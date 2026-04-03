@@ -11,7 +11,15 @@ export type HelpSection = {
 };
 
 export type AppHelpPage = {
-  key: 'login' | 'dashboard' | 'clients' | 'client-profile' | 'audit' | 'menu' | 'not-found';
+  key:
+    | 'login'
+    | 'dashboard'
+    | 'clients'
+    | 'client-profile'
+    | 'audit'
+    | 'menu'
+    | 'settings'
+    | 'not-found';
   title: string;
   routeLabel: string;
   summary: string;
@@ -577,6 +585,102 @@ const helpPages: AppHelpPage[] = [
     ]
   },
   {
+    key: 'settings',
+    title: 'Settings',
+    routeLabel: 'Account and preferences',
+    summary:
+      'The settings page lets you personalise the workspace, update your visible account details, control theme and layout preferences, and decide how the app behaves on this device.',
+    quickStart: [
+      'Set your display name and avatar first so the shell reflects your account properly.',
+      'Choose the theme and layout options that feel best for how you work.',
+      'Set your default landing page and remember-me preference so the app opens the way you expect.'
+    ],
+    sections: [
+      {
+        title: 'Account profile',
+        purpose:
+          'Use this section to control the visible account identity across the workspace.',
+        fields: [
+          {
+            label: 'Display name',
+            guidance:
+              'This is the name shown in the app shell and settings preview. Use the name you want to work under inside the app.'
+          },
+          {
+            label: 'Avatar image URL',
+            guidance:
+              'Add a direct image URL if you want a profile picture in the shell. Leave it blank to use initials instead.'
+          },
+          {
+            label: 'Account email and user ID',
+            guidance:
+              'These are read-only references so you can confirm which signed-in account you are editing.'
+          }
+        ]
+      },
+      {
+        title: 'Theme and appearance',
+        purpose:
+          'This section controls the visual feel of the app on your device.',
+        fields: [
+          {
+            label: 'Theme selection',
+            guidance:
+              'Choose the workspace palette you prefer. The app remembers this on the current device.'
+          },
+          {
+            label: 'Compact layout',
+            guidance:
+              'Turn this on if you want tighter spacing and more information visible at once.'
+          },
+          {
+            label: 'Reduced motion',
+            guidance:
+              'Use this if you want fewer movement effects and a calmer working experience.'
+          }
+        ]
+      },
+      {
+        title: 'Device and workflow preferences',
+        purpose:
+          'These settings decide how the app behaves when you return to it on this device.',
+        fields: [
+          {
+            label: 'Default landing page',
+            guidance:
+              'Choose the page you want to land on when there is no deeper redirect waiting after sign-in.'
+          },
+          {
+            label: 'Remember me on this device',
+            guidance:
+              'Enable this to keep login persistence in local storage. Turn it off if you want sign-in to stay session-only.'
+          }
+        ]
+      },
+      {
+        title: 'Password update',
+        purpose:
+          'Use this section only when you actually want to rotate your password.',
+        fields: [
+          {
+            label: 'New password and confirmation',
+            guidance:
+              'Leave these blank unless you want to change the password. If you do change it, make sure both entries match.'
+          }
+        ]
+      }
+    ],
+    tips: [
+      'Theme and layout choices are remembered on this device, so different devices can feel different if you want them to.',
+      'Reset device preferences if you want to return to the default workspace feel without losing your account name or avatar.'
+    ],
+    prompts: [
+      'How do I change my profile name and picture?',
+      'How do themes work in settings?',
+      'What does remember me do in settings?'
+    ]
+  },
+  {
     key: 'not-found',
     title: 'Page guide',
     routeLabel: 'Support',
@@ -600,6 +704,7 @@ const pageKeywords: Record<AppHelpPage['key'], string[]> = {
   'client-profile': ['client profile', 'account', 'invoice', 'billing', 'deals', 'timeline'],
   audit: ['audit', 'kitchen', 'scorecard', 'controls', 'waste', 'portion', 'ordering'],
   menu: ['menu', 'dish', 'ingredient', 'gp', 'pricing', 'costing'],
+  settings: ['settings', 'theme', 'username', 'avatar', 'profile picture', 'landing page'],
   'not-found': ['help', 'support']
 };
 
@@ -610,6 +715,7 @@ function routeKey(pathname: string): AppHelpPage['key'] {
   if (pathname.startsWith('/clients/')) return 'client-profile';
   if (pathname === '/audit') return 'audit';
   if (pathname === '/menu') return 'menu';
+  if (pathname === '/settings') return 'settings';
   return 'not-found';
 }
 

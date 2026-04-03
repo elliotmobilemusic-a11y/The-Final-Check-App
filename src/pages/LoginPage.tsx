@@ -1,17 +1,19 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { getRememberPreference, setRememberPreference } from '../lib/authStorage';
 import { hasSupabaseEnv, supabase } from '../lib/supabase';
 
 export function LoginPage() {
   const { session } = useAuth();
+  const { preferences } = usePreferences();
   const location = useLocation();
 
   const redirectTo = useMemo(() => {
     const next = (location.state as { from?: string } | null)?.from;
-    return next || '/dashboard';
-  }, [location.state]);
+    return next || preferences.defaultLandingPage;
+  }, [location.state, preferences.defaultLandingPage]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

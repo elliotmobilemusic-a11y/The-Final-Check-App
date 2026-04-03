@@ -1,12 +1,14 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { supabase } from '../lib/supabase';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/clients', label: 'Clients' },
   { to: '/audit', label: 'Audit Tool' },
-  { to: '/menu', label: 'Menu Builder' }
+  { to: '/menu', label: 'Menu Builder' },
+  { to: '/settings', label: 'Settings' }
 ];
 
 const routeMeta = [
@@ -39,20 +41,55 @@ const routeMeta = [
     eyebrow: 'Menu builder',
     title: 'Menu engineering and commercial review',
     description: 'Work through dish costing, pricing, GP, and mix with a stronger operating view.'
+  },
+  {
+    match: (pathname: string) => pathname === '/settings',
+    eyebrow: 'Settings',
+    title: 'Account, themes, and device preferences',
+    description:
+      'Personalise the workspace, control startup behaviour, and manage how the app feels on this device.'
   }
 ];
 
 const shellQuickLinks = [
   { to: '/clients', label: 'Open clients' },
   { to: '/audit', label: 'New audit' },
-  { to: '/menu', label: 'New menu review' }
+  { to: '/menu', label: 'New menu review' },
+  { to: '/settings', label: 'Settings' }
 ];
+
+function deriveDisplayName(email?: string | null) {
+  if (!email) return 'Approved user';
+  return email.split('@')[0].replace(/[._-]+/g, ' ');
+}
+
+function getInitials(name: string) {
+  const parts = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!parts.length) return 'TF';
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
 
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const { preferences } = usePreferences();
   const meta = routeMeta.find((item) => item.match(location.pathname)) ?? routeMeta[0];
+  const displayName =
+    preferences.displayName ||
+    (typeof session?.user.user_metadata?.display_name === 'string'
+      ? session.user.user_metadata.display_name
+      : '') ||
+    deriveDisplayName(session?.user.email);
+  const avatarUrl =
+    preferences.avatarUrl ||
+    (typeof session?.user.user_metadata?.avatar_url === 'string'
+      ? session.user.user_metadata.avatar_url
+      : '');
 
   async function handleSignOut() {
     await supabase?.auth.signOut();
@@ -91,7 +128,23 @@ export function AppShell() {
           </nav>
 
           <div className="topbar-actions">
-            <div className="user-chip">{session?.user.email ?? 'Approved user'}</div>
+            <div className="user-chip">
+              {avatarUrl ? (
+                <img
+                  alt={`${displayName} avatar`}
+                  className="user-chip-avatar"
+                  src={avatarUrl}
+                />
+              ) : (
+                <span className="user-chip-avatar user-chip-avatar-fallback">
+                  {getInitials(displayName)}
+                </span>
+              )}
+              <span className="user-chip-copy">
+                <strong>{displayName}</strong>
+                <small>{session?.user.email ?? 'Approved user'}</small>
+              </span>
+            </div>
             <button className="button button-secondary" onClick={handleSignOut}>
               Sign out
             </button>
