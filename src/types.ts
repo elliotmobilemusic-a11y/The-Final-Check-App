@@ -24,6 +24,36 @@ export interface AuditOrderingItem {
   fix: string;
 }
 
+export interface AuditCategoryScores {
+  leadership: number;
+  foodQuality: number;
+  systems: number;
+  cleanliness: number;
+  flow: number;
+  training: number;
+  stock: number;
+  safety: number;
+}
+
+export interface AuditActionItem {
+  id: string;
+  title: string;
+  area: string;
+  priority: 'Critical' | 'High' | 'Medium' | 'Low';
+  owner: string;
+  dueDate: string;
+  status: 'Open' | 'In Progress' | 'Done';
+  impact: string;
+}
+
+export interface AuditControlCheck {
+  id: string;
+  category: string;
+  label: string;
+  status: 'In Place' | 'Partial' | 'Missing' | 'N/A';
+  note: string;
+}
+
 export interface AuditFormState {
   id?: string;
   clientId?: string | null;
@@ -34,12 +64,21 @@ export interface AuditFormState {
   consultantName: string;
   contactName: string;
   auditType: string;
+  serviceStyle: string;
+  tradingDays: string;
+  coversPerWeek: number;
+  averageSpend: number;
+  kitchenTeamSize: number;
+  mainSupplier: string;
   weeklySales: number;
   weeklyFoodCost: number;
   targetGp: number;
   actualWasteValue: number;
   labourPercent: number;
   orderingScore: 'Low' | 'Moderate' | 'High';
+  allergenConfidence: 'Low' | 'Moderate' | 'High';
+  hygieneRisk: 'Low' | 'Moderate' | 'High';
+  equipmentCondition: 'Strong' | 'Mixed' | 'Poor';
   summary: string;
   cultureLeadership: string;
   foodQuality: string;
@@ -52,9 +91,12 @@ export interface AuditFormState {
   longTermStrategy: string;
   priorityActions: string;
   nextVisit: string;
+  categoryScores: AuditCategoryScores;
   wasteItems: AuditWasteItem[];
   portionItems: AuditPortionItem[];
   orderingItems: AuditOrderingItem[];
+  actionItems: AuditActionItem[];
+  controlChecks: AuditControlCheck[];
   createdAt?: string;
   updatedAt?: string;
 }

@@ -1,6 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { StatCard } from '../components/StatCard';
+import { openPrintableHtmlDocument } from '../lib/clientExports';
 import {
   deleteMenuProject,
   getMenuProjectById,
@@ -692,13 +693,10 @@ export function MenuBuilderPage() {
     );
   }
 
-  function exportHtml() {
-    const html = `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Menu Builder Report</title><style>body{font-family:Inter,Arial,sans-serif;max-width:1200px;margin:40px auto;padding:0 20px;color:#0f172a;line-height:1.55}.report-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.report-meta div{padding:12px;background:#f8fafc;border:1px solid #dbe2ea;border-radius:12px}.report-table{width:100%;border-collapse:collapse}.report-table th,.report-table td{border:1px solid #dbe2ea;padding:10px;text-align:left}.report-table th{background:#f8fafc}.muted-copy{color:#64748b}</style></head><body>${reportHtml}</body></html>`;
-
-    downloadText(
-      `${safe(project.menuName || 'menu-report').replace(/\s+/g, '-').toLowerCase()}.html`,
-      html,
-      'text/html'
+  function exportPdf() {
+    openPrintableHtmlDocument(
+      `${safe(project.menuName || 'Menu Builder Report')} report`,
+      reportHtml
     );
   }
 
@@ -773,11 +771,11 @@ export function MenuBuilderPage() {
               >
                 {saving ? 'Saving...' : 'Save to Supabase'}
               </button>
+              <button className="button button-secondary" onClick={exportPdf}>
+                Export PDF
+              </button>
               <button className="button button-secondary" onClick={exportJson}>
                 Export JSON
-              </button>
-              <button className="button button-secondary" onClick={exportHtml}>
-                Export HTML
               </button>
               <label className="button button-secondary inline-file-button">
                 Load JSON
@@ -1276,6 +1274,9 @@ export function MenuBuilderPage() {
                   Preview the current menu structure and commercial view.
                 </p>
               </div>
+              <button className="button button-secondary" onClick={exportPdf}>
+                PDF / Print
+              </button>
             </div>
             <div className="panel-body">
               <div className="report-preview" dangerouslySetInnerHTML={{ __html: reportHtml }} />
