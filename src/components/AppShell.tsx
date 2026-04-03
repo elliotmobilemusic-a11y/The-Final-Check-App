@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
@@ -57,13 +56,6 @@ const routeMeta = [
   }
 ];
 
-const shellQuickLinks = [
-  { to: '/dashboard', label: 'Overview', caption: 'See the live portfolio summary' },
-  { to: '/clients', label: 'Open clients', caption: 'Jump into the CRM list' },
-  { to: '/audit', label: 'New audit', caption: 'Start a fresh audit record' },
-  { to: '/menu', label: 'New menu review', caption: 'Open menu engineering' }
-];
-
 function deriveDisplayName(email?: string | null) {
   if (!email) return 'Approved user';
   return email.split('@')[0].replace(/[._-]+/g, ' ');
@@ -84,14 +76,7 @@ export function AppShell() {
   const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
-  const [navOpen, setNavOpen] = useState(false);
   const meta = routeMeta.find((item) => item.match(location.pathname)) ?? routeMeta[0];
-  const activeNav =
-    navItems.find((item) =>
-      item.to === '/clients'
-        ? location.pathname === '/clients' || location.pathname.startsWith('/clients/')
-        : location.pathname === item.to
-    ) ?? navItems[0];
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -103,33 +88,6 @@ export function AppShell() {
     (typeof session?.user.user_metadata?.avatar_url === 'string'
       ? session.user.user_metadata.avatar_url
       : '');
-
-  useEffect(() => {
-    setNavOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as HTMLElement | null;
-      if (!target?.closest('.shell-nav-menu') && !target?.closest('.shell-nav-band')) {
-        setNavOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        setNavOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, []);
 
   async function handleSignOut() {
     await supabase?.auth.signOut();
@@ -157,85 +115,40 @@ export function AppShell() {
             </NavLink>
 
             <div className="shell-toolbar-actions">
-              <div className="shell-toolbar-row">
-                <div className={`shell-nav-menu ${navOpen ? 'open' : ''}`}>
-                  <button
-                    aria-expanded={navOpen}
-                    aria-haspopup="menu"
-                    className="shell-nav-trigger"
-                    onClick={() => setNavOpen((current) => !current)}
-                    type="button"
+              <nav className="shell-primary-nav" aria-label="Primary navigation">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to !== '/clients'}
+                    className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
                   >
-                    <span className="shell-nav-trigger-copy">
-                      <small>Navigate</small>
-                      <strong>
-                        {location.pathname === '/settings' ? 'Settings' : activeNav.label}
-                      </strong>
-                    </span>
-                    <span className="shell-nav-trigger-icon" aria-hidden="true">
-                      ▾
-                    </span>
-                  </button>
-                </div>
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
 
-                <div className="shell-shortcuts">
-                  {shellQuickLinks.map((item) => (
-                    <Link className="shell-shortcut-link" key={item.to} to={item.to}>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-
-                <Link className="user-chip shell-profile-link" to="/settings">
-                  {avatarUrl ? (
-                    <img
-                      alt={`${displayName} avatar`}
-                      className="user-chip-avatar"
-                      src={avatarUrl}
-                    />
-                  ) : (
-                    <span className="user-chip-avatar user-chip-avatar-fallback">
-                      {getInitials(displayName)}
-                    </span>
-                  )}
-                  <span className="user-chip-copy">
-                    <strong>{displayName}</strong>
-                    <small>Profile and settings</small>
+              <Link className="user-chip shell-profile-link" to="/settings">
+                {avatarUrl ? (
+                  <img
+                    alt={`${displayName} avatar`}
+                    className="user-chip-avatar"
+                    src={avatarUrl}
+                  />
+                ) : (
+                  <span className="user-chip-avatar user-chip-avatar-fallback">
+                    {getInitials(displayName)}
                   </span>
-                </Link>
+                )}
+                <span className="user-chip-copy">
+                  <strong>{displayName}</strong>
+                  <small>Profile and settings</small>
+                </span>
+              </Link>
 
-                <button className="button button-secondary shell-signout" onClick={handleSignOut}>
-                  Sign out
-                </button>
-              </div>
-
-              {navOpen ? (
-                <div className="shell-nav-band">
-                  <div className="shell-nav-dropdown" role="menu">
-                    <div className="shell-panel-heading">
-                      <span className="shell-section-label">Navigation</span>
-                      <strong>Move around the app</strong>
-                    </div>
-
-                    <nav className="shell-nav-list">
-                      {navItems.map((item) => (
-                        <NavLink
-                          key={item.to}
-                          to={item.to}
-                          end={item.to !== '/clients'}
-                          className={({ isActive }) => `shell-nav-link ${isActive ? 'active' : ''}`}
-                          onClick={() => setNavOpen(false)}
-                        >
-                          <span className="shell-nav-copy">
-                            <strong>{item.label}</strong>
-                            <small>{item.caption}</small>
-                          </span>
-                        </NavLink>
-                      ))}
-                    </nav>
-                  </div>
-                </div>
-              ) : null}
+              <button className="button button-secondary shell-signout" onClick={handleSignOut}>
+                Sign out
+              </button>
             </div>
           </div>
 
