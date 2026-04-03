@@ -2,6 +2,12 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { buildClientPdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
 import { clientRecordToProfile, createEmptyClientData } from '../lib/clientData';
+import {
+  getBusinessProfile,
+  searchBusinessProfiles,
+  type BusinessLookupProfile,
+  type BusinessLookupResult
+} from '../lib/businessLookup';
 import { fmtCurrency } from '../lib/utils';
 import { createClient, deleteClient, listClients } from '../services/clients';
 import type { ClientProfile, ClientRecord } from '../types';
@@ -85,11 +91,37 @@ function relationshipTone(health?: string | null) {
 
 type SortMode = 'updated' | 'review' | 'value' | 'company' | 'attention';
 
+function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupProfile): ClientProfile {
+  const nextTags = [...new Set([lookup.industry, ...current.tags].filter(Boolean))];
+
+  return {
+    ...current,
+    companyName: lookup.name || current.companyName,
+    location: lookup.location || current.location,
+    logoUrl: lookup.logoUrl || current.logoUrl,
+    coverUrl: lookup.coverUrl || current.coverUrl || lookup.logoUrl,
+    industry: lookup.industry || current.industry,
+    website: lookup.website || current.website,
+    tags: nextTags,
+    data: {
+      ...current.data,
+      profileSummary: current.data.profileSummary || lookup.summary,
+      billingName: current.data.billingName || lookup.name,
+      leadSource: current.data.leadSource || 'Business lookup'
+    }
+  };
+}
+
 export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<ClientProfile>(blankClient);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('Client list ready.');
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState('Search a recognised business to prefill the core account details.');
+  const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('updated');
@@ -128,6 +160,47 @@ export function ClientsPage() {
       setMessage(error instanceof Error ? error.message : 'Could not create client.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleBusinessLookup() {
+    const query = lookupQuery.trim();
+    if (query.length < 2) {
+      setLookupMessage('Enter at least two characters to search for a business.');
+      setLookupResults([]);
+      return;
+    }
+
+    try {
+      setLookupLoading(true);
+      setLookupSelectionId('');
+      const results = await searchBusinessProfiles(query);
+      setLookupResults(results);
+      setLookupMessage(
+        results.length
+          ? `Found ${results.length} recognised business match${results.length === 1 ? '' : 'es'}. Pick the right one to prefill the form.`
+          : 'No recognised business matches found. Try a clearer company name.'
+      );
+    } catch (error) {
+      setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
+      setLookupResults([]);
+    } finally {
+      setLookupLoading(false);
+    }
+  }
+
+  async function handleUseLookup(result: BusinessLookupResult) {
+    try {
+      setLookupLoading(true);
+      setLookupSelectionId(result.id);
+      const profile = await getBusinessProfile(result.id);
+      setForm((current) => mergeLookupIntoClient(current, profile));
+      setLookupMessage(`Loaded details for ${profile.name}. Review the contact and billing fields before saving.`);
+      setMessage(`Business details loaded for ${profile.name}.`);
+    } catch (error) {
+      setLookupMessage(error instanceof Error ? error.message : 'Could not load business details.');
+    } finally {
+      setLookupLoading(false);
     }
   }
 
@@ -405,6 +478,101 @@ export function ClientsPage() {
           </div>
 
           <form className="stack gap-20" onSubmit={handleSubmit}>
+            <section className="crm-lookup-shell">
+              <div className="crm-lookup-top">
+                <div>
+                  <h4>Business lookup</h4>
+                  <p className="muted-copy">
+                    Search for a recognised business and pull in the public company name, industry,
+                    website, location, and logo before you save the CRM record.
+                  </p>
+                </div>
+                <span className="soft-pill">Quick fill</span>
+              </div>
+
+              <div className="crm-lookup-bar">
+                <label className="field">
+                  <span>Business name search</span>
+                  <input
+                    className="input"
+                    placeholder="Search for a restaurant, pub, group, or hospitality business"
+                    value={lookupQuery}
+                    onChange={(event) => setLookupQuery(event.target.value)}
+                  />
+                </label>
+                <button
+                  className="button button-secondary self-end"
+                  disabled={lookupLoading}
+                  onClick={handleBusinessLookup}
+                  type="button"
+                >
+                  {lookupLoading ? 'Searching...' : 'Find business'}
+                </button>
+              </div>
+
+              <p className="muted-copy">{lookupMessage}</p>
+
+              {lookupResults.length ? (
+                <div className="crm-lookup-results">
+                  {lookupResults.map((result) => (
+                    <article className="crm-lookup-card" key={result.id}>
+                      <div className="crm-lookup-card-top">
+                        <div className="crm-lookup-logo-shell">
+                          {result.logoUrl ? (
+                            <img alt={`${result.name} logo`} className="crm-lookup-logo" src={result.logoUrl} />
+                          ) : (
+                            <span className="crm-lookup-logo-fallback">
+                              {result.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="stack gap-12">
+                          <div>
+                            <strong>{result.name}</strong>
+                            <p className="muted-copy">
+                              {result.description || 'Public business profile recognised.'}
+                            </p>
+                          </div>
+
+                          <div className="crm-alert-row">
+                            {result.industry ? (
+                              <span className="crm-alert-chip is-stable">{result.industry}</span>
+                            ) : null}
+                            {result.location ? (
+                              <span className="crm-alert-chip is-warning">{result.location}</span>
+                            ) : null}
+                            {result.website ? (
+                              <span className="crm-alert-chip">{result.website.replace(/^https?:\/\//, '')}</span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="saved-actions">
+                        <button
+                          className="button button-primary"
+                          disabled={lookupLoading}
+                          onClick={() => handleUseLookup(result)}
+                          type="button"
+                        >
+                          {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Use details'}
+                        </button>
+                        <a
+                          className="button button-ghost"
+                          href={result.sourceUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          Source
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+
             <div className="form-grid">
               <label className="field">
                 <span>Company name</span>
@@ -539,6 +707,26 @@ export function ClientsPage() {
                 }
               />
             </label>
+
+            <div className="form-grid two-columns">
+              <label className="field">
+                <span>Website</span>
+                <input
+                  className="input"
+                  value={form.website}
+                  onChange={(event) => setForm({ ...form, website: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Logo image URL</span>
+                <input
+                  className="input"
+                  value={form.logoUrl}
+                  onChange={(event) => setForm({ ...form, logoUrl: event.target.value })}
+                />
+              </label>
+            </div>
 
             <div className="header-actions">
               <button className="button button-primary" disabled={saving}>

@@ -1725,6 +1725,84 @@ body.reduced-motion *::after {
   gap: 10px;
 }
 
+.crm-lookup-shell {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 244, 240, 0.84));
+}
+
+.crm-lookup-top,
+.crm-lookup-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.crm-lookup-top h4 {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.crm-lookup-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.crm-lookup-results {
+  display: grid;
+  gap: 12px;
+}
+
+.crm-lookup-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.crm-lookup-card strong {
+  display: block;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.crm-lookup-logo-shell {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.crm-lookup-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.crm-lookup-logo-fallback {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .crm-deal-card,
 .invoice-card {
   gap: 14px;
@@ -2297,6 +2375,8 @@ body[data-theme="midnight"] .support-guide-section,
 body[data-theme="midnight"] .support-field-card,
 body[data-theme="midnight"] .support-chat-message.assistant,
 body[data-theme="midnight"] .support-chat-message.user,
+body[data-theme="midnight"] .crm-lookup-shell,
+body[data-theme="midnight"] .crm-lookup-card,
 body[data-theme="midnight"] .support-chat-card,
 body[data-theme="midnight"] .report-meta > div,
 body[data-theme="midnight"] .report-columns > div,
@@ -4315,6 +4395,8 @@ body,
 @media (max-width: 1200px) {
   .topbar-context,
   .client-portfolio-top,
+  .crm-lookup-top,
+  .crm-lookup-card-top,
   .crm-client-heading,
   .crm-deal-top,
   .invoice-card-top {
@@ -4346,6 +4428,7 @@ body,
   .clients-hero-grid,
   .client-portfolio-meta,
   .form-grid.three-balance,
+  .crm-lookup-bar,
   .crm-summary-grid,
   .crm-priority-grid,
   .invoice-line-grid {
