@@ -626,7 +626,7 @@ const helpPages: AppHelpPage[] = [
           {
             label: 'Theme selection',
             guidance:
-              'Choose the workspace palette you prefer. The app remembers this on the current device.'
+              'Choose the workspace palette you prefer, including dark mode. The app remembers this on the current device.'
           },
           {
             label: 'Compact layout',

@@ -1,7 +1,7 @@
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 
-export type ThemeMode = 'sandstone' | 'coastal' | 'cedar' | 'sunrise';
+export type ThemeMode = 'sandstone' | 'coastal' | 'cedar' | 'sunrise' | 'midnight';
 export type LandingPage = '/dashboard' | '/clients' | '/audit' | '/menu' | '/settings';
 
 export type AppPreferences = {
@@ -156,5 +156,10 @@ export const themeOptions: Array<{ value: ThemeMode; label: string; description:
     value: 'sunrise',
     label: 'Sunrise',
     description: 'A lighter premium palette with warmer accents and brighter panels.'
+  },
+  {
+    value: 'midnight',
+    label: 'Dark mode',
+    description: 'A darker workspace for lower glare and a more focused operating feel.'
   }
 ];

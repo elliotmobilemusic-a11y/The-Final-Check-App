@@ -19,7 +19,8 @@ const themePreviewClasses: ThemePreview[] = [
   { value: 'sandstone', accentClass: 'theme-preview-sandstone' },
   { value: 'coastal', accentClass: 'theme-preview-coastal' },
   { value: 'cedar', accentClass: 'theme-preview-cedar' },
-  { value: 'sunrise', accentClass: 'theme-preview-sunrise' }
+  { value: 'sunrise', accentClass: 'theme-preview-sunrise' },
+  { value: 'midnight', accentClass: 'theme-preview-midnight' }
 ];
 
 const landingPages: Array<{ value: LandingPage; label: string }> = [
