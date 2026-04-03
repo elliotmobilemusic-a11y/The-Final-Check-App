@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
@@ -85,7 +85,6 @@ export function AppShell() {
   const { session } = useAuth();
   const { preferences } = usePreferences();
   const [navOpen, setNavOpen] = useState(false);
-  const navMenuRef = useRef<HTMLDivElement | null>(null);
   const meta = routeMeta.find((item) => item.match(location.pathname)) ?? routeMeta[0];
   const activeNav =
     navItems.find((item) =>
@@ -111,7 +110,8 @@ export function AppShell() {
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!navMenuRef.current?.contains(event.target as Node)) {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('.shell-nav-menu') && !target?.closest('.shell-nav-band')) {
         setNavOpen(false);
       }
     }
@@ -157,26 +157,60 @@ export function AppShell() {
             </NavLink>
 
             <div className="shell-toolbar-actions">
-              <div className={`shell-nav-menu ${navOpen ? 'open' : ''}`} ref={navMenuRef}>
-                <button
-                  aria-expanded={navOpen}
-                  aria-haspopup="menu"
-                  className="shell-nav-trigger"
-                  onClick={() => setNavOpen((current) => !current)}
-                  type="button"
-                >
-                  <span className="shell-nav-trigger-copy">
-                    <small>Navigate</small>
-                    <strong>
-                      {location.pathname === '/settings' ? 'Settings' : activeNav.label}
-                    </strong>
-                  </span>
-                  <span className="shell-nav-trigger-icon" aria-hidden="true">
-                    ▾
-                  </span>
-                </button>
+              <div className="shell-toolbar-row">
+                <div className={`shell-nav-menu ${navOpen ? 'open' : ''}`}>
+                  <button
+                    aria-expanded={navOpen}
+                    aria-haspopup="menu"
+                    className="shell-nav-trigger"
+                    onClick={() => setNavOpen((current) => !current)}
+                    type="button"
+                  >
+                    <span className="shell-nav-trigger-copy">
+                      <small>Navigate</small>
+                      <strong>
+                        {location.pathname === '/settings' ? 'Settings' : activeNav.label}
+                      </strong>
+                    </span>
+                    <span className="shell-nav-trigger-icon" aria-hidden="true">
+                      ▾
+                    </span>
+                  </button>
+                </div>
 
-                {navOpen ? (
+                <div className="shell-shortcuts">
+                  {shellQuickLinks.map((item) => (
+                    <Link className="shell-shortcut-link" key={item.to} to={item.to}>
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+
+                <Link className="user-chip shell-profile-link" to="/settings">
+                  {avatarUrl ? (
+                    <img
+                      alt={`${displayName} avatar`}
+                      className="user-chip-avatar"
+                      src={avatarUrl}
+                    />
+                  ) : (
+                    <span className="user-chip-avatar user-chip-avatar-fallback">
+                      {getInitials(displayName)}
+                    </span>
+                  )}
+                  <span className="user-chip-copy">
+                    <strong>{displayName}</strong>
+                    <small>Profile and settings</small>
+                  </span>
+                </Link>
+
+                <button className="button button-secondary shell-signout" onClick={handleSignOut}>
+                  Sign out
+                </button>
+              </div>
+
+              {navOpen ? (
+                <div className="shell-nav-band">
                   <div className="shell-nav-dropdown" role="menu">
                     <div className="shell-panel-heading">
                       <span className="shell-section-label">Navigation</span>
@@ -200,38 +234,8 @@ export function AppShell() {
                       ))}
                     </nav>
                   </div>
-                ) : null}
-              </div>
-
-              <div className="shell-shortcuts">
-                {shellQuickLinks.map((item) => (
-                  <Link className="shell-shortcut-link" key={item.to} to={item.to}>
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-
-              <Link className="user-chip shell-profile-link" to="/settings">
-                {avatarUrl ? (
-                  <img
-                    alt={`${displayName} avatar`}
-                    className="user-chip-avatar"
-                    src={avatarUrl}
-                  />
-                ) : (
-                  <span className="user-chip-avatar user-chip-avatar-fallback">
-                    {getInitials(displayName)}
-                  </span>
-                )}
-                <span className="user-chip-copy">
-                  <strong>{displayName}</strong>
-                  <small>Profile and settings</small>
-                </span>
-              </Link>
-
-              <button className="button button-secondary shell-signout" onClick={handleSignOut}>
-                Sign out
-              </button>
+                </div>
+              ) : null}
             </div>
           </div>
 

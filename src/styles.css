@@ -498,17 +498,24 @@ body.reduced-motion *::after {
 }
 
 .shell-toolbar-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: grid;
   gap: 12px;
   min-width: 0;
   flex: 1 1 auto;
 }
 
+.shell-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
 .shell-nav-menu {
   position: relative;
-  z-index: 90;
+  z-index: 2;
   isolation: isolate;
 }
 
@@ -573,11 +580,9 @@ body.reduced-motion *::after {
 }
 
 .shell-nav-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 14px);
-  z-index: 95;
-  width: min(340px, calc(100vw - 32px));
+  position: relative;
+  z-index: 1;
+  width: min(340px, 100%);
   padding: 18px;
   border-radius: 24px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(247, 243, 239, 0.99));
@@ -586,6 +591,12 @@ body.reduced-motion *::after {
     0 32px 60px rgba(36, 31, 38, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(18px);
+}
+
+.shell-nav-band {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .shell-panel-heading {
@@ -2784,6 +2795,10 @@ body[data-theme="midnight"] .data-table td {
     align-items: stretch;
   }
 
+  .shell-toolbar-row {
+    justify-content: flex-start;
+  }
+
   .shell-nav-menu,
   .shell-nav-trigger,
   .shell-nav-dropdown,
@@ -2798,8 +2813,6 @@ body[data-theme="midnight"] .data-table td {
   }
 
   .shell-nav-dropdown {
-    left: 0;
-    right: 0;
     width: 100%;
   }
 
