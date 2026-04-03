@@ -23,14 +23,17 @@ export function AppShell() {
       <header className="app-topbar">
         <div className="topbar-inner">
           <NavLink className="brand-link" to="/dashboard">
-            <img
-              src="/the-final-check-logo.png"
-              alt="The Final Check logo"
-              className="brand-logo"
-            />
+            <span className="brand-mark">
+              <img
+                src="/the-final-check-logo.png"
+                alt="The Final Check logo"
+                className="brand-logo"
+              />
+            </span>
             <div className="brand-copy">
+              <small className="brand-kicker">Consultancy OS</small>
               <strong>The Final Check</strong>
-              <span>Profit and Performance Consultancy</span>
+              <span className="brand-subtitle">Profit and Performance Consultancy</span>
             </div>
           </NavLink>
 
