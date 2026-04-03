@@ -1015,12 +1015,10 @@ body.reduced-motion *::after {
 }
 
 .support-chat-card {
-  position: fixed;
-  right: 22px;
-  bottom: 86px;
-  z-index: 88;
-  width: min(460px, calc(100vw - 28px));
+  width: 100%;
+  max-height: inherit;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 14px;
   padding: 18px;
   border-radius: 28px;
@@ -1028,6 +1026,20 @@ body.reduced-motion *::after {
   border: 1px solid rgba(255, 255, 255, 0.68);
   box-shadow: var(--shadow-strong);
   backdrop-filter: blur(18px);
+}
+
+.support-chat-backdrop {
+  z-index: 87;
+  align-items: end;
+  justify-items: end;
+  padding: 22px;
+  background: rgba(33, 29, 36, 0.22);
+}
+
+.support-chat-shell {
+  width: min(460px, calc(100vw - 44px));
+  max-height: min(760px, calc(100vh - 120px));
+  display: grid;
 }
 
 .support-chat-header {
@@ -1056,7 +1068,8 @@ body.reduced-motion *::after {
 }
 
 .support-chat-messages {
-  max-height: 420px;
+  min-height: 0;
+  max-height: none;
   overflow: auto;
   display: grid;
   gap: 12px;
@@ -2440,6 +2453,7 @@ body[data-theme="midnight"] .support-guide-section,
 body[data-theme="midnight"] .support-field-card,
 body[data-theme="midnight"] .support-chat-message.assistant,
 body[data-theme="midnight"] .support-chat-message.user,
+body[data-theme="midnight"] .support-chat-card,
 body[data-theme="midnight"] .report-meta > div,
 body[data-theme="midnight"] .report-columns > div,
 body[data-theme="midnight"] .audit-section-link,
@@ -2842,11 +2856,16 @@ body[data-theme="midnight"] .data-table td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .support-chat-backdrop {
+    padding: 14px;
+  }
+
+  .support-chat-shell {
+    width: min(100%, calc(100vw - 28px));
+    max-height: calc(100vh - 96px);
+  }
+
   .support-chat-card {
-    right: 14px;
-    left: 14px;
-    bottom: 74px;
-    width: auto;
     padding: 16px;
     border-radius: 22px;
   }

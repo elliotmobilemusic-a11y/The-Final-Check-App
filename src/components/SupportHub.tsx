@@ -160,54 +160,58 @@ function AssistantPanel({
   const page = getHelpPage(pathname);
 
   return (
-    <div className="support-chat-card">
-      <div className="support-chat-header">
-        <div>
-          <div className="brand-badge">Guided help</div>
-          <h3>Workflow guide</h3>
-          <p>{page.title} guidance loaded</p>
+    <div className="drawer-backdrop support-chat-backdrop" onClick={onClose}>
+      <aside className="support-chat-shell" onClick={(event) => event.stopPropagation()}>
+        <div className="support-chat-card">
+          <div className="support-chat-header">
+            <div>
+              <div className="brand-badge">Guided help</div>
+              <h3>Workflow guide</h3>
+              <p>{page.title} guidance loaded</p>
+            </div>
+
+            <div className="support-chat-actions">
+              <button className="button button-ghost" onClick={onOpenGuide} type="button">
+                Page guide
+              </button>
+              <button className="button button-ghost" onClick={onReset} type="button">
+                New chat
+              </button>
+              <button className="button button-ghost" onClick={onClose} type="button">
+                Close
+              </button>
+            </div>
+          </div>
+
+          <div className="support-chat-messages">
+            {messages.map((message) => (
+              <article
+                className={`support-chat-message ${message.role === 'assistant' ? 'assistant' : 'user'}`}
+                key={message.id}
+              >
+                <span>{message.role === 'assistant' ? 'Guide' : 'You'}</span>
+                <p>{message.content}</p>
+              </article>
+            ))}
+          </div>
+
+          <form className="support-chat-form" onSubmit={onSubmit}>
+            <label className="field">
+              <span>Ask about this page</span>
+              <textarea
+                className="input textarea"
+                placeholder="Ask how to use a section, what a field means, or what order to work in."
+                rows={4}
+                value={input}
+                onChange={(event) => onInputChange(event.target.value)}
+              />
+            </label>
+            <button className="button button-primary" type="submit">
+              Get guidance
+            </button>
+          </form>
         </div>
-
-        <div className="support-chat-actions">
-          <button className="button button-ghost" onClick={onOpenGuide} type="button">
-            Page guide
-          </button>
-          <button className="button button-ghost" onClick={onReset} type="button">
-            New chat
-          </button>
-          <button className="button button-ghost" onClick={onClose} type="button">
-            Close
-          </button>
-        </div>
-      </div>
-
-      <div className="support-chat-messages">
-        {messages.map((message) => (
-          <article
-            className={`support-chat-message ${message.role === 'assistant' ? 'assistant' : 'user'}`}
-            key={message.id}
-          >
-            <span>{message.role === 'assistant' ? 'Guide' : 'You'}</span>
-            <p>{message.content}</p>
-          </article>
-        ))}
-      </div>
-
-      <form className="support-chat-form" onSubmit={onSubmit}>
-        <label className="field">
-          <span>Ask about this page</span>
-          <textarea
-            className="input textarea"
-            placeholder="Ask how to use a section, what a field means, or what order to work in."
-            rows={4}
-            value={input}
-            onChange={(event) => onInputChange(event.target.value)}
-          />
-        </label>
-        <button className="button button-primary" type="submit">
-          Get guidance
-        </button>
-      </form>
+      </aside>
     </div>
   );
 }
@@ -231,6 +235,18 @@ export function SupportHub() {
   useEffect(() => {
     setSelectedPageKey(currentPage.key);
   }, [currentPage.key]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setGuideOpen(false);
+        setAssistantOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
 
   const selectedPage = useMemo(
     () => pages.find((page) => page.key === selectedPageKey) ?? currentPage,
