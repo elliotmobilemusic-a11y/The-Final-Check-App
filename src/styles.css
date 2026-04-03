@@ -449,6 +449,289 @@ p {
   align-content: start;
 }
 
+/* ---------- Support hub ---------- */
+
+.support-launcher {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 85;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.support-backdrop {
+  z-index: 90;
+}
+
+.support-drawer {
+  width: min(1160px, 100%);
+}
+
+.support-drawer-shell {
+  display: grid;
+  gap: 22px;
+  min-height: 100%;
+  padding: 28px;
+}
+
+.support-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 244, 240, 0.88));
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.support-drawer-header h2 {
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1.05;
+}
+
+.support-drawer-header p {
+  max-width: 720px;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.support-drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.support-drawer-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.support-page-nav {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.support-page-tab {
+  appearance: none;
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(86, 81, 91, 0.1);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.support-page-tab:hover {
+  transform: translateY(-1px);
+}
+
+.support-page-tab.active {
+  background: linear-gradient(135deg, rgba(86, 81, 91, 0.92), rgba(106, 100, 112, 0.92));
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.support-page-tab strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.support-page-tab span {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.support-page-tab.active strong,
+.support-page-tab.active span {
+  color: var(--white);
+}
+
+.support-guide-content {
+  display: grid;
+  gap: 18px;
+}
+
+.support-guide-section {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.support-guide-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.support-guide-section h3 {
+  font-size: 20px;
+  color: var(--text);
+}
+
+.support-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  line-height: 1.75;
+}
+
+.support-list.numbered {
+  padding-left: 22px;
+}
+
+.support-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.support-field-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(249, 246, 242, 0.96), rgba(255, 255, 255, 0.88));
+  border: 1px solid rgba(86, 81, 91, 0.08);
+}
+
+.support-field-card strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.support-field-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.support-chat-card {
+  position: fixed;
+  right: 22px;
+  bottom: 86px;
+  z-index: 88;
+  width: min(460px, calc(100vw - 28px));
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(245, 240, 235, 0.98), rgba(239, 233, 227, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow-strong);
+  backdrop-filter: blur(18px);
+}
+
+.support-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 14px;
+}
+
+.support-chat-header h3 {
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.support-chat-header p {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.support-chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.support-chat-messages {
+  max-height: 420px;
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.support-chat-message {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+}
+
+.support-chat-message.assistant {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.support-chat-message.user {
+  background: rgba(198, 161, 97, 0.14);
+}
+
+.support-chat-message span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.support-chat-message p {
+  color: var(--text);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.support-prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.support-prompt-chip {
+  appearance: none;
+  border: 1px solid rgba(86, 81, 91, 0.12);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+}
+
+.support-chat-form {
+  display: grid;
+  gap: 12px;
+}
+
 /* ---------- Buttons ---------- */
 
 .button {
@@ -1855,6 +2138,11 @@ textarea.input,
     grid-template-columns: 1fr;
   }
 
+  .support-drawer-layout,
+  .support-field-grid {
+    grid-template-columns: 1fr;
+  }
+
   .workspace-side {
     position: static;
   }
@@ -1943,6 +2231,39 @@ textarea.input,
   .header-actions,
   .hero-actions,
   .saved-actions {
+    width: 100%;
+  }
+
+  .support-launcher {
+    right: 14px;
+    left: 14px;
+    bottom: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .support-chat-card {
+    right: 14px;
+    left: 14px;
+    bottom: 74px;
+    width: auto;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .support-drawer-shell {
+    padding: 18px;
+  }
+
+  .support-drawer-header,
+  .support-chat-header,
+  .support-guide-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .support-drawer-actions,
+  .support-chat-actions {
     width: 100%;
   }
 
