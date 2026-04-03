@@ -43,9 +43,9 @@ const helpPages: AppHelpPage[] = [
     title: 'Login',
     routeLabel: 'Sign in',
     summary:
-      'Use the login page to enter the workspace with your approved email and password. Once you are signed in, the app takes you into the consultancy operating system.',
+      'Use the login page to enter the app with your approved email and password. Once signed in, you can move into clients, audits, menus, and billing.',
     quickStart: [
-      'Enter the approved email address connected to your workspace.',
+      'Enter the approved email address connected to your account.',
       'Enter the password for that account and submit the form.',
       'If sign-in works, you are taken into the protected area and can start using clients, audits, and menu work.'
     ],
@@ -68,7 +68,7 @@ const helpPages: AppHelpPage[] = [
       },
       {
         title: 'After login',
-        purpose: 'The app remembers the active session so you can move around the workspace without signing in again.',
+        purpose: 'The app remembers the active session so you can move around the product without signing in again.',
         steps: [
           'Check the top bar to confirm the correct account email is showing.',
           'Start on the dashboard if you want a full overview, or jump straight into clients, audit, or menu work.'
@@ -90,7 +90,7 @@ const helpPages: AppHelpPage[] = [
     title: 'Dashboard',
     routeLabel: 'Overview',
     summary:
-      'The dashboard is the command centre for the whole app. It shows current clients, recent activity, follow-up pressure points, and the quickest route into the next useful piece of work.',
+      'The dashboard is the main overview for the app. It shows current clients, recent activity, follow-up pressure points, and the quickest route into the next useful piece of work.',
     quickStart: [
       'Check the top summary cards and operations board to see overall workload and health.',
       'Use recent activity and spotlight sections to jump straight into a client, audit, or menu project.',
@@ -105,7 +105,7 @@ const helpPages: AppHelpPage[] = [
       {
         title: 'Command centre and system health',
         purpose:
-          'These blocks tell you if the workspace is set up well or if there are gaps like unlinked work, inactive clients, or missing follow-up.'
+          'These blocks tell you if the app is set up well or if there are gaps like unlinked work, inactive clients, or missing follow-up.'
       },
       {
         title: 'Recent activity',
@@ -137,7 +137,7 @@ const helpPages: AppHelpPage[] = [
     title: 'Clients',
     routeLabel: 'Client CRM',
     summary:
-      'The clients page is the front desk of the CRM. Use it to create new accounts at the top, then filter, sort, review, export, and open the full client profile from the live portfolio list underneath.',
+      'The clients page is the main CRM list. Use it to create new accounts at the top, then filter, sort, review, export, and open the full client profile from the live portfolio list underneath.',
     quickStart: [
       'Create a new client at the top before starting linked audits or menu projects.',
       'Use portfolio controls to search, filter by status, and sort by urgency or value.',
@@ -198,7 +198,7 @@ const helpPages: AppHelpPage[] = [
       {
         title: 'Portfolio controls',
         purpose:
-          'Search and narrow the long client list so you can run the CRM like an actual operating system.',
+          'Search and narrow the long client list so you can manage the CRM quickly and consistently.',
         fields: [
           {
             label: 'Search',
@@ -234,9 +234,9 @@ const helpPages: AppHelpPage[] = [
   {
     key: 'client-profile',
     title: 'Client Profile',
-    routeLabel: 'Account workspace',
+    routeLabel: 'Account record',
     summary:
-      'The client profile is the full account workspace. Use it to manage relationship data, billing details, deals, contacts, tasks, timeline, invoices, and linked audits and menu projects.',
+      'The client profile is the full account record. Use it to manage relationship data, billing details, deals, contacts, tasks, timeline, invoices, and linked audits and menu projects.',
     quickStart: [
       'Complete the core profile and relationship sections first so the account is well-defined.',
       'Use CRM and billing controls to make invoicing and account management reliable.',
@@ -330,7 +330,7 @@ const helpPages: AppHelpPage[] = [
   {
     key: 'audit',
     title: 'Audit Tool',
-    routeLabel: 'Kitchen audit workspace',
+    routeLabel: 'Kitchen audit',
     summary:
       'The audit tool is built to reduce onsite workload. It helps you capture the visit quickly, score the kitchen, generate actions, draft narrative, and export the audit as a printable client-ready report.',
     quickStart: [
@@ -484,7 +484,7 @@ const helpPages: AppHelpPage[] = [
     title: 'Menu Builder',
     routeLabel: 'Menu engineering',
     summary:
-      'The menu builder is the commercial menu-engineering workspace. Use it to structure sections, cost dishes, add ingredients, review GP, and export a client-ready menu report.',
+      'The menu builder is the commercial menu-engineering page. Use it to structure sections, cost dishes, add ingredients, review GP, and export a client-ready menu report.',
     quickStart: [
       'Start with menu information and the default target GP.',
       'Build sections before adding dishes so the menu structure stays clean.',
@@ -589,7 +589,7 @@ const helpPages: AppHelpPage[] = [
     title: 'Settings',
     routeLabel: 'Account and preferences',
     summary:
-      'The settings page lets you personalise the workspace, update your visible account details, control theme and layout preferences, and decide how the app behaves on this device.',
+      'The settings page lets you personalise the app, update your visible account details, control theme and layout preferences, and decide how it behaves on this device.',
     quickStart: [
       'Set your display name and avatar first so the shell reflects your account properly.',
       'Choose the theme and layout options that feel best for how you work.',
@@ -599,7 +599,7 @@ const helpPages: AppHelpPage[] = [
       {
         title: 'Account profile',
         purpose:
-          'Use this section to control the visible account identity across the workspace.',
+          'Use this section to control the visible account identity across the app.',
         fields: [
           {
             label: 'Display name',
@@ -626,7 +626,7 @@ const helpPages: AppHelpPage[] = [
           {
             label: 'Theme selection',
             guidance:
-              'Choose the workspace palette you prefer, including dark mode. The app remembers this on the current device.'
+              'Choose the palette you prefer, including dark mode. The app remembers this on the current device.'
           },
           {
             label: 'Compact layout',
@@ -672,7 +672,7 @@ const helpPages: AppHelpPage[] = [
     ],
     tips: [
       'Theme and layout choices are remembered on this device, so different devices can feel different if you want them to.',
-      'Reset device preferences if you want to return to the default workspace feel without losing your account name or avatar.'
+      'Reset device preferences if you want to return to the default look and feel without losing your account name or avatar.'
     ],
     prompts: [
       'How do I change my profile name and picture?',
@@ -687,7 +687,7 @@ const helpPages: AppHelpPage[] = [
     summary:
       'If you land somewhere unexpected, use the guide to jump back into dashboard, clients, audit, or menu work.',
     quickStart: [
-      'Open the dashboard to get back to the main workspace.',
+      'Open the dashboard to get back to the main overview.',
       'Use clients if you need account setup or CRM work.',
       'Use audit or menu if you are resuming delivery work.'
     ],

@@ -7,8 +7,8 @@ export function NotFoundPage() {
         <div className="brand-badge">Route missing</div>
         <h2>Page not found</h2>
         <p>
-          The route you tried does not exist or is no longer part of the workspace. Use the
-          dashboard to get back into the main operating flow.
+          The route you tried does not exist or is no longer available. Use the dashboard to
+          get back to the main working view.
         </p>
         <div className="hero-actions">
           <Link className="button button-primary" to="/dashboard">

@@ -67,9 +67,8 @@ export function LoginPage() {
 
           <h1>The Final Check</h1>
           <p>
-            Sign in to access the live consultancy operating system for client portfolios,
-            kitchen audits, menu engineering, and follow-up execution. Access stays limited to
-            approved users only.
+            Sign in to access client records, audit reports, menu engineering, billing, and
+            follow-up work in one secure system. Access is limited to approved users.
           </p>
 
           <div className="auth-stat-grid">
@@ -86,19 +85,19 @@ export function LoginPage() {
             <div className="auth-stat-card">
               <span>Access</span>
               <strong>Approved only</strong>
-              <small>Sign-in is restricted to authorised Supabase users for this workspace.</small>
+              <small>Only approved account holders can access saved client and project data.</small>
             </div>
           </div>
 
           <div className="feature-list">
             <div className="feature-chip">Operational dashboard and client hub</div>
-            <div className="feature-chip">Kitchen audit reporting workspace</div>
+            <div className="feature-chip">Kitchen audit reports and action plans</div>
             <div className="feature-chip">Menu costing and GP review flow</div>
             <div className="feature-chip">Remember-me support on trusted devices</div>
           </div>
 
           <div className="auth-side-note">
-            <strong>Inside the workspace</strong>
+            <strong>Inside the app</strong>
             <p>
               Use the dashboard to spot priority work, then move straight into client setup,
               audits, menu reviews, and account follow-up without switching systems.
@@ -111,10 +110,10 @@ export function LoginPage() {
             <div>
               <h2>Sign in</h2>
               <p className="muted-copy">
-                Use the email and password for an approved Supabase user account.
+                Use the email and password for an approved account.
               </p>
             </div>
-            <div className="auth-card-badge">Secure workspace</div>
+            <div className="auth-card-badge">Secure access</div>
           </div>
 
           {!hasSupabaseEnv ? (

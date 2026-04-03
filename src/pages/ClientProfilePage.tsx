@@ -180,7 +180,7 @@ export function ClientProfilePage() {
   const [form, setForm] = useState<ClientProfile | null>(null);
   const [audits, setAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
   const [menus, setMenus] = useState<SupabaseRecord<MenuProjectState>[]>([]);
-  const [message, setMessage] = useState('Ready');
+  const [message, setMessage] = useState('Client loaded.');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -247,6 +247,19 @@ export function ClientProfilePage() {
         .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0) ?? 0,
     [form?.data.invoices]
   );
+  const invoiceSnapshot = useMemo(() => {
+    const invoices = form?.data.invoices ?? [];
+
+    return {
+      overdueCount: invoices.filter((invoice) => invoice.status === 'Overdue').length,
+      overdueValue: invoices
+        .filter((invoice) => invoice.status === 'Overdue')
+        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0),
+      paidValue: invoices
+        .filter((invoice) => invoice.status === 'Paid')
+        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0)
+    };
+  }, [form?.data.invoices]);
 
   if (!client || !form) {
     return (
@@ -953,7 +966,7 @@ function removeInvoice(invoiceId: string) {
             <div className="feature-top">
               <div>
                 <h3>Pipeline and CRM deals</h3>
-                <p>Track proposals, negotiations, renewals, and new opportunities from the same client workspace.</p>
+                <p>Track proposals, negotiations, renewals, and new opportunities from the same client record.</p>
               </div>
               {editing ? (
                 <button
@@ -1364,6 +1377,25 @@ function removeInvoice(invoiceId: string) {
             </div>
 
             <div className="stack gap-12">
+              <div className="mini-grid">
+                <div className="mini-box">
+                  <span>Outstanding</span>
+                  <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
+                </div>
+                <div className="mini-box">
+                  <span>Overdue</span>
+                  <strong>
+                    {invoiceSnapshot.overdueCount
+                      ? `${invoiceSnapshot.overdueCount} • ${fmtCurrency(invoiceSnapshot.overdueValue)}`
+                      : 'None'}
+                  </strong>
+                </div>
+                <div className="mini-box">
+                  <span>Paid to date</span>
+                  <strong>{fmtCurrency(invoiceSnapshot.paidValue)}</strong>
+                </div>
+              </div>
+
               {form.data.invoices.length === 0 ? (
                 <div className="dashboard-empty">No invoices drafted yet.</div>
               ) : null}

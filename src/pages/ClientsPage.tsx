@@ -89,7 +89,7 @@ export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<ClientProfile>(blankClient);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('CRM workspace ready.');
+  const [message, setMessage] = useState('Client list ready.');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('updated');
@@ -251,11 +251,10 @@ export function ClientsPage() {
         <div className="clients-hero-grid">
           <div className="clients-hero-copy">
             <div className="brand-badge">CRM and client portfolio</div>
-            <h2>Run the client side like a real consultancy operating system</h2>
+            <h2>Manage the full client book from one clear operational list</h2>
             <p>
-              This page now works as the front desk for relationship management: create
-              accounts at the top, then manage the full client list with pipeline, review,
-              billing, invoice, and delivery visibility underneath.
+              Create new accounts at the top, then use the live client list for reviews,
+              pipeline, billing exposure, and linked delivery work.
             </p>
 
             <div className="hero-actions">
@@ -263,7 +262,7 @@ export function ClientsPage() {
                 Add new client
               </a>
               <Link className="button button-secondary" to="/dashboard">
-                Open dashboard
+                Back to overview
               </Link>
             </div>
 
@@ -287,7 +286,7 @@ export function ClientsPage() {
           </div>
 
           <div className="clients-focus-card">
-            <span className="soft-pill">Real system behaviour</span>
+            <span className="soft-pill">Operational view</span>
             <h3>One place for client records, delivery history, billing, and follow-up</h3>
             <div className="clients-focus-list">
               <div className="clients-focus-item">

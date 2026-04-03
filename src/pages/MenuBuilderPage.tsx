@@ -66,6 +66,18 @@ function dishProfit(dish: MenuDish) {
   return num(dish.sellPrice) - dishUnitCost(dish);
 }
 
+function dishRecommendedPrice(dish: MenuDish) {
+  const unitCost = dishUnitCost(dish);
+  const targetGp = Math.min(Math.max(num(dish.targetGp), 1), 95);
+
+  if (unitCost <= 0) return 0;
+  return unitCost / (1 - targetGp / 100);
+}
+
+function dishPriceGap(dish: MenuDish) {
+  return dishRecommendedPrice(dish) - num(dish.sellPrice);
+}
+
 function gpClass(dish: MenuDish) {
   const theo = dishTheoGp(dish);
   const target = num(dish.targetGp);
@@ -115,6 +127,8 @@ function buildMenuReport(project: MenuProjectState) {
             <th>Profit</th>
             <th>Target GP</th>
             <th>Theo GP</th>
+            <th>Target sell</th>
+            <th>Price move</th>
             <th>Mix</th>
           </tr>
         </thead>
@@ -132,6 +146,8 @@ function buildMenuReport(project: MenuProjectState) {
               <td>${fmtCurrency(dishProfit(dish))}</td>
               <td>${fmtPercent(num(dish.targetGp))}</td>
               <td>${fmtPercent(dishTheoGp(dish))}</td>
+              <td>${fmtCurrency(dishRecommendedPrice(dish))}</td>
+              <td>${fmtCurrency(dishPriceGap(dish))}</td>
               <td>${num(dish.mix)}</td>
             </tr>
           `
@@ -303,7 +319,7 @@ function buildMenuInsights(
   if (!insights.length) {
     insights.push({
       tone: 'success',
-      title: 'Menu builder ready',
+      title: 'Menu file ready',
       detail: 'Start by creating sections, dishes, ingredients, and realistic sell prices.'
     });
   }
@@ -321,7 +337,8 @@ export function MenuBuilderPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [editingDishId, setEditingDishId] = useState<string | null>(null);
   const [dishDraft, setDishDraft] = useState<MenuDish | null>(null);
-  const [message, setMessage] = useState('Ready');
+  const [sectionNameDraft, setSectionNameDraft] = useState('Starters');
+  const [message, setMessage] = useState('Menu draft ready.');
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -329,6 +346,10 @@ export function MenuBuilderPage() {
     () => project.sections.find((section) => section.id === project.selectedSectionId) ?? null,
     [project]
   );
+
+  useEffect(() => {
+    setSectionNameDraft(selectedSection?.name ?? '');
+  }, [selectedSection?.id, selectedSection?.name]);
 
   const allDishes = useMemo(
     () => project.sections.flatMap((section) => section.dishes),
@@ -384,6 +405,14 @@ export function MenuBuilderPage() {
 
   const riskDishCount = useMemo(
     () => allDishes.filter((dish) => dishTheoGp(dish) < num(dish.targetGp) - 3).length,
+    [allDishes]
+  );
+  const pricingGapValue = useMemo(
+    () =>
+      allDishes.reduce((sum, dish) => {
+        const gap = dishPriceGap(dish);
+        return gap > 0 ? sum + gap * Math.max(num(dish.mix), 1) : sum;
+      }, 0),
     [allDishes]
   );
 
@@ -473,29 +502,30 @@ export function MenuBuilderPage() {
   }
 
   function addSection() {
-    const name = window.prompt('Section name', 'New section');
-    if (!name) return;
+    const nextName = safe(sectionNameDraft) || `Section ${project.sections.length + 1}`;
 
     const id = uid('section');
     setProject((current) => ({
       ...current,
       selectedSectionId: id,
-      sections: [...current.sections, { id, name: safe(name), dishes: [] }]
+      sections: [...current.sections, { id, name: nextName, dishes: [] }]
     }));
+    setSectionNameDraft('');
+    setMessage(`Section "${nextName}" added.`);
   }
 
   function renameSection() {
     if (!selectedSection) return;
-
-    const nextName = window.prompt('Rename section', selectedSection.name);
+    const nextName = safe(sectionNameDraft);
     if (!nextName) return;
 
     setProject((current) => ({
       ...current,
       sections: current.sections.map((section) =>
-        section.id === selectedSection.id ? { ...section, name: safe(nextName) } : section
+        section.id === selectedSection.id ? { ...section, name: nextName } : section
       )
     }));
+    setMessage(`Section renamed to "${nextName}".`);
   }
 
   function deleteSection() {
@@ -622,7 +652,7 @@ export function MenuBuilderPage() {
     }));
 
     closeDishEditor();
-    setMessage('Dish saved in the workspace.');
+    setMessage('Dish updated.');
   }
 
   function deleteDish(dishId: string) {
@@ -670,7 +700,7 @@ export function MenuBuilderPage() {
         createdAt: saved.created_at,
         updatedAt: saved.updated_at
       });
-      setMessage('Menu project saved to Supabase.');
+      setMessage('Menu saved.');
       await refreshProjects();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not save project.');
@@ -682,7 +712,7 @@ export function MenuBuilderPage() {
   function newProject() {
     const activeClientId = queryClientId || null;
     setProject(createDefaultMenu(activeClientId));
-    setMessage('Started a new menu project.');
+    setMessage('New menu started.');
   }
 
   function exportJson() {
@@ -752,12 +782,11 @@ export function MenuBuilderPage() {
       <section className="page-heading menu-hero">
         <div className="menu-hero-grid">
           <div className="menu-hero-copy">
-            <div className="brand-badge">Menu Builder</div>
-            <h2>Advanced menu engineering workstation</h2>
+            <div className="brand-badge">Menu engineering</div>
+            <h2>Build, price, and refine menus with live commercial control</h2>
             <p>
-              Build dishes from ingredients, monitor commercial performance section by
-              section, and use the workspace like a proper pricing and margin control
-              system.
+              Cost dishes from ingredients, monitor section performance, and use target
+              sell guidance to tighten pricing before the menu goes live.
             </p>
 
             <div className="hero-actions">
@@ -769,7 +798,7 @@ export function MenuBuilderPage() {
                 disabled={saving}
                 onClick={handleSaveProject}
               >
-                {saving ? 'Saving...' : 'Save to Supabase'}
+                {saving ? 'Saving...' : 'Save menu'}
               </button>
               <button className="button button-secondary" onClick={exportPdf}>
                 Export PDF
@@ -817,6 +846,10 @@ export function MenuBuilderPage() {
                 <span>Profit</span>
                 <strong>{fmtCurrency(totalProfit)}</strong>
               </div>
+              <div className="menu-summary-item">
+                <span>Price gap</span>
+                <strong>{fmtCurrency(pricingGapValue)}</strong>
+              </div>
             </div>
 
             <div className="menu-progress-block">
@@ -862,7 +895,7 @@ export function MenuBuilderPage() {
           <div className="panel">
             <div className="panel-header">
               <div>
-                <h3>Menu workspace</h3>
+                <h3>Menu build</h3>
                 <p className="muted-copy">
                   Control structure, costing, pricing, and mix from one central view.
                 </p>
@@ -1017,6 +1050,18 @@ export function MenuBuilderPage() {
                   </div>
                 </div>
 
+                <div className="form-grid two-columns">
+                  <label className="field">
+                    <span>Section name</span>
+                    <input
+                      className="input"
+                      placeholder="For example: Starters, Grill, Desserts"
+                      value={sectionNameDraft}
+                      onChange={(event) => setSectionNameDraft(event.target.value)}
+                    />
+                  </label>
+                </div>
+
                 <div className="section-list">
                   {project.sections.map((section) => {
                     const count = section.dishes.length;
@@ -1049,7 +1094,7 @@ export function MenuBuilderPage() {
 
               <section className="sub-panel">
                 <div className="sub-panel-header">
-                  <h4>Selected section workspace</h4>
+                  <h4>Selected section</h4>
                   <button
                     className="button button-primary"
                     disabled={!selectedSection}
@@ -1092,6 +1137,8 @@ export function MenuBuilderPage() {
                           <th>Profit</th>
                           <th>Target GP</th>
                           <th>Theo GP</th>
+                          <th>Target sell</th>
+                          <th>Move</th>
                           <th>Mix</th>
                           <th>Actions</th>
                         </tr>
@@ -1099,7 +1146,7 @@ export function MenuBuilderPage() {
                       <tbody>
                         {!selectedSection.dishes.length ? (
                           <tr>
-                            <td colSpan={9} className="empty-cell">
+                            <td colSpan={11} className="empty-cell">
                               No dishes in this section yet.
                             </td>
                           </tr>
@@ -1148,6 +1195,19 @@ export function MenuBuilderPage() {
                               <td>
                                 <span className={gpClass(dish)}>
                                   {fmtPercent(dishTheoGp(dish))}
+                                </span>
+                              </td>
+                              <td>{fmtCurrency(dishRecommendedPrice(dish))}</td>
+                              <td>
+                                <span
+                                  className={
+                                    dishPriceGap(dish) > 0
+                                      ? 'status-pill status-warning'
+                                      : 'status-pill status-success'
+                                  }
+                                >
+                                  {dishPriceGap(dish) > 0 ? '+' : ''}
+                                  {fmtCurrency(dishPriceGap(dish))}
                                 </span>
                               </td>
                               <td>
@@ -1222,7 +1282,7 @@ export function MenuBuilderPage() {
 
               <section className="menu-side-block">
                 <div className="menu-side-title-row">
-                  <h4>Automatic insights</h4>
+                  <h4>System checks</h4>
                   <span className="soft-pill">{insights.length}</span>
                 </div>
 
@@ -1334,7 +1394,8 @@ export function MenuBuilderPage() {
               <div>
                 <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
                 <p className="muted-copy">
-                  Build each dish from ingredients, sell price, target GP, and mix.
+                  Build each dish from ingredients, sell price, target GP, and mix. Use the
+                  target sell column to spot where pricing still needs work.
                 </p>
               </div>
               <button className="button button-ghost" onClick={closeDishEditor}>
@@ -1394,6 +1455,14 @@ export function MenuBuilderPage() {
                 <StatCard label="Unit cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
                 <StatCard label="Theo GP" value={fmtPercent(dishTheoGp(dishDraft))} />
                 <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
+                <StatCard
+                  label="Target sell"
+                  value={fmtCurrency(dishRecommendedPrice(dishDraft))}
+                />
+                <StatCard
+                  label="Price move"
+                  value={`${dishPriceGap(dishDraft) > 0 ? '+' : ''}${fmtCurrency(dishPriceGap(dishDraft))}`}
+                />
               </div>
 
               <section className="sub-panel">

@@ -14,52 +14,52 @@ const routeMeta = [
   {
     match: (pathname: string) => pathname === '/dashboard',
     eyebrow: 'Overview',
-    title: 'Portfolio command centre',
-    description: 'Track the full consultancy system, recent activity, and the next actions that matter.',
-    focus: 'Review movement across clients, active delivery, and priority work that needs attention.'
+    title: 'Portfolio overview',
+    description: 'Track the live client book, current delivery work, and the items that need action next.',
+    focus: 'Review active accounts, recent updates, and the next priority task.'
   },
   {
     match: (pathname: string) => pathname === '/clients',
     eyebrow: 'Clients',
-    title: 'Client portfolio and setup',
-    description: 'Create, review, and organise the businesses that sit behind every audit and menu engagement.',
-    focus: 'Keep the list clean, searchable, and ready for delivery, billing, and follow-up.'
+    title: 'Client list and account setup',
+    description: 'Create, review, and organise the businesses behind every audit, menu review, and invoice.',
+    focus: 'Keep the client list clean, searchable, and ready for delivery, billing, and follow-up.'
   },
   {
     match: (pathname: string) => pathname.startsWith('/clients/'),
     eyebrow: 'Client profile',
     title: 'Relationship, workstreams, and follow-up',
     description: 'Keep the account view, supporting context, and linked delivery work in one place.',
-    focus: 'Use the profile as the single source of truth for the account, actions, and commercial history.'
+    focus: 'Use this profile as the single source of truth for the account, actions, and commercial history.'
   },
   {
     match: (pathname: string) => pathname === '/audit',
     eyebrow: 'Audit',
-    title: 'Kitchen performance audit workspace',
-    description: 'Capture operational findings, commercial pressure points, and the final action plan.',
-    focus: 'Move from evidence capture to a report that is detailed, commercial, and quick to present.'
+    title: 'Kitchen performance audit',
+    description: 'Capture operational findings, commercial pressure points, and a clear action plan.',
+    focus: 'Move from evidence capture to a report that is detailed, practical, and ready to present.'
   },
   {
     match: (pathname: string) => pathname === '/menu',
     eyebrow: 'Menu builder',
     title: 'Menu engineering and commercial review',
     description: 'Work through dish costing, pricing, GP, and mix with a stronger operating view.',
-    focus: 'Turn pricing, mix, and margin analysis into a usable menu action plan.'
+    focus: 'Turn pricing, mix, and margin analysis into a menu plan the client can act on.'
   },
   {
     match: (pathname: string) => pathname === '/settings',
     eyebrow: 'Settings',
     title: 'Account, themes, and device preferences',
     description:
-      'Personalise the workspace, control startup behaviour, and manage how the app feels on this device.',
-    focus: 'Set up the workspace so the app opens the right way and feels consistent every time you use it.'
+      'Personalise the app, control startup behaviour, and manage how it feels on this device.',
+    focus: 'Set up the app so it opens the right way and feels consistent every time you use it.'
   }
 ];
 
 const shellQuickLinks = [
-  { to: '/dashboard', label: 'Overview', caption: 'See your live command centre' },
+  { to: '/dashboard', label: 'Overview', caption: 'See the live portfolio summary' },
   { to: '/clients', label: 'Open clients', caption: 'Jump into the CRM list' },
-  { to: '/audit', label: 'New audit', caption: 'Start a fresh audit workspace' },
+  { to: '/audit', label: 'New audit', caption: 'Start a fresh audit record' },
   { to: '/menu', label: 'New menu review', caption: 'Open menu engineering' }
 ];
 
@@ -121,7 +121,7 @@ export function AppShell() {
                 />
               </span>
               <div className="brand-copy">
-                <small className="brand-kicker">Consultancy OS</small>
+                <small className="brand-kicker">Consultancy platform</small>
                 <strong>The Final Check</strong>
                 <span className="brand-subtitle">Profit and Performance Consultancy</span>
               </div>

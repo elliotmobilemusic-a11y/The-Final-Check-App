@@ -505,6 +505,7 @@ body.reduced-motion *::after {
 
 .shell-nav-menu {
   position: relative;
+  z-index: 4;
 }
 
 .shell-nav-menu[open] .shell-nav-trigger-icon {
@@ -562,9 +563,12 @@ body.reduced-motion *::after {
   width: min(360px, calc(100vw - 32px));
   padding: 16px;
   border-radius: 24px;
-  background: var(--surface-card-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 244, 240, 0.98));
   border: 1px solid var(--shell-line);
-  box-shadow: var(--shadow-strong);
+  box-shadow:
+    0 28px 50px rgba(36, 31, 38, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: none;
 }
 
 .shell-panel-heading {
@@ -2269,6 +2273,10 @@ body[data-theme="midnight"] .shell-nav-trigger,
 body[data-theme="midnight"] .shell-shortcut-link,
 body[data-theme="midnight"] .shell-pagebar-focus {
   background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="midnight"] .shell-nav-dropdown {
+  background: linear-gradient(180deg, rgba(24, 31, 42, 0.98), rgba(18, 24, 33, 0.98));
 }
 
 body[data-theme="midnight"] .shell-nav-link {

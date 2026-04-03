@@ -151,7 +151,7 @@ export function SettingsPage() {
             <p>
               This is where you shape how the app feels day to day: update your display
               name and profile image, pick a theme, control what the app remembers on this
-              device, and set the way you want the workspace to open.
+              device, and set the page you want to open first.
             </p>
 
             <div className="hero-actions">
@@ -239,9 +239,9 @@ export function SettingsPage() {
           <form className="panel" id="settings-form" onSubmit={handleSave}>
             <div className="panel-header">
               <div>
-                <h3>Account and workspace settings</h3>
+                <h3>Account and app settings</h3>
                 <p className="muted-copy">
-                  Keep your visible account details and everyday workspace preferences in one place.
+                  Keep your visible account details and everyday app preferences in one place.
                 </p>
               </div>
               <div className="soft-pill">{message}</div>
@@ -428,7 +428,7 @@ export function SettingsPage() {
             <div className="panel-body stack gap-12">
               <div className="settings-note-card">
                 <strong>Display name and avatar</strong>
-                <p>These personalise the shell and make the workspace feel like your own account.</p>
+                <p>These personalise the shell and make the app feel like your own account.</p>
               </div>
               <div className="settings-note-card">
                 <strong>Theme selection</strong>

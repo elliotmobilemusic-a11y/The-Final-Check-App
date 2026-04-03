@@ -100,7 +100,7 @@ export function DashboardPage() {
   const [audits, setAudits] = useState<AuditRows>([]);
   const [menus, setMenus] = useState<MenuRows>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('Workspace synced.');
+  const [message, setMessage] = useState('Portfolio loaded.');
 
   useEffect(() => {
     async function load() {
@@ -114,7 +114,7 @@ export function DashboardPage() {
         setClients(sortNewest(clientRows));
         setAudits(sortNewest(auditRows));
         setMenus(sortNewest(menuRows));
-        setMessage('All systems synced.');
+        setMessage('Data up to date.');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'Could not load dashboard data.');
       } finally {
@@ -206,7 +206,7 @@ export function DashboardPage() {
       label: 'Audit',
       title: audit.title || 'Kitchen audit',
       detail: `${
-        clientNameById.get(audit.client_id ?? '') ?? audit.site_name ?? 'Unlinked workspace'
+        clientNameById.get(audit.client_id ?? '') ?? audit.site_name ?? 'Unlinked audit'
       } • ${formatShortDate(audit.review_date || audit.updated_at)}`,
       href: `/audit?load=${audit.id}`,
       action: 'Open audit',
@@ -218,7 +218,7 @@ export function DashboardPage() {
       label: 'Menu',
       title: menu.title || 'Menu project',
       detail: `${
-        clientNameById.get(menu.client_id ?? '') ?? menu.site_name ?? 'Unlinked workspace'
+        clientNameById.get(menu.client_id ?? '') ?? menu.site_name ?? 'Unlinked menu review'
       } • ${formatShortDate(menu.review_date || menu.updated_at)}`,
       href: `/menu?load=${menu.id}`,
       action: 'Open menu',
@@ -257,7 +257,7 @@ export function DashboardPage() {
       return {
         label: 'Setup',
         tone: 'warning' as const,
-        detail: 'Create your first client and start building the workspace.'
+        detail: 'Create your first client and start building the portfolio.'
       };
     }
 
@@ -294,7 +294,7 @@ export function DashboardPage() {
     () => [
       {
         id: 'client',
-        kicker: 'Client workspace',
+        kicker: 'Client records',
         title: 'Add or refine a client profile',
         detail: 'Keep all audits, menu reviews, contacts, and follow-up actions anchored to the right business.',
         href: spotlightClients[0] ? `/clients/${spotlightClients[0].client.id}` : '/clients',
@@ -349,7 +349,7 @@ export function DashboardPage() {
         detail:
           clients.length > 0
             ? `${pluralize(activeClients.length, 'active client')} live in the system.`
-            : 'The workspace still needs its first client record.',
+            : 'The system still needs its first client record.',
         label: clients.length > 0 ? 'Live' : 'Needs setup',
         tone: clients.length > 0 ? 'success' : 'warning'
       },
@@ -369,7 +369,7 @@ export function DashboardPage() {
         detail:
           menus.length > 0
             ? `${pluralize(menus.length, 'menu project')} available for review.`
-            : 'No menu workspaces have been saved yet.',
+            : 'No menu reviews have been saved yet.',
         label: menus.length > 0 ? 'Running' : 'Empty',
         tone: menus.length > 0 ? 'success' : 'warning'
       },
@@ -459,16 +459,15 @@ export function DashboardPage() {
       <section className="hero-panel dashboard-hero">
         <div className="dashboard-hero-grid">
           <div className="dashboard-hero-copy">
-            <div className="brand-badge">Consultancy Operating System</div>
-            <h2>A proper command centre for clients, audits, menu work, and follow-up execution</h2>
+            <div className="brand-badge">Portfolio overview</div>
+            <h2>Track clients, live work, and the next actions that matter</h2>
             <p>
-              The dashboard should feel like the front desk of the whole product: live portfolio
-              visibility, direct access to active work, and a clear signal on what needs attention
-              next.
+              Use the dashboard to review current activity, check account pressure points, and
+              move straight into the client, audit, or menu work that needs attention next.
             </p>
 
             <div className="dashboard-inline-note">
-              {loading ? 'Syncing workspace...' : message}
+              {loading ? 'Loading latest data...' : message}
             </div>
 
             <div className="hero-actions">
@@ -487,7 +486,7 @@ export function DashboardPage() {
               <div className="dashboard-hero-chip">
                 <span>Portfolio</span>
                 <strong>{pluralize(clients.length, 'client')}</strong>
-                <small>{pluralize(totalSites, 'site')} across the active workspace</small>
+                <small>{pluralize(totalSites, 'site')} across the active client book</small>
               </div>
               <div className="dashboard-hero-chip">
                 <span>Coverage</span>
@@ -498,7 +497,7 @@ export function DashboardPage() {
                 <span>Follow-up</span>
                 <strong>{pluralize(openTaskCount, 'open task')}</strong>
                 <small>
-                  {pluralize(dueSoonReviews.length + overdueReviews.length, 'review')} in the queue
+                  {pluralize(dueSoonReviews.length + overdueReviews.length, 'review')} due soon or overdue
                 </small>
               </div>
             </div>
@@ -529,7 +528,7 @@ export function DashboardPage() {
               <div className="dashboard-live-item">
                 <span>Total projects</span>
                 <strong>{totalProjects}</strong>
-                <small>Audits and menu workspaces combined</small>
+                <small>Audits and menu reviews combined</small>
               </div>
               <div className="dashboard-live-item">
                 <span>Full coverage</span>
@@ -549,7 +548,7 @@ export function DashboardPage() {
                 <strong>
                   {clientsWithoutWorkstreams.length > 0
                     ? `${pluralize(clientsWithoutWorkstreams.length, 'client')} still needs first linked workstream.`
-                    : 'Every current client has at least one linked workspace.'}
+                    : 'Every current client has at least one linked project.'}
                 </strong>
               </div>
               <Link className="button button-secondary" to="/clients">
@@ -648,7 +647,7 @@ export function DashboardPage() {
           <div className="feature-top">
             <div>
               <h3>Recent activity</h3>
-              <p>The latest client, audit, and menu changes across the whole workspace.</p>
+              <p>The latest client, audit, and menu changes across the app.</p>
             </div>
             <span className="soft-pill">Live feed</span>
           </div>
@@ -740,7 +739,7 @@ export function DashboardPage() {
           <div className="dashboard-queue-list">
             {queueItems.length === 0 ? (
               <div className="dashboard-empty">
-                The queue is clear. New review prompts will appear here automatically.
+                The queue is clear. New follow-up items will appear here as work builds up.
               </div>
             ) : null}
 

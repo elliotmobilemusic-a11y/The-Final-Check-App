@@ -35,9 +35,32 @@ function normalizeInvoiceLines(value: ClientInvoiceLine[] | undefined) {
   return value ?? [];
 }
 
+function isPastDue(value?: string) {
+  if (!value) return false;
+
+  const dueDate = new Date(value);
+  if (Number.isNaN(dueDate.getTime())) return false;
+
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startDue = new Date(
+    dueDate.getFullYear(),
+    dueDate.getMonth(),
+    dueDate.getDate()
+  ).getTime();
+
+  return startDue < startToday;
+}
+
 function normalizeInvoices(value: ClientInvoice[] | undefined): ClientInvoice[] {
   return (value ?? []).map((invoice) => ({
     ...invoice,
+    status:
+      invoice.status !== 'Paid' &&
+      invoice.status !== 'Cancelled' &&
+      isPastDue(invoice.dueDate)
+        ? 'Overdue'
+        : invoice.status,
     lines: normalizeInvoiceLines(invoice.lines)
   }));
 }

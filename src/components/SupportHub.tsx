@@ -5,7 +5,6 @@ import {
   createAssistantWelcome,
   getAllHelpPages,
   getHelpPage,
-  getSuggestedPrompts,
   type AppHelpPage
 } from '../lib/appHelp';
 
@@ -52,7 +51,7 @@ function GuideDrawer({
 
             <div className="support-drawer-actions">
               <button className="button button-secondary" onClick={onOpenAssistant}>
-                Ask AI assistant
+                Ask a question
               </button>
               <button className="button button-ghost" onClick={onClose}>
                 Close
@@ -140,11 +139,9 @@ function AssistantPanel({
   pathname,
   messages,
   input,
-  prompts,
   onClose,
   onInputChange,
   onSubmit,
-  onQuickPrompt,
   onReset,
   onOpenGuide
 }: {
@@ -152,11 +149,9 @@ function AssistantPanel({
   pathname: string;
   messages: ChatMessage[];
   input: string;
-  prompts: string[];
   onClose: () => void;
   onInputChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onQuickPrompt: (prompt: string) => void;
   onReset: () => void;
   onOpenGuide: () => void;
 }) {
@@ -168,9 +163,9 @@ function AssistantPanel({
     <div className="support-chat-card">
       <div className="support-chat-header">
         <div>
-          <div className="brand-badge">AI assistant</div>
-          <h3>App guide assistant</h3>
-          <p>{page.title} context loaded</p>
+          <div className="brand-badge">Guided help</div>
+          <h3>Workflow guide</h3>
+          <p>{page.title} guidance loaded</p>
         </div>
 
         <div className="support-chat-actions">
@@ -192,38 +187,25 @@ function AssistantPanel({
             className={`support-chat-message ${message.role === 'assistant' ? 'assistant' : 'user'}`}
             key={message.id}
           >
-            <span>{message.role === 'assistant' ? 'Assistant' : 'You'}</span>
+            <span>{message.role === 'assistant' ? 'Guide' : 'You'}</span>
             <p>{message.content}</p>
           </article>
         ))}
       </div>
 
-      <div className="support-prompt-row">
-        {prompts.map((prompt) => (
-          <button
-            className="support-prompt-chip"
-            key={prompt}
-            onClick={() => onQuickPrompt(prompt)}
-            type="button"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
-
       <form className="support-chat-form" onSubmit={onSubmit}>
         <label className="field">
-          <span>Ask about this app</span>
+          <span>Ask about this page</span>
           <textarea
             className="input textarea"
-            placeholder="Ask how to use a page, what a field means, or the best workflow."
+            placeholder="Ask how to use a section, what a field means, or what order to work in."
             rows={4}
             value={input}
             onChange={(event) => onInputChange(event.target.value)}
           />
         </label>
         <button className="button button-primary" type="submit">
-          Ask assistant
+          Get guidance
         </button>
       </form>
     </div>
@@ -254,7 +236,6 @@ export function SupportHub() {
     () => pages.find((page) => page.key === selectedPageKey) ?? currentPage,
     [currentPage, pages, selectedPageKey]
   );
-  const prompts = useMemo(() => getSuggestedPrompts(location.pathname), [location.pathname]);
 
   function resetChat() {
     setMessages([
@@ -300,7 +281,7 @@ export function SupportHub() {
           Help me
         </button>
         <button className="button button-primary" onClick={() => setAssistantOpen(true)} type="button">
-          Ask AI
+          Ask guide
         </button>
       </div>
 
@@ -321,11 +302,9 @@ export function SupportHub() {
         pathname={location.pathname}
         messages={messages}
         input={input}
-        prompts={prompts}
         onClose={() => setAssistantOpen(false)}
         onInputChange={setInput}
         onSubmit={handleSubmit}
-        onQuickPrompt={askQuestion}
         onReset={resetChat}
         onOpenGuide={() => {
           setAssistantOpen(false);

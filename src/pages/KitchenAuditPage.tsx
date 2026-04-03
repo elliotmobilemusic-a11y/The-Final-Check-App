@@ -1018,7 +1018,7 @@ function buildAuditInsights(
   if (!insights.length) {
     insights.push({
       tone: 'success',
-      title: 'Audit workspace is ready',
+      title: 'Audit record ready',
       detail: 'Start entering commercial and operational findings to build the final report.'
     });
   }
@@ -1085,7 +1085,7 @@ export function KitchenAuditPage() {
   const [savedAudits, setSavedAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState('Ready');
+  const [message, setMessage] = useState('Audit draft ready.');
   const [loadingSaved, setLoadingSaved] = useState(true);
 
   const calc = useMemo(() => calculateAudit(form), [form]);
@@ -1259,7 +1259,7 @@ export function KitchenAuditPage() {
         createdAt: saved.created_at,
         updatedAt: saved.updated_at
       });
-      setMessage('Audit saved to Supabase.');
+      setMessage('Audit saved.');
       await refreshAudits();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Save failed.');
@@ -1381,11 +1381,10 @@ export function KitchenAuditPage() {
         <div className="audit-hero-grid">
           <div className="audit-hero-copy">
             <div className="brand-badge">Kitchen Profit Audit</div>
-            <h2>Advanced audit workstation</h2>
+            <h2>Build a faster, clearer kitchen audit from evidence to action plan</h2>
             <p>
-              This page is now designed to feel like a real consultancy operating system:
-              capture findings fast, surface the main risks automatically, and build a
-              client-ready report as you work.
+              Capture findings quickly, surface the main operational risks, and build a
+              client-ready report while you work through the site visit.
             </p>
 
             <div className="hero-actions">
@@ -1393,7 +1392,7 @@ export function KitchenAuditPage() {
                 New audit
               </button>
               <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
-                {isSaving ? 'Saving...' : 'Save to Supabase'}
+                {isSaving ? 'Saving...' : 'Save audit'}
               </button>
               <button className="button button-secondary" onClick={exportPdf}>
                 Export PDF
@@ -1528,7 +1527,7 @@ export function KitchenAuditPage() {
           <div className="panel">
             <div className="panel-header">
               <div>
-                <h3>Audit input workspace</h3>
+                <h3>Audit input</h3>
                 <p className="muted-copy">
                   Work section by section and keep the most important parts of the visit structured.
                 </p>
@@ -2429,7 +2428,7 @@ export function KitchenAuditPage() {
 
               <section className="audit-side-block">
                 <div className="audit-side-title-row">
-                  <h4>Automatic insights</h4>
+                  <h4>System checks</h4>
                   <span className="soft-pill">{insights.length}</span>
                 </div>
 
@@ -2508,7 +2507,7 @@ export function KitchenAuditPage() {
                 <p className="muted-copy">
                   {form.clientId
                     ? 'Saved audits for the selected client.'
-                    : 'Stored per logged-in user in Supabase.'}
+                    : 'Stored under your signed-in account.'}
                 </p>
               </div>
             </div>
