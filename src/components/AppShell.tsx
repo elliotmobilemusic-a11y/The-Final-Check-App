@@ -7,8 +7,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', caption: 'Command centre' },
   { to: '/clients', label: 'Clients', caption: 'CRM and accounts' },
   { to: '/audit', label: 'Audit Tool', caption: 'Site reviews' },
-  { to: '/menu', label: 'Menu Builder', caption: 'Commercial menus' },
-  { to: '/settings', label: 'Settings', caption: 'Account and themes' }
+  { to: '/menu', label: 'Menu Builder', caption: 'Commercial menus' }
 ];
 
 const routeMeta = [
@@ -58,10 +57,10 @@ const routeMeta = [
 ];
 
 const shellQuickLinks = [
+  { to: '/dashboard', label: 'Overview', caption: 'See your live command centre' },
   { to: '/clients', label: 'Open clients', caption: 'Jump into the CRM list' },
   { to: '/audit', label: 'New audit', caption: 'Start a fresh audit workspace' },
-  { to: '/menu', label: 'New menu review', caption: 'Open menu engineering' },
-  { to: '/settings', label: 'Settings', caption: 'Adjust themes and device options' }
+  { to: '/menu', label: 'New menu review', caption: 'Open menu engineering' }
 ];
 
 function deriveDisplayName(email?: string | null) {
@@ -111,8 +110,8 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <div className="app-shell-frame">
-        <aside className="shell-sidebar">
-          <div className="shell-sidebar-top">
+        <header className="shell-topbar">
+          <div className="shell-toolbar">
             <NavLink className="brand-link" to="/dashboard">
               <span className="brand-mark">
                 <img
@@ -128,98 +127,103 @@ export function AppShell() {
               </div>
             </NavLink>
 
-            <div className="shell-sidebar-intro">
-              <span className="shell-section-label">Operating system</span>
-              <p>
-                A cleaner workspace for running clients, audits, menus, billing, and
-                account setup without the interface fighting for attention.
-              </p>
-            </div>
-          </div>
-
-          <div className="shell-sidebar-panel">
-            <div className="shell-panel-heading">
-              <span className="shell-section-label">Navigation</span>
-              <strong>{activeNav.label}</strong>
-            </div>
-
-            <nav className="shell-nav">
-              {navItems.map((item, index) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to !== '/clients'}
-                  className={({ isActive }) => `shell-nav-link ${isActive ? 'active' : ''}`}
-                >
-                  <span className="shell-nav-index">{String(index + 1).padStart(2, '0')}</span>
-                  <span className="shell-nav-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.caption}</small>
+            <div className="shell-toolbar-actions">
+              <details className="shell-nav-menu">
+                <summary className="shell-nav-trigger">
+                  <span className="shell-nav-trigger-copy">
+                    <small>Navigate</small>
+                    <strong>
+                      {location.pathname === '/settings' ? 'Settings' : activeNav.label}
+                    </strong>
                   </span>
-                </NavLink>
-              ))}
-            </nav>
-          </div>
+                  <span className="shell-nav-trigger-icon" aria-hidden="true">
+                    ▾
+                  </span>
+                </summary>
 
-          <div className="shell-sidebar-panel shell-sidebar-panel-muted">
-            <div className="shell-panel-heading">
-              <span className="shell-section-label">Quick actions</span>
-              <strong>Most-used moves</strong>
-            </div>
+                <div className="shell-nav-dropdown">
+                  <div className="shell-panel-heading">
+                    <span className="shell-section-label">Navigation</span>
+                    <strong>Move around the app</strong>
+                  </div>
 
-            <div className="shell-quick-grid">
-              {shellQuickLinks.map((item) => (
-                <Link className="shell-quick-link" key={item.to} to={item.to}>
-                  <strong>{item.label}</strong>
-                  <small>{item.caption}</small>
-                </Link>
-              ))}
-            </div>
-          </div>
+                  <nav className="shell-nav-list">
+                    {navItems.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.to !== '/clients'}
+                        className={({ isActive }) => `shell-nav-link ${isActive ? 'active' : ''}`}
+                      >
+                        <span className="shell-nav-copy">
+                          <strong>{item.label}</strong>
+                          <small>{item.caption}</small>
+                        </span>
+                      </NavLink>
+                    ))}
+                  </nav>
+                </div>
+              </details>
 
-          <div className="shell-sidebar-footer">
-            <div className="user-chip shell-user-card">
-              {avatarUrl ? (
-                <img
-                  alt={`${displayName} avatar`}
-                  className="user-chip-avatar"
-                  src={avatarUrl}
-                />
-              ) : (
-                <span className="user-chip-avatar user-chip-avatar-fallback">
-                  {getInitials(displayName)}
+              <div className="shell-shortcuts">
+                {shellQuickLinks.map((item) => (
+                  <Link className="shell-shortcut-link" key={item.to} to={item.to}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+
+              <Link className="user-chip shell-profile-link" to="/settings">
+                {avatarUrl ? (
+                  <img
+                    alt={`${displayName} avatar`}
+                    className="user-chip-avatar"
+                    src={avatarUrl}
+                  />
+                ) : (
+                  <span className="user-chip-avatar user-chip-avatar-fallback">
+                    {getInitials(displayName)}
+                  </span>
+                )}
+                <span className="user-chip-copy">
+                  <strong>{displayName}</strong>
+                  <small>Profile and settings</small>
                 </span>
-              )}
-              <span className="user-chip-copy">
-                <strong>{displayName}</strong>
-                <small>{session?.user.email ?? 'Approved user'}</small>
-              </span>
-            </div>
-            <button className="button button-secondary shell-signout" onClick={handleSignOut}>
-              Sign out
-            </button>
-          </div>
-        </aside>
+              </Link>
 
-        <div className="shell-main">
-          <header className="shell-header">
-            <div className="shell-header-copy">
+              <button className="button button-secondary shell-signout" onClick={handleSignOut}>
+                Sign out
+              </button>
+            </div>
+          </div>
+
+          <div className="shell-pagebar">
+            <div className="shell-pagebar-copy">
               <span className="shell-section-label">{meta.eyebrow}</span>
               <h1>{meta.title}</h1>
               <p>{meta.description}</p>
             </div>
 
-            <div className="shell-header-card">
-              <span>Current focus</span>
-              <strong>{meta.focus}</strong>
-              <small>{activeNav.label} workspace</small>
-            </div>
-          </header>
+            <div className="shell-pagebar-side">
+              <div className="shell-pagebar-focus">
+                <span>Current focus</span>
+                <strong>{meta.focus}</strong>
+              </div>
 
-          <main className="app-content">
-            <Outlet />
-          </main>
-        </div>
+              <div className="shell-pagebar-links">
+                {shellQuickLinks.map((item) => (
+                  <Link className="button button-ghost" key={item.to} to={item.to}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="app-content">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
