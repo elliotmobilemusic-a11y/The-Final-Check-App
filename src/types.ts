@@ -150,6 +150,34 @@ export type ClientTask = {
   status: 'Open' | 'In Progress' | 'Done';
 };
 
+export type ClientDeal = {
+  id: string;
+  title: string;
+  stage: 'Lead' | 'Qualified' | 'Proposal' | 'Negotiation' | 'Won' | 'Lost';
+  value: number;
+  closeDate: string;
+  owner: string;
+  notes: string;
+};
+
+export type ClientInvoiceLine = {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export type ClientInvoice = {
+  id: string;
+  number: string;
+  title: string;
+  issueDate: string;
+  dueDate: string;
+  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+  notes: string;
+  lines: ClientInvoiceLine[];
+};
+
 export type ClientProfileData = {
   profileSummary: string;
   goals: string[];
@@ -160,6 +188,18 @@ export type ClientProfileData = {
   sites: ClientSite[];
   timeline: ClientTimelineItem[];
   tasks: ClientTask[];
+  accountOwner: string;
+  leadSource: string;
+  relationshipHealth: 'Strong' | 'Watch' | 'At Risk';
+  estimatedMonthlyValue: number;
+  billingName: string;
+  billingEmail: string;
+  billingAddress: string;
+  paymentTermsDays: number;
+  vatNumber: string;
+  companyNumber: string;
+  deals: ClientDeal[];
+  invoices: ClientInvoice[];
 };
 
 export type ClientProfile = {

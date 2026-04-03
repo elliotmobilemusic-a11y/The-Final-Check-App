@@ -1,19 +1,17 @@
 import { supabase } from '../lib/supabase';
+import { createEmptyClientData, normalizeClientData } from '../lib/clientData';
 import type { ClientProfile, ClientRecord } from '../types';
 
 const TABLE = 'clients';
 
-const emptyData = {
-  profileSummary: '',
-  goals: [],
-  risks: [],
-  opportunities: [],
-  internalNotes: '',
-  contacts: [],
-  sites: [],
-  timeline: [],
-  tasks: []
-};
+const emptyData = createEmptyClientData();
+
+function normalizeClientRow(client: ClientRecord): ClientRecord {
+  return {
+    ...client,
+    data: normalizeClientData(client.data)
+  };
+}
 
 function mapClientToRow(client: ClientProfile) {
   return {
@@ -56,7 +54,7 @@ export async function listClients(): Promise<ClientRecord[]> {
     .order('company_name', { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map(normalizeClientRow);
 }
 
 export async function getClientById(id: string): Promise<ClientRecord | null> {
@@ -69,7 +67,7 @@ export async function getClientById(id: string): Promise<ClientRecord | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return data ?? null;
+  return data ? normalizeClientRow(data) : null;
 }
 
 export async function createClient(client: ClientProfile): Promise<ClientRecord> {
@@ -87,7 +85,7 @@ export async function createClient(client: ClientProfile): Promise<ClientRecord>
     .single();
 
   if (error) throw error;
-  return data;
+  return normalizeClientRow(data);
 }
 
 export async function updateClient(id: string, client: ClientProfile): Promise<ClientRecord> {
@@ -101,7 +99,7 @@ export async function updateClient(id: string, client: ClientProfile): Promise<C
     .single();
 
   if (error) throw error;
-  return data;
+  return normalizeClientRow(data);
 }
 
 export async function deleteClient(id: string): Promise<void> {

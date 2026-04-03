@@ -997,6 +997,162 @@ p {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 244, 240, 0.88));
 }
 
+.clients-top-grid {
+  align-items: start;
+}
+
+.crm-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.crm-summary-card,
+.crm-inline-stat {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 244, 240, 0.88));
+}
+
+.crm-summary-card span,
+.crm-inline-stat span,
+.crm-metric-card span,
+.invoice-line-grid .crm-inline-stat span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.crm-summary-card strong,
+.crm-inline-stat strong,
+.crm-metric-card strong {
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.crm-summary-card small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.clients-long-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.crm-client-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 242, 238, 0.9));
+  box-shadow: var(--shadow-soft);
+}
+
+.crm-client-main {
+  display: grid;
+  gap: 16px;
+}
+
+.crm-client-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.crm-client-heading strong {
+  display: block;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.crm-client-heading p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.crm-client-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.crm-client-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.crm-metric-card {
+  min-height: 96px;
+}
+
+.crm-client-summary {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.crm-client-actions {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.crm-deal-card,
+.invoice-card {
+  gap: 14px;
+}
+
+.crm-deal-top,
+.invoice-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.crm-deal-top strong,
+.invoice-card-top strong {
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.invoice-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.invoice-line-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) repeat(3, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+}
+
 .loading-card h2 {
   margin-bottom: 10px;
 }
@@ -3044,7 +3200,10 @@ body,
 
 @media (max-width: 1200px) {
   .topbar-context,
-  .client-portfolio-top {
+  .client-portfolio-top,
+  .crm-client-heading,
+  .crm-deal-top,
+  .invoice-card-top {
     flex-direction: column;
     align-items: stretch;
   }
@@ -3057,7 +3216,12 @@ body,
   .clients-hero-grid,
   .clients-hero-chip-row,
   .client-hero-metrics,
-  .client-inline-summary {
+  .client-inline-summary,
+  .crm-client-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-client-row {
     grid-template-columns: 1fr;
   }
 }
@@ -3066,18 +3230,26 @@ body,
   .auth-panel,
   .clients-hero-grid,
   .client-portfolio-meta,
-  .form-grid.three-balance {
+  .form-grid.three-balance,
+  .crm-summary-grid,
+  .invoice-line-grid {
     grid-template-columns: 1fr;
   }
 
   .auth-card-header,
   .clients-pulse-row,
-  .client-summary-row {
+  .client-summary-row,
+  .crm-client-badges,
+  .invoice-card-actions {
     flex-direction: column;
     align-items: stretch;
   }
 
   .topbar-context-copy strong {
     font-size: 17px;
+  }
+
+  .crm-client-actions {
+    grid-template-columns: 1fr;
   }
 }

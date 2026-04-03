@@ -1,5 +1,8 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { buildClientPdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
+import { clientRecordToProfile, createEmptyClientData } from '../lib/clientData';
+import { fmtCurrency } from '../lib/utils';
 import { createClient, deleteClient, listClients } from '../services/clients';
 import type { ClientProfile, ClientRecord } from '../types';
 import { StatCard } from '../components/StatCard';
@@ -19,17 +22,7 @@ const blankClient: ClientProfile = {
   website: '',
   nextReviewDate: '',
   tags: [],
-  data: {
-    profileSummary: '',
-    goals: [],
-    risks: [],
-    opportunities: [],
-    internalNotes: '',
-    contacts: [],
-    sites: [],
-    timeline: [],
-    tasks: []
-  }
+  data: createEmptyClientData()
 };
 
 function getTimestamp(value?: string | null) {
@@ -68,21 +61,38 @@ function daysUntil(value?: string | null) {
   return Math.round((startTarget - startToday) / (1000 * 60 * 60 * 24));
 }
 
+function reviewLabel(value?: string | null) {
+  const delta = daysUntil(value);
+  if (delta === null) return 'No review date';
+  if (delta < 0) return `${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} overdue`;
+  if (delta === 0) return 'Due today';
+  return `Due in ${delta} day${delta === 1 ? '' : 's'}`;
+}
+
 function statusTone(status?: string | null) {
   const normalized = (status ?? '').toLowerCase();
   if (normalized === 'active') return 'status-pill status-success';
-  if (normalized === 'prospect' || normalized === 'onboarding') {
-    return 'status-pill status-warning';
-  }
-
+  if (normalized === 'prospect' || normalized === 'onboarding') return 'status-pill status-warning';
   return 'status-pill status-danger';
 }
+
+function relationshipTone(health?: string | null) {
+  const normalized = (health ?? '').toLowerCase();
+  if (normalized === 'strong') return 'status-pill status-success';
+  if (normalized === 'watch') return 'status-pill status-warning';
+  return 'status-pill status-danger';
+}
+
+type SortMode = 'updated' | 'review' | 'value' | 'company';
 
 export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<ClientProfile>(blankClient);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('Client hub ready.');
+  const [message, setMessage] = useState('CRM workspace ready.');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [sortMode, setSortMode] = useState<SortMode>('updated');
 
   useEffect(() => {
     refreshClients();
@@ -91,11 +101,7 @@ export function ClientsPage() {
   async function refreshClients() {
     try {
       const rows = await listClients();
-      setClients(
-        [...rows].sort(
-          (a, b) => getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at)
-        )
-      );
+      setClients(rows);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not load clients.');
     }
@@ -112,8 +118,11 @@ export function ClientsPage() {
     try {
       setSaving(true);
       await createClient(form);
-      setForm(blankClient);
-      setMessage('Client created.');
+      setForm({
+        ...blankClient,
+        data: createEmptyClientData()
+      });
+      setMessage('Client created and added to the CRM.');
       await refreshClients();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not create client.');
@@ -134,34 +143,124 @@ export function ClientsPage() {
     }
   }
 
-  const activeClients = clients.filter(
-    (client) => (client.status ?? 'Active').toLowerCase() === 'active'
+  function handleExportClient(record: ClientRecord) {
+    const profile = clientRecordToProfile(record);
+    openPrintableHtmlDocument(
+      `${profile.companyName} CRM export`,
+      buildClientPdfHtml(profile)
+    );
+  }
+
+  const activeClients = useMemo(
+    () => clients.filter((client) => (client.status ?? 'Active').toLowerCase() === 'active'),
+    [clients]
   );
-  const upcomingReviews = clients.filter((client) => {
-    const days = daysUntil(client.next_review_date);
-    return days !== null && days >= 0 && days <= 21;
-  });
-  const onboardingClients = clients.filter((client) => {
-    const normalized = (client.status ?? '').toLowerCase();
-    return normalized === 'prospect' || normalized === 'onboarding';
-  });
+  const upcomingReviews = useMemo(
+    () =>
+      clients.filter((client) => {
+        const days = daysUntil(client.next_review_date);
+        return days !== null && days >= 0 && days <= 21;
+      }),
+    [clients]
+  );
+  const openInvoiceCount = useMemo(
+    () =>
+      clients.reduce(
+        (sum, client) =>
+          sum +
+          (client.data ?? createEmptyClientData()).invoices.filter(
+            (invoice) => invoice.status !== 'Paid'
+          ).length,
+        0
+      ),
+    [clients]
+  );
+  const openInvoiceValue = useMemo(
+    () =>
+      clients.reduce(
+        (sum, client) =>
+          sum +
+          (client.data ?? createEmptyClientData()).invoices
+            .filter((invoice) => invoice.status !== 'Paid')
+            .reduce((invoiceSum, invoice) => invoiceSum + invoiceTotal(invoice), 0),
+        0
+      ),
+    [clients]
+  );
+  const pipelineValue = useMemo(
+    () =>
+      clients.reduce(
+        (sum, client) =>
+          sum +
+          (client.data ?? createEmptyClientData()).deals
+            .filter((deal) => deal.stage !== 'Lost')
+            .reduce((dealSum, deal) => dealSum + Number(deal.value || 0), 0),
+        0
+      ),
+    [clients]
+  );
+
+  const filteredClients = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    const filtered = clients.filter((client) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        [
+          client.company_name,
+          client.contact_name,
+          client.contact_email,
+          client.location,
+          client.industry,
+          ...(client.tags ?? [])
+        ]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+
+      const matchesStatus =
+        statusFilter === 'All' ||
+        (client.status ?? 'Active').toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    });
+
+    return filtered.sort((a, b) => {
+      if (sortMode === 'company') {
+        return (a.company_name ?? '').localeCompare(b.company_name ?? '');
+      }
+
+      if (sortMode === 'review') {
+        const aDays = daysUntil(a.next_review_date);
+        const bDays = daysUntil(b.next_review_date);
+        return (aDays ?? Number.MAX_SAFE_INTEGER) - (bDays ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      if (sortMode === 'value') {
+        const aValue = Number((a.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
+        const bValue = Number((b.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
+        return bValue - aValue;
+      }
+
+      return getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at);
+    });
+  }, [clients, search, sortMode, statusFilter]);
 
   return (
     <div className="page-stack">
       <section className="page-heading clients-hero">
         <div className="clients-hero-grid">
           <div className="clients-hero-copy">
-            <div className="brand-badge">Client portfolio</div>
-            <h2>Build a sharper client operating layer for every engagement</h2>
+            <div className="brand-badge">CRM and client portfolio</div>
+            <h2>Run the client side like a real consultancy operating system</h2>
             <p>
-              Create the business record first, then keep audits, menu reviews, contacts,
-              review dates, and follow-up work anchored to that account instead of scattered
-              across the system.
+              This page now works as the front desk for relationship management: create
+              accounts at the top, then manage the full client list with pipeline, review,
+              billing, invoice, and delivery visibility underneath.
             </p>
 
             <div className="hero-actions">
               <a className="button button-primary" href="#client-create-form">
-                Create client profile
+                Add new client
               </a>
               <Link className="button button-secondary" to="/dashboard">
                 Open dashboard
@@ -170,37 +269,37 @@ export function ClientsPage() {
 
             <div className="clients-hero-chip-row">
               <div className="clients-hero-chip">
-                <span>Portfolio</span>
+                <span>Clients</span>
                 <strong>{clients.length}</strong>
-                <small>Client records currently in the workspace</small>
+                <small>Accounts currently active in the CRM</small>
               </div>
               <div className="clients-hero-chip">
-                <span>Active</span>
-                <strong>{activeClients.length}</strong>
-                <small>Businesses already live and in motion</small>
+                <span>Pipeline</span>
+                <strong>{fmtCurrency(pipelineValue)}</strong>
+                <small>Open opportunity value across the client base</small>
               </div>
               <div className="clients-hero-chip">
-                <span>Review queue</span>
-                <strong>{upcomingReviews.length}</strong>
-                <small>Accounts due review in the next 21 days</small>
+                <span>Outstanding invoices</span>
+                <strong>{openInvoiceCount}</strong>
+                <small>{fmtCurrency(openInvoiceValue)} still open across the book</small>
               </div>
             </div>
           </div>
 
           <div className="clients-focus-card">
-            <span className="soft-pill">Operating focus</span>
-            <h3>One profile should hold the full commercial relationship</h3>
+            <span className="soft-pill">Real system behaviour</span>
+            <h3>One place for client records, delivery history, billing, and follow-up</h3>
             <div className="clients-focus-list">
               <div className="clients-focus-item">
-                <strong>Account setup</strong>
-                <span>Capture contact detail, review cadence, tier, status, and commercial context up front.</span>
+                <strong>CRM visibility</strong>
+                <span>Searchable accounts, status filters, relationship health, and account ownership.</span>
               </div>
               <div className="clients-focus-item">
-                <strong>Delivery linkage</strong>
-                <span>Keep audits and menu work attached to the client record so the history stays usable.</span>
+                <strong>Commercial workflow</strong>
+                <span>Track pipeline value, invoice exposure, review cadence, and open tasks from the same record.</span>
               </div>
               <div className="clients-focus-item">
-                <strong>Follow-up visibility</strong>
+                <strong>Fast actions</strong>
                 <span>{message}</span>
               </div>
             </div>
@@ -209,269 +308,346 @@ export function ClientsPage() {
       </section>
 
       <section className="stats-grid">
-        <StatCard label="Clients" value={String(clients.length)} hint="Profiles in the portfolio" />
-        <StatCard label="Active" value={String(activeClients.length)} hint="Live retained or current accounts" />
-        <StatCard label="Onboarding" value={String(onboardingClients.length)} hint="Prospects and new client setup" />
-        <StatCard label="Review queue" value={String(upcomingReviews.length)} hint={message} />
+        <StatCard label="Active clients" value={String(activeClients.length)} hint="Accounts currently in live service" />
+        <StatCard label="Review queue" value={String(upcomingReviews.length)} hint="Clients due review within 21 days" />
+        <StatCard label="Open invoices" value={String(openInvoiceCount)} hint={fmtCurrency(openInvoiceValue)} />
+        <StatCard label="Pipeline value" value={fmtCurrency(pipelineValue)} hint="Estimated value still in play" />
       </section>
 
-      <section className="workspace-grid">
-        <div className="workspace-main">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3 id="client-create-form">New client profile</h3>
-                <p className="muted-copy">Record the business properly before you create delivery work.</p>
-              </div>
+      <section className="card-grid two-columns clients-top-grid">
+        <article className="feature-card">
+          <div className="feature-top">
+            <div>
+              <h3 id="client-create-form">Add a new client</h3>
+              <p>Create the account once, then use the profile as the CRM, billing, and delivery home.</p>
             </div>
-
-            <div className="panel-body">
-              <form className="stack gap-20" onSubmit={handleSubmit}>
-                <div className="stack gap-16">
-                  <div className="section-kicker">Client essentials</div>
-                  <div className="form-grid">
-                    <label className="field">
-                      <span>Company name</span>
-                      <input
-                        className="input"
-                        value={form.companyName}
-                        onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Contact name</span>
-                      <input
-                        className="input"
-                        value={form.contactName}
-                        onChange={(e) => setForm({ ...form, contactName: e.target.value })}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Contact email</span>
-                      <input
-                        className="input"
-                        value={form.contactEmail}
-                        onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Contact phone</span>
-                      <input
-                        className="input"
-                        value={form.contactPhone}
-                        onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Location</span>
-                      <input
-                        className="input"
-                        value={form.location}
-                        onChange={(e) => setForm({ ...form, location: e.target.value })}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Industry</span>
-                      <input
-                        className="input"
-                        value={form.industry}
-                        onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="form-grid three-balance">
-                  <label className="field">
-                    <span>Status</span>
-                    <select
-                      className="input"
-                      value={form.status}
-                      onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    >
-                      <option>Active</option>
-                      <option>Prospect</option>
-                      <option>Onboarding</option>
-                      <option>Paused</option>
-                      <option>Completed</option>
-                    </select>
-                  </label>
-
-                  <label className="field">
-                    <span>Tier</span>
-                    <select
-                      className="input"
-                      value={form.tier}
-                      onChange={(e) => setForm({ ...form, tier: e.target.value })}
-                    >
-                      <option>Standard</option>
-                      <option>Growth</option>
-                      <option>Premium</option>
-                      <option>Enterprise</option>
-                    </select>
-                  </label>
-
-                  <label className="field">
-                    <span>Next review date</span>
-                    <input
-                      className="input"
-                      type="date"
-                      value={form.nextReviewDate}
-                      onChange={(e) => setForm({ ...form, nextReviewDate: e.target.value })}
-                    />
-                  </label>
-                </div>
-
-                <div className="form-grid two-columns">
-                  <label className="field">
-                    <span>Website</span>
-                    <input
-                      className="input"
-                      value={form.website}
-                      onChange={(e) => setForm({ ...form, website: e.target.value })}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Tags (one per line)</span>
-                    <textarea
-                      className="input textarea"
-                      value={form.tags.join('\n')}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          tags: e.target.value
-                            .split('\n')
-                            .map((item) => item.trim())
-                            .filter(Boolean)
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-
-                <label className="field">
-                  <span>Profile summary</span>
-                  <textarea
-                    className="input textarea"
-                    value={form.data.profileSummary}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        data: {
-                          ...form.data,
-                          profileSummary: e.target.value
-                        }
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="field">
-                  <span>Notes</span>
-                  <textarea
-                    className="input textarea"
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  />
-                </label>
-
-                <div className="header-actions">
-                  <button className="button button-primary" disabled={saving}>
-                    {saving ? 'Saving...' : 'Create client'}
-                  </button>
-                </div>
-              </form>
-            </div>
+            <span className="soft-pill">New account</span>
           </div>
-        </div>
 
-        <aside className="workspace-side">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Portfolio pulse</h3>
-                <p className="muted-copy">A quick view of who needs attention before you open the full profile.</p>
-              </div>
+          <form className="stack gap-20" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <label className="field">
+                <span>Company name</span>
+                <input
+                  className="input"
+                  value={form.companyName}
+                  onChange={(event) => setForm({ ...form, companyName: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Main contact</span>
+                <input
+                  className="input"
+                  value={form.contactName}
+                  onChange={(event) => setForm({ ...form, contactName: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Contact email</span>
+                <input
+                  className="input"
+                  value={form.contactEmail}
+                  onChange={(event) => setForm({ ...form, contactEmail: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Location</span>
+                <input
+                  className="input"
+                  value={form.location}
+                  onChange={(event) => setForm({ ...form, location: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Status</span>
+                <select
+                  className="input"
+                  value={form.status}
+                  onChange={(event) => setForm({ ...form, status: event.target.value })}
+                >
+                  <option>Active</option>
+                  <option>Prospect</option>
+                  <option>Onboarding</option>
+                  <option>Paused</option>
+                  <option>Completed</option>
+                </select>
+              </label>
+
+              <label className="field">
+                <span>Account owner</span>
+                <input
+                  className="input"
+                  value={form.data.accountOwner}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        accountOwner: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
             </div>
 
-            <div className="panel-body stack gap-12">
-              <div className="clients-pulse-row">
-                <span>Active accounts</span>
-                <strong>{activeClients.length}</strong>
+            <div className="form-grid three-balance">
+              <label className="field">
+                <span>Review date</span>
+                <input
+                  className="input"
+                  type="date"
+                  value={form.nextReviewDate}
+                  onChange={(event) => setForm({ ...form, nextReviewDate: event.target.value })}
+                />
+              </label>
+
+              <label className="field">
+                <span>Estimated monthly value</span>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  value={form.data.estimatedMonthlyValue}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        estimatedMonthlyValue: Number(event.target.value)
+                      }
+                    })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>Lead source</span>
+                <input
+                  className="input"
+                  value={form.data.leadSource}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        leadSource: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Profile summary</span>
+              <textarea
+                className="input textarea"
+                value={form.data.profileSummary}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    data: {
+                      ...form.data,
+                      profileSummary: event.target.value
+                    }
+                  })
+                }
+              />
+            </label>
+
+            <div className="header-actions">
+              <button className="button button-primary" disabled={saving}>
+                {saving ? 'Saving...' : 'Create client'}
+              </button>
+            </div>
+          </form>
+        </article>
+
+        <article className="feature-card">
+          <div className="feature-top">
+            <div>
+              <h3>Portfolio controls</h3>
+              <p>Filter the CRM like a working client book, not a static address list.</p>
+            </div>
+            <span className="soft-pill">List controls</span>
+          </div>
+
+          <div className="stack gap-16">
+            <label className="field">
+              <span>Search clients</span>
+              <input
+                className="input"
+                placeholder="Search company, contact, email, location, or tag"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+
+            <div className="form-grid two-columns">
+              <label className="field">
+                <span>Status filter</span>
+                <select
+                  className="input"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option>All</option>
+                  <option>Active</option>
+                  <option>Prospect</option>
+                  <option>Onboarding</option>
+                  <option>Paused</option>
+                  <option>Completed</option>
+                </select>
+              </label>
+
+              <label className="field">
+                <span>Sort by</span>
+                <select
+                  className="input"
+                  value={sortMode}
+                  onChange={(event) => setSortMode(event.target.value as SortMode)}
+                >
+                  <option value="updated">Last updated</option>
+                  <option value="review">Next review date</option>
+                  <option value="value">Estimated monthly value</option>
+                  <option value="company">Company name</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="crm-summary-grid">
+              <div className="crm-summary-card">
+                <span>Visible results</span>
+                <strong>{filteredClients.length}</strong>
+                <small>Clients matching the current search and filter state</small>
               </div>
-              <div className="clients-pulse-row">
+              <div className="crm-summary-card">
                 <span>Upcoming reviews</span>
                 <strong>{upcomingReviews.length}</strong>
-              </div>
-              <div className="clients-pulse-row">
-                <span>Onboarding pipeline</span>
-                <strong>{onboardingClients.length}</strong>
+                <small>Next scheduled relationship checkpoints</small>
               </div>
             </div>
           </div>
+        </article>
+      </section>
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Client profiles</h3>
-                <p className="muted-copy">Open a client to see the full account, linked audits, menu work, and follow-up.</p>
-              </div>
+      <section className="feature-card">
+        <div className="feature-top">
+          <div>
+            <h3>Client CRM list</h3>
+            <p>A long-form operational list with quick visibility into relationship, delivery, billing, and pipeline.</p>
+          </div>
+          <span className="soft-pill">{filteredClients.length} records</span>
+        </div>
+
+        <div className="clients-long-list">
+          {filteredClients.length === 0 ? (
+            <div className="dashboard-empty">
+              No clients match the current search or filter settings.
             </div>
+          ) : null}
 
-            <div className="panel-body stack gap-12">
-              {clients.length === 0 ? <div className="muted-copy">No clients created yet.</div> : null}
+          {filteredClients.map((client) => {
+            const data = client.data ?? createEmptyClientData();
+            const openTasks = data.tasks.filter((task) => task.status !== 'Done').length;
+            const openDeals = data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost');
+            const pipeline = openDeals.reduce((sum, deal) => sum + Number(deal.value || 0), 0);
+            const openInvoices = data.invoices.filter((invoice) => invoice.status !== 'Paid');
+            const outstanding = openInvoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
 
-              {clients.map((client) => (
-                <div className="client-portfolio-card" key={client.id}>
-                  <div className="client-portfolio-top">
+            return (
+              <article className="crm-client-row" key={client.id}>
+                <div className="crm-client-main">
+                  <div className="crm-client-heading">
                     <div>
                       <strong>{client.company_name}</strong>
-                      <div className="saved-meta">
-                        {client.location || 'No location'} • {client.contact_name || 'No contact'}
-                      </div>
+                      <p>
+                        {client.industry || 'Industry not set'} • {client.location || 'Location not set'} •{' '}
+                        {client.contact_name || 'Main contact not set'}
+                      </p>
                     </div>
-                    <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                    <div className="crm-client-badges">
+                      <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                      <span className={relationshipTone(data.relationshipHealth)}>
+                        {data.relationshipHealth}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="client-portfolio-meta">
-                    <div>
-                      <span>Tier</span>
-                      <strong>{client.tier || 'Standard'}</strong>
+                  <div className="crm-client-metrics">
+                    <div className="crm-metric-card">
+                      <span>Account owner</span>
+                      <strong>{data.accountOwner || 'Not set'}</strong>
                     </div>
-                    <div>
+                    <div className="crm-metric-card">
                       <span>Next review</span>
-                      <strong>{formatShortDate(client.next_review_date)}</strong>
+                      <strong>{reviewLabel(client.next_review_date)}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Monthly value</span>
+                      <strong>{fmtCurrency(Number(data.estimatedMonthlyValue || 0))}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Pipeline</span>
+                      <strong>{fmtCurrency(pipeline)}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Open invoices</span>
+                      <strong>{openInvoices.length}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Outstanding</span>
+                      <strong>{fmtCurrency(outstanding)}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Open tasks</span>
+                      <strong>{openTasks}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Updated</span>
+                      <strong>{formatShortDate(client.updated_at)}</strong>
                     </div>
                   </div>
 
-                  {client.data?.profileSummary ? (
-                    <p className="muted-copy">{client.data.profileSummary}</p>
-                  ) : (
-                    <p className="muted-copy">No summary written yet. Open the client to build out the account view.</p>
-                  )}
+                  <p className="crm-client-summary">
+                    {data.profileSummary || 'No CRM summary written yet. Open the profile to flesh out strategy, billing, tasks, and invoice detail.'}
+                  </p>
 
-                  <div className="saved-actions">
-                    <Link className="button button-ghost" to={`/clients/${client.id}`}>
-                      Open
-                    </Link>
-                    <button
-                      className="button button-ghost danger-text"
-                      onClick={() => handleDelete(client.id)}
-                    >
-                      Delete
-                    </button>
+                  <div className="client-tag-row">
+                    {(client.tags ?? []).slice(0, 5).map((tag) => (
+                      <span className="soft-pill" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </aside>
+
+                <div className="crm-client-actions">
+                  <Link className="button button-primary" to={`/clients/${client.id}`}>
+                    Open CRM
+                  </Link>
+                  <button className="button button-secondary" onClick={() => handleExportClient(client)}>
+                    Export PDF
+                  </button>
+                  <Link className="button button-ghost" to={`/audit?client=${client.id}`}>
+                    New audit
+                  </Link>
+                  <Link className="button button-ghost" to={`/menu?client=${client.id}`}>
+                    New menu
+                  </Link>
+                  <button className="button button-ghost danger-text" onClick={() => handleDelete(client.id)}>
+                    Delete
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

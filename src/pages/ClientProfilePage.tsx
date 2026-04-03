@@ -1,57 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { StatCard } from '../components/StatCard';
+import { buildClientPdfHtml, buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
+import { clientRecordToProfile } from '../lib/clientData';
 import { getClientById, updateClient } from '../services/clients';
 import { listAudits } from '../services/audits';
 import { listMenuProjects } from '../services/menus';
 import type {
   AuditFormState,
   ClientContact,
+  ClientDeal,
+  ClientInvoice,
+  ClientInvoiceLine,
   ClientProfile,
   ClientProfileData,
-  ClientRecord,
   ClientSite,
   ClientTask,
   ClientTimelineItem,
   MenuProjectState,
   SupabaseRecord
 } from '../types';
-import { safe, uid } from '../lib/utils';
-
-const emptyData: ClientProfileData = {
-  profileSummary: '',
-  goals: [],
-  risks: [],
-  opportunities: [],
-  internalNotes: '',
-  contacts: [],
-  sites: [],
-  timeline: [],
-  tasks: []
-};
-
-function toProfile(record: ClientRecord): ClientProfile {
-  return {
-    id: record.id,
-    companyName: record.company_name ?? '',
-    contactName: record.contact_name ?? '',
-    contactEmail: record.contact_email ?? '',
-    contactPhone: record.contact_phone ?? '',
-    location: record.location ?? '',
-    notes: record.notes ?? '',
-    logoUrl: record.logo_url ?? '',
-    coverUrl: record.cover_url ?? '',
-    status: record.status ?? 'Active',
-    tier: record.tier ?? 'Standard',
-    industry: record.industry ?? '',
-    website: record.website ?? '',
-    nextReviewDate: record.next_review_date ?? '',
-    tags: record.tags ?? [],
-    data: record.data ?? emptyData,
-    createdAt: record.created_at,
-    updatedAt: record.updated_at
-  };
-}
+import { fmtCurrency, num, safe, todayIso, uid } from '../lib/utils';
 
 function splitLines(value: string) {
   return value
@@ -143,6 +112,66 @@ function blankTask(): ClientTask {
   };
 }
 
+function blankDeal(): ClientDeal {
+  return {
+    id: uid('deal'),
+    title: '',
+    stage: 'Lead',
+    value: 0,
+    closeDate: '',
+    owner: '',
+    notes: ''
+  };
+}
+
+function blankInvoiceLine(): ClientInvoiceLine {
+  return {
+    id: uid('invoice-line'),
+    description: '',
+    quantity: 1,
+    unitPrice: 0
+  };
+}
+
+function buildInvoiceNumber(existingCount: number) {
+  return `INV-${new Date().getFullYear()}-${String(existingCount + 1).padStart(3, '0')}`;
+}
+
+function blankInvoice(existingCount: number, paymentTermsDays: number): ClientInvoice {
+  const issueDate = todayIso();
+  const due = new Date();
+  due.setDate(due.getDate() + (paymentTermsDays || 30));
+
+  return {
+    id: uid('invoice'),
+    number: buildInvoiceNumber(existingCount),
+    title: 'Consultancy services',
+    issueDate,
+    dueDate: due.toISOString().slice(0, 10),
+    status: 'Draft',
+    notes: '',
+    lines: [blankInvoiceLine()]
+  };
+}
+
+function stageTone(stage: ClientDeal['stage']) {
+  if (stage === 'Won') return 'status-pill status-success';
+  if (stage === 'Lost') return 'status-pill status-danger';
+  return 'status-pill status-warning';
+}
+
+function invoiceTone(status: ClientInvoice['status']) {
+  if (status === 'Paid') return 'status-pill status-success';
+  if (status === 'Overdue' || status === 'Cancelled') return 'status-pill status-danger';
+  return 'status-pill status-warning';
+}
+
+function relationshipTone(health: ClientProfileData['relationshipHealth']) {
+  if (health === 'Strong') return 'status-pill status-success';
+  if (health === 'Watch') return 'status-pill status-warning';
+  return 'status-pill status-danger';
+}
+
 export function ClientProfilePage() {
   const { clientId = '' } = useParams();
 
@@ -164,7 +193,7 @@ export function ClientProfilePage() {
 
       if (!clientRow) return;
 
-      const profile = toProfile(clientRow);
+      const profile = clientRecordToProfile(clientRow);
       setClient(profile);
       setForm(profile);
       setAudits(auditRows);
@@ -184,7 +213,9 @@ export function ClientProfilePage() {
         contacts: 0,
         sites: 0,
         tasksOpen: 0,
-        timeline: 0
+        timeline: 0,
+        deals: 0,
+        invoicesOpen: 0
       };
     }
 
@@ -192,7 +223,9 @@ export function ClientProfilePage() {
       contacts: client.data.contacts.length,
       sites: client.data.sites.length,
       tasksOpen: client.data.tasks.filter((task) => task.status !== 'Done').length,
-      timeline: client.data.timeline.length
+      timeline: client.data.timeline.length,
+      deals: client.data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost').length,
+      invoicesOpen: client.data.invoices.filter((invoice) => invoice.status !== 'Paid').length
     };
   }, [client]);
 
@@ -200,6 +233,20 @@ export function ClientProfilePage() {
   const linkedWorkstreams = audits.length + menus.length;
   const primaryContact =
     form?.data.contacts.find((contact) => contact.isPrimary) ?? form?.data.contacts[0] ?? null;
+  const pipelineValue = useMemo(
+    () =>
+      form?.data.deals
+        .filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost')
+        .reduce((sum, deal) => sum + num(deal.value), 0) ?? 0,
+    [form?.data.deals]
+  );
+  const outstandingInvoiceValue = useMemo(
+    () =>
+      form?.data.invoices
+        .filter((invoice) => invoice.status !== 'Paid')
+        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0) ?? 0,
+    [form?.data.invoices]
+  );
 
   if (!client || !form) {
     return (
@@ -297,13 +344,133 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
   );
 }
 
+function updateDeal(id: string, key: keyof ClientDeal, value: string | number) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            deals: current.data.deals.map((item) =>
+              item.id === id ? { ...item, [key]: value } : item
+            )
+          }
+        }
+      : current
+  );
+}
+
+function updateInvoice(
+  id: string,
+  key: keyof Omit<ClientInvoice, 'lines'>,
+  value: string
+) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            invoices: current.data.invoices.map((item) =>
+              item.id === id ? { ...item, [key]: value } : item
+            )
+          }
+        }
+      : current
+  );
+}
+
+function updateInvoiceLine(
+  invoiceId: string,
+  lineId: string,
+  key: keyof ClientInvoiceLine,
+  value: string | number
+) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            invoices: current.data.invoices.map((invoice) =>
+              invoice.id === invoiceId
+                ? {
+                    ...invoice,
+                    lines: invoice.lines.map((line) =>
+                      line.id === lineId ? { ...line, [key]: value } : line
+                    )
+                  }
+                : invoice
+            )
+          }
+        }
+      : current
+  );
+}
+
+function addInvoiceLine(invoiceId: string) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            invoices: current.data.invoices.map((invoice) =>
+              invoice.id === invoiceId
+                ? {
+                    ...invoice,
+                    lines: [...invoice.lines, blankInvoiceLine()]
+                  }
+                : invoice
+            )
+          }
+        }
+      : current
+  );
+}
+
+function removeInvoiceLine(invoiceId: string, lineId: string) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            invoices: current.data.invoices.map((invoice) =>
+              invoice.id === invoiceId
+                ? {
+                    ...invoice,
+                    lines: invoice.lines.filter((line) => line.id !== lineId)
+                  }
+                : invoice
+            )
+          }
+        }
+      : current
+  );
+}
+
+function removeInvoice(invoiceId: string) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            invoices: current.data.invoices.filter((invoice) => invoice.id !== invoiceId)
+          }
+        }
+      : current
+  );
+}
+
   async function handleSave() {
   if (!client?.id || !form) return;
 
   try {
     setSaving(true);
     const updated = await updateClient(client.id, form);
-    const next = toProfile(updated);
+    const next = clientRecordToProfile(updated);
     setClient(next);
     setForm(next);
     setEditing(false);
@@ -314,6 +481,22 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
     setSaving(false);
   }
 }
+
+  function exportClientPdf() {
+    if (!form) return;
+    openPrintableHtmlDocument(
+      `${form.companyName} CRM export`,
+      buildClientPdfHtml(form, audits, menus)
+    );
+  }
+
+  function exportInvoicePdf(invoice: ClientInvoice) {
+    if (!form) return;
+    openPrintableHtmlDocument(
+      `${invoice.number} invoice export`,
+      buildInvoicePdfHtml(form, invoice)
+    );
+  }
 
   return (
     <div className="page-stack">
@@ -374,6 +557,9 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
             <Link className="button button-secondary" to={`/menu?client=${client.id}`}>
               New menu
             </Link>
+            <button className="button button-secondary" onClick={exportClientPdf}>
+              Export CRM PDF
+            </button>
           </div>
 
           <div className="client-hero-metrics">
@@ -392,6 +578,16 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
               <strong>{form.contactName || primaryContact?.name || 'Main contact not set'}</strong>
               <small>{form.contactEmail || primaryContact?.email || 'No email stored yet'}</small>
             </div>
+            <div className="client-hero-metric">
+              <span>Pipeline value</span>
+              <strong>{fmtCurrency(pipelineValue)}</strong>
+              <small>{stats.deals} open opportunit{stats.deals === 1 ? 'y' : 'ies'} tracked in CRM</small>
+            </div>
+            <div className="client-hero-metric">
+              <span>Outstanding invoices</span>
+              <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
+              <small>{stats.invoicesOpen} invoice{stats.invoicesOpen === 1 ? '' : 's'} not yet paid</small>
+            </div>
           </div>
         </div>
       </section>
@@ -400,7 +596,7 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
         <StatCard label="Contacts" value={String(stats.contacts)} hint="Key people" />
         <StatCard label="Sites" value={String(stats.sites)} hint="Locations and venues" />
         <StatCard label="Open tasks" value={String(stats.tasksOpen)} hint="Follow-up actions" />
-        <StatCard label="Timeline items" value={String(stats.timeline)} hint="Client history and milestones" />
+        <StatCard label="Open deals" value={String(stats.deals)} hint="Pipeline opportunities in play" />
       </section>
 
       <section className="workspace-grid client-workspace">
@@ -569,6 +765,125 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
                 />
               </label>
             </article>
+
+            <article className="feature-card">
+              <div className="feature-top">
+                <div>
+                  <h3>CRM and billing controls</h3>
+                  <p>Use this client record for account ownership, billing data, value tracking, and relationship health.</p>
+                </div>
+                <span className={relationshipTone(form.data.relationshipHealth)}>
+                  {form.data.relationshipHealth}
+                </span>
+              </div>
+
+              <div className="form-grid three-balance">
+                <label className="field">
+                  <span>Account owner</span>
+                  <input
+                    className="input"
+                    value={form.data.accountOwner}
+                    onChange={(e) => updateData('accountOwner', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Lead source</span>
+                  <input
+                    className="input"
+                    value={form.data.leadSource}
+                    onChange={(e) => updateData('leadSource', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Relationship health</span>
+                  <select
+                    className="input"
+                    value={form.data.relationshipHealth}
+                    onChange={(e) =>
+                      updateData(
+                        'relationshipHealth',
+                        e.target.value as ClientProfileData['relationshipHealth']
+                      )
+                    }
+                    disabled={!editing}
+                  >
+                    <option>Strong</option>
+                    <option>Watch</option>
+                    <option>At Risk</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Estimated monthly value</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    value={form.data.estimatedMonthlyValue}
+                    onChange={(e) => updateData('estimatedMonthlyValue', Number(e.target.value))}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Billing name</span>
+                  <input
+                    className="input"
+                    value={form.data.billingName}
+                    onChange={(e) => updateData('billingName', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Billing email</span>
+                  <input
+                    className="input"
+                    value={form.data.billingEmail}
+                    onChange={(e) => updateData('billingEmail', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Payment terms (days)</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    value={form.data.paymentTermsDays}
+                    onChange={(e) => updateData('paymentTermsDays', Number(e.target.value))}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>VAT number</span>
+                  <input
+                    className="input"
+                    value={form.data.vatNumber}
+                    onChange={(e) => updateData('vatNumber', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Company number</span>
+                  <input
+                    className="input"
+                    value={form.data.companyNumber}
+                    onChange={(e) => updateData('companyNumber', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+              </div>
+
+              <label className="field">
+                <span>Billing address</span>
+                <textarea
+                  className="input textarea"
+                  value={form.data.billingAddress}
+                  onChange={(e) => updateData('billingAddress', e.target.value)}
+                  disabled={!editing}
+                />
+              </label>
+            </article>
           </div>
 
           <article className="feature-card">
@@ -634,6 +949,125 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
             </div>
           </article>
 
+          <article className="feature-card" id="client-deals">
+            <div className="feature-top">
+              <div>
+                <h3>Pipeline and CRM deals</h3>
+                <p>Track proposals, negotiations, renewals, and new opportunities from the same client workspace.</p>
+              </div>
+              {editing ? (
+                <button
+                  className="button button-secondary"
+                  onClick={() => updateData('deals', [...form.data.deals, blankDeal()])}
+                >
+                  Add deal
+                </button>
+              ) : null}
+            </div>
+
+            <div className="stack gap-12">
+              {form.data.deals.length === 0 ? (
+                <div className="dashboard-empty">No opportunities tracked yet.</div>
+              ) : null}
+
+              {form.data.deals.map((deal) => (
+                <div className="repeat-card crm-deal-card" key={deal.id}>
+                  <div className="crm-deal-top">
+                    <strong>{deal.title || 'Untitled deal'}</strong>
+                    <div className="invoice-card-actions">
+                      <span className={stageTone(deal.stage)}>{deal.stage}</span>
+                      {editing ? (
+                        <button
+                          className="button button-ghost danger-text"
+                          onClick={() =>
+                            updateData(
+                              'deals',
+                              form.data.deals.filter((item) => item.id !== deal.id)
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="form-grid three-balance">
+                    <label className="field">
+                      <span>Deal title</span>
+                      <input
+                        className="input"
+                        value={deal.title}
+                        onChange={(e) => updateDeal(deal.id, 'title', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Stage</span>
+                      <select
+                        className="input"
+                        value={deal.stage}
+                        onChange={(e) => updateDeal(deal.id, 'stage', e.target.value)}
+                        disabled={!editing}
+                      >
+                        <option>Lead</option>
+                        <option>Qualified</option>
+                        <option>Proposal</option>
+                        <option>Negotiation</option>
+                        <option>Won</option>
+                        <option>Lost</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Value</span>
+                      <input
+                        className="input"
+                        type="number"
+                        min="0"
+                        value={deal.value}
+                        onChange={(e) => updateDeal(deal.id, 'value', Number(e.target.value))}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Target close date</span>
+                      <input
+                        className="input"
+                        type="date"
+                        value={deal.closeDate}
+                        onChange={(e) => updateDeal(deal.id, 'closeDate', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Owner</span>
+                      <input
+                        className="input"
+                        value={deal.owner}
+                        onChange={(e) => updateDeal(deal.id, 'owner', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <div className="crm-inline-stat">
+                      <span>Deal value</span>
+                      <strong>{fmtCurrency(num(deal.value))}</strong>
+                    </div>
+                  </div>
+
+                  <label className="field">
+                    <span>Notes</span>
+                    <textarea
+                      className="input textarea"
+                      value={deal.notes}
+                      onChange={(e) => updateDeal(deal.id, 'notes', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </article>
+
           <article className="feature-card">
             <div className="feature-top">
               <div>
@@ -691,6 +1125,24 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
                       />
                     </label>
                   </div>
+                  <label className="checkbox-row">
+                    <input
+                      checked={contact.isPrimary}
+                      type="checkbox"
+                      onChange={(e) => updateContact(contact.id, 'isPrimary', e.target.checked)}
+                      disabled={!editing}
+                    />
+                    <span>Primary contact</span>
+                  </label>
+                  <label className="field">
+                    <span>Notes</span>
+                    <textarea
+                      className="input textarea"
+                      value={contact.notes}
+                      onChange={(e) => updateContact(contact.id, 'notes', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </label>
                 </div>
               ))}
             </div>
@@ -886,6 +1338,208 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
               ))}
             </div>
           </article>
+
+          <article className="feature-card" id="client-invoices">
+            <div className="feature-top">
+              <div>
+                <h3>Invoices and billing exports</h3>
+                <p>Create invoice drafts inside the client record and export them as printable PDF documents.</p>
+              </div>
+              {editing ? (
+                <button
+                  className="button button-secondary"
+                  onClick={() =>
+                    updateData(
+                      'invoices',
+                      [
+                        ...form.data.invoices,
+                        blankInvoice(form.data.invoices.length, form.data.paymentTermsDays)
+                      ]
+                    )
+                  }
+                >
+                  Add invoice
+                </button>
+              ) : null}
+            </div>
+
+            <div className="stack gap-12">
+              {form.data.invoices.length === 0 ? (
+                <div className="dashboard-empty">No invoices drafted yet.</div>
+              ) : null}
+
+              {form.data.invoices.map((invoice) => (
+                <div className="repeat-card invoice-card" key={invoice.id}>
+                  <div className="invoice-card-top">
+                    <div>
+                      <strong>{invoice.number || 'Draft invoice'}</strong>
+                      <div className="saved-meta">
+                        {invoice.title || 'Consultancy services'} • {fmtCurrency(invoiceTotal(invoice))}
+                      </div>
+                    </div>
+                    <div className="invoice-card-actions">
+                      <span className={invoiceTone(invoice.status)}>{invoice.status}</span>
+                      <button
+                        className="button button-ghost"
+                        onClick={() => exportInvoicePdf(invoice)}
+                      >
+                        PDF
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-grid three-balance">
+                    <label className="field">
+                      <span>Invoice number</span>
+                      <input
+                        className="input"
+                        value={invoice.number}
+                        onChange={(e) => updateInvoice(invoice.id, 'number', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Issue date</span>
+                      <input
+                        className="input"
+                        type="date"
+                        value={invoice.issueDate}
+                        onChange={(e) => updateInvoice(invoice.id, 'issueDate', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Due date</span>
+                      <input
+                        className="input"
+                        type="date"
+                        value={invoice.dueDate}
+                        onChange={(e) => updateInvoice(invoice.id, 'dueDate', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Invoice title</span>
+                      <input
+                        className="input"
+                        value={invoice.title}
+                        onChange={(e) => updateInvoice(invoice.id, 'title', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Status</span>
+                      <select
+                        className="input"
+                        value={invoice.status}
+                        onChange={(e) =>
+                          updateInvoice(
+                            invoice.id,
+                            'status',
+                            e.target.value as ClientInvoice['status']
+                          )
+                        }
+                        disabled={!editing}
+                      >
+                        <option>Draft</option>
+                        <option>Sent</option>
+                        <option>Paid</option>
+                        <option>Overdue</option>
+                        <option>Cancelled</option>
+                      </select>
+                    </label>
+                    <div className="crm-inline-stat">
+                      <span>Total due</span>
+                      <strong>{fmtCurrency(invoiceTotal(invoice))}</strong>
+                    </div>
+                  </div>
+
+                  <label className="field">
+                    <span>Invoice notes</span>
+                    <textarea
+                      className="input textarea"
+                      value={invoice.notes}
+                      onChange={(e) => updateInvoice(invoice.id, 'notes', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </label>
+
+                  <div className="stack gap-12">
+                    {invoice.lines.map((line) => (
+                      <div className="invoice-line-grid" key={line.id}>
+                        <label className="field">
+                          <span>Description</span>
+                          <input
+                            className="input"
+                            value={line.description}
+                            onChange={(e) =>
+                              updateInvoiceLine(invoice.id, line.id, 'description', e.target.value)
+                            }
+                            disabled={!editing}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Qty</span>
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            value={line.quantity}
+                            onChange={(e) =>
+                              updateInvoiceLine(invoice.id, line.id, 'quantity', Number(e.target.value))
+                            }
+                            disabled={!editing}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Unit price</span>
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            value={line.unitPrice}
+                            onChange={(e) =>
+                              updateInvoiceLine(invoice.id, line.id, 'unitPrice', Number(e.target.value))
+                            }
+                            disabled={!editing}
+                          />
+                        </label>
+                        <div className="crm-inline-stat">
+                          <span>Line total</span>
+                          <strong>{fmtCurrency(num(line.quantity) * num(line.unitPrice))}</strong>
+                        </div>
+                        {editing ? (
+                          <button
+                            className="button button-ghost danger-text self-end"
+                            onClick={() => removeInvoiceLine(invoice.id, line.id)}
+                          >
+                            Remove line
+                          </button>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+
+                  {editing ? (
+                    <div className="saved-actions">
+                      <button
+                        className="button button-secondary"
+                        onClick={() => addInvoiceLine(invoice.id)}
+                      >
+                        Add line
+                      </button>
+                      <button
+                        className="button button-ghost danger-text"
+                        onClick={() => removeInvoice(invoice.id)}
+                      >
+                        Delete invoice
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </article>
         </div>
 
         <aside className="workspace-side stack gap-20">
@@ -925,6 +1579,18 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
                           ? 'Coming up soon'
                           : 'On track'}
                   </strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Account owner</span>
+                  <strong>{form.data.accountOwner || 'Not set'}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Pipeline value</span>
+                  <strong>{fmtCurrency(pipelineValue)}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Outstanding invoices</span>
+                  <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
                 </div>
               </div>
             </div>
