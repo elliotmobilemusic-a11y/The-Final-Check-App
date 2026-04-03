@@ -104,6 +104,29 @@ function shellHtml(title: string, bodyHtml: string) {
           color: var(--ink);
           background: #f6f2ee;
         }
+        .print-toolbar {
+          position: sticky;
+          top: 16px;
+          z-index: 10;
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          max-width: 960px;
+          margin: 0 auto 18px;
+        }
+        .print-toolbar button {
+          appearance: none;
+          border: 1px solid rgba(86, 81, 91, 0.14);
+          background: #ffffff;
+          color: var(--ink);
+          padding: 12px 16px;
+          border-radius: 999px;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 12px 24px rgba(36, 31, 38, 0.08);
+        }
         main {
           max-width: 960px;
           margin: 0 auto;
@@ -219,6 +242,9 @@ function shellHtml(title: string, bodyHtml: string) {
           border: 1px solid rgba(198, 161, 97, 0.28);
         }
         @media print {
+          .print-toolbar {
+            display: none;
+          }
           body {
             padding: 0;
             background: white;
@@ -244,10 +270,21 @@ function shellHtml(title: string, bodyHtml: string) {
       </style>
     </head>
     <body>
+      <div class="print-toolbar">
+        <button type="button" onclick="window.print()">Print / Save PDF</button>
+        <button type="button" onclick="window.close()">Close</button>
+      </div>
       <main>${bodyHtml}</main>
       <script>
         window.addEventListener('load', () => {
-          setTimeout(() => window.print(), 200);
+          setTimeout(() => {
+            try {
+              window.focus();
+              window.print();
+            } catch (error) {
+              console.error('Automatic print failed', error);
+            }
+          }, 350);
         });
       </script>
     </body>
@@ -255,14 +292,21 @@ function shellHtml(title: string, bodyHtml: string) {
 }
 
 export function openPrintableHtmlDocument(title: string, bodyHtml: string) {
-  const popup = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=900');
+  const popup = window.open('', '_blank', 'width=1200,height=900');
   if (!popup) {
     throw new Error('Enable pop-ups to export PDFs from this workspace.');
+  }
+
+  try {
+    popup.opener = null;
+  } catch {
+    // Ignore browsers that prevent rewriting opener after opening the window.
   }
 
   popup.document.open();
   popup.document.write(shellHtml(title, bodyHtml));
   popup.document.close();
+  popup.focus();
 }
 
 export function buildClientPdfHtml(
