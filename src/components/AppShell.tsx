@@ -1,12 +1,13 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { supabase } from '../lib/supabase';
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', caption: 'Command centre' },
+  { to: '/dashboard', label: 'Dashboard', caption: 'Overview and priorities' },
   { to: '/clients', label: 'Clients', caption: 'CRM and accounts' },
-  { to: '/audit', label: 'Audit Tool', caption: 'Site reviews' },
+  { to: '/audit', label: 'Audit Tool', caption: 'Operational audits' },
   { to: '/menu', label: 'Menu Builder', caption: 'Commercial menus' }
 ];
 
@@ -83,6 +84,8 @@ export function AppShell() {
   const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
+  const [navOpen, setNavOpen] = useState(false);
+  const navMenuRef = useRef<HTMLDivElement | null>(null);
   const meta = routeMeta.find((item) => item.match(location.pathname)) ?? routeMeta[0];
   const activeNav =
     navItems.find((item) =>
@@ -101,6 +104,32 @@ export function AppShell() {
     (typeof session?.user.user_metadata?.avatar_url === 'string'
       ? session.user.user_metadata.avatar_url
       : '');
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!navMenuRef.current?.contains(event.target as Node)) {
+        setNavOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setNavOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   async function handleSignOut() {
     await supabase?.auth.signOut();
@@ -128,8 +157,14 @@ export function AppShell() {
             </NavLink>
 
             <div className="shell-toolbar-actions">
-              <details className="shell-nav-menu">
-                <summary className="shell-nav-trigger">
+              <div className={`shell-nav-menu ${navOpen ? 'open' : ''}`} ref={navMenuRef}>
+                <button
+                  aria-expanded={navOpen}
+                  aria-haspopup="menu"
+                  className="shell-nav-trigger"
+                  onClick={() => setNavOpen((current) => !current)}
+                  type="button"
+                >
                   <span className="shell-nav-trigger-copy">
                     <small>Navigate</small>
                     <strong>
@@ -139,31 +174,34 @@ export function AppShell() {
                   <span className="shell-nav-trigger-icon" aria-hidden="true">
                     ▾
                   </span>
-                </summary>
+                </button>
 
-                <div className="shell-nav-dropdown">
-                  <div className="shell-panel-heading">
-                    <span className="shell-section-label">Navigation</span>
-                    <strong>Move around the app</strong>
+                {navOpen ? (
+                  <div className="shell-nav-dropdown" role="menu">
+                    <div className="shell-panel-heading">
+                      <span className="shell-section-label">Navigation</span>
+                      <strong>Move around the app</strong>
+                    </div>
+
+                    <nav className="shell-nav-list">
+                      {navItems.map((item) => (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          end={item.to !== '/clients'}
+                          className={({ isActive }) => `shell-nav-link ${isActive ? 'active' : ''}`}
+                          onClick={() => setNavOpen(false)}
+                        >
+                          <span className="shell-nav-copy">
+                            <strong>{item.label}</strong>
+                            <small>{item.caption}</small>
+                          </span>
+                        </NavLink>
+                      ))}
+                    </nav>
                   </div>
-
-                  <nav className="shell-nav-list">
-                    {navItems.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.to !== '/clients'}
-                        className={({ isActive }) => `shell-nav-link ${isActive ? 'active' : ''}`}
-                      >
-                        <span className="shell-nav-copy">
-                          <strong>{item.label}</strong>
-                          <small>{item.caption}</small>
-                        </span>
-                      </NavLink>
-                    ))}
-                  </nav>
-                </div>
-              </details>
+                ) : null}
+              </div>
 
               <div className="shell-shortcuts">
                 {shellQuickLinks.map((item) => (
@@ -208,14 +246,6 @@ export function AppShell() {
               <div className="shell-pagebar-focus">
                 <span>Current focus</span>
                 <strong>{meta.focus}</strong>
-              </div>
-
-              <div className="shell-pagebar-links">
-                {shellQuickLinks.map((item) => (
-                  <Link className="button button-ghost" key={item.to} to={item.to}>
-                    {item.label}
-                  </Link>
-                ))}
               </div>
             </div>
           </div>

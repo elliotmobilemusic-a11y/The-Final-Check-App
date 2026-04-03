@@ -281,7 +281,7 @@ export function SupportHub() {
           Help me
         </button>
         <button className="button button-primary" onClick={() => setAssistantOpen(true)} type="button">
-          Ask guide
+          Quick help
         </button>
       </div>
 

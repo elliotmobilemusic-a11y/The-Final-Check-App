@@ -83,7 +83,7 @@ function relationshipTone(health?: string | null) {
   return 'status-pill status-danger';
 }
 
-type SortMode = 'updated' | 'review' | 'value' | 'company';
+type SortMode = 'updated' | 'review' | 'value' | 'company' | 'attention';
 
 export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -163,6 +163,14 @@ export function ClientsPage() {
       }),
     [clients]
   );
+  const overdueReviews = useMemo(
+    () =>
+      clients.filter((client) => {
+        const days = daysUntil(client.next_review_date);
+        return days !== null && days < 0;
+      }),
+    [clients]
+  );
   const openInvoiceCount = useMemo(
     () =>
       clients.reduce(
@@ -197,6 +205,43 @@ export function ClientsPage() {
             .reduce((dealSum, deal) => dealSum + Number(deal.value || 0), 0),
         0
       ),
+    [clients]
+  );
+  const overdueInvoiceCount = useMemo(
+    () =>
+      clients.reduce(
+        (sum, client) =>
+          sum +
+          (client.data ?? createEmptyClientData()).invoices.filter(
+            (invoice) => invoice.status === 'Overdue'
+          ).length,
+        0
+      ),
+    [clients]
+  );
+  const overdueInvoiceValue = useMemo(
+    () =>
+      clients.reduce(
+        (sum, client) =>
+          sum +
+          (client.data ?? createEmptyClientData()).invoices
+            .filter((invoice) => invoice.status === 'Overdue')
+            .reduce((invoiceSum, invoice) => invoiceSum + invoiceTotal(invoice), 0),
+        0
+      ),
+    [clients]
+  );
+  const setupGaps = useMemo(
+    () =>
+      clients.filter((client) => {
+        const data = client.data ?? createEmptyClientData();
+        return (
+          !client.contact_name ||
+          !data.accountOwner ||
+          !data.profileSummary.trim() ||
+          !client.contact_email
+        );
+      }),
     [clients]
   );
 
@@ -239,6 +284,22 @@ export function ClientsPage() {
         const aValue = Number((a.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
         const bValue = Number((b.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
         return bValue - aValue;
+      }
+
+      if (sortMode === 'attention') {
+        const rankClient = (client: ClientRecord) => {
+          const data = client.data ?? createEmptyClientData();
+          const overdueInvoices = data.invoices.filter((invoice) => invoice.status === 'Overdue').length;
+          const reviewDays = daysUntil(client.next_review_date);
+          const overdueReviewPenalty = reviewDays !== null && reviewDays < 0 ? Math.abs(reviewDays) + 5 : 0;
+          const relationshipPenalty = data.relationshipHealth === 'At Risk' ? 10 : data.relationshipHealth === 'Watch' ? 5 : 0;
+          const setupPenalty =
+            !client.contact_name || !data.accountOwner || !data.profileSummary.trim() ? 3 : 0;
+
+          return overdueInvoices * 20 + overdueReviewPenalty + relationshipPenalty + setupPenalty;
+        };
+
+        return rankClient(b) - rankClient(a);
       }
 
       return getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at);
@@ -311,6 +372,26 @@ export function ClientsPage() {
         <StatCard label="Review queue" value={String(upcomingReviews.length)} hint="Clients due review within 21 days" />
         <StatCard label="Open invoices" value={String(openInvoiceCount)} hint={fmtCurrency(openInvoiceValue)} />
         <StatCard label="Pipeline value" value={fmtCurrency(pipelineValue)} hint="Estimated value still in play" />
+      </section>
+
+      <section className="crm-priority-grid">
+        <article className="crm-priority-card is-critical">
+          <span>Immediate attention</span>
+          <strong>{overdueReviews.length} overdue review{overdueReviews.length === 1 ? '' : 's'}</strong>
+          <small>Accounts that should be followed up now before cadence slips further.</small>
+        </article>
+        <article className="crm-priority-card is-warning">
+          <span>Billing risk</span>
+          <strong>
+            {overdueInvoiceCount} overdue invoice{overdueInvoiceCount === 1 ? '' : 's'}
+          </strong>
+          <small>{fmtCurrency(overdueInvoiceValue)} is past due across the current client book.</small>
+        </article>
+        <article className="crm-priority-card is-stable">
+          <span>Setup gaps</span>
+          <strong>{setupGaps.length} client record{setupGaps.length === 1 ? '' : 's'}</strong>
+          <small>These accounts still need cleaner contact, ownership, or summary detail.</small>
+        </article>
       </section>
 
       <section className="card-grid two-columns clients-top-grid">
@@ -511,6 +592,7 @@ export function ClientsPage() {
                   value={sortMode}
                   onChange={(event) => setSortMode(event.target.value as SortMode)}
                 >
+                  <option value="attention">Attention needed</option>
                   <option value="updated">Last updated</option>
                   <option value="review">Next review date</option>
                   <option value="value">Estimated monthly value</option>
@@ -557,7 +639,37 @@ export function ClientsPage() {
             const openDeals = data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost');
             const pipeline = openDeals.reduce((sum, deal) => sum + Number(deal.value || 0), 0);
             const openInvoices = data.invoices.filter((invoice) => invoice.status !== 'Paid');
+            const overdueInvoices = data.invoices.filter((invoice) => invoice.status === 'Overdue');
             const outstanding = openInvoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+            const reviewDelta = daysUntil(client.next_review_date);
+            const setupIncomplete =
+              !client.contact_name || !data.accountOwner || !data.profileSummary.trim();
+            const alerts = [
+              overdueInvoices.length
+                ? {
+                    label: `${overdueInvoices.length} overdue invoice${overdueInvoices.length === 1 ? '' : 's'}`,
+                    tone: 'is-critical'
+                  }
+                : null,
+              reviewDelta !== null && reviewDelta < 0
+                ? {
+                    label: `Review overdue by ${Math.abs(reviewDelta)} day${Math.abs(reviewDelta) === 1 ? '' : 's'}`,
+                    tone: 'is-critical'
+                  }
+                : null,
+              data.relationshipHealth === 'At Risk'
+                ? { label: 'Relationship at risk', tone: 'is-critical' }
+                : data.relationshipHealth === 'Watch'
+                  ? { label: 'Relationship needs watching', tone: 'is-warning' }
+                  : null,
+              openTasks > 0
+                ? {
+                    label: `${openTasks} open task${openTasks === 1 ? '' : 's'}`,
+                    tone: 'is-warning'
+                  }
+                : null,
+              setupIncomplete ? { label: 'Profile setup incomplete', tone: 'is-warning' } : null
+            ].filter(Boolean) as Array<{ label: string; tone: string }>;
 
             return (
               <article className="crm-client-row" key={client.id}>
@@ -617,6 +729,18 @@ export function ClientsPage() {
                     {data.profileSummary || 'No CRM summary written yet. Open the profile to flesh out strategy, billing, tasks, and invoice detail.'}
                   </p>
 
+                  <div className="crm-alert-row">
+                    {alerts.length > 0 ? (
+                      alerts.map((alert) => (
+                        <span className={`crm-alert-chip ${alert.tone}`} key={alert.label}>
+                          {alert.label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="crm-alert-chip is-stable">No active alerts on this account</span>
+                    )}
+                  </div>
+
                   <div className="client-tag-row">
                     {(client.tags ?? []).slice(0, 5).map((tag) => (
                       <span className="soft-pill" key={tag}>
@@ -633,6 +757,9 @@ export function ClientsPage() {
                   <button className="button button-secondary" onClick={() => handleExportClient(client)}>
                     Export PDF
                   </button>
+                  <Link className="button button-ghost" to={`/clients/${client.id}#client-invoices`}>
+                    Billing
+                  </Link>
                   <Link className="button button-ghost" to={`/audit?client=${client.id}`}>
                     New audit
                   </Link>

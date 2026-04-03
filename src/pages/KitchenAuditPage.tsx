@@ -1092,6 +1092,52 @@ export function KitchenAuditPage() {
   const reportHtml = useMemo(() => makeAuditReport(form), [form]);
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
+  const readinessItems = useMemo(
+    () => [
+      {
+        label: 'Site setup',
+        value:
+          form.businessName.trim() && form.visitDate && form.auditType
+            ? 'Ready'
+            : 'Add site basics',
+        detail: 'Title, business, visit date, and audit type'
+      },
+      {
+        label: 'Commercial data',
+        value:
+          form.weeklySales > 0 && form.weeklyFoodCost > 0
+            ? 'Captured'
+            : 'Awaiting figures',
+        detail: 'Weekly sales, food cost, and target GP'
+      },
+      {
+        label: 'Action plan',
+        value:
+          calc.totalNamedActions > 0
+            ? `${calc.totalNamedActions} actions`
+            : 'Needs actions',
+        detail: 'Priority actions ready to present back to site'
+      },
+      {
+        label: 'Report readiness',
+        value:
+          completion.percent >= 70 && form.summary.trim()
+            ? 'Nearly ready'
+            : 'More evidence needed',
+        detail: 'Completion and narrative coverage before export'
+      }
+    ],
+    [
+      calc.totalNamedActions,
+      completion.percent,
+      form.auditType,
+      form.businessName,
+      form.summary,
+      form.visitDate,
+      form.weeklyFoodCost,
+      form.weeklySales
+    ]
+  );
 
   const refreshAudits = useCallback(async () => {
     try {
@@ -1425,6 +1471,16 @@ export function KitchenAuditPage() {
               <button className="button button-ghost" onClick={estimateSalesFromTradingProfile}>
                 Estimate sales
               </button>
+            </div>
+
+            <div className="audit-readiness-grid">
+              {readinessItems.map((item) => (
+                <div className="audit-readiness-card" key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                  <small>{item.detail}</small>
+                </div>
+              ))}
             </div>
           </div>
 
