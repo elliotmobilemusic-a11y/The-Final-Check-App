@@ -64,6 +64,43 @@ function joinLines(values: string[]) {
   return values.join('\n');
 }
 
+function formatShortDate(value?: string | null) {
+  if (!value) return 'No date set';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'No date set';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(parsed);
+}
+
+function daysUntil(value?: string | null) {
+  if (!value) return null;
+
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) return null;
+
+  const today = new Date();
+  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startTarget = new Date(
+    target.getFullYear(),
+    target.getMonth(),
+    target.getDate()
+  ).getTime();
+
+  return Math.round((startTarget - startToday) / (1000 * 60 * 60 * 24));
+}
+
+function reviewLabel(value?: string | null) {
+  const delta = daysUntil(value);
+  if (delta === null) return 'Not scheduled';
+  if (delta < 0) return `${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} overdue`;
+  if (delta === 0) return 'Due today';
+  return `Due in ${delta} day${delta === 1 ? '' : 's'}`;
+}
+
 function blankContact(): ClientContact {
   return {
     id: uid('contact'),
@@ -158,6 +195,11 @@ export function ClientProfilePage() {
       timeline: client.data.timeline.length
     };
   }, [client]);
+
+  const nextReviewState = useMemo(() => daysUntil(form?.nextReviewDate), [form?.nextReviewDate]);
+  const linkedWorkstreams = audits.length + menus.length;
+  const primaryContact =
+    form?.data.contacts.find((contact) => contact.isPrimary) ?? form?.data.contacts[0] ?? null;
 
   if (!client || !form) {
     return (
@@ -333,6 +375,24 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
               New menu
             </Link>
           </div>
+
+          <div className="client-hero-metrics">
+            <div className="client-hero-metric">
+              <span>Workstreams</span>
+              <strong>{linkedWorkstreams}</strong>
+              <small>{audits.length} audits and {menus.length} menu projects linked</small>
+            </div>
+            <div className="client-hero-metric">
+              <span>Review cadence</span>
+              <strong>{reviewLabel(form.nextReviewDate)}</strong>
+              <small>{formatShortDate(form.nextReviewDate)}</small>
+            </div>
+            <div className="client-hero-metric">
+              <span>Relationship</span>
+              <strong>{form.contactName || primaryContact?.name || 'Main contact not set'}</strong>
+              <small>{form.contactEmail || primaryContact?.email || 'No email stored yet'}</small>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -340,7 +400,7 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
         <StatCard label="Contacts" value={String(stats.contacts)} hint="Key people" />
         <StatCard label="Sites" value={String(stats.sites)} hint="Locations and venues" />
         <StatCard label="Open tasks" value={String(stats.tasksOpen)} hint="Follow-up actions" />
-        <StatCard label="Timeline items" value={String(stats.timeline)} hint="Client history" />
+        <StatCard label="Timeline items" value={String(stats.timeline)} hint="Client history and milestones" />
       </section>
 
       <section className="workspace-grid client-workspace">
@@ -512,6 +572,21 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
           </div>
 
           <article className="feature-card">
+            <div className="client-inline-summary">
+              <div className="client-inline-summary-item">
+                <span>Status</span>
+                <strong>{form.status}</strong>
+              </div>
+              <div className="client-inline-summary-item">
+                <span>Tier</span>
+                <strong>{form.tier}</strong>
+              </div>
+              <div className="client-inline-summary-item">
+                <span>Last updated</span>
+                <strong>{formatShortDate(form.updatedAt)}</strong>
+              </div>
+            </div>
+
             <div className="feature-top">
               <div>
                 <h3>Goals, risks and opportunities</h3>
@@ -817,17 +892,58 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
           <div className="panel">
             <div className="panel-header">
               <div>
+                <h3>Account snapshot</h3>
+                <p className="muted-copy">A quick relationship view before you dive into the detail.</p>
+              </div>
+            </div>
+            <div className="panel-body stack gap-12">
+              <div className="client-summary-list">
+                <div className="client-summary-row">
+                  <span>Primary contact</span>
+                  <strong>{form.contactName || primaryContact?.name || 'Not set'}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Email</span>
+                  <strong>{form.contactEmail || primaryContact?.email || 'Not set'}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Website</span>
+                  <strong>{form.website || 'Not set'}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Next review</span>
+                  <strong>{reviewLabel(form.nextReviewDate)}</strong>
+                </div>
+                <div className="client-summary-row">
+                  <span>Review status</span>
+                  <strong>
+                    {nextReviewState === null
+                      ? 'Review date missing'
+                      : nextReviewState < 0
+                        ? 'Attention needed'
+                        : nextReviewState <= 14
+                          ? 'Coming up soon'
+                          : 'On track'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
                 <h3>Linked audits</h3>
-                <p className="muted-copy">All audits connected to this client.</p>
+                <p className="muted-copy">Operational reviews already connected to this account.</p>
               </div>
             </div>
             <div className="panel-body stack gap-12">
               {audits.length === 0 ? <div className="muted-copy">No audits yet.</div> : null}
               {audits.map((audit) => (
-                <div className="saved-item" key={audit.id}>
+                <div className="saved-item saved-item-rich" key={audit.id}>
                   <div>
                     <strong>{audit.title}</strong>
-                    <div className="saved-meta">{audit.review_date || 'No date'}</div>
+                    <div className="saved-meta">{formatShortDate(audit.review_date || audit.updated_at)}</div>
                   </div>
                   <Link className="button button-ghost" to={`/audit?client=${client.id}&load=${audit.id}`}>
                     Open
@@ -841,16 +957,16 @@ function updateTask(id: string, key: keyof ClientTask, value: string) {
             <div className="panel-header">
               <div>
                 <h3>Linked menu projects</h3>
-                <p className="muted-copy">All menu work connected to this client.</p>
+                <p className="muted-copy">Commercial menu work already attached to this business record.</p>
               </div>
             </div>
             <div className="panel-body stack gap-12">
               {menus.length === 0 ? <div className="muted-copy">No menu projects yet.</div> : null}
               {menus.map((menu) => (
-                <div className="saved-item" key={menu.id}>
+                <div className="saved-item saved-item-rich" key={menu.id}>
                   <div>
                     <strong>{menu.title}</strong>
-                    <div className="saved-meta">{menu.review_date || 'No date'}</div>
+                    <div className="saved-meta">{formatShortDate(menu.review_date || menu.updated_at)}</div>
                   </div>
                   <Link className="button button-ghost" to={`/menu?client=${client.id}&load=${menu.id}`}>
                     Open

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -9,9 +9,50 @@ const navItems = [
   { to: '/menu', label: 'Menu Builder' }
 ];
 
+const routeMeta = [
+  {
+    match: (pathname: string) => pathname === '/dashboard',
+    eyebrow: 'Overview',
+    title: 'Portfolio command centre',
+    description: 'Track the full consultancy system, recent activity, and the next actions that matter.'
+  },
+  {
+    match: (pathname: string) => pathname === '/clients',
+    eyebrow: 'Clients',
+    title: 'Client portfolio and setup',
+    description: 'Create, review, and organise the businesses that sit behind every audit and menu engagement.'
+  },
+  {
+    match: (pathname: string) => pathname.startsWith('/clients/'),
+    eyebrow: 'Client profile',
+    title: 'Relationship, workstreams, and follow-up',
+    description: 'Keep the account view, supporting context, and linked delivery work in one place.'
+  },
+  {
+    match: (pathname: string) => pathname === '/audit',
+    eyebrow: 'Audit',
+    title: 'Kitchen performance audit workspace',
+    description: 'Capture operational findings, commercial pressure points, and the final action plan.'
+  },
+  {
+    match: (pathname: string) => pathname === '/menu',
+    eyebrow: 'Menu builder',
+    title: 'Menu engineering and commercial review',
+    description: 'Work through dish costing, pricing, GP, and mix with a stronger operating view.'
+  }
+];
+
+const shellQuickLinks = [
+  { to: '/clients', label: 'Open clients' },
+  { to: '/audit', label: 'New audit' },
+  { to: '/menu', label: 'New menu review' }
+];
+
 export function AppShell() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuth();
+  const meta = routeMeta.find((item) => item.match(location.pathname)) ?? routeMeta[0];
 
   async function handleSignOut() {
     await supabase?.auth.signOut();
@@ -54,6 +95,22 @@ export function AppShell() {
             <button className="button button-secondary" onClick={handleSignOut}>
               Sign out
             </button>
+          </div>
+
+          <div className="topbar-context">
+            <div className="topbar-context-copy">
+              <span className="topbar-context-kicker">{meta.eyebrow}</span>
+              <strong>{meta.title}</strong>
+              <p>{meta.description}</p>
+            </div>
+
+            <div className="topbar-context-actions">
+              {shellQuickLinks.map((item) => (
+                <Link className="button button-ghost" key={item.to} to={item.to}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </header>

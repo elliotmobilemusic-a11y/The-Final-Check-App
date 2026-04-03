@@ -65,24 +65,55 @@ export function LoginPage() {
 
           <h1>The Final Check</h1>
           <p>
-            Sign in to access your profit and performance consultancy workspace for food
-            businesses. The layout is cleaner, the navigation is simpler, and access stays
-            limited to approved users only.
+            Sign in to access the live consultancy operating system for client portfolios,
+            kitchen audits, menu engineering, and follow-up execution. Access stays limited to
+            approved users only.
           </p>
 
+          <div className="auth-stat-grid">
+            <div className="auth-stat-card">
+              <span>System</span>
+              <strong>Client-first</strong>
+              <small>Every audit and menu review can stay anchored to the right business.</small>
+            </div>
+            <div className="auth-stat-card">
+              <span>Workflow</span>
+              <strong>Joined up</strong>
+              <small>Commercial, operational, and follow-up work live in one protected place.</small>
+            </div>
+            <div className="auth-stat-card">
+              <span>Access</span>
+              <strong>Approved only</strong>
+              <small>Sign-in is restricted to authorised Supabase users for this workspace.</small>
+            </div>
+          </div>
+
           <div className="feature-list">
-            <div className="feature-chip">Modern top navigation</div>
-            <div className="feature-chip">Cleaner, simpler layout</div>
-            <div className="feature-chip">Protected client-only access</div>
-            <div className="feature-chip">Remember me support</div>
+            <div className="feature-chip">Operational dashboard and client hub</div>
+            <div className="feature-chip">Kitchen audit reporting workspace</div>
+            <div className="feature-chip">Menu costing and GP review flow</div>
+            <div className="feature-chip">Remember-me support on trusted devices</div>
+          </div>
+
+          <div className="auth-side-note">
+            <strong>Inside the workspace</strong>
+            <p>
+              Use the dashboard to spot priority work, then move straight into client setup,
+              audits, menu reviews, and account follow-up without switching systems.
+            </p>
           </div>
         </div>
 
         <div className="auth-card">
-          <h2>Sign in</h2>
-          <p className="muted-copy">
-            Use the email and password for an approved Supabase user account.
-          </p>
+          <div className="auth-card-header">
+            <div>
+              <h2>Sign in</h2>
+              <p className="muted-copy">
+                Use the email and password for an approved Supabase user account.
+              </p>
+            </div>
+            <div className="auth-card-badge">Secure workspace</div>
+          </div>
 
           {!hasSupabaseEnv ? (
             <div className="notice notice-warning">
@@ -124,6 +155,10 @@ export function LoginPage() {
               />
               <span>Remember me on this device</span>
             </label>
+
+            <div className="auth-form-note">
+              This keeps the browser signed in between sessions unless you explicitly sign out.
+            </div>
 
             {error ? <div className="notice notice-danger">{error}</div> : null}
 
