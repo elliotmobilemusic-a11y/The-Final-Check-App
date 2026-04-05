@@ -1,5 +1,14 @@
 export type Nullable<T> = T | null;
 
+export type MeasurementUnit =
+  | 'g'
+  | 'kg'
+  | 'ml'
+  | 'l'
+  | 'each'
+  | 'portion'
+  | 'pack';
+
 export interface AuditWasteItem {
   id: string;
   item: string;
@@ -106,7 +115,9 @@ export interface DishIngredient {
   id: string;
   name: string;
   qtyUsed: number;
+  qtyUnit: MeasurementUnit;
   packQty: number;
+  packUnit: MeasurementUnit;
   packCost: number;
 }
 

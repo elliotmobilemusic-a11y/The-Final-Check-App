@@ -1,6 +1,7 @@
 const OPENAI_ENDPOINT = 'https://api.openai.com/v1/responses';
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const WEBSITE_TIMEOUT_MS = 3500;
 
 function normalizeWebsite(value) {
   if (!value) return '';
@@ -213,6 +214,7 @@ function normalizeMatches(matches, sources, defaultLabel) {
         logoUrl: String(match.logoUrl ?? '').trim() || domainLogoUrl(website),
         sourceUrl: fallbackSourceUrl(match, sources),
         sourceLabel: fallbackSourceLabel(match, sources, defaultLabel),
+        email: String(match.email ?? '').trim(),
         phone: String(match.phone ?? '').trim(),
         addressLine: String(match.addressLine ?? '').trim(),
         registeredAddress: String(match.registeredAddress ?? '').trim(),
@@ -276,6 +278,185 @@ function collectGeminiSources(responseJson) {
   return [...new Map(webChunks.map((item) => [item.url || item.title, item])).values()];
 }
 
+function matchMetaTag(html, key, attribute = 'name') {
+  const pattern = new RegExp(
+    `<meta[^>]+${attribute}=["']${key}["'][^>]+content=["']([^"']+)["'][^>]*>`,
+    'i'
+  );
+  return html.match(pattern)?.[1]?.trim() ?? '';
+}
+
+function stripHtml(value) {
+  return String(value ?? '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseJsonLike(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function flattenJsonLdNode(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.flatMap((item) => flattenJsonLdNode(item));
+  if (typeof value === 'object' && value) {
+    if (Array.isArray(value['@graph'])) {
+      return flattenJsonLdNode(value['@graph']);
+    }
+    return [value];
+  }
+  return [];
+}
+
+function extractJsonLdNodes(html) {
+  const matches = [
+    ...html.matchAll(
+      /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+    )
+  ];
+
+  return matches.flatMap((match) => flattenJsonLdNode(parseJsonLike(match[1]?.trim() ?? '')));
+}
+
+function schemaTypeList(node) {
+  const typeValue = node?.['@type'];
+  if (Array.isArray(typeValue)) return typeValue.map((value) => String(value));
+  if (typeValue) return [String(typeValue)];
+  return [];
+}
+
+function schemaAddressText(address) {
+  if (!address) return '';
+  if (typeof address === 'string') return address.trim();
+
+  return [
+    address.streetAddress,
+    address.addressLocality,
+    address.addressRegion,
+    address.postalCode,
+    address.addressCountry
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).trim())
+    .join(', ');
+}
+
+function pickBestSchemaNode(nodes) {
+  const preferredTypes = [
+    'Organization',
+    'Corporation',
+    'Restaurant',
+    'FoodEstablishment',
+    'BarOrPub',
+    'CafeOrCoffeeShop',
+    'Hotel',
+    'LocalBusiness'
+  ];
+
+  return (
+    nodes.find((node) =>
+      schemaTypeList(node).some((type) => preferredTypes.includes(type))
+    ) ?? nodes[0] ?? null
+  );
+}
+
+async function fetchWebsiteMetadata(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), WEBSITE_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(normalizeWebsite(url), {
+      headers: {
+        'User-Agent': 'The-Final-Check-Business-Finder/1.0'
+      },
+      signal: controller.signal
+    });
+
+    if (!response.ok) return null;
+
+    const html = await response.text();
+    const schemaNodes = extractJsonLdNodes(html);
+    const schemaNode = pickBestSchemaNode(schemaNodes);
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const visibleText = stripHtml(html).slice(0, 1000);
+    const phoneMatch =
+      html.match(/(?:\+44\s?\d[\d\s().-]{7,}|\b0\d[\d\s().-]{8,}\b)/) ?? null;
+    const emailMatch =
+      html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i) ??
+      html.match(/mailto:([^"'?#\s]+)/i);
+
+    return {
+      schemaName: String(schemaNode?.name ?? '').trim(),
+      schemaDescription: String(schemaNode?.description ?? '').trim(),
+      schemaAddress: schemaAddressText(schemaNode?.address),
+      schemaPhone: String(schemaNode?.telephone ?? '').trim(),
+      schemaEmail: String(schemaNode?.email ?? '').trim(),
+      schemaLogo:
+        typeof schemaNode?.logo === 'string'
+          ? schemaNode.logo.trim()
+          : String(schemaNode?.logo?.url ?? '').trim(),
+      schemaWebsite: String(schemaNode?.url ?? '').trim(),
+      title: titleMatch?.[1]?.trim() ?? '',
+      description:
+        matchMetaTag(html, 'description') ||
+        matchMetaTag(html, 'og:description', 'property') ||
+        '',
+      image:
+        matchMetaTag(html, 'og:image', 'property') ||
+        matchMetaTag(html, 'twitter:image', 'name') ||
+        '',
+      phone: String(schemaNode?.telephone ?? '').trim() || phoneMatch?.[0]?.trim() ?? '',
+      email:
+        String(schemaNode?.email ?? '').trim() ||
+        String(emailMatch?.[1] ?? emailMatch?.[0] ?? '')
+          .replace(/^mailto:/i, '')
+          .trim(),
+      snippet: visibleText
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function enrichMatchFromWebsite(match) {
+  if (!match.website) return match;
+
+  const metadata = await fetchWebsiteMetadata(match.website);
+  if (!metadata) return match;
+
+  const enrichedDescription =
+    match.description ||
+    metadata.schemaDescription ||
+    metadata.description ||
+    metadata.title ||
+    metadata.snippet.slice(0, 220);
+
+  return {
+    ...match,
+    officialName: match.officialName || metadata.schemaName || match.name,
+    description: enrichedDescription,
+    website: match.website || normalizeWebsite(metadata.schemaWebsite),
+    logoUrl:
+      match.logoUrl ||
+      metadata.schemaLogo ||
+      metadata.image ||
+      domainLogoUrl(match.website || metadata.schemaWebsite),
+    phone: match.phone || metadata.phone || metadata.schemaPhone,
+    email: match.email || metadata.email || metadata.schemaEmail,
+    addressLine: match.addressLine || metadata.schemaAddress,
+    registeredAddress: match.registeredAddress || metadata.schemaAddress
+  };
+}
+
 async function callOpenAiBusinessSearch(query, apiKey, scope) {
   const prompt = [
     'You are a UK hospitality business enrichment engine.',
@@ -290,9 +471,10 @@ async function callOpenAiBusinessSearch(query, apiKey, scope) {
     'Prefer official UK websites, Companies House style registered details, and corporate or brand pages over directories.',
     'Do not return local areas, stations, streets, neighbourhoods, or generic map entities.',
     'If the query appears to be a domain or website, prioritise the entity that owns that website.',
+    'Prefer records where you can confidently provide the official website, registered address, company number, phone number, and representative UK sites.',
     'Return only JSON with shape {"matches":[...]} and no markdown.',
     'Each match must include:',
-    'name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sites, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
+    'name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, email, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sites, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
     'For multi-site groups, include up to 6 representative UK sites in sites[]. Each site must include name, address, website, status, notes.',
     'Keep confidenceScore between 0 and 100.',
     'Use short sourceLabel values.',
@@ -345,6 +527,7 @@ async function callGeminiBusinessSearch(query, apiKey, scope) {
     'Focus on official UK websites, company pages, brand pages, reputable trade coverage, and business listings.',
     'Never return local areas, streets, stations, wards, or neighbourhoods as matches.',
     'If the query looks like a domain or website, prefer the owning business or brand first.',
+    'Prefer matches that include official websites, registered address detail, and business metadata where available.',
     `Query: ${query}`
   ].join('\n');
 
@@ -371,7 +554,7 @@ async function callGeminiBusinessSearch(query, apiKey, scope) {
               'You are a hospitality business enrichment engine for a consultancy CRM.',
               'Return only JSON with shape {"matches":[...]} and no markdown.',
               'Search in the United Kingdom only unless the user explicitly asks otherwise.',
-              'Each match must include: name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sites, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
+              'Each match must include: name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, email, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sites, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
               'For multi-site groups, include up to 6 representative UK sites in sites[]. Each site must include name, address, website, status, notes.',
               'Use confidenceScore between 0 and 100.',
               'Use short sourceLabel values.',
@@ -454,9 +637,15 @@ export default async function handler(request, response) {
       .sort((a, b) => b.confidenceScore - a.confidenceScore)
       .slice(0, 8);
 
+    const enrichedMatches = await Promise.all(
+      rerankedMatches.map((match, index) =>
+        index < 5 ? enrichMatchFromWebsite(match) : Promise.resolve(match)
+      )
+    );
+
     response.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=3600');
     response.status(200).json({
-      matches: rerankedMatches,
+      matches: enrichedMatches,
       provider
     });
   } catch (error) {

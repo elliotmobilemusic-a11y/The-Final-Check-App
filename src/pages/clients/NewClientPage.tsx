@@ -54,6 +54,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
     coverUrl: lookup.coverUrl || current.coverUrl || lookup.logoUrl,
     industry: lookup.industry || current.industry,
     website: lookup.website || current.website,
+    contactEmail: lookup.email || current.contactEmail,
     contactPhone: lookup.phone || current.contactPhone,
     tags: nextTags,
     data: {
@@ -70,6 +71,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
       registeredAddress:
         current.data.registeredAddress || lookup.registeredAddress || lookup.addressLine,
       billingName: current.data.billingName || lookup.name,
+      billingEmail: current.data.billingEmail || lookup.email,
       billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
       companyNumber: current.data.companyNumber || lookup.companyNumber,
       vatNumber: current.data.vatNumber || lookup.vatNumber,
@@ -332,12 +334,23 @@ export function NewClientPage() {
                           {result.website ? (
                             <span className="crm-alert-chip">{result.website.replace(/^https?:\/\//, '')}</span>
                           ) : null}
+                          {result.email ? <span className="crm-alert-chip">{result.email}</span> : null}
+                          {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                           {result.siteCountEstimate > 1 ? (
                             <span className="crm-alert-chip is-stable">
                               {result.siteCountEstimate} known sites
                             </span>
                           ) : null}
+                          {result.companyNumber ? (
+                            <span className="crm-alert-chip">Co. {result.companyNumber}</span>
+                          ) : null}
                         </div>
+
+                        {result.registeredAddress || result.addressLine ? (
+                          <p className="crm-lookup-note">
+                            {result.registeredAddress || result.addressLine}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 

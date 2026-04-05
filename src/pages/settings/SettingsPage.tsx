@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { NavLink, useParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
@@ -29,8 +30,46 @@ const landingPages: Array<{ value: LandingPage; label: string }> = [
   { value: '/clients', label: 'Clients' },
   { value: '/audit', label: 'Audit tool' },
   { value: '/menu', label: 'Menu builder' },
-  { value: '/settings', label: 'Settings' }
+  { value: '/settings/profile', label: 'Settings' }
 ];
+
+type SettingsSection = 'profile' | 'appearance' | 'workflow' | 'security';
+
+const settingsSections: Array<{
+  value: SettingsSection;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'profile',
+    label: 'Profile',
+    description: 'Visible account details and identity shown in the app shell.'
+  },
+  {
+    value: 'appearance',
+    label: 'Appearance',
+    description: 'Theme, spacing, motion, and visual working preferences.'
+  },
+  {
+    value: 'workflow',
+    label: 'Workflow',
+    description: 'Startup, landing-page, and device behaviour controls.'
+  },
+  {
+    value: 'security',
+    label: 'Security',
+    description: 'Password updates and sign-in persistence preferences.'
+  }
+];
+
+function isSettingsSection(value?: string): value is SettingsSection {
+  return (
+    value === 'profile' ||
+    value === 'appearance' ||
+    value === 'workflow' ||
+    value === 'security'
+  );
+}
 
 function deriveDisplayName(email?: string | null) {
   if (!email) return 'Approved user';
@@ -48,8 +87,10 @@ function getInitials(name: string) {
 }
 
 export function SettingsPage() {
+  const { section } = useParams();
   const { session } = useAuth();
   const { preferences, updatePreferences, resetDevicePreferences } = usePreferences();
+  const activeSection = isSettingsSection(section) ? section : 'profile';
   const [displayName, setDisplayName] = useState(preferences.displayName);
   const [avatarUrl, setAvatarUrl] = useState(preferences.avatarUrl);
   const [theme, setTheme] = useState<ThemeMode>(preferences.theme);
@@ -105,6 +146,8 @@ export function SettingsPage() {
   );
   const avatarPreview = avatarUrl.trim() || preferences.avatarUrl;
   const currentTheme = themeOptions.find((option) => option.value === theme) ?? themeOptions[0];
+  const activeSectionMeta =
+    settingsSections.find((item) => item.value === activeSection) ?? settingsSections[0];
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -168,18 +211,8 @@ export function SettingsPage() {
     <div className="page-stack settings-page">
       <PageIntro
         eyebrow="Settings"
-        title="Account and device preferences"
-        description="Control your profile, themes, startup behaviour, and device defaults from one place without hunting through the app."
-        actions={
-          <>
-            <button className="button button-primary" form="settings-form" disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save settings'}
-            </button>
-            <button className="button button-secondary" onClick={handleResetDevicePreferences}>
-              Reset device preferences
-            </button>
-          </>
-        }
+        title={activeSectionMeta.label}
+        description={activeSectionMeta.description}
         side={
           <div className="settings-profile-card">
             <div className="settings-profile-top">
@@ -235,6 +268,19 @@ export function SettingsPage() {
         }
       />
 
+      <nav className="settings-section-nav" aria-label="Settings sections">
+        {settingsSections.map((item) => (
+          <NavLink
+            key={item.value}
+            to={`/settings/${item.value}`}
+            className={({ isActive }) => `settings-section-link ${isActive ? 'active' : ''}`}
+          >
+            <strong>{item.label}</strong>
+            <span>{item.description}</span>
+          </NavLink>
+        ))}
+      </nav>
+
       <section className="stats-grid compact">
         <StatCard
           label="Signed in as"
@@ -258,15 +304,15 @@ export function SettingsPage() {
           <form className="panel" id="settings-form" onSubmit={handleSave}>
             <div className="panel-header">
               <div>
-                <h3>Account and app settings</h3>
+                <h3>{activeSectionMeta.label}</h3>
                 <p className="muted-copy">
-                  Keep your visible account details and everyday app preferences in one place.
+                  {activeSectionMeta.description}
                 </p>
               </div>
-              <div className="soft-pill">{message}</div>
             </div>
 
             <div className="panel-body stack gap-24">
+              {activeSection === 'profile' ? (
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Account profile</h4>
@@ -308,7 +354,9 @@ export function SettingsPage() {
                   </label>
                 </div>
               </section>
+              ) : null}
 
+              {activeSection === 'appearance' ? (
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Theme and appearance</h4>
@@ -384,7 +432,9 @@ export function SettingsPage() {
                   </label>
                 </div>
               </section>
+              ) : null}
 
+              {activeSection === 'workflow' ? (
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Device and workflow preferences</h4>
@@ -425,7 +475,9 @@ export function SettingsPage() {
                   </label>
                 </div>
               </section>
+              ) : null}
 
+              {activeSection === 'security' ? (
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Password update</h4>
@@ -454,6 +506,24 @@ export function SettingsPage() {
                   </label>
                 </div>
               </section>
+              ) : null}
+
+              <div className="settings-save-bar">
+                <div className="settings-save-copy">
+                  <span className="soft-pill">{message}</span>
+                  <p className="muted-copy">
+                    Save changes from the bottom of the page once you have finished reviewing this section.
+                  </p>
+                </div>
+                <div className="header-actions">
+                  <button className="button button-secondary" onClick={handleResetDevicePreferences} type="button">
+                    Reset device preferences
+                  </button>
+                  <button className="button button-primary" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save changes'}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>

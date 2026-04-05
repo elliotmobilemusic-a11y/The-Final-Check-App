@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useAuth } from '../../context/AuthContext';
+import { usePreferences } from '../../context/PreferencesContext';
 import type { ClientRecord } from '../../types';
 import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
@@ -96,7 +98,14 @@ function pluralize(value: number, singular: string, plural = `${singular}s`) {
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
+function deriveDisplayName(email?: string | null) {
+  if (!email) return 'there';
+  return email.split('@')[0].replace(/[._-]+/g, ' ');
+}
+
 export function DashboardPage() {
+  const { session } = useAuth();
+  const { preferences } = usePreferences();
   const [clients, setClients] = useState<ClientRows>([]);
   const [audits, setAudits] = useState<AuditRows>([]);
   const [menus, setMenus] = useState<MenuRows>([]);
@@ -454,13 +463,20 @@ export function DashboardPage() {
 
   const coveragePercent =
     totalProjects > 0 ? Math.round((linkedProjects / totalProjects) * 100) : 0;
+  const welcomeName =
+    preferences.displayName ||
+    (typeof session?.user.user_metadata?.display_name === 'string'
+      ? session.user.user_metadata.display_name
+      : '') ||
+    deriveDisplayName(session?.user.email);
+  const welcomeLabel = welcomeName.split(/\s+/).filter(Boolean)[0] || welcomeName;
 
   return (
     <div className="page-stack">
       <PageIntro
         eyebrow="Overview"
-        title="Portfolio overview"
-        description="See the client book, active delivery work, and the next operational actions without hunting through the app."
+        title={`Welcome, ${welcomeLabel}`}
+        description="Here is the working overview for clients, active delivery, upcoming reviews, and the next actions that need your attention."
         actions={
           <>
             <Link className="button button-primary" to="/clients">

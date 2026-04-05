@@ -14,14 +14,96 @@ import { listClients } from '../../services/clients';
 import type {
   ClientRecord,
   DishIngredient,
+  MeasurementUnit,
   MenuDish,
   MenuProjectState,
   SupabaseRecord
 } from '../../types';
 import { downloadText, fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 
+const ingredientUnitOptions: Array<{ value: MeasurementUnit; label: string }> = [
+  { value: 'g', label: 'Grams' },
+  { value: 'kg', label: 'Kilograms' },
+  { value: 'ml', label: 'Millilitres' },
+  { value: 'l', label: 'Litres' },
+  { value: 'each', label: 'Each' },
+  { value: 'portion', label: 'Portions' },
+  { value: 'pack', label: 'Packs' }
+];
+
 function blankIngredient(): DishIngredient {
-  return { id: uid('ing'), name: '', qtyUsed: 0, packQty: 1, packCost: 0 };
+  return {
+    id: uid('ing'),
+    name: '',
+    qtyUsed: 0,
+    qtyUnit: 'g',
+    packQty: 1,
+    packUnit: 'kg',
+    packCost: 0
+  };
+}
+
+function normalizeIngredient(ingredient?: Partial<DishIngredient>): DishIngredient {
+  return {
+    ...blankIngredient(),
+    ...ingredient,
+    id: ingredient?.id || uid('ing'),
+    qtyUsed: num(ingredient?.qtyUsed),
+    packQty: Math.max(1, num(ingredient?.packQty) || 1),
+    packCost: num(ingredient?.packCost)
+  };
+}
+
+function normalizeDish(dish?: Partial<MenuDish>): MenuDish {
+  return {
+    id: dish?.id || uid('dish'),
+    name: String(dish?.name ?? ''),
+    sellPrice: num(dish?.sellPrice),
+    targetGp: num(dish?.targetGp),
+    mix: num(dish?.mix),
+    notes: String(dish?.notes ?? ''),
+    ingredients:
+      Array.isArray(dish?.ingredients) && dish.ingredients.length
+        ? dish.ingredients.map((ingredient) => normalizeIngredient(ingredient))
+        : [blankIngredient()]
+  };
+}
+
+function normalizeMenuProject(project: MenuProjectState): MenuProjectState {
+  return {
+    ...project,
+    clientSiteId: project.clientSiteId ?? null,
+    sections: (project.sections ?? []).map((section) => ({
+      ...section,
+      dishes: (section.dishes ?? []).map((dish) => normalizeDish(dish))
+    }))
+  };
+}
+
+const unitFamilies: Record<MeasurementUnit, 'weight' | 'volume' | 'count' | 'pack'> = {
+  g: 'weight',
+  kg: 'weight',
+  ml: 'volume',
+  l: 'volume',
+  each: 'count',
+  portion: 'count',
+  pack: 'pack'
+};
+
+const unitMultipliers: Record<MeasurementUnit, number> = {
+  g: 1,
+  kg: 1000,
+  ml: 1,
+  l: 1000,
+  each: 1,
+  portion: 1,
+  pack: 1
+};
+
+function convertUnitAmount(value: number, from: MeasurementUnit, to: MeasurementUnit) {
+  if (from === to) return value;
+  if (unitFamilies[from] !== unitFamilies[to]) return null;
+  return (value * unitMultipliers[from]) / unitMultipliers[to];
 }
 
 function createDefaultMenu(clientId: string | null = null): MenuProjectState {
@@ -51,7 +133,10 @@ function dishUnitCost(dish: MenuDish) {
     const qtyUsed = num(ingredient.qtyUsed);
     const packQty = Math.max(num(ingredient.packQty), 1);
     const packCost = num(ingredient.packCost);
-    return sum + (qtyUsed / packQty) * packCost;
+    const comparableQty =
+      convertUnitAmount(qtyUsed, ingredient.qtyUnit, ingredient.packUnit) ?? qtyUsed;
+
+    return sum + (comparableQty / packQty) * packCost;
   }, 0);
 }
 
@@ -339,7 +424,9 @@ export function MenuBuilderPage() {
   const queryClientId = searchParams.get('client') || null;
   const queryLoadId = searchParams.get('load');
 
-  const [project, setProject] = useState<MenuProjectState>(() => createDefaultMenu(queryClientId));
+  const [project, setProject] = useState<MenuProjectState>(() =>
+    normalizeMenuProject(createDefaultMenu(queryClientId))
+  );
   const [savedProjects, setSavedProjects] = useState<SupabaseRecord<MenuProjectState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [editingDishId, setEditingDishId] = useState<string | null>(null);
@@ -522,7 +609,7 @@ export function MenuBuilderPage() {
         if (!record) return;
 
         setProject({
-          ...record.data,
+          ...normalizeMenuProject(record.data),
           id: record.id,
           clientId: record.client_id ?? record.data.clientId ?? null,
           createdAt: record.created_at,
@@ -623,8 +710,8 @@ export function MenuBuilderPage() {
     setEditingDishId(existing?.id ?? null);
     setDishDraft(
       existing
-        ? JSON.parse(JSON.stringify(existing))
-        : {
+        ? normalizeDish(JSON.parse(JSON.stringify(existing)) as MenuDish)
+        : normalizeDish({
             id: uid('dish'),
             name: '',
             sellPrice: 0,
@@ -632,7 +719,7 @@ export function MenuBuilderPage() {
             mix: 1,
             notes: '',
             ingredients: [blankIngredient()]
-          }
+          })
     );
   }
 
@@ -689,8 +776,10 @@ export function MenuBuilderPage() {
     }
 
     const cleanDish = {
-      ...dishDraft,
-      ingredients: dishDraft.ingredients.filter((ingredient) => safe(ingredient.name))
+      ...normalizeDish(dishDraft),
+      ingredients: dishDraft.ingredients
+        .filter((ingredient) => safe(ingredient.name))
+        .map((ingredient) => normalizeIngredient(ingredient))
     };
 
     if (!cleanDish.ingredients.length) {
@@ -761,7 +850,7 @@ export function MenuBuilderPage() {
       setSaving(true);
       const saved = await saveMenuProject(project);
       setProject({
-        ...saved.data,
+        ...normalizeMenuProject(saved.data),
         id: saved.id,
         clientId: saved.client_id ?? saved.data.clientId ?? null,
         createdAt: saved.created_at,
@@ -778,7 +867,7 @@ export function MenuBuilderPage() {
 
   function newProject() {
     const activeClientId = queryClientId || null;
-    setProject(createDefaultMenu(activeClientId));
+    setProject(normalizeMenuProject(createDefaultMenu(activeClientId)));
     setMessage('New menu started.');
   }
 
@@ -806,7 +895,7 @@ export function MenuBuilderPage() {
       .then((content) => {
         const parsed = JSON.parse(content) as MenuProjectState;
         setProject({
-          ...parsed,
+          ...normalizeMenuProject(parsed),
           clientId: parsed.clientId ?? queryClientId ?? null
         });
         setMessage('Menu JSON loaded.');
@@ -818,7 +907,7 @@ export function MenuBuilderPage() {
 
   async function handleLoad(record: SupabaseRecord<MenuProjectState>) {
     setProject({
-      ...record.data,
+      ...normalizeMenuProject(record.data),
       id: record.id,
       clientId: record.client_id ?? record.data.clientId ?? null,
       createdAt: record.created_at,
@@ -834,7 +923,7 @@ export function MenuBuilderPage() {
       await deleteMenuProject(id);
 
       if (project.id === id) {
-        setProject(createDefaultMenu(queryClientId || null));
+        setProject(normalizeMenuProject(createDefaultMenu(queryClientId || null)));
       }
 
       await refreshProjects();
@@ -1551,29 +1640,67 @@ export function MenuBuilderPage() {
                       </label>
                       <label className="field">
                         <span>Qty used</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={ingredient.qtyUsed}
-                          onChange={(e) =>
-                            updateIngredient(ingredient.id, 'qtyUsed', num(e.target.value))
-                          }
-                        />
+                        <div className="unit-input-row">
+                          <input
+                            className="input"
+                            type="number"
+                            value={ingredient.qtyUsed}
+                            onChange={(e) =>
+                              updateIngredient(ingredient.id, 'qtyUsed', num(e.target.value))
+                            }
+                          />
+                          <select
+                            className="input unit-select"
+                            value={ingredient.qtyUnit}
+                            onChange={(e) =>
+                              updateIngredient(
+                                ingredient.id,
+                                'qtyUnit',
+                                e.target.value as MeasurementUnit
+                              )
+                            }
+                          >
+                            {ingredientUnitOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </label>
                       <label className="field">
-                        <span>Pack qty</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={ingredient.packQty}
-                          onChange={(e) =>
-                            updateIngredient(
-                              ingredient.id,
-                              'packQty',
-                              Math.max(1, num(e.target.value))
-                            )
-                          }
-                        />
+                        <span>Pack size</span>
+                        <div className="unit-input-row">
+                          <input
+                            className="input"
+                            type="number"
+                            value={ingredient.packQty}
+                            onChange={(e) =>
+                              updateIngredient(
+                                ingredient.id,
+                                'packQty',
+                                Math.max(1, num(e.target.value))
+                              )
+                            }
+                          />
+                          <select
+                            className="input unit-select"
+                            value={ingredient.packUnit}
+                            onChange={(e) =>
+                              updateIngredient(
+                                ingredient.id,
+                                'packUnit',
+                                e.target.value as MeasurementUnit
+                              )
+                            }
+                          >
+                            {ingredientUnitOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </label>
                       <label className="field">
                         <span>Pack cost (£)</span>

@@ -111,18 +111,7 @@ export function AppShell() {
             </div>
 
             <div className="shell-toolbar-actions">
-              <div className="shell-quick-actions" aria-label="Quick actions">
-                <Link className="shell-utility-link" to="/clients/new">
-                  New client
-                </Link>
-                <Link className="shell-utility-link" to="/audit">
-                  New audit
-                </Link>
-                <Link className="shell-utility-link" to="/menu">
-                  New menu
-                </Link>
-              </div>
-              <Link className="user-chip shell-profile-link" to="/settings">
+              <Link className="user-chip shell-profile-link" to="/settings/profile">
                 {avatarUrl ? (
                   <img
                     alt={`${displayName} avatar`}

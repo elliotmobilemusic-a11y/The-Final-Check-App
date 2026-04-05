@@ -64,41 +64,12 @@ export function LoginPage() {
 
           <h1>The Final Check</h1>
           <p>
-            Sign in to access client records, audit reports, menu engineering, billing, and
-            follow-up work in one secure system. Access is limited to approved users.
+            Sign in to manage clients, site reviews, menu work, billing, and follow-up from one
+            secure workspace.
           </p>
-
-          <div className="auth-stat-grid">
-            <div className="auth-stat-card">
-              <span>System</span>
-              <strong>Client-first</strong>
-              <small>Every audit and menu review can stay anchored to the right business.</small>
-            </div>
-            <div className="auth-stat-card">
-              <span>Workflow</span>
-              <strong>Joined up</strong>
-              <small>Commercial, operational, and follow-up work live in one protected place.</small>
-            </div>
-            <div className="auth-stat-card">
-              <span>Access</span>
-              <strong>Approved only</strong>
-              <small>Only approved account holders can access saved client and project data.</small>
-            </div>
-          </div>
-
-          <div className="feature-list">
-            <div className="feature-chip">Operational dashboard and client hub</div>
-            <div className="feature-chip">Kitchen audit reports and action plans</div>
-            <div className="feature-chip">Menu costing and GP review flow</div>
-            <div className="feature-chip">Remember-me support on trusted devices</div>
-          </div>
-
           <div className="auth-side-note">
-            <strong>Inside the app</strong>
-            <p>
-              Use the dashboard to spot priority work, then move straight into client setup,
-              audits, menu reviews, and account follow-up without switching systems.
-            </p>
+            <strong>Inside the system</strong>
+            <p>Client records, audit work, menu reviews, and billing stay connected in one place.</p>
           </div>
         </div>
 

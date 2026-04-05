@@ -2,7 +2,12 @@ import { PropsWithChildren, createContext, useCallback, useContext, useEffect, u
 import { useAuth } from './AuthContext';
 
 export type ThemeMode = 'sandstone' | 'coastal' | 'cedar' | 'sunrise' | 'midnight';
-export type LandingPage = '/dashboard' | '/clients' | '/audit' | '/menu' | '/settings';
+export type LandingPage =
+  | '/dashboard'
+  | '/clients'
+  | '/audit'
+  | '/menu'
+  | '/settings/profile';
 export type ThemeOption = {
   value: ThemeMode;
   label: string;
@@ -54,8 +59,15 @@ function readStoredPreferences(): Partial<AppPreferences> {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as Partial<AppPreferences>;
-    return parsed ?? {};
+    const parsed = (JSON.parse(raw) as Partial<AppPreferences>) ?? {};
+
+    return {
+      ...parsed,
+      defaultLandingPage:
+        String(parsed.defaultLandingPage ?? '') === '/settings'
+          ? '/settings/profile'
+          : parsed.defaultLandingPage
+    };
   } catch {
     return {};
   }

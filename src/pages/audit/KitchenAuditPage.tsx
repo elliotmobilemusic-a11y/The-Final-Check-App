@@ -76,7 +76,16 @@ function defaultControlChecks(): AuditControlCheck[] {
     blankControlCheck({ category: 'Purchasing', label: 'Ordering pars and ownership are clearly set' }),
     blankControlCheck({ category: 'Operations', label: 'Prep sheets or production plans are used each service' }),
     blankControlCheck({ category: 'People', label: 'Team training records and onboarding are current' }),
-    blankControlCheck({ category: 'Maintenance', label: 'Equipment issues are logged and followed up' })
+    blankControlCheck({ category: 'Maintenance', label: 'Equipment issues are logged and followed up' }),
+    blankControlCheck({ category: 'Food safety', label: 'Probe calibration and fridge / freezer checks are up to date' }),
+    blankControlCheck({ category: 'Compliance', label: 'COSHH, HACCP, and due-diligence documents are current' }),
+    blankControlCheck({ category: 'Stock', label: 'High-value lines are counted and secured correctly' }),
+    blankControlCheck({ category: 'Operations', label: 'Service pass and handover communication are structured' }),
+    blankControlCheck({ category: 'Systems', label: 'Menu updates, supplier changes, and recipe amendments are signed off' }),
+    blankControlCheck({ category: 'Cost control', label: 'Portion control tools and plating standards are in place' }),
+    blankControlCheck({ category: 'People', label: 'Rota, labour deployment, and section ownership are clear' }),
+    blankControlCheck({ category: 'Purchasing', label: 'Supplier pricing, substitutions, and approvals are reviewed regularly' }),
+    blankControlCheck({ category: 'Maintenance', label: 'Critical equipment has preventive maintenance or service cover in place' })
   ];
 }
 

@@ -39,7 +39,8 @@ export default function App() {
           <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
           <Route path="audit" element={<KitchenAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
+          <Route path="settings/:section" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

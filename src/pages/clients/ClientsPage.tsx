@@ -226,36 +226,36 @@ export function ClientsPage() {
       <PageIntro
         eyebrow="Clients"
         title="Client list"
-        description="Use this page as the working CRM list. Search, filter, and open the right account quickly, then use the dedicated setup page when you need to create a new client."
+        description="Use this page as the live client book. Search, sort, and open the right record quickly, then use the add panel when you need to create a new account."
         actions={
           <>
             <Link className="button button-primary" to="/clients/new">
-              Add new client
-            </Link>
-            <Link className="button button-secondary" to="/dashboard">
-              Back to overview
+              Add client
             </Link>
           </>
         }
         side={
-          <div className="page-intro-summary">
-            <span className="soft-pill">CRM snapshot</span>
-            <strong>Live client book</strong>
-            <p>{message}</p>
+          <div className="page-intro-summary client-add-summary">
+            <span className="soft-pill">Add</span>
+            <strong>New client setup</strong>
+            <p>Create a new account, run the business finder, and save the record into the CRM.</p>
             <div className="page-intro-summary-list">
               <div>
                 <span>Accounts</span>
                 <strong>{clients.length}</strong>
               </div>
               <div>
-                <span>Pipeline</span>
-                <strong>{fmtCurrency(pipelineValue)}</strong>
+                <span>Visible</span>
+                <strong>{filteredClients.length}</strong>
               </div>
               <div>
                 <span>Open invoices</span>
                 <strong>{openInvoiceCount}</strong>
               </div>
             </div>
+            <Link className="button button-primary" to="/clients/new">
+              Add client
+            </Link>
           </div>
         }
       />
@@ -338,12 +338,10 @@ export function ClientsPage() {
         <div className="panel-body stack gap-20">
           <div className="crm-controls-top">
             <div>
-              <h3>Client CRM list</h3>
-              <p>Open the account you need and move straight into billing, audit, menu, or follow-up work.</p>
+              <h3>Client book</h3>
+              <p>Open the account you need and move straight into contacts, sites, billing, audit, menu, or follow-up work.</p>
             </div>
-            <Link className="button button-primary" to="/clients/new">
-              Add new client
-            </Link>
+            <span className="soft-pill">Operational list</span>
           </div>
 
           <div className="clients-long-list">
@@ -424,31 +422,19 @@ export function ClientsPage() {
                       <strong>{reviewLabel(client.next_review_date)}</strong>
                     </div>
                     <div className="crm-metric-card">
-                      <span>Monthly value</span>
-                      <strong>{fmtCurrency(Number(data.estimatedMonthlyValue || 0))}</strong>
-                    </div>
-                    <div className="crm-metric-card">
                       <span>Pipeline</span>
                       <strong>{fmtCurrency(pipeline)}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Open invoices</span>
-                      <strong>{openInvoices.length}</strong>
                     </div>
                     <div className="crm-metric-card">
                       <span>Outstanding</span>
                       <strong>{fmtCurrency(outstanding)}</strong>
                     </div>
                     <div className="crm-metric-card">
-                      <span>Open tasks</span>
-                      <strong>{openTasks}</strong>
-                    </div>
-                    <div className="crm-metric-card">
                       <span>Sites</span>
                       <strong>{Math.max(data.sites.length, data.siteCountEstimate || 0)}</strong>
                     </div>
                     <div className="crm-metric-card">
-                      <span>Updated</span>
+                      <span>Last updated</span>
                       <strong>{formatShortDate(client.updated_at)}</strong>
                     </div>
                   </div>

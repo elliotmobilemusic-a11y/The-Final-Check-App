@@ -61,6 +61,7 @@ export type BusinessLookupResult = {
   logoUrl: string;
   sourceUrl: string;
   sourceLabel: string;
+  email: string;
   phone: string;
   addressLine: string;
   registeredAddress: string;
@@ -474,6 +475,7 @@ function baseWikidataResult(
     logoUrl,
     sourceUrl: `${WIKIDATA_PAGE}/${entity.id}`,
     sourceLabel: 'Wikidata',
+    email: '',
     phone: '',
     addressLine: '',
     registeredAddress: '',
@@ -508,6 +510,7 @@ function baseOpenStreetMapResult(
   );
   const industry = wikidataResult?.industry || hospitalityLabel(place);
   const location = wikidataResult?.location || locationFromAddress(place.address);
+  const email = place.extratags?.email || place.extratags?.['contact:email'] || '';
   const phone = place.extratags?.phone || place.extratags?.['contact:phone'] || '';
   const name =
     wikidataResult?.name ||
@@ -544,6 +547,7 @@ function baseOpenStreetMapResult(
     logoUrl,
     sourceUrl: openStreetMapUrl(place),
     sourceLabel: wikidataResult ? 'OpenStreetMap + Wikidata' : 'OpenStreetMap',
+    email,
     phone,
     addressLine: addressLine(place),
     registeredAddress: '',
@@ -589,6 +593,7 @@ function mergeBusinessResults(current: BusinessLookupResult, incoming: BusinessL
             'OpenStreetMap + Wikidata + Wikidata',
             'OpenStreetMap + Wikidata'
           ),
+    email: preferred.email || secondary.email,
     phone: preferred.phone || secondary.phone,
     addressLine: preferred.addressLine || secondary.addressLine,
     registeredAddress: preferred.registeredAddress || secondary.registeredAddress,
@@ -618,6 +623,7 @@ function buildBusinessSummary(result: BusinessLookupResult, summaryText?: string
     result.addressLine ? `Address: ${result.addressLine}` : '',
     result.companyNumber ? `Company number: ${result.companyNumber}` : '',
     result.siteCountEstimate > 1 ? `Sites: approximately ${result.siteCountEstimate}` : '',
+    result.email ? `Email: ${result.email}` : '',
     result.phone ? `Phone: ${result.phone}` : '',
     result.website ? `Website: ${result.website}` : ''
   ].filter(Boolean);
@@ -670,6 +676,7 @@ async function searchBusinessProfilesWithAi(
           logoUrl: String(match.logoUrl ?? '').trim() || domainLogoUrl(website),
           sourceUrl: String(match.sourceUrl ?? '').trim(),
           sourceLabel: String(match.sourceLabel ?? 'OpenAI web search').trim(),
+          email: String(match.email ?? '').trim(),
           phone: String(match.phone ?? '').trim(),
           addressLine: String(match.addressLine ?? '').trim(),
           registeredAddress: String(match.registeredAddress ?? '').trim(),
