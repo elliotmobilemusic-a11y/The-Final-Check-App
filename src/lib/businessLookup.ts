@@ -33,6 +33,10 @@ type OpenStreetMapPlace = {
   namedetails?: Record<string, string>;
 };
 
+type AiBusinessLookupResponse = {
+  matches?: Array<Partial<BusinessLookupResult>>;
+};
+
 export type BusinessLookupResult = {
   id: string;
   name: string;
@@ -515,6 +519,57 @@ function buildBusinessSummary(result: BusinessLookupResult, summaryText?: string
   return parts.join('. ') || `${result.name} matched from public business data.`;
 }
 
+async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLookupResult[]> {
+  try {
+    const response = await fetch(`/api/business-search?q=${encodeURIComponent(query)}`, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as AiBusinessLookupResponse;
+
+    return (payload.matches ?? [])
+      .map((match, index) => {
+        const name = String(match.name ?? '').trim();
+        if (!name) return null;
+
+        const website = normalizeWebsite(match.website);
+        const confidenceScore = Number(match.confidenceScore ?? 0);
+
+        return {
+          id: String(match.id ?? `ai:${normalizeName(name) || index}`),
+          name,
+          description: String(match.description ?? '').trim(),
+          resultType: match.resultType === 'site' ? 'site' : 'group',
+          website,
+          industry: String(match.industry ?? '').trim(),
+          location: String(match.location ?? '').trim(),
+          logoUrl: String(match.logoUrl ?? '').trim() || domainLogoUrl(website),
+          sourceUrl: String(match.sourceUrl ?? '').trim(),
+          sourceLabel: String(match.sourceLabel ?? 'OpenAI web search').trim(),
+          phone: String(match.phone ?? '').trim(),
+          addressLine: String(match.addressLine ?? '').trim(),
+          wikidataId: String(match.wikidataId ?? '').trim(),
+          confidenceScore,
+          confidenceLabel:
+            String(match.confidenceLabel ?? '').trim() || confidenceLabel(confidenceScore),
+          signals: Array.isArray(match.signals)
+            ? match.signals.map((item) => String(item).trim()).filter(Boolean)
+            : []
+        } satisfies BusinessLookupResult;
+      })
+      .filter(isPresent)
+      .sort((a, b) => b.confidenceScore - a.confidenceScore);
+  } catch {
+    return [];
+  }
+}
+
 async function searchWikidata(query: string) {
   const searches = await Promise.all(
     queryVariants(query).map(async (variant) => {
@@ -540,6 +595,12 @@ async function searchOpenStreetMap(query: string) {
 export async function searchBusinessProfiles(query: string): Promise<BusinessLookupResult[]> {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
+
+  const aiResults = await searchBusinessProfilesWithAi(trimmed);
+  if (aiResults.length) {
+    return aiResults.slice(0, 8);
+  }
+
   const siteSearch = queryLooksLikeSiteSearch(trimmed);
 
   const [wikidataSearch, places] = await Promise.all([searchWikidata(trimmed), searchOpenStreetMap(trimmed)]);

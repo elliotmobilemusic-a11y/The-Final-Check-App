@@ -161,44 +161,33 @@ function shellHtml(title: string, bodyHtml: string) {
           border-bottom: 1px solid rgba(86, 81, 91, 0.12);
         }
         .report-brand {
-          display: flex;
-          align-items: center;
-          gap: 14px;
+          display: grid;
+          gap: 10px;
           min-width: 0;
         }
-        .report-brand-mark {
-          width: 60px;
-          height: 60px;
-          flex-shrink: 0;
-          display: grid;
-          place-items: center;
-          padding: 5px;
-          border-radius: 20px;
-          background: var(--paper-strong);
-          border: 1px solid rgba(198, 161, 97, 0.18);
-        }
-        .report-brand-mark img {
-          width: 100%;
-          height: 100%;
+        .report-wordmark {
+          width: min(360px, 100%);
+          max-height: 120px;
+          display: block;
           object-fit: contain;
-          border-radius: 16px;
+          object-position: left center;
+        }
+        .report-kicker {
+          color: var(--accent-strong);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
         }
         .report-brand-copy {
           display: grid;
-          gap: 5px;
+          gap: 4px;
         }
-        .report-brand-copy strong {
-          font-size: 18px;
-          line-height: 1.05;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-        .report-brand-copy span {
+        .report-brand-copy p {
+          max-width: 460px;
           color: var(--muted);
-          font-size: 11px;
-          line-height: 1.5;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
+          font-size: 13px;
+          line-height: 1.6;
         }
         .report-meta-block {
           display: grid;
@@ -432,12 +421,10 @@ function shellHtml(title: string, bodyHtml: string) {
         <article class="report-document">
           <div class="report-masthead">
             <div class="report-brand">
-              <div class="report-brand-mark">
-                <img src="/the-final-check-logo.png" alt="The Final Check logo" />
-              </div>
+              <img class="report-wordmark" src="/the-final-check-wordmark.png" alt="The Final Check logo" />
               <div class="report-brand-copy">
-                <strong>The Final Check</strong>
-                <span>Profit and Performance Consultancy</span>
+                <span class="report-kicker">Profit and performance consultancy</span>
+                <p>Prepared for client presentation, review meetings, and professional PDF handover.</p>
               </div>
             </div>
 
@@ -526,9 +513,44 @@ export function buildClientPdfHtml(
       <div class="meta-card"><span>Linked work</span><strong>${audits.length} audits / ${menus.length} menu projects</strong></div>
     </div>
 
-    ${paragraph('Profile summary', client.data.profileSummary || client.notes)}
-    ${paragraph('Relationship notes', client.data.internalNotes)}
-    ${paragraph('Billing details', `${client.data.billingName || 'Billing name not set'} | ${client.data.billingEmail || 'Billing email not set'} | ${client.data.billingAddress || 'Billing address not set'}`)}
+    <section>
+      <h2>Account overview</h2>
+      <div class="report-columns">
+        <div>
+          <h3>Profile summary</h3>
+          <p>${escapeHtml(client.data.profileSummary || client.notes || 'Not recorded')}</p>
+        </div>
+        <div>
+          <h3>Relationship notes</h3>
+          <p>${escapeHtml(client.data.internalNotes || 'Not recorded')}</p>
+        </div>
+      </div>
+      <div class="report-grid columns-4">
+        <div><h3>Main contact</h3><p>${escapeHtml(client.contactName || 'Not recorded')}</p></div>
+        <div><h3>Email</h3><p>${escapeHtml(client.contactEmail || 'Not recorded')}</p></div>
+        <div><h3>Phone</h3><p>${escapeHtml(client.contactPhone || 'Not recorded')}</p></div>
+        <div><h3>Website</h3><p>${escapeHtml(client.website || 'Not recorded')}</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Commercial and billing</h2>
+      <div class="report-columns">
+        <div>
+          <h3>Billing details</h3>
+          <p>${escapeHtml(client.data.billingName || 'Billing name not set')}</p>
+          <p class="muted-copy">${escapeHtml(client.data.billingEmail || 'Billing email not set')}</p>
+          <p class="muted-copy">${escapeHtml(client.data.billingAddress || 'Billing address not set')}</p>
+        </div>
+        <div>
+          <h3>Commercial snapshot</h3>
+          <p>${escapeHtml(fmtCurrency(pipelineValue))} in active pipeline.</p>
+          <p class="muted-copy">${openInvoices.length} open invoices totalling ${escapeHtml(fmtCurrency(outstandingValue))}.</p>
+          <p class="muted-copy">${paidInvoices.length} paid invoices recorded.</p>
+        </div>
+      </div>
+    </section>
+
     ${listMarkup('Goals', client.data.goals)}
     ${listMarkup('Risks', client.data.risks)}
     ${listMarkup('Opportunities', client.data.opportunities)}
@@ -585,7 +607,23 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
       <div class="meta-card"><span>Payment terms</span><strong>${client.data.paymentTermsDays} days</strong></div>
     </div>
 
-    ${paragraph('Billing address', client.data.billingAddress)}
+    <section>
+      <h2>Billing summary</h2>
+      <div class="report-columns">
+        <div>
+          <h3>Bill to</h3>
+          <p>${escapeHtml(client.data.billingName || client.companyName || 'Client')}</p>
+          <p class="muted-copy">${escapeHtml(client.data.billingEmail || client.contactEmail || 'Not set')}</p>
+          <p class="muted-copy">${escapeHtml(client.data.billingAddress || 'Not recorded')}</p>
+        </div>
+        <div>
+          <h3>Invoice status</h3>
+          <p>${escapeHtml(invoice.status)}</p>
+          <p class="muted-copy">Issue date ${escapeHtml(formatDate(invoice.issueDate))}</p>
+          <p class="muted-copy">Due date ${escapeHtml(formatDate(invoice.dueDate))}</p>
+        </div>
+      </div>
+    </section>
 
     <section>
       <h2>Invoice lines</h2>

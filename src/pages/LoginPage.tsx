@@ -56,9 +56,9 @@ export function LoginPage() {
         <div className="auth-copy">
           <div className="auth-brand-row">
             <img
-              src="/the-final-check-logo.png"
+              src="/the-final-check-wordmark.png"
               alt="The Final Check logo"
-              className="auth-brand-logo"
+              className="auth-brand-wordmark"
             />
             <div>
               <div className="brand-badge">Private access</div>
