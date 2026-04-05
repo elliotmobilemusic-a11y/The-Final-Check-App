@@ -235,6 +235,42 @@ function queryLooksLikeSiteSearch(query: string) {
   return /\d/.test(query) || /,/.test(query) || /\b(road|street|lane|avenue|way|close|station|hotel|postcode|high street)\b/i.test(query);
 }
 
+function scopePreferenceScore(
+  result: Pick<BusinessLookupResult, 'resultType' | 'siteCountEstimate'>,
+  query: string,
+  scope: BusinessLookupScope
+) {
+  const siteSearch = queryLooksLikeSiteSearch(query);
+
+  if (scope === 'group') {
+    return result.resultType === 'group' ? 28 + Math.min(result.siteCountEstimate, 8) : 2;
+  }
+
+  if (scope === 'site') {
+    return result.resultType === 'site' ? 28 : 4;
+  }
+
+  if (siteSearch) {
+    return result.resultType === 'site' ? 18 : 8 + Math.min(result.siteCountEstimate, 6);
+  }
+
+  return result.resultType === 'group' ? 18 + Math.min(result.siteCountEstimate, 8) : 6;
+}
+
+function sortBusinessResultsByScope(
+  results: BusinessLookupResult[],
+  query: string,
+  scope: BusinessLookupScope
+) {
+  return [...results].sort((a, b) => {
+    const scopeDelta = scopePreferenceScore(b, query, scope) - scopePreferenceScore(a, query, scope);
+    if (scopeDelta !== 0) return scopeDelta;
+    if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
+    if (a.resultType !== b.resultType) return a.resultType === 'group' ? -1 : 1;
+    return b.signals.length - a.signals.length;
+  });
+}
+
 function locationFromAddress(address?: Record<string, string>) {
   if (!address) return '';
 
@@ -651,7 +687,7 @@ async function searchBusinessProfilesWithAi(
 
     const payload = (await response.json()) as AiBusinessLookupResponse;
 
-    return (payload.matches ?? [])
+    const results = (payload.matches ?? [])
       .map((match, index) => {
         const name = String(match.name ?? '').trim();
         if (!name) return null;
@@ -701,17 +737,9 @@ async function searchBusinessProfilesWithAi(
           confidenceScore: rerankedScore,
           confidenceLabel: confidenceLabel(rerankedScore)
         };
-      })
-      .sort((a, b) => {
-        if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
-        if (a.resultType !== b.resultType) return a.resultType === 'group' ? -1 : 1;
-        return b.signals.length - a.signals.length;
-      })
-      .filter((result) => {
-        if (scope === 'group') return result.resultType === 'group';
-        if (scope === 'site') return result.resultType === 'site';
-        return true;
       });
+
+    return sortBusinessResultsByScope(results, query, scope);
   } catch {
     return [];
   }
@@ -749,6 +777,13 @@ export async function searchBusinessProfiles(
   const aiResults = await searchBusinessProfilesWithAi(trimmed, scope);
   if (aiResults.length) {
     return aiResults.slice(0, 8);
+  }
+
+  if (scope !== 'all') {
+    const fallbackAiResults = await searchBusinessProfilesWithAi(trimmed, 'all');
+    if (fallbackAiResults.length) {
+      return sortBusinessResultsByScope(fallbackAiResults, trimmed, scope).slice(0, 8);
+    }
   }
 
   const siteSearch = scope === 'site' || (scope === 'all' && queryLooksLikeSiteSearch(trimmed));
@@ -816,20 +851,7 @@ export async function searchBusinessProfiles(
       });
   }
 
-  return [...results.values()]
-    .filter((result) => {
-      if (scope === 'group') return result.resultType === 'group';
-      if (scope === 'site') return result.resultType === 'site';
-      return true;
-    })
-    .sort((a, b) => {
-      if (a.resultType !== b.resultType) {
-        return a.resultType === 'group' ? -1 : 1;
-      }
-      if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
-      return b.signals.length - a.signals.length;
-    })
-    .slice(0, 8);
+  return sortBusinessResultsByScope([...results.values()], trimmed, scope).slice(0, 8);
 }
 
 export async function getBusinessProfile(result: BusinessLookupResult): Promise<BusinessLookupProfile> {

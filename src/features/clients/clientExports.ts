@@ -114,9 +114,9 @@ function shellHtml(title: string, bodyHtml: string) {
         * { box-sizing: border-box; }
         body {
           margin: 0;
-          padding: 20px;
+          padding: 18px;
           color: var(--ink);
-          background: #ebe5de;
+          background: #ece7df;
         }
         .print-toolbar {
           position: sticky;
@@ -147,27 +147,27 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         .report-document {
           padding: 18px 20px 20px;
-          border-radius: 14px;
+          border-radius: 16px;
           background: var(--panel);
           border: 1px solid rgba(86, 81, 91, 0.08);
-          box-shadow: 0 16px 28px rgba(36, 31, 38, 0.05);
+          box-shadow: 0 16px 30px rgba(36, 31, 38, 0.05);
         }
         .report-masthead {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          gap: 16px;
-          padding-bottom: 14px;
+          align-items: center;
+          gap: 18px;
+          padding-bottom: 16px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.12);
         }
         .report-brand {
           display: grid;
-          gap: 12px;
+          gap: 10px;
           min-width: 0;
         }
         .report-brand-mark {
           display: grid;
-          gap: 6px;
+          gap: 4px;
         }
         .report-brand-mark span {
           color: var(--muted);
@@ -178,38 +178,31 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         .report-brand-mark strong {
           color: var(--ink);
-          font-size: 20px;
+          font-size: 22px;
           line-height: 1;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
-        .report-brand-mark small {
-          color: var(--accent-strong);
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-        }
         .report-kicker {
           color: var(--accent-strong);
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
           letter-spacing: 0.12em;
           text-transform: uppercase;
         }
         .report-brand-copy {
           display: grid;
-          gap: 4px;
+          gap: 6px;
         }
         .report-brand-copy p {
-          max-width: 460px;
+          max-width: 420px;
           color: var(--muted);
           font-size: 12px;
           line-height: 1.55;
         }
         .report-meta-block {
           display: grid;
-          gap: 8px;
+          gap: 6px;
           justify-items: end;
           text-align: right;
         }
@@ -221,8 +214,8 @@ function shellHtml(title: string, bodyHtml: string) {
           text-transform: uppercase;
         }
         .report-meta-block strong {
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 13px;
+          line-height: 1.45;
         }
         .report-section-lead {
           margin-top: 4px;
@@ -269,7 +262,7 @@ function shellHtml(title: string, bodyHtml: string) {
           padding: 12px 14px;
           border-radius: 10px;
           border: 1px solid rgba(86, 81, 91, 0.08);
-          background: linear-gradient(180deg, #fdfaf6, #ffffff);
+          background: #faf7f2;
         }
         .meta-card span {
           display: block;
@@ -308,8 +301,8 @@ function shellHtml(title: string, bodyHtml: string) {
           padding: 12px 12px 12px 14px;
           border-radius: 10px;
           border: 1px solid rgba(86, 81, 91, 0.08);
-          border-left: 3px solid rgba(198, 161, 97, 0.48);
-          background: linear-gradient(180deg, #fdfaf6, #ffffff);
+          border-top: 3px solid rgba(198, 161, 97, 0.48);
+          background: #faf7f2;
         }
         ul {
           margin: 0;
@@ -342,7 +335,7 @@ function shellHtml(title: string, bodyHtml: string) {
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          background: rgba(198, 161, 97, 0.08);
+          background: #f6efe3;
         }
         .totals {
           display: flex;
@@ -424,11 +417,10 @@ function shellHtml(title: string, bodyHtml: string) {
               <div class="report-brand-mark">
                 <span>Jason Wardill</span>
                 <strong>The Final Check</strong>
-                <small>Profit and performance consultancy</small>
               </div>
               <div class="report-brand-copy">
                 <span class="report-kicker">Profit and performance consultancy</span>
-                <p>Prepared for client presentation, review meetings, and professional PDF handover.</p>
+                <p>Prepared for client presentation, review meetings, and professional handover.</p>
               </div>
             </div>
 
@@ -442,7 +434,7 @@ function shellHtml(title: string, bodyHtml: string) {
 
           ${bodyHtml}
           <div class="report-footer">
-            <span>The Final Check • Profit and Performance Consultancy</span>
+            <span>The Final Check</span>
             <span>Prepared ${escapeHtml(generatedOn)}</span>
           </div>
         </article>

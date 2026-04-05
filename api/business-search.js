@@ -77,6 +77,24 @@ function normalizeScope(value) {
   return value === 'group' || value === 'site' ? value : 'all';
 }
 
+function scopePreferenceScore(match, query, scope = 'all') {
+  const siteQuery = scope === 'site' || (scope === 'all' && queryLooksLikeSite(query));
+
+  if (scope === 'group') {
+    return match.resultType === 'group' ? 28 + Math.min(Number(match.siteCountEstimate ?? 0), 8) : 2;
+  }
+
+  if (scope === 'site') {
+    return match.resultType === 'site' ? 28 : 4;
+  }
+
+  if (siteQuery) {
+    return match.resultType === 'site' ? 18 : 8 + Math.min(Number(match.siteCountEstimate ?? 0), 6);
+  }
+
+  return match.resultType === 'group' ? 18 + Math.min(Number(match.siteCountEstimate ?? 0), 8) : 6;
+}
+
 function rerankMatch(match, query, scope = 'all') {
   const normalizedQuery = normalizeName(query);
   const normalizedName = normalizeName(match.name);
@@ -412,7 +430,7 @@ async function fetchWebsiteMetadata(url) {
         matchMetaTag(html, 'og:image', 'property') ||
         matchMetaTag(html, 'twitter:image', 'name') ||
         '',
-      phone: String(schemaNode?.telephone ?? '').trim() || phoneMatch?.[0]?.trim() ?? '',
+      phone: String(schemaNode?.telephone ?? '').trim() || (phoneMatch?.[0]?.trim() ?? ''),
       email:
         String(schemaNode?.email ?? '').trim() ||
         String(emailMatch?.[1] ?? emailMatch?.[0] ?? '')
@@ -609,6 +627,9 @@ export default async function handler(request, response) {
     if (geminiApiKey) {
       try {
         matches = await callGeminiBusinessSearch(query, geminiApiKey, scope);
+        if (!matches.length && scope !== 'all') {
+          matches = await callGeminiBusinessSearch(query, geminiApiKey, 'all');
+        }
         provider = 'gemini';
       } catch (error) {
         if (!apiKey) throw error;
@@ -617,6 +638,9 @@ export default async function handler(request, response) {
 
     if (!matches.length && apiKey) {
       matches = await callOpenAiBusinessSearch(query, apiKey, scope);
+      if (!matches.length && scope !== 'all') {
+        matches = await callOpenAiBusinessSearch(query, apiKey, 'all');
+      }
       provider = 'openai';
     }
 
@@ -629,12 +653,11 @@ export default async function handler(request, response) {
         ...match,
         confidenceLabel: confidenceLabel(match.confidenceScore)
       }))
-      .filter((match) => {
-        if (scope === 'group') return match.resultType === 'group';
-        if (scope === 'site') return match.resultType === 'site';
-        return true;
+      .sort((a, b) => {
+        const scopeDelta = scopePreferenceScore(b, query, scope) - scopePreferenceScore(a, query, scope);
+        if (scopeDelta !== 0) return scopeDelta;
+        return b.confidenceScore - a.confidenceScore;
       })
-      .sort((a, b) => b.confidenceScore - a.confidenceScore)
       .slice(0, 8);
 
     const enrichedMatches = await Promise.all(

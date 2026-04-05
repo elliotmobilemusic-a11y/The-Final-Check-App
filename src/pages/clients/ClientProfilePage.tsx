@@ -342,12 +342,18 @@ export function ClientProfilePage() {
         .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0)
     };
   }, [form?.data.invoices]);
-  const visibleLookupResults = useMemo(() => {
+  const scopedLookupResults = useMemo(() => {
     if (lookupScope === 'all') return lookupResults;
     return lookupResults.filter((result) =>
       lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
     );
   }, [lookupResults, lookupScope]);
+  const visibleLookupResults = useMemo(() => {
+    if (lookupScope === 'all') return lookupResults;
+    return scopedLookupResults.length ? scopedLookupResults : lookupResults;
+  }, [lookupResults, lookupScope, scopedLookupResults]);
+  const isLookupFallbackVisible =
+    lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
   const activeSection = isClientSectionKey(section) ? section : null;
 
   if (!client || !form) {
@@ -1175,9 +1181,11 @@ function removeInvoice(invoiceId: string) {
                             </article>
                           ))}
                         </div>
-                      ) : lookupResults.length ? (
+                      ) : null}
+
+                      {isLookupFallbackVisible ? (
                         <p className="muted-copy">
-                          No results match the current filter. Switch between groups and sites to narrow the search.
+                          No exact {lookupScope === 'group' ? 'group' : 'site'} matches were returned, so the closest UK hospitality results are being shown instead.
                         </p>
                       ) : null}
                     </section>

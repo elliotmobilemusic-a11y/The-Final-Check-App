@@ -94,12 +94,20 @@ export function NewClientPage() {
     'Search for UK hospitality groups, pub companies, restaurant brands, or individual sites before saving the client.'
   );
 
-  const visibleLookupResults = useMemo(() => {
+  const scopedLookupResults = useMemo(() => {
     if (lookupScope === 'all') return lookupResults;
     return lookupResults.filter((result) =>
       lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
     );
   }, [lookupResults, lookupScope]);
+
+  const visibleLookupResults = useMemo(() => {
+    if (lookupScope === 'all') return lookupResults;
+    return scopedLookupResults.length ? scopedLookupResults : lookupResults;
+  }, [lookupResults, lookupScope, scopedLookupResults]);
+
+  const isLookupFallbackVisible =
+    lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -370,8 +378,12 @@ export function NewClientPage() {
                   </article>
                 ))}
               </div>
-            ) : lookupResults.length ? (
-              <p className="muted-copy">No results match the current filter. Switch between groups and sites to narrow the search.</p>
+            ) : null}
+
+            {isLookupFallbackVisible ? (
+              <p className="muted-copy">
+                No exact {lookupScope === 'group' ? 'group' : 'site'} matches were returned, so the closest UK hospitality results are being shown instead.
+              </p>
             ) : null}
           </section>
 
