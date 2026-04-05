@@ -36,6 +36,7 @@ export default function App() {
           <Route path="clients" element={<ClientsPage />} />
           <Route path="clients/new" element={<NewClientPage />} />
           <Route path="clients/:clientId" element={<ClientProfilePage />} />
+          <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
           <Route path="audit" element={<KitchenAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
           <Route path="settings" element={<SettingsPage />} />

@@ -487,7 +487,7 @@ export function ClientsPage() {
                   <button className="button button-secondary" onClick={() => handleExportClient(client)}>
                     Export PDF
                   </button>
-                  <Link className="button button-ghost" to={`/clients/${client.id}#client-invoices`}>
+                  <Link className="button button-ghost" to={`/clients/${client.id}/commercial#client-invoices`}>
                     Billing
                   </Link>
                   <Link className="button button-ghost" to={`/audit?client=${client.id}`}>
