@@ -80,6 +80,61 @@ function invoiceTable(invoice: ClientInvoice) {
   `;
 }
 
+type ReportHeroCard = {
+  label: string;
+  value: string;
+  detail?: string;
+};
+
+export function buildReportHeroHtml(options: {
+  eyebrow: string;
+  title: string;
+  leadHtml?: string;
+  description?: string;
+  chips?: string[];
+  cards: ReportHeroCard[];
+}) {
+  const chipsHtml = options.chips?.filter(Boolean).length
+    ? `
+      <div class="report-chip-row">
+        ${options.chips
+          ?.filter(Boolean)
+          .map((chip) => `<span class="report-chip">${escapeHtml(chip)}</span>`)
+          .join('')}
+      </div>
+    `
+    : '';
+
+  return `
+    <div class="report-hero">
+      <div class="report-hero-main">
+        <div class="eyebrow">${escapeHtml(options.eyebrow)}</div>
+        <h1>${escapeHtml(options.title)}</h1>
+        ${options.leadHtml ? `<p class="report-hero-lead">${options.leadHtml}</p>` : ''}
+        ${
+          options.description
+            ? `<p class="report-section-lead">${escapeHtml(options.description)}</p>`
+            : ''
+        }
+        ${chipsHtml}
+      </div>
+      <aside class="report-hero-side">
+        ${options.cards
+          .map(
+            (card) => `
+              <div class="report-summary-card">
+                <span>${escapeHtml(card.label)}</span>
+                <strong>${escapeHtml(card.value)}</strong>
+                ${card.detail ? `<p>${escapeHtml(card.detail)}</p>` : ''}
+              </div>
+            `
+          )
+          .join('')}
+      </aside>
+    </div>
+  `;
+}
+
 function shellHtml(title: string, bodyHtml: string) {
   const generatedOn = formatDate(new Date().toISOString());
   const safeTitle = escapeHtml(title);
@@ -145,8 +200,8 @@ function shellHtml(title: string, bodyHtml: string) {
           margin: 0 auto;
         }
         .report-document {
-          padding: 20px 22px 22px;
-          border-radius: 14px;
+          padding: 18px 20px 22px;
+          border-radius: 12px;
           background: var(--panel);
           border: 1px solid rgba(86, 81, 91, 0.1);
           box-shadow: var(--shadow);
@@ -218,6 +273,78 @@ function shellHtml(title: string, bodyHtml: string) {
           margin: 18px 0 18px;
           padding: 0 0 14px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.1);
+        }
+        .report-hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.9fr);
+          gap: 16px;
+          margin: 18px 0 20px;
+        }
+        .report-hero-main {
+          display: grid;
+          gap: 8px;
+          padding: 18px;
+          border-radius: 12px;
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          background: linear-gradient(180deg, #fdfaf5 0%, #fbf7f1 100%);
+        }
+        .report-hero-lead {
+          color: var(--ink);
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+        .report-chip-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 4px;
+        }
+        .report-chip {
+          display: inline-flex;
+          align-items: center;
+          min-height: 30px;
+          padding: 0 12px;
+          border-radius: 999px;
+          border: 1px solid rgba(198, 161, 97, 0.3);
+          background: #f8f0e1;
+          color: var(--accent-strong);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .report-hero-side {
+          display: grid;
+          gap: 10px;
+          align-content: start;
+        }
+        .report-summary-card {
+          padding: 14px;
+          border-radius: 10px;
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          background: #fcfaf6;
+        }
+        .report-summary-card span {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--muted);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .report-summary-card strong {
+          display: block;
+          color: var(--ink);
+          font-size: 16px;
+          line-height: 1.3;
+        }
+        .report-summary-card p {
+          margin-top: 6px;
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.55;
         }
         h1, h2, h3, p { margin: 0; }
         h1 { font-size: 32px; line-height: 1.02; letter-spacing: -0.035em; }
@@ -395,6 +522,10 @@ function shellHtml(title: string, bodyHtml: string) {
             flex-direction: column;
             align-items: flex-start;
           }
+          .report-hero {
+            display: grid;
+            grid-template-columns: 1fr;
+          }
           .meta-grid,
           .summary-grid,
           .report-meta,
@@ -483,26 +614,50 @@ export function buildClientPdfHtml(
     .filter((deal) => deal.stage !== 'Lost')
     .reduce((sum, deal) => sum + num(deal.value), 0);
   const outstandingValue = openInvoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+  const siteCount = Math.max(client.data.sites.length, client.data.siteCountEstimate || 0);
 
   return `
-    <header>
-      <div class="eyebrow">Client CRM export</div>
-      <h1>${escapeHtml(client.companyName || 'Client profile')}</h1>
-      <p class="muted">
-        ${escapeHtml(client.industry || 'Industry not set')} • ${escapeHtml(client.location || 'Location not set')} • ${escapeHtml(client.status || 'Status not set')}
-      </p>
-    </header>
+    ${buildReportHeroHtml({
+      eyebrow: 'Client CRM export',
+      title: client.companyName || 'Client profile',
+      leadHtml: `<strong>${escapeHtml(client.industry || 'Industry not set')}</strong> • ${escapeHtml(client.location || 'Location not set')} • ${escapeHtml(client.status || 'Status not set')}`,
+      description:
+        'Account profile, commercial context, and delivery summary prepared for operational handover.',
+      chips: [
+        client.data.accountScope || 'Single site',
+        `${siteCount} site${siteCount === 1 ? '' : 's'}`,
+        `${audits.length} audits linked`,
+        `${menus.length} menu projects linked`
+      ],
+      cards: [
+        {
+          label: 'Account owner',
+          value: client.data.accountOwner || client.contactName || 'Not set'
+        },
+        {
+          label: 'Next review',
+          value: formatDate(client.nextReviewDate)
+        },
+        {
+          label: 'Monthly value',
+          value: fmtCurrency(num(client.data.estimatedMonthlyValue))
+        },
+        {
+          label: 'Outstanding value',
+          value: fmtCurrency(outstandingValue),
+          detail: `${openInvoices.length} open invoice${openInvoices.length === 1 ? '' : 's'}`
+        }
+      ]
+    })}
 
     <div class="summary-grid">
-      <div class="meta-card"><span>Account owner</span><strong>${escapeHtml(client.data.accountOwner || client.contactName || 'Not set')}</strong></div>
       <div class="meta-card"><span>Account scope</span><strong>${escapeHtml(client.data.accountScope || 'Single site')}</strong></div>
-      <div class="meta-card"><span>Next review</span><strong>${escapeHtml(formatDate(client.nextReviewDate))}</strong></div>
-      <div class="meta-card"><span>Monthly value</span><strong>${escapeHtml(fmtCurrency(num(client.data.estimatedMonthlyValue)))}</strong></div>
+      <div class="meta-card"><span>Relationship health</span><strong>${escapeHtml(client.data.relationshipHealth || 'Stable')}</strong></div>
       <div class="meta-card"><span>Pipeline value</span><strong>${escapeHtml(fmtCurrency(pipelineValue))}</strong></div>
       <div class="meta-card"><span>Operating country</span><strong>${escapeHtml(client.data.operatingCountry || 'United Kingdom')}</strong></div>
       <div class="meta-card"><span>Outstanding invoices</span><strong>${openInvoices.length} open / ${escapeHtml(fmtCurrency(outstandingValue))}</strong></div>
       <div class="meta-card"><span>Linked work</span><strong>${audits.length} audits / ${menus.length} menu projects</strong></div>
-      <div class="meta-card"><span>Site count</span><strong>${escapeHtml(String(Math.max(client.data.sites.length, client.data.siteCountEstimate || 0)))}</strong></div>
+      <div class="meta-card"><span>Site count</span><strong>${escapeHtml(String(siteCount))}</strong></div>
     </div>
 
     <section>
@@ -598,19 +753,43 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
   const total = invoiceTotal(invoice);
 
   return `
-    <header>
-      <div class="eyebrow">Invoice export</div>
-      <h1>${escapeHtml(invoice.number || 'Invoice')}</h1>
-      <p class="muted">${escapeHtml(client.companyName || 'Client')} • ${escapeHtml(invoice.title || 'Consultancy services')}</p>
-    </header>
+    ${buildReportHeroHtml({
+      eyebrow: 'Invoice export',
+      title: invoice.number || 'Invoice',
+      leadHtml: `<strong>${escapeHtml(client.companyName || 'Client')}</strong> • ${escapeHtml(invoice.title || 'Consultancy services')}`,
+      description: 'Billing summary and charge breakdown prepared for finance issue and PDF handover.',
+      chips: [
+        invoice.status,
+        `${client.data.paymentTermsDays} day terms`,
+        formatDate(invoice.dueDate)
+      ],
+      cards: [
+        {
+          label: 'Bill to',
+          value: client.data.billingName || client.companyName || 'Client'
+        },
+        {
+          label: 'Issue date',
+          value: formatDate(invoice.issueDate)
+        },
+        {
+          label: 'Due date',
+          value: formatDate(invoice.dueDate)
+        },
+        {
+          label: 'Total due',
+          value: fmtCurrency(total)
+        }
+      ]
+    })}
 
     <div class="meta-grid">
-      <div class="meta-card"><span>Bill to</span><strong>${escapeHtml(client.data.billingName || client.companyName || 'Client')}</strong></div>
-      <div class="meta-card"><span>Issue date</span><strong>${escapeHtml(formatDate(invoice.issueDate))}</strong></div>
-      <div class="meta-card"><span>Due date</span><strong>${escapeHtml(formatDate(invoice.dueDate))}</strong></div>
       <div class="meta-card"><span>Status</span><strong>${escapeHtml(invoice.status)}</strong></div>
       <div class="meta-card"><span>Billing email</span><strong>${escapeHtml(client.data.billingEmail || client.contactEmail || 'Not set')}</strong></div>
       <div class="meta-card"><span>Payment terms</span><strong>${client.data.paymentTermsDays} days</strong></div>
+      <div class="meta-card"><span>Billing address</span><strong>${escapeHtml(client.data.billingAddress || 'Not recorded')}</strong></div>
+      <div class="meta-card"><span>Client contact</span><strong>${escapeHtml(client.contactName || 'Not recorded')}</strong></div>
+      <div class="meta-card"><span>Finance contact</span><strong>${escapeHtml(client.data.billingName || client.companyName || 'Client')}</strong></div>
     </div>
 
     <section>

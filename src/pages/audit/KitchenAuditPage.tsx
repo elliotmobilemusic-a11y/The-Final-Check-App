@@ -3,7 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { selectableSitesForClient } from '../../features/clients/clientData';
-import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import {
+  buildReportHeroHtml,
+  openPrintableHtmlDocument
+} from '../../features/clients/clientExports';
 import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import type {
@@ -535,6 +538,10 @@ function makeAuditReport(state: AuditFormState) {
   const controlRows = state.controlChecks.filter(
     (item) => item.status !== 'N/A' || safe(item.note) || safe(item.label)
   );
+  const siteName = safe(state.businessName) || 'Unnamed site';
+  const siteLeadHtml = `<strong>${siteName}</strong>${
+    safe(state.location) ? ` • ${safe(state.location)}` : ''
+  }`;
   const scoreEntries = [
     ['Leadership', state.categoryScores.leadership],
     ['Food quality', state.categoryScores.foodQuality],
@@ -643,59 +650,83 @@ function makeAuditReport(state: AuditFormState) {
   };
 
   return `
-    <div class="report-meta">
-      <div><strong>Visit date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
-      <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
-      <div><strong>Site contact</strong><br />${safe(state.contactName) || 'Not recorded'}</div>
-      <div><strong>Audit type</strong><br />${safe(state.auditType) || 'Not recorded'}</div>
-    </div>
+    ${buildReportHeroHtml({
+      eyebrow: 'Kitchen audit export',
+      title: safe(state.title) || 'Kitchen Profit Audit Report',
+      leadHtml: siteLeadHtml,
+      description:
+        'Operational review, control scoring, and action planning prepared for client handover.',
+      chips: [
+        safe(state.auditType) || 'Operational audit',
+        `${scoreLabel(calc.score)} priority`,
+        `${calc.totalNamedActions} action${calc.totalNamedActions === 1 ? '' : 's'} logged`
+      ],
+      cards: [
+        {
+          label: 'Visit date',
+          value: formatShortDate(state.visitDate)
+        },
+        {
+          label: 'Consultant',
+          value: safe(state.consultantName) || 'Not recorded'
+        },
+        {
+          label: 'Site contact',
+          value: safe(state.contactName) || 'Not recorded'
+        },
+        {
+          label: 'Commercial position',
+          value: fmtPercent(calc.actualGp),
+          detail: `Target ${fmtPercent(state.targetGp)} • Waste ${fmtCurrency(state.actualWasteValue)}`
+        }
+      ]
+    })}
 
     <section>
-      <h2>Site summary</h2>
-      <p class="report-section-lead">
-        <strong>${safe(state.businessName) || 'Unnamed site'}</strong>${safe(state.location) ? ` • ${safe(state.location)}` : ''}
-      </p>
+      <h2>Site and trading profile</h2>
+      <div class="report-grid columns-4">
+        <div><strong>Service style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
+        <div><strong>Trading days</strong><br />${safe(state.tradingDays) || 'Not recorded'}</div>
+        <div><strong>Covers per week</strong><br />${state.coversPerWeek > 0 ? state.coversPerWeek : 'Not recorded'}</div>
+        <div><strong>Average spend</strong><br />${state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded'}</div>
+        <div><strong>Kitchen team size</strong><br />${state.kitchenTeamSize > 0 ? state.kitchenTeamSize : 'Not recorded'}</div>
+        <div><strong>Main supplier</strong><br />${safe(state.mainSupplier) || 'Not recorded'}</div>
+        <div><strong>Allergen confidence</strong><br />${state.allergenConfidence}</div>
+        <div><strong>Equipment condition</strong><br />${state.equipmentCondition}</div>
+      </div>
     </section>
 
-    <h2>Site and trading profile</h2>
-    <div class="report-grid columns-4">
-      <div><strong>Service style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
-      <div><strong>Trading days</strong><br />${safe(state.tradingDays) || 'Not recorded'}</div>
-      <div><strong>Covers per week</strong><br />${state.coversPerWeek > 0 ? state.coversPerWeek : 'Not recorded'}</div>
-      <div><strong>Average spend</strong><br />${state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded'}</div>
-      <div><strong>Kitchen team size</strong><br />${state.kitchenTeamSize > 0 ? state.kitchenTeamSize : 'Not recorded'}</div>
-      <div><strong>Main supplier</strong><br />${safe(state.mainSupplier) || 'Not recorded'}</div>
-      <div><strong>Allergen confidence</strong><br />${state.allergenConfidence}</div>
-      <div><strong>Equipment condition</strong><br />${state.equipmentCondition}</div>
-    </div>
+    <section>
+      <h2>Commercial snapshot</h2>
+      <div class="report-meta">
+        <div><strong>Weekly food sales</strong><br />${fmtCurrency(state.weeklySales)}</div>
+        <div><strong>Estimated sales from covers</strong><br />${calc.estimatedWeeklySales > 0 ? fmtCurrency(calc.estimatedWeeklySales) : 'Not available'}</div>
+        <div><strong>Weekly food cost</strong><br />${fmtCurrency(state.weeklyFoodCost)}</div>
+        <div><strong>Actual GP</strong><br />${fmtPercent(calc.actualGp)}</div>
+        <div><strong>Target GP</strong><br />${fmtPercent(state.targetGp)}</div>
+        <div><strong>Waste value</strong><br />${fmtCurrency(state.actualWasteValue)}</div>
+        <div><strong>Waste % of sales</strong><br />${fmtPercent(calc.wastePercent)}</div>
+        <div><strong>Kitchen labour %</strong><br />${fmtPercent(state.labourPercent)}</div>
+        <div><strong>Overall priority</strong><br />${scoreLabel(calc.score)} (${calc.score}/100)</div>
+      </div>
+    </section>
 
-    <h2>Commercial snapshot</h2>
-    <div class="report-meta">
-      <div><strong>Weekly food sales</strong><br />${fmtCurrency(state.weeklySales)}</div>
-      <div><strong>Estimated sales from covers</strong><br />${calc.estimatedWeeklySales > 0 ? fmtCurrency(calc.estimatedWeeklySales) : 'Not available'}</div>
-      <div><strong>Weekly food cost</strong><br />${fmtCurrency(state.weeklyFoodCost)}</div>
-      <div><strong>Actual GP</strong><br />${fmtPercent(calc.actualGp)}</div>
-      <div><strong>Target GP</strong><br />${fmtPercent(state.targetGp)}</div>
-      <div><strong>Waste value</strong><br />${fmtCurrency(state.actualWasteValue)}</div>
-      <div><strong>Waste % of sales</strong><br />${fmtPercent(calc.wastePercent)}</div>
-      <div><strong>Kitchen labour %</strong><br />${fmtPercent(state.labourPercent)}</div>
-      <div><strong>Overall priority</strong><br />${scoreLabel(calc.score)} (${calc.score}/100)</div>
-    </div>
-
-    <h2>Operational scorecard</h2>
-    <div class="report-grid columns-4">
-      ${scoreEntries
-        .map(
-          ([label, value]) =>
-            `<div><strong>${label}</strong><br />${num(value).toFixed(1)}/10</div>`
-        )
-        .join('')}
-      <div><strong>Average operating score</strong><br />${calc.operationsAverage.toFixed(1)}/10</div>
-      <div><strong>Control compliance</strong><br />${Math.round(calc.controlScore)}%</div>
-      <div><strong>Hygiene risk</strong><br />${state.hygieneRisk}</div>
-      <div><strong>Ordering control</strong><br />${state.orderingScore}</div>
-      <div><strong>Structured actions</strong><br />${calc.totalNamedActions}</div>
-    </div>
+    <section>
+      <h2>Operational scorecard</h2>
+      <div class="report-grid columns-4">
+        ${scoreEntries
+          .map(
+            ([label, value]) =>
+              `<div><strong>${label}</strong><br />${num(value).toFixed(1)}/10</div>`
+          )
+          .join('')}
+        <div><strong>Average operating score</strong><br />${calc.operationsAverage.toFixed(1)}/10</div>
+        <div><strong>Control compliance</strong><br />${Math.round(calc.controlScore)}%</div>
+        <div><strong>Hygiene risk</strong><br />${state.hygieneRisk}</div>
+        <div><strong>Ordering control</strong><br />${state.orderingScore}</div>
+        <div><strong>Structured actions</strong><br />${calc.totalNamedActions}</div>
+      </div>
+    </section>
 
     <h2>Controls and evidence register</h2>
     ${
