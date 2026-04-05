@@ -442,31 +442,36 @@ body.reduced-motion *::after {
 .brand-link {
   display: inline-flex;
   align-items: center;
+  gap: 14px;
   min-width: 0;
   text-decoration: none;
 }
 
-.brand-wordmark-shell {
+.brand-icon-shell {
   display: grid;
-  place-items: center start;
-  width: clamp(156px, 18vw, 228px);
-  height: clamp(54px, 5.6vw, 74px);
+  place-items: center;
+  width: clamp(54px, 5vw, 64px);
+  height: clamp(54px, 5vw, 64px);
   flex-shrink: 0;
-  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 242, 237, 0.96));
+  box-shadow: var(--shadow-soft);
 }
 
-.brand-wordmark-image {
+.brand-icon-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: left center;
+  object-fit: cover;
+  object-position: center;
   filter: contrast(1.08) saturate(1.08);
   flex-shrink: 0;
 }
 
 .brand-copy {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -483,10 +488,10 @@ body.reduced-motion *::after {
 .brand-copy strong {
   display: block;
   color: var(--text);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.05;
-  letter-spacing: 0.08em;
-  font-weight: 800;
+  letter-spacing: 0.05em;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
@@ -2365,7 +2370,7 @@ textarea.input,
   box-shadow: 0 14px 28px rgba(86, 81, 91, 0.08);
 }
 
-body[data-theme="midnight"] .brand-wordmark-shell,
+body[data-theme="midnight"] .brand-icon-shell,
 body[data-theme="midnight"] .user-chip,
 body[data-theme="midnight"] .shell-inline-focus,
 body[data-theme="midnight"] .audit-section-link,
@@ -2776,9 +2781,13 @@ body[data-theme="midnight"] .data-table td {
     align-items: flex-start;
   }
 
-  .brand-wordmark-shell {
-    width: min(100%, 260px);
-    height: auto;
+  .brand-icon-shell {
+    width: 48px;
+    height: 48px;
+  }
+
+  .brand-copy strong {
+    font-size: 16px;
   }
 
   .shell-toolbar-actions {
