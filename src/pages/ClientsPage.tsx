@@ -108,7 +108,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
       billingName: current.data.billingName || lookup.name,
-      leadSource: current.data.leadSource || 'Smart business finder'
+      leadSource: current.data.leadSource || 'AI business search'
     }
   };
 }
@@ -122,7 +122,7 @@ export function ClientsPage() {
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupMessage, setLookupMessage] = useState(
-    'Use the smart business finder to search brand, venue, or website and pull the strongest public match into the CRM.'
+    'Use the business finder to search hospitality groups, pub companies, restaurant brands, or websites and pull the best match into the CRM.'
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [search, setSearch] = useState('');

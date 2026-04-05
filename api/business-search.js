@@ -1,4 +1,6 @@
 const OPENAI_ENDPOINT = 'https://api.openai.com/v1/responses';
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 function normalizeWebsite(value) {
   if (!value) return '';
@@ -60,12 +62,12 @@ function fallbackSourceUrl(match, sources) {
   return sources[0]?.url ?? '';
 }
 
-function fallbackSourceLabel(match, sources) {
+function fallbackSourceLabel(match, sources, defaultLabel) {
   if (match.sourceLabel) return String(match.sourceLabel);
-  return sources[0]?.title ? `OpenAI web search • ${sources[0].title}` : 'OpenAI web search';
+  return sources[0]?.title ? `${defaultLabel} • ${sources[0].title}` : defaultLabel;
 }
 
-function normalizeMatches(matches, sources) {
+function normalizeMatches(matches, sources, defaultLabel) {
   return (Array.isArray(matches) ? matches : [])
     .map((match, index) => {
       const name = String(match?.name ?? '').trim();
@@ -84,7 +86,7 @@ function normalizeMatches(matches, sources) {
         location: String(match.location ?? '').trim(),
         logoUrl: String(match.logoUrl ?? '').trim() || domainLogoUrl(website),
         sourceUrl: fallbackSourceUrl(match, sources),
-        sourceLabel: fallbackSourceLabel(match, sources),
+        sourceLabel: fallbackSourceLabel(match, sources, defaultLabel),
         phone: String(match.phone ?? '').trim(),
         addressLine: String(match.addressLine ?? '').trim(),
         wikidataId: String(match.wikidataId ?? '').trim(),
@@ -115,6 +117,36 @@ function collectSources(responseJson) {
     url: String(source?.url ?? '').trim(),
     title: String(source?.title ?? '').trim()
   }));
+}
+
+function textFromGeminiResponse(responseJson) {
+  const candidates = Array.isArray(responseJson.candidates) ? responseJson.candidates : [];
+  const firstCandidate = candidates[0] ?? {};
+  const parts = Array.isArray(firstCandidate?.content?.parts) ? firstCandidate.content.parts : [];
+
+  return parts
+    .map((part) => String(part?.text ?? '').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function collectGeminiSources(responseJson) {
+  const candidates = Array.isArray(responseJson.candidates) ? responseJson.candidates : [];
+  const firstCandidate = candidates[0] ?? {};
+  const groundingChunks = Array.isArray(firstCandidate?.groundingMetadata?.groundingChunks)
+    ? firstCandidate.groundingMetadata.groundingChunks
+    : [];
+
+  const webChunks = groundingChunks
+    .map((chunk) => chunk?.web ?? null)
+    .filter(Boolean)
+    .map((item) => ({
+      url: String(item?.uri ?? '').trim(),
+      title: String(item?.title ?? '').trim()
+    }))
+    .filter((item) => item.url || item.title);
+
+  return [...new Map(webChunks.map((item) => [item.url || item.title, item])).values()];
 }
 
 async function callOpenAiBusinessSearch(query, apiKey) {
@@ -161,7 +193,61 @@ async function callOpenAiBusinessSearch(query, apiKey) {
   const parsed = parseJsonPayload(String(rawText));
   const sources = collectSources(responseJson);
 
-  return normalizeMatches(parsed.matches, sources);
+  return normalizeMatches(parsed.matches, sources, 'OpenAI web search');
+}
+
+async function callGeminiBusinessSearch(query, apiKey) {
+  const prompt = [
+    'Find the best hospitality business matches for the user query.',
+    'Prioritize parent companies, hospitality groups, pub companies, restaurant groups, hotel groups, and known hospitality brands over individual venue locations.',
+    'Only include a site or venue when the query clearly targets a specific place or when no credible group/brand exists.',
+    'Focus on official websites, company pages, brand pages, reputable trade coverage, and business listings.',
+    `Query: ${query}`
+  ].join('\n');
+
+  const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [{ text: prompt }]
+        }
+      ],
+      tools: [
+        {
+          google_search: {}
+        }
+      ],
+      systemInstruction: {
+        parts: [
+          {
+            text: [
+              'You are a hospitality business enrichment engine for a consultancy CRM.',
+              'Return only JSON with shape {"matches":[...]} and no markdown.',
+              'Each match must include: name, description, resultType ("group" or "site"), website, industry, location, phone, addressLine, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
+              'Use confidenceScore between 0 and 100.',
+              'Use short sourceLabel values.',
+              'When a brand/group and an individual site both exist, prefer the brand/group first.'
+            ].join('\n')
+          }
+        ]
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini business search failed (${response.status}): ${errorText}`);
+  }
+
+  const responseJson = await response.json();
+  const parsed = parseJsonPayload(textFromGeminiResponse(responseJson));
+  const sources = collectGeminiSources(responseJson);
+
+  return normalizeMatches(parsed.matches, sources, 'Gemini web search');
 }
 
 export default async function handler(request, response) {
@@ -176,16 +262,25 @@ export default async function handler(request, response) {
     return;
   }
 
+  const geminiApiKey = process.env.GEMINI_API_KEY;
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    response.status(503).json({ error: 'OpenAI business search is not configured.' });
+  if (!geminiApiKey && !apiKey) {
+    response
+      .status(503)
+      .json({ error: 'AI business search is not configured.' });
     return;
   }
 
   try {
-    const matches = await callOpenAiBusinessSearch(query, apiKey);
+    const matches = geminiApiKey
+      ? await callGeminiBusinessSearch(query, geminiApiKey)
+      : await callOpenAiBusinessSearch(query, apiKey);
+
     response.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=3600');
-    response.status(200).json({ matches });
+    response.status(200).json({
+      matches,
+      provider: geminiApiKey ? 'gemini' : 'openai'
+    });
   } catch (error) {
     response.status(500).json({
       error: error instanceof Error ? error.message : 'Business search failed.'

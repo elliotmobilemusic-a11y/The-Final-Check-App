@@ -195,7 +195,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
       billingName: current.data.billingName || lookup.name,
-      leadSource: current.data.leadSource || 'Smart business finder'
+      leadSource: current.data.leadSource || 'AI business search'
     }
   };
 }
@@ -214,7 +214,7 @@ export function ClientProfilePage() {
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupMessage, setLookupMessage] = useState(
-    'Use the smart business finder to refresh the company name, logo, website, location, and profile summary.'
+    'Use the business finder to refresh the company name, logo, website, location, and profile summary from the strongest matched record.'
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
 

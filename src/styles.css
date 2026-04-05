@@ -448,20 +448,19 @@ body.reduced-motion *::after {
 
 .brand-wordmark-shell {
   display: grid;
-  place-items: center;
-  width: clamp(180px, 20vw, 280px);
-  height: clamp(72px, 7vw, 94px);
+  place-items: center start;
+  width: clamp(156px, 18vw, 228px);
+  height: clamp(54px, 5.6vw, 74px);
   flex-shrink: 0;
   padding: 0;
-  border-radius: 20px;
 }
 
 .brand-wordmark-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center;
-  border-radius: 18px;
+  object-position: left center;
+  filter: contrast(1.08) saturate(1.08);
   flex-shrink: 0;
 }
 
@@ -1094,11 +1093,12 @@ body.reduced-motion *::after {
 }
 
 .auth-brand-wordmark {
-  width: min(360px, 100%);
+  width: min(320px, 100%);
   height: auto;
-  max-height: 112px;
+  max-height: 88px;
   object-fit: contain;
-  object-position: center;
+  object-position: left center;
+  filter: contrast(1.08) saturate(1.08);
   flex-shrink: 0;
 }
 

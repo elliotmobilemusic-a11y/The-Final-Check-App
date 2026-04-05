@@ -166,11 +166,12 @@ function shellHtml(title: string, bodyHtml: string) {
           min-width: 0;
         }
         .report-wordmark {
-          width: min(360px, 100%);
-          max-height: 120px;
+          width: min(300px, 100%);
+          max-height: 88px;
           display: block;
           object-fit: contain;
           object-position: left center;
+          filter: contrast(1.08) saturate(1.08);
         }
         .report-kicker {
           color: var(--accent-strong);
@@ -209,7 +210,7 @@ function shellHtml(title: string, bodyHtml: string) {
         .report-title-block {
           display: grid;
           gap: 10px;
-          padding: 22px 0 28px;
+          padding: 22px 0 24px;
           border-bottom: 2px solid var(--accent);
         }
         .report-title-block span {
@@ -229,6 +230,12 @@ function shellHtml(title: string, bodyHtml: string) {
           max-width: 760px;
           color: var(--muted);
           font-size: 14px;
+          line-height: 1.7;
+        }
+        .report-section-lead {
+          margin-top: 4px;
+          color: var(--muted);
+          font-size: 13px;
           line-height: 1.7;
         }
         header {
@@ -515,6 +522,7 @@ export function buildClientPdfHtml(
 
     <section>
       <h2>Account overview</h2>
+      <p class="report-section-lead">Core account context, contact details, and relationship notes for operational handover.</p>
       <div class="report-columns">
         <div>
           <h3>Profile summary</h3>
@@ -535,6 +543,7 @@ export function buildClientPdfHtml(
 
     <section>
       <h2>Commercial and billing</h2>
+      <p class="report-section-lead">Billing ownership, commercial exposure, and invoice position at the point of export.</p>
       <div class="report-columns">
         <div>
           <h3>Billing details</h3>
@@ -609,6 +618,7 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
 
     <section>
       <h2>Billing summary</h2>
+      <p class="report-section-lead">Billing contact, invoice timing, and status snapshot for finance handover.</p>
       <div class="report-columns">
         <div>
           <h3>Bill to</h3>
@@ -627,6 +637,7 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
 
     <section>
       <h2>Invoice lines</h2>
+      <p class="report-section-lead">Charge breakdown prepared for client issue and PDF handover.</p>
       ${invoiceTable(invoice)}
       <div class="totals">
         <strong>Total due: ${escapeHtml(fmtCurrency(total))}</strong>
