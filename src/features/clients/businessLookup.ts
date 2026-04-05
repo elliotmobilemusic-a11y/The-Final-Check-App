@@ -382,6 +382,35 @@ function confidenceLabel(score: number) {
   return 'Needs review';
 }
 
+function rerankAiResult(result: BusinessLookupResult, query: string) {
+  const normalizedQuery = normalizeName(query);
+  const normalizedName = normalizeName(result.name);
+  const normalizedOfficial = normalizeName(result.officialName);
+  const siteQuery = queryLooksLikeSiteSearch(query);
+
+  let score = result.confidenceScore;
+
+  if (normalizedName === normalizedQuery || normalizedOfficial === normalizedQuery) {
+    score += 18;
+  } else if (normalizedName.includes(normalizedQuery) || normalizedOfficial.includes(normalizedQuery)) {
+    score += 10;
+  }
+
+  if (result.website && websiteHostname(result.website) && query.toLowerCase().includes(websiteHostname(result.website))) {
+    score += 20;
+  }
+
+  if (!siteQuery && result.resultType === 'group') score += 10;
+  if (!siteQuery && result.resultType === 'site') score -= 8;
+  if (siteQuery && result.resultType === 'site') score += 8;
+
+  if (result.companyNumber) score += 4;
+  if (result.registeredAddress) score += 3;
+  if (result.siteCountEstimate > 1) score += 4;
+
+  return Math.max(1, Math.min(100, score));
+}
+
 function buildSignals(
   score: number,
   details: {
@@ -647,7 +676,19 @@ async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLook
         } satisfies BusinessLookupResult;
       })
       .filter(isPresent)
-      .sort((a, b) => b.confidenceScore - a.confidenceScore);
+      .map((result) => {
+        const rerankedScore = rerankAiResult(result, query);
+        return {
+          ...result,
+          confidenceScore: rerankedScore,
+          confidenceLabel: confidenceLabel(rerankedScore)
+        };
+      })
+      .sort((a, b) => {
+        if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
+        if (a.resultType !== b.resultType) return a.resultType === 'group' ? -1 : 1;
+        return b.signals.length - a.signals.length;
+      });
   } catch {
     return [];
   }

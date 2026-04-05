@@ -1086,35 +1086,13 @@ body.reduced-motion *::after {
   margin-bottom: 22px;
 }
 
-.auth-brand-text {
-  display: grid;
-  gap: 6px;
-}
-
-.auth-brand-kicker {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.auth-brand-text strong {
-  color: var(--white);
-  font-size: clamp(18px, 2.4vw, 24px);
-  line-height: 1.02;
-  letter-spacing: 0.14em;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.auth-brand-text small {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.auth-brand-wordmark-dark {
+  width: min(520px, 100%);
+  display: block;
+  border-radius: 18px;
+  box-shadow:
+    0 26px 50px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .auth-card {

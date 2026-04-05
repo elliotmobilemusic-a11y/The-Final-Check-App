@@ -165,6 +165,14 @@ function shellHtml(title: string, bodyHtml: string) {
           gap: 10px;
           min-width: 0;
         }
+        .report-brand-tile {
+          display: inline-flex;
+          width: fit-content;
+          padding: 14px;
+          border-radius: 20px;
+          background: #060606;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+        }
         .report-wordmark {
           width: min(300px, 100%);
           max-height: 88px;
@@ -428,7 +436,9 @@ function shellHtml(title: string, bodyHtml: string) {
         <article class="report-document">
           <div class="report-masthead">
             <div class="report-brand">
-              <img class="report-wordmark" src="/the-final-check-wordmark.png" alt="The Final Check logo" />
+              <div class="report-brand-tile">
+                <img class="report-wordmark" src="/the-final-check-brand-dark.png" alt="The Final Check logo" />
+              </div>
               <div class="report-brand-copy">
                 <span class="report-kicker">Profit and performance consultancy</span>
                 <p>Prepared for client presentation, review meetings, and professional PDF handover.</p>

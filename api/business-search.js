@@ -25,6 +25,16 @@ function normalizeName(value) {
     .trim();
 }
 
+function websiteHostname(value) {
+  if (!value) return '';
+
+  try {
+    return new URL(normalizeWebsite(value)).hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
 function domainLogoUrl(value) {
   if (!value) return '';
 
@@ -43,6 +53,60 @@ function confidenceLabel(score) {
   if (score >= 66) return 'Strong match';
   if (score >= 48) return 'Possible match';
   return 'Needs review';
+}
+
+function queryLooksLikeDomain(query) {
+  return /\b[a-z0-9.-]+\.[a-z]{2,}\b/i.test(query);
+}
+
+function queryLooksLikeSite(query) {
+  return /\d/.test(query) || /,/.test(query) || /\b(site|venue|branch|road|street|lane|avenue|way|close|postcode|high street|hotel)\b/i.test(query);
+}
+
+function queryLooksLikeGroup(query) {
+  return /\b(group|holdings|head office|hq|estate|estates|restaurants|pubs|hotels|leisure|company|plc|ltd|limited)\b/i.test(query);
+}
+
+function queryDomain(query) {
+  const domainMatch = String(query).toLowerCase().match(/\b([a-z0-9.-]+\.[a-z]{2,})\b/);
+  return domainMatch?.[1] ?? '';
+}
+
+function rerankMatch(match, query) {
+  const normalizedQuery = normalizeName(query);
+  const normalizedName = normalizeName(match.name);
+  const normalizedOfficial = normalizeName(match.officialName);
+  const domainQuery = queryDomain(query);
+  const domainMatch = websiteHostname(match.website);
+  const siteQuery = queryLooksLikeSite(query);
+  const groupQuery = queryLooksLikeGroup(query) || !siteQuery;
+
+  let score = Number(match.confidenceScore ?? 0);
+
+  if (normalizedName === normalizedQuery || normalizedOfficial === normalizedQuery) {
+    score += 22;
+  } else if (normalizedName.includes(normalizedQuery) || normalizedOfficial.includes(normalizedQuery)) {
+    score += 12;
+  }
+
+  if (domainQuery && domainMatch === domainQuery) {
+    score += 26;
+  }
+
+  if (match.companyNumber) score += 6;
+  if (match.registeredAddress) score += 4;
+  if (match.website) score += 6;
+  if (Array.isArray(match.sites) && match.sites.length > 0) score += 4;
+
+  if (groupQuery && match.resultType === 'group') score += 12;
+  if (groupQuery && match.resultType === 'site') score -= 10;
+  if (siteQuery && match.resultType === 'site') score += 10;
+  if (siteQuery && match.resultType === 'group') score -= 2;
+
+  if (String(match.accountScope).toLowerCase().includes('multi')) score += 8;
+  if (String(match.country).toLowerCase().includes('united kingdom')) score += 6;
+
+  return score;
 }
 
 function stripCodeFence(text) {
@@ -154,13 +218,9 @@ function normalizeMatches(matches, sources, defaultLabel) {
     })
     .filter(Boolean)
     .sort((a, b) => {
-      if (a.resultType !== b.resultType) {
-        return a.resultType === 'group' ? -1 : 1;
-      }
-
-      return b.confidenceScore - a.confidenceScore;
+      return 0;
     })
-    .slice(0, 6);
+    .slice(0, 12);
 }
 
 function collectSources(responseJson) {
@@ -209,6 +269,8 @@ async function callOpenAiBusinessSearch(query, apiKey) {
     'Find likely matches for the user query in the United Kingdom only.',
     'Prioritize parent companies, hospitality groups, restaurant groups, pub companies, hotel groups, and established hospitality brands over individual site locations.',
     'Only include a site or venue result if the query explicitly looks like a location/site search or if no credible group/brand exists.',
+    'Prefer official UK websites, Companies House style registered details, and corporate or brand pages over directories.',
+    'If the query appears to be a domain or website, prioritise the entity that owns that website.',
     'Return only JSON with shape {"matches":[...]} and no markdown.',
     'Each match must include:',
     'name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sites, sourceUrl, sourceLabel, confidenceScore, confidenceLabel, signals.',
@@ -257,6 +319,7 @@ async function callGeminiBusinessSearch(query, apiKey) {
     'Prioritize parent companies, hospitality groups, pub companies, restaurant groups, hotel groups, and known hospitality brands over individual venue locations.',
     'Only include a site or venue when the query clearly targets a specific UK place or when no credible UK group/brand exists.',
     'Focus on official UK websites, company pages, brand pages, reputable trade coverage, and business listings.',
+    'If the query looks like a domain or website, prefer the owning business or brand first.',
     `Query: ${query}`
   ].join('\n');
 
@@ -287,7 +350,9 @@ async function callGeminiBusinessSearch(query, apiKey) {
               'For multi-site groups, include up to 6 representative UK sites in sites[]. Each site must include name, address, website, status, notes.',
               'Use confidenceScore between 0 and 100.',
               'Use short sourceLabel values.',
-              'When a brand/group and an individual site both exist, prefer the brand/group first.'
+              'When a brand/group and an individual site both exist, prefer the brand/group first.',
+              'Include registered/company details when they can be supported confidently.',
+              'When the user query is a domain, return the owner of the domain first.'
             ].join('\n')
           }
         ]
@@ -329,14 +394,39 @@ export default async function handler(request, response) {
   }
 
   try {
-    const matches = geminiApiKey
-      ? await callGeminiBusinessSearch(query, geminiApiKey)
-      : await callOpenAiBusinessSearch(query, apiKey);
+    let matches = [];
+    let provider = '';
+
+    if (geminiApiKey) {
+      try {
+        matches = await callGeminiBusinessSearch(query, geminiApiKey);
+        provider = 'gemini';
+      } catch (error) {
+        if (!apiKey) throw error;
+      }
+    }
+
+    if (!matches.length && apiKey) {
+      matches = await callOpenAiBusinessSearch(query, apiKey);
+      provider = 'openai';
+    }
+
+    const rerankedMatches = [...matches]
+      .map((match) => ({
+        ...match,
+        confidenceScore: Math.max(1, Math.min(100, rerankMatch(match, query)))
+      }))
+      .map((match) => ({
+        ...match,
+        confidenceLabel: confidenceLabel(match.confidenceScore)
+      }))
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .slice(0, 8);
 
     response.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=3600');
     response.status(200).json({
-      matches,
-      provider: geminiApiKey ? 'gemini' : 'openai'
+      matches: rerankedMatches,
+      provider
     });
   } catch (error) {
     response.status(500).json({

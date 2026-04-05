@@ -137,17 +137,17 @@ const helpPages: AppHelpPage[] = [
     title: 'Clients',
     routeLabel: 'Client CRM',
     summary:
-      'The clients page is the main CRM list. Use it to create new accounts at the top, then filter, sort, review, export, and open the full client profile from the live portfolio list underneath.',
+      'The clients page is the main CRM list. Use it to filter, sort, review, export, and open the full client profile. Use the Add new client button to open the dedicated setup page when you need to create an account.',
     quickStart: [
-      'Create a new client at the top before starting linked audits or menu projects.',
+      'Use the Add new client button when you need to create a new account.',
       'Use portfolio controls to search, filter by status, and sort by urgency or value.',
       'Open a client profile when you need full CRM, invoice, timeline, and delivery detail.'
     ],
     sections: [
       {
-        title: 'Add a new client',
+        title: 'New client setup',
         purpose:
-          'Create the base CRM record before you start delivery work or billing.',
+          'The Add new client button opens a dedicated setup page where you can create the base CRM record before you start delivery work or billing.',
         fields: [
           {
             label: 'Company name',
@@ -712,6 +712,7 @@ function routeKey(pathname: string): AppHelpPage['key'] {
   if (pathname === '/login') return 'login';
   if (pathname === '/dashboard' || pathname === '/') return 'dashboard';
   if (pathname === '/clients') return 'clients';
+  if (pathname === '/clients/new') return 'clients';
   if (pathname.startsWith('/clients/')) return 'client-profile';
   if (pathname === '/audit') return 'audit';
   if (pathname === '/menu') return 'menu';
