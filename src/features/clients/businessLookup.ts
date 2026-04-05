@@ -45,6 +45,8 @@ export type BusinessLookupSite = {
   notes: string;
 };
 
+export type BusinessLookupScope = 'group' | 'site' | 'all';
+
 export type BusinessLookupResult = {
   id: string;
   name: string;
@@ -382,11 +384,13 @@ function confidenceLabel(score: number) {
   return 'Needs review';
 }
 
-function rerankAiResult(result: BusinessLookupResult, query: string) {
+function rerankAiResult(result: BusinessLookupResult, query: string, scope: BusinessLookupScope) {
   const normalizedQuery = normalizeName(query);
   const normalizedName = normalizeName(result.name);
   const normalizedOfficial = normalizeName(result.officialName);
   const siteQuery = queryLooksLikeSiteSearch(query);
+  const preferGroups = scope === 'group' || (scope === 'all' && !siteQuery);
+  const preferSites = scope === 'site' || (scope === 'all' && siteQuery);
 
   let score = result.confidenceScore;
 
@@ -400,9 +404,10 @@ function rerankAiResult(result: BusinessLookupResult, query: string) {
     score += 20;
   }
 
-  if (!siteQuery && result.resultType === 'group') score += 10;
-  if (!siteQuery && result.resultType === 'site') score -= 8;
-  if (siteQuery && result.resultType === 'site') score += 8;
+  if (preferGroups && result.resultType === 'group') score += 12;
+  if (preferGroups && result.resultType === 'site') score -= 12;
+  if (preferSites && result.resultType === 'site') score += 10;
+  if (preferSites && result.resultType === 'group') score -= 4;
 
   if (result.companyNumber) score += 4;
   if (result.registeredAddress) score += 3;
@@ -620,13 +625,19 @@ function buildBusinessSummary(result: BusinessLookupResult, summaryText?: string
   return parts.join('. ') || `${result.name} matched from public business data.`;
 }
 
-async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLookupResult[]> {
+async function searchBusinessProfilesWithAi(
+  query: string,
+  scope: BusinessLookupScope
+): Promise<BusinessLookupResult[]> {
   try {
-    const response = await fetch(`/api/business-search?q=${encodeURIComponent(query)}`, {
+    const response = await fetch(
+      `/api/business-search?q=${encodeURIComponent(query)}&scope=${encodeURIComponent(scope)}`,
+      {
       headers: {
         Accept: 'application/json'
       }
-    });
+      }
+    );
 
     if (!response.ok) {
       return [];
@@ -677,7 +688,7 @@ async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLook
       })
       .filter(isPresent)
       .map((result) => {
-        const rerankedScore = rerankAiResult(result, query);
+        const rerankedScore = rerankAiResult(result, query, scope);
         return {
           ...result,
           confidenceScore: rerankedScore,
@@ -688,6 +699,11 @@ async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLook
         if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
         if (a.resultType !== b.resultType) return a.resultType === 'group' ? -1 : 1;
         return b.signals.length - a.signals.length;
+      })
+      .filter((result) => {
+        if (scope === 'group') return result.resultType === 'group';
+        if (scope === 'site') return result.resultType === 'site';
+        return true;
       });
   } catch {
     return [];
@@ -716,16 +732,19 @@ async function searchOpenStreetMap(query: string) {
   return fetchJson<OpenStreetMapPlace[]>(url);
 }
 
-export async function searchBusinessProfiles(query: string): Promise<BusinessLookupResult[]> {
+export async function searchBusinessProfiles(
+  query: string,
+  scope: BusinessLookupScope = 'all'
+): Promise<BusinessLookupResult[]> {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
-  const aiResults = await searchBusinessProfilesWithAi(trimmed);
+  const aiResults = await searchBusinessProfilesWithAi(trimmed, scope);
   if (aiResults.length) {
     return aiResults.slice(0, 8);
   }
 
-  const siteSearch = queryLooksLikeSiteSearch(trimmed);
+  const siteSearch = scope === 'site' || (scope === 'all' && queryLooksLikeSiteSearch(trimmed));
 
   const [wikidataSearch, places] = await Promise.all([searchWikidata(trimmed), searchOpenStreetMap(trimmed)]);
 
@@ -791,6 +810,11 @@ export async function searchBusinessProfiles(query: string): Promise<BusinessLoo
   }
 
   return [...results.values()]
+    .filter((result) => {
+      if (scope === 'group') return result.resultType === 'group';
+      if (scope === 'site') return result.resultType === 'site';
+      return true;
+    })
     .sort((a, b) => {
       if (a.resultType !== b.resultType) {
         return a.resultType === 'group' ? -1 : 1;

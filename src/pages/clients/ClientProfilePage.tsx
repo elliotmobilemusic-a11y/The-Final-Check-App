@@ -588,7 +588,7 @@ function removeInvoice(invoiceId: string) {
     try {
       setLookupLoading(true);
       setLookupSelectionId('');
-      const results = await searchBusinessProfiles(query);
+      const results = await searchBusinessProfiles(query, lookupScope);
       setLookupResults(results);
       setLookupMessage(
         results.length

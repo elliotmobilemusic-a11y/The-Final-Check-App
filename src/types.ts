@@ -57,6 +57,7 @@ export interface AuditControlCheck {
 export interface AuditFormState {
   id?: string;
   clientId?: string | null;
+  clientSiteId?: string | null;
   title: string;
   businessName: string;
   location: string;
@@ -128,6 +129,7 @@ export interface MenuSection {
 export interface MenuProjectState {
   id?: string;
   clientId?: string | null;
+  clientSiteId?: string | null;
   menuName: string;
   siteName: string;
   reviewDate: string;

@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { selectableSitesForClient } from '../../features/clients/clientData';
 import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
 import { listClients } from '../../services/clients';
@@ -96,6 +97,7 @@ function createDefaultAudit(clientId: string | null = null): AuditFormState {
   return {
     id: undefined,
     clientId,
+    clientSiteId: null,
     title: 'Kitchen Profit Audit',
     businessName: '',
     location: '',
@@ -1090,6 +1092,14 @@ export function KitchenAuditPage() {
   const [loadingSaved, setLoadingSaved] = useState(true);
 
   const calc = useMemo(() => calculateAudit(form), [form]);
+  const activeClient = useMemo(
+    () => clients.find((client) => client.id === form.clientId) ?? null,
+    [clients, form.clientId]
+  );
+  const availableClientSites = useMemo(
+    () => selectableSitesForClient(activeClient),
+    [activeClient]
+  );
   const reportHtml = useMemo(() => makeAuditReport(form), [form]);
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
@@ -1193,8 +1203,76 @@ export function KitchenAuditPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!form.clientId) return;
+
+    if (!availableClientSites.length) {
+      if (form.clientSiteId) {
+        setForm((current) => ({ ...current, clientSiteId: null }));
+      }
+      return;
+    }
+
+    const matchingSite = availableClientSites.find((site) => site.id === form.clientSiteId);
+    if (matchingSite) return;
+
+    if (availableClientSites.length === 1) {
+      const singleSite = availableClientSites[0];
+      setForm((current) => ({
+        ...current,
+        clientSiteId: singleSite.id,
+        businessName:
+          !current.businessName.trim() || current.businessName === activeClient?.company_name
+            ? singleSite.name || activeClient?.company_name || current.businessName
+            : current.businessName,
+        location:
+          !current.location.trim()
+            ? singleSite.address || activeClient?.location || current.location
+            : current.location
+      }));
+      return;
+    }
+
+    if (form.clientSiteId) {
+      setForm((current) => ({ ...current, clientSiteId: null }));
+    }
+  }, [activeClient, availableClientSites, form.clientId, form.clientSiteId]);
+
   function updateField<K extends keyof AuditFormState>(key: K, value: AuditFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function handleClientSelection(nextClientId: string | null) {
+    const nextClient = clients.find((client) => client.id === nextClientId) ?? null;
+    const nextSites = selectableSitesForClient(nextClient);
+    const singleSite = nextSites.length === 1 ? nextSites[0] : null;
+
+    setForm((current) => ({
+      ...current,
+      clientId: nextClientId,
+      clientSiteId: singleSite?.id ?? null,
+      businessName: singleSite
+        ? singleSite.name || nextClient?.company_name || current.businessName
+        : nextClientId && current.clientId !== nextClientId
+          ? nextClient?.company_name || current.businessName
+          : current.businessName,
+      location: singleSite
+        ? singleSite.address || nextClient?.location || current.location
+        : nextClientId && current.clientId !== nextClientId
+          ? nextClient?.location || current.location
+          : current.location
+    }));
+  }
+
+  function handleClientSiteSelection(nextSiteId: string | null) {
+    const nextSite = availableClientSites.find((site) => site.id === nextSiteId) ?? null;
+
+    setForm((current) => ({
+      ...current,
+      clientSiteId: nextSiteId,
+      businessName: nextSite?.name || current.businessName,
+      location: nextSite?.address || activeClient?.location || current.location
+    }));
   }
 
   function updateCategoryScore(key: keyof AuditCategoryScores, value: number) {
@@ -1632,7 +1710,7 @@ export function KitchenAuditPage() {
                     <select
                       className="input"
                       value={form.clientId || ''}
-                      onChange={(e) => updateField('clientId', e.target.value || null)}
+                      onChange={(e) => handleClientSelection(e.target.value || null)}
                     >
                       <option value="">Select a client</option>
                       {clients.map((client) => (
@@ -1642,6 +1720,24 @@ export function KitchenAuditPage() {
                       ))}
                     </select>
                   </label>
+
+                  {availableClientSites.length > 1 ? (
+                    <label className="field">
+                      <span>Client site</span>
+                      <select
+                        className="input"
+                        value={form.clientSiteId || ''}
+                        onChange={(e) => handleClientSiteSelection(e.target.value || null)}
+                      >
+                        <option value="">Select a site</option>
+                        {availableClientSites.map((site) => (
+                          <option key={site.id} value={site.id}>
+                            {site.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
 
                   <label className="field">
                     <span>Audit type</span>
@@ -1658,6 +1754,13 @@ export function KitchenAuditPage() {
                     </select>
                   </label>
                 </div>
+
+                {availableClientSites.length > 1 ? (
+                  <p className="muted-copy">
+                    This client has multiple recorded sites. Pick the location you are visiting so
+                    the audit and export stay tied to the right site.
+                  </p>
+                ) : null}
 
                 {form.clientId ? (
                   <div className="header-actions">

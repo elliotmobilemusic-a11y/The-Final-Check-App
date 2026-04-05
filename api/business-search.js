@@ -72,14 +72,18 @@ function queryDomain(query) {
   return domainMatch?.[1] ?? '';
 }
 
-function rerankMatch(match, query) {
+function normalizeScope(value) {
+  return value === 'group' || value === 'site' ? value : 'all';
+}
+
+function rerankMatch(match, query, scope = 'all') {
   const normalizedQuery = normalizeName(query);
   const normalizedName = normalizeName(match.name);
   const normalizedOfficial = normalizeName(match.officialName);
   const domainQuery = queryDomain(query);
   const domainMatch = websiteHostname(match.website);
-  const siteQuery = queryLooksLikeSite(query);
-  const groupQuery = queryLooksLikeGroup(query) || !siteQuery;
+  const siteQuery = scope === 'site' || (scope === 'all' && queryLooksLikeSite(query));
+  const groupQuery = scope === 'group' || (scope === 'all' && (queryLooksLikeGroup(query) || !siteQuery));
 
   let score = Number(match.confidenceScore ?? 0);
 
@@ -105,6 +109,15 @@ function rerankMatch(match, query) {
 
   if (String(match.accountScope).toLowerCase().includes('multi')) score += 8;
   if (String(match.country).toLowerCase().includes('united kingdom')) score += 6;
+  if (match.sourceUrl && /companieshouse|gov\.uk|corporate|group|restaurants|pubs|hotels/i.test(match.sourceUrl)) {
+    score += 5;
+  }
+  if (
+    match.sourceUrl &&
+    /tripadvisor|yelp|designmynight|opentable|facebook|instagram|wikipedia/i.test(match.sourceUrl)
+  ) {
+    score -= 6;
+  }
 
   return score;
 }
@@ -263,13 +276,19 @@ function collectGeminiSources(responseJson) {
   return [...new Map(webChunks.map((item) => [item.url || item.title, item])).values()];
 }
 
-async function callOpenAiBusinessSearch(query, apiKey) {
+async function callOpenAiBusinessSearch(query, apiKey, scope) {
   const prompt = [
     'You are a UK hospitality business enrichment engine.',
     'Find likely matches for the user query in the United Kingdom only.',
     'Prioritize parent companies, hospitality groups, restaurant groups, pub companies, hotel groups, and established hospitality brands over individual site locations.',
     'Only include a site or venue result if the query explicitly looks like a location/site search or if no credible group/brand exists.',
+    scope === 'group'
+      ? 'The user is explicitly asking for a parent company, group, brand owner, or head office result. Return group/head-office matches only.'
+      : scope === 'site'
+        ? 'The user is explicitly asking for individual site or venue matches. Return site-level matches only.'
+        : 'Return the best UK hospitality matches, but keep parent groups ahead of individual sites unless the query is clearly site-specific.',
     'Prefer official UK websites, Companies House style registered details, and corporate or brand pages over directories.',
+    'Do not return local areas, stations, streets, neighbourhoods, or generic map entities.',
     'If the query appears to be a domain or website, prioritise the entity that owns that website.',
     'Return only JSON with shape {"matches":[...]} and no markdown.',
     'Each match must include:',
@@ -313,12 +332,18 @@ async function callOpenAiBusinessSearch(query, apiKey) {
   return normalizeMatches(parsed.matches, sources, 'OpenAI web search');
 }
 
-async function callGeminiBusinessSearch(query, apiKey) {
+async function callGeminiBusinessSearch(query, apiKey, scope) {
   const prompt = [
     'Find the best hospitality business matches for the user query in the United Kingdom only.',
     'Prioritize parent companies, hospitality groups, pub companies, restaurant groups, hotel groups, and known hospitality brands over individual venue locations.',
     'Only include a site or venue when the query clearly targets a specific UK place or when no credible UK group/brand exists.',
+    scope === 'group'
+      ? 'Return group, brand-owner, or head-office matches only.'
+      : scope === 'site'
+        ? 'Return site or venue matches only.'
+        : 'Keep group or brand matches ahead of site matches unless the query is clearly site-specific.',
     'Focus on official UK websites, company pages, brand pages, reputable trade coverage, and business listings.',
+    'Never return local areas, streets, stations, wards, or neighbourhoods as matches.',
     'If the query looks like a domain or website, prefer the owning business or brand first.',
     `Query: ${query}`
   ].join('\n');
@@ -379,6 +404,7 @@ export default async function handler(request, response) {
   }
 
   const query = String(request.query.q ?? '').trim();
+  const scope = normalizeScope(String(request.query.scope ?? 'all').trim().toLowerCase());
   if (query.length < 2) {
     response.status(400).json({ error: 'Search query is too short.' });
     return;
@@ -399,7 +425,7 @@ export default async function handler(request, response) {
 
     if (geminiApiKey) {
       try {
-        matches = await callGeminiBusinessSearch(query, geminiApiKey);
+        matches = await callGeminiBusinessSearch(query, geminiApiKey, scope);
         provider = 'gemini';
       } catch (error) {
         if (!apiKey) throw error;
@@ -407,19 +433,24 @@ export default async function handler(request, response) {
     }
 
     if (!matches.length && apiKey) {
-      matches = await callOpenAiBusinessSearch(query, apiKey);
+      matches = await callOpenAiBusinessSearch(query, apiKey, scope);
       provider = 'openai';
     }
 
     const rerankedMatches = [...matches]
       .map((match) => ({
         ...match,
-        confidenceScore: Math.max(1, Math.min(100, rerankMatch(match, query)))
+        confidenceScore: Math.max(1, Math.min(100, rerankMatch(match, query, scope)))
       }))
       .map((match) => ({
         ...match,
         confidenceLabel: confidenceLabel(match.confidenceScore)
       }))
+      .filter((match) => {
+        if (scope === 'group') return match.resultType === 'group';
+        if (scope === 'site') return match.resultType === 'site';
+        return true;
+      })
       .sort((a, b) => b.confidenceScore - a.confidenceScore)
       .slice(0, 8);
 

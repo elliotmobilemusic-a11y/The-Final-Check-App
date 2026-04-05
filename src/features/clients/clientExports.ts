@@ -162,24 +162,33 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         .report-brand {
           display: grid;
-          gap: 10px;
+          gap: 12px;
           min-width: 0;
         }
-        .report-brand-tile {
-          display: inline-flex;
-          width: fit-content;
-          padding: 14px;
-          border-radius: 20px;
-          background: #060606;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+        .report-brand-mark {
+          display: grid;
+          gap: 6px;
         }
-        .report-wordmark {
-          width: min(300px, 100%);
-          max-height: 88px;
-          display: block;
-          object-fit: contain;
-          object-position: left center;
-          filter: contrast(1.08) saturate(1.08);
+        .report-brand-mark span {
+          color: var(--muted);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+        }
+        .report-brand-mark strong {
+          color: var(--ink);
+          font-size: 28px;
+          line-height: 1;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+        .report-brand-mark small {
+          color: var(--accent-strong);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
         }
         .report-kicker {
           color: var(--accent-strong);
@@ -436,8 +445,10 @@ function shellHtml(title: string, bodyHtml: string) {
         <article class="report-document">
           <div class="report-masthead">
             <div class="report-brand">
-              <div class="report-brand-tile">
-                <img class="report-wordmark" src="/the-final-check-brand-dark.png" alt="The Final Check logo" />
+              <div class="report-brand-mark">
+                <span>Jason Wardill</span>
+                <strong>The Final Check</strong>
+                <small>Profit and performance consultancy</small>
               </div>
               <div class="report-brand-copy">
                 <span class="report-kicker">Profit and performance consultancy</span>

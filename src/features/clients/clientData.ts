@@ -123,6 +123,39 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
   };
 }
 
+export function selectableSitesForClient(record?: ClientRecord | null): ClientSite[] {
+  if (!record) return [];
+
+  const data = normalizeClientData(record.data);
+  if (data.sites.length > 0) {
+    return data.sites;
+  }
+
+  if (data.accountScope !== 'Single site') {
+    return [];
+  }
+
+  const derivedName = record.company_name?.trim() || '';
+  const derivedAddress =
+    record.location?.trim() || data.registeredAddress.trim() || data.billingAddress.trim();
+  const derivedWebsite = record.website?.trim() || '';
+
+  if (!derivedName && !derivedAddress && !derivedWebsite) {
+    return [];
+  }
+
+  return [
+    {
+      id: 'primary-site',
+      name: derivedName || 'Primary site',
+      address: derivedAddress,
+      website: derivedWebsite,
+      status: 'Active',
+      notes: 'Primary site derived from the main client record.'
+    }
+  ];
+}
+
 export function clientRecordToProfile(record: ClientRecord): ClientProfile {
   return {
     id: record.id,

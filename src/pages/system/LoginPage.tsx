@@ -55,11 +55,11 @@ export function LoginPage() {
       <div className="auth-panel">
         <div className="auth-copy">
           <div className="auth-brand-row">
-            <img
-              src="/the-final-check-brand-dark.png"
-              alt="The Final Check"
-              className="auth-brand-wordmark-dark"
-            />
+            <div className="auth-brand-textlock">
+              <span>Jason Wardill</span>
+              <strong>The Final Check</strong>
+              <small>Profit and performance consultancy for food businesses</small>
+            </div>
           </div>
 
           <h1>The Final Check</h1>

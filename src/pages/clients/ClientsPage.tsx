@@ -1,7 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import {
   buildClientPdfHtml,
   invoiceTotal,
@@ -261,24 +260,17 @@ export function ClientsPage() {
         }
       />
 
-      <section className="stats-grid">
-        <StatCard label="Active clients" value={String(activeClients.length)} hint="Accounts currently in live service" />
-        <StatCard label="Review queue" value={String(upcomingReviews.length)} hint="Clients due review within 21 days" />
-        <StatCard label="Open invoices" value={String(openInvoiceCount)} hint={fmtCurrency(openInvoiceValue)} />
-        <StatCard label="Pipeline value" value={fmtCurrency(pipelineValue)} hint="Estimated value still in play" />
-      </section>
-
-      <section className="card-grid two-columns">
-        <article className="feature-card">
-          <div className="feature-top">
+      <section className="panel crm-controls-panel">
+        <div className="panel-body">
+          <div className="crm-controls-top">
             <div>
-              <h3>List controls</h3>
-              <p>Keep the CRM list tight and easy to work from day to day.</p>
+              <h3>CRM list controls</h3>
+              <p>Keep the working list clean, searchable, and easy to act from.</p>
             </div>
             <span className="soft-pill">{filteredClients.length} visible</span>
           </div>
 
-          <div className="stack gap-20">
+          <div className="crm-controls-grid">
             <label className="field">
               <span>Search clients</span>
               <input
@@ -289,80 +281,79 @@ export function ClientsPage() {
               />
             </label>
 
-            <div className="form-grid two-columns">
-              <label className="field">
-                <span>Status filter</span>
-                <select
-                  className="input"
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  <option>All</option>
-                  <option>Active</option>
-                  <option>Prospect</option>
-                  <option>Onboarding</option>
-                  <option>Paused</option>
-                  <option>Completed</option>
-                </select>
-              </label>
+            <label className="field">
+              <span>Status filter</span>
+              <select
+                className="input"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option>All</option>
+                <option>Active</option>
+                <option>Prospect</option>
+                <option>Onboarding</option>
+                <option>Paused</option>
+                <option>Completed</option>
+              </select>
+            </label>
 
-              <label className="field">
-                <span>Sort by</span>
-                <select
-                  className="input"
-                  value={sortMode}
-                  onChange={(event) => setSortMode(event.target.value as SortMode)}
-                >
-                  <option value="attention">Attention needed</option>
-                  <option value="updated">Last updated</option>
-                  <option value="review">Next review date</option>
-                  <option value="value">Estimated monthly value</option>
-                  <option value="company">Company name</option>
-                </select>
-              </label>
-            </div>
-          </div>
-        </article>
-
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>New client setup</h3>
-              <p>Client creation now lives on its own page so this screen stays focused on the working CRM list.</p>
-            </div>
-            <span className="soft-pill">Separate workflow</span>
+            <label className="field">
+              <span>Sort by</span>
+              <select
+                className="input"
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value as SortMode)}
+              >
+                <option value="attention">Attention needed</option>
+                <option value="updated">Last updated</option>
+                <option value="review">Next review date</option>
+                <option value="value">Estimated monthly value</option>
+                <option value="company">Company name</option>
+              </select>
+            </label>
           </div>
 
-          <div className="stack gap-16">
-            <p className="muted-copy">
-              Use the dedicated setup page for the business finder, account scope, site planner, registered details, and first CRM summary.
-            </p>
-            <div className="header-actions">
-              <Link className="button button-primary" to="/clients/new">
-                Open setup page
-              </Link>
+          <div className="crm-inline-stats">
+            <div className="crm-inline-stat">
+              <span>Active clients</span>
+              <strong>{activeClients.length}</strong>
+            </div>
+            <div className="crm-inline-stat">
+              <span>Review queue</span>
+              <strong>{upcomingReviews.length}</strong>
+            </div>
+            <div className="crm-inline-stat">
+              <span>Open invoices</span>
+              <strong>{openInvoiceCount}</strong>
+            </div>
+            <div className="crm-inline-stat">
+              <span>Outstanding value</span>
+              <strong>{fmtCurrency(openInvoiceValue)}</strong>
             </div>
           </div>
-        </article>
+        </div>
       </section>
 
-      <section className="feature-card">
-        <div className="feature-top">
-          <div>
-            <h3>Client CRM list</h3>
-            <p>Open the record you need, review alerts quickly, and move straight into billing, audit, or menu work.</p>
-          </div>
-          <span className="soft-pill">{filteredClients.length} records</span>
-        </div>
-
-        <div className="clients-long-list">
-          {filteredClients.length === 0 ? (
-            <div className="dashboard-empty">
-              No clients match the current search or filter settings.
+      <section className="panel">
+        <div className="panel-body stack gap-20">
+          <div className="crm-controls-top">
+            <div>
+              <h3>Client CRM list</h3>
+              <p>Open the account you need and move straight into billing, audit, menu, or follow-up work.</p>
             </div>
-          ) : null}
+            <Link className="button button-primary" to="/clients/new">
+              Add new client
+            </Link>
+          </div>
 
-          {filteredClients.map((client) => {
+          <div className="clients-long-list">
+            {filteredClients.length === 0 ? (
+              <div className="dashboard-empty">
+                No clients match the current search or filter settings.
+              </div>
+            ) : null}
+
+            {filteredClients.map((client) => {
             const data = client.data ?? createEmptyClientData();
             const openTasks = data.tasks.filter((task) => task.status !== 'Done').length;
             const openDeals = data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost');
@@ -511,7 +502,8 @@ export function ClientsPage() {
                 </div>
               </article>
             );
-          })}
+            })}
+          </div>
         </div>
       </section>
     </div>

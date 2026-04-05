@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { selectableSitesForClient } from '../../features/clients/clientData';
 import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import {
   deleteMenuProject,
@@ -29,6 +30,7 @@ function createDefaultMenu(clientId: string | null = null): MenuProjectState {
   return {
     id: undefined,
     clientId,
+    clientSiteId: null,
     menuName: 'Spring Main Menu',
     siteName: '',
     reviewDate: todayIso(),
@@ -388,6 +390,10 @@ export function MenuBuilderPage() {
     () => clients.find((client) => client.id === project.clientId) ?? null,
     [clients, project.clientId]
   );
+  const availableClientSites = useMemo(
+    () => selectableSitesForClient(activeClient),
+    [activeClient]
+  );
 
   const strongDishCount = useMemo(
     () => allDishes.filter((dish) => dishTheoGp(dish) >= num(dish.targetGp)).length,
@@ -476,6 +482,35 @@ export function MenuBuilderPage() {
   }, [queryClientId]);
 
   useEffect(() => {
+    if (!project.clientId) return;
+
+    if (!availableClientSites.length) {
+      if (project.clientSiteId) {
+        setProject((current) => ({ ...current, clientSiteId: null }));
+      }
+      return;
+    }
+
+    const matchingSite = availableClientSites.find((site) => site.id === project.clientSiteId);
+    if (matchingSite) return;
+
+    if (availableClientSites.length === 1) {
+      const singleSite = availableClientSites[0];
+      setProject((current) => ({
+        ...current,
+        clientSiteId: singleSite.id,
+        siteName:
+          !current.siteName.trim() ? singleSite.name || activeClient?.company_name || '' : current.siteName
+      }));
+      return;
+    }
+
+    if (project.clientSiteId) {
+      setProject((current) => ({ ...current, clientSiteId: null }));
+    }
+  }, [activeClient, availableClientSites, project.clientId, project.clientSiteId]);
+
+  useEffect(() => {
     if (!queryLoadId) return;
 
     getMenuProjectById(queryLoadId)
@@ -500,6 +535,33 @@ export function MenuBuilderPage() {
     value: MenuProjectState[K]
   ) {
     setProject((current) => ({ ...current, [key]: value }));
+  }
+
+  function handleClientSelection(nextClientId: string | null) {
+    const nextClient = clients.find((client) => client.id === nextClientId) ?? null;
+    const nextSites = selectableSitesForClient(nextClient);
+    const singleSite = nextSites.length === 1 ? nextSites[0] : null;
+
+    setProject((current) => ({
+      ...current,
+      clientId: nextClientId,
+      clientSiteId: singleSite?.id ?? null,
+      siteName: singleSite
+        ? singleSite.name || nextClient?.company_name || current.siteName
+        : nextClientId && current.clientId !== nextClientId
+          ? ''
+          : current.siteName
+    }));
+  }
+
+  function handleClientSiteSelection(nextSiteId: string | null) {
+    const nextSite = availableClientSites.find((site) => site.id === nextSiteId) ?? null;
+
+    setProject((current) => ({
+      ...current,
+      clientSiteId: nextSiteId,
+      siteName: nextSite?.name || current.siteName
+    }));
   }
 
   function addSection() {
@@ -945,7 +1007,7 @@ export function MenuBuilderPage() {
                     <select
                       className="input"
                       value={project.clientId || ''}
-                      onChange={(e) => updateProject('clientId', e.target.value || null)}
+                      onChange={(e) => handleClientSelection(e.target.value || null)}
                     >
                       <option value="">Select a client</option>
                       {clients.map((client) => (
@@ -955,7 +1017,32 @@ export function MenuBuilderPage() {
                       ))}
                     </select>
                   </label>
+
+                  {availableClientSites.length > 1 ? (
+                    <label className="field">
+                      <span>Client site</span>
+                      <select
+                        className="input"
+                        value={project.clientSiteId || ''}
+                        onChange={(e) => handleClientSiteSelection(e.target.value || null)}
+                      >
+                        <option value="">Select a site</option>
+                        {availableClientSites.map((site) => (
+                          <option key={site.id} value={site.id}>
+                            {site.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                 </div>
+
+                {availableClientSites.length > 1 ? (
+                  <p className="muted-copy">
+                    This client has more than one site. Choose the location you are pricing so the
+                    menu review stays tied to the right trading site.
+                  </p>
+                ) : null}
 
                 {project.clientId ? (
                   <div className="header-actions">
