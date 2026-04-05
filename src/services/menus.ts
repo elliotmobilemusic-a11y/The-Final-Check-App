@@ -3,6 +3,18 @@ import type { MenuProjectState, SupabaseRecord } from '../types';
 
 const TABLE = 'menu_projects';
 
+async function requireUserId(): Promise<string> {
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+
+  const userId = data.user?.id;
+  if (!userId) throw new Error('You must be signed in.');
+
+  return userId;
+}
+
 export async function listMenuProjects(
   clientId?: string
 ): Promise<SupabaseRecord<MenuProjectState>[]> {
@@ -39,11 +51,14 @@ export async function saveMenuProject(
 ): Promise<SupabaseRecord<MenuProjectState>> {
   if (!supabase) throw new Error('Supabase is not configured.');
 
+  const userId = await requireUserId();
   const payload = {
+    user_id: userId,
     title: project.menuName || 'Untitled Menu',
     site_name: project.siteName || '',
     review_date: project.reviewDate || null,
     client_id: project.clientId || null,
+    client_site_id: project.clientSiteId || null,
     data: project
   };
 

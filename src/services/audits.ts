@@ -3,6 +3,18 @@ import type { AuditFormState, SupabaseRecord } from '../types';
 
 const TABLE = 'audits';
 
+async function requireUserId(): Promise<string> {
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+
+  const userId = data.user?.id;
+  if (!userId) throw new Error('You must be signed in.');
+
+  return userId;
+}
+
 export async function listAudits(clientId?: string): Promise<SupabaseRecord<AuditFormState>[]> {
   if (!supabase) return [];
 
@@ -33,11 +45,15 @@ export async function getAuditById(id: string): Promise<SupabaseRecord<AuditForm
 export async function saveAudit(form: AuditFormState): Promise<SupabaseRecord<AuditFormState>> {
   if (!supabase) throw new Error('Supabase is not configured.');
 
+  const userId = await requireUserId();
   const payload = {
+    user_id: userId,
     title: form.title || 'Kitchen Profit Audit',
     site_name: form.businessName || '',
+    location: form.location || null,
     review_date: form.visitDate || null,
     client_id: form.clientId || null,
+    client_site_id: form.clientSiteId || null,
     data: form
   };
 
