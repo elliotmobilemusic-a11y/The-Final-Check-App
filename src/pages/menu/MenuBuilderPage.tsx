@@ -1,22 +1,23 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { StatCard } from '../components/StatCard';
-import { openPrintableHtmlDocument } from '../lib/clientExports';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
+import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import {
   deleteMenuProject,
   getMenuProjectById,
   listMenuProjects,
   saveMenuProject
-} from '../services/menus';
-import { listClients } from '../services/clients';
+} from '../../services/menus';
+import { listClients } from '../../services/clients';
 import type {
   ClientRecord,
   DishIngredient,
   MenuDish,
   MenuProjectState,
   SupabaseRecord
-} from '../types';
-import { downloadText, fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../lib/utils';
+} from '../../types';
+import { downloadText, fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 
 function blankIngredient(): DishIngredient {
   return { id: uid('ing'), name: '', qtyUsed: 0, packQty: 1, packCost: 0 };
@@ -779,93 +780,66 @@ export function MenuBuilderPage() {
 
   return (
     <div className="page-stack menu-page">
-      <section className="page-heading menu-hero">
-        <div className="menu-hero-grid">
-          <div className="menu-hero-copy">
-            <div className="brand-badge">Menu engineering</div>
-            <h2>Build, price, and refine menus with live commercial control</h2>
-            <p>
-              Cost dishes from ingredients, monitor section performance, and use target
-              sell guidance to tighten pricing before the menu goes live.
-            </p>
-
-            <div className="hero-actions">
-              <button className="button button-secondary" onClick={newProject}>
-                New menu
-              </button>
-              <button
-                className="button button-primary"
-                disabled={saving}
-                onClick={handleSaveProject}
-              >
-                {saving ? 'Saving...' : 'Save menu'}
-              </button>
-              <button className="button button-secondary" onClick={exportPdf}>
-                Export PDF
-              </button>
-              <button className="button button-secondary" onClick={exportJson}>
-                Export JSON
-              </button>
-              <label className="button button-secondary inline-file-button">
-                Load JSON
-                <input accept="application/json" hidden type="file" onChange={loadFromJson} />
-              </label>
-            </div>
-          </div>
-
-          <div className="menu-summary-card">
-            <div className="menu-summary-top">
-              <span
-                className={
-                  weightedGp >= project.defaultTargetGp
-                    ? 'status-pill status-success'
-                    : weightedGp >= project.defaultTargetGp - 3
-                      ? 'status-pill status-warning'
-                      : 'status-pill status-danger'
-                }
-              >
-                Theo GP {fmtPercent(weightedGp)}
-              </span>
-              <div className="menu-summary-meta">{message}</div>
-            </div>
-
-            <div className="menu-summary-grid">
-              <div className="menu-summary-item">
+      <PageIntro
+        eyebrow="Menu builder"
+        title="Menu engineering and pricing"
+        description="Cost dishes from ingredients, track section performance, and tighten pricing with one working view that is built for menu reviews."
+        actions={
+          <>
+            <button className="button button-secondary" onClick={newProject}>
+              New menu
+            </button>
+            <button
+              className="button button-primary"
+              disabled={saving}
+              onClick={handleSaveProject}
+            >
+              {saving ? 'Saving...' : 'Save menu'}
+            </button>
+            <button className="button button-secondary" onClick={exportPdf}>
+              Export PDF
+            </button>
+            <button className="button button-secondary" onClick={exportJson}>
+              Export JSON
+            </button>
+            <label className="button button-secondary inline-file-button">
+              Load JSON
+              <input accept="application/json" hidden type="file" onChange={loadFromJson} />
+            </label>
+          </>
+        }
+        side={
+          <div className="page-intro-summary">
+            <span
+              className={
+                weightedGp >= project.defaultTargetGp
+                  ? 'status-pill status-success'
+                  : weightedGp >= project.defaultTargetGp - 3
+                    ? 'status-pill status-warning'
+                    : 'status-pill status-danger'
+              }
+            >
+              Theo GP {fmtPercent(weightedGp)}
+            </span>
+            <strong>Menu snapshot</strong>
+            <p>{message}</p>
+            <div className="page-intro-summary-list">
+              <div>
                 <span>Completion</span>
                 <strong>{completion.percent}%</strong>
               </div>
-              <div className="menu-summary-item">
-                <span>Total dishes</span>
+              <div>
+                <span>Dishes</span>
                 <strong>{allDishes.length}</strong>
               </div>
-              <div className="menu-summary-item">
-                <span>Revenue</span>
-                <strong>{fmtCurrency(totalRevenue)}</strong>
-              </div>
-              <div className="menu-summary-item">
-                <span>Profit</span>
-                <strong>{fmtCurrency(totalProfit)}</strong>
-              </div>
-              <div className="menu-summary-item">
+              <div>
                 <span>Price gap</span>
                 <strong>{fmtCurrency(pricingGapValue)}</strong>
               </div>
             </div>
-
-            <div className="menu-progress-block">
-              <div className="menu-progress-row">
-                <strong>Menu build progress</strong>
-                <span>
-                  {completion.complete}/{completion.total} checkpoints
-                </span>
-              </div>
-              <div className="menu-progress-track">
-                <div className="menu-progress-fill" style={{ width: `${completion.percent}%` }} />
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       <section className="stats-grid">
         <StatCard

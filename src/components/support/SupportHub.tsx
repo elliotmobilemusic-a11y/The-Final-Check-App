@@ -6,7 +6,7 @@ import {
   getAllHelpPages,
   getHelpPage,
   type AppHelpPage
-} from '../lib/appHelp';
+} from '../../lib/appHelp';
 
 type ChatMessage = {
   id: string;

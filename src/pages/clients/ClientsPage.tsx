@@ -1,17 +1,18 @@
 import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { buildClientPdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
-import { clientRecordToProfile, createEmptyClientData } from '../lib/clientData';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { buildClientPdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { clientRecordToProfile, createEmptyClientData } from '../../features/clients/clientData';
 import {
   getBusinessProfile,
   searchBusinessProfiles,
   type BusinessLookupProfile,
   type BusinessLookupResult
-} from '../lib/businessLookup';
-import { fmtCurrency } from '../lib/utils';
-import { createClient, deleteClient, listClients } from '../services/clients';
-import type { ClientProfile, ClientRecord } from '../types';
-import { StatCard } from '../components/StatCard';
+} from '../../features/clients/businessLookup';
+import { fmtCurrency } from '../../lib/utils';
+import { createClient, deleteClient, listClients } from '../../services/clients';
+import type { ClientProfile, ClientRecord } from '../../types';
+import { StatCard } from '../../components/ui/StatCard';
 
 const blankClient: ClientProfile = {
   companyName: '',
@@ -90,6 +91,7 @@ function relationshipTone(health?: string | null) {
 }
 
 type SortMode = 'updated' | 'review' | 'value' | 'company' | 'attention';
+type LookupScopeFilter = 'group' | 'site' | 'all';
 
 function clientSitesFromLookup(lookup: BusinessLookupProfile) {
   return lookup.sites.map((site, index) => ({
@@ -146,6 +148,7 @@ export function ClientsPage() {
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupScope, setLookupScope] = useState<LookupScopeFilter>('group');
   const [lookupMessage, setLookupMessage] = useState(
     'Use the business finder to search hospitality groups, pub companies, restaurant brands, or websites and pull the best match into the CRM.'
   );
@@ -349,6 +352,12 @@ export function ClientsPage() {
       ),
     [clients]
   );
+  const visibleLookupResults = useMemo(() => {
+    if (lookupScope === 'all') return lookupResults;
+    return lookupResults.filter((result) =>
+      lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
+    );
+  }, [lookupResults, lookupScope]);
   const overdueInvoiceCount = useMemo(
     () =>
       clients.reduce(
@@ -450,64 +459,42 @@ export function ClientsPage() {
 
   return (
     <div className="page-stack">
-      <section className="page-heading clients-hero">
-        <div className="clients-hero-grid">
-          <div className="clients-hero-copy">
-            <div className="brand-badge">CRM and client portfolio</div>
-            <h2>Manage the full client book from one clear operational list</h2>
-            <p>
-              Create new accounts at the top, then use the live client list for reviews,
-              pipeline, billing exposure, and linked delivery work.
-            </p>
-
-            <div className="hero-actions">
-              <a className="button button-primary" href="#client-create-form">
-                Add new client
-              </a>
-              <Link className="button button-secondary" to="/dashboard">
-                Back to overview
-              </Link>
-            </div>
-
-            <div className="clients-hero-chip-row">
-              <div className="clients-hero-chip">
-                <span>Clients</span>
+      <PageIntro
+        eyebrow="Clients"
+        title="Client CRM and account setup"
+        description="Create new accounts quickly, keep the list searchable, and use each client record as the home for delivery, billing, and follow-up."
+        actions={
+          <>
+            <a className="button button-primary" href="#client-create-form">
+              Add new client
+            </a>
+            <Link className="button button-secondary" to="/dashboard">
+              Back to overview
+            </Link>
+          </>
+        }
+        side={
+          <div className="page-intro-summary">
+            <span className="soft-pill">CRM snapshot</span>
+            <strong>Live client book</strong>
+            <p>{message}</p>
+            <div className="page-intro-summary-list">
+              <div>
+                <span>Accounts</span>
                 <strong>{clients.length}</strong>
-                <small>Accounts currently active in the CRM</small>
               </div>
-              <div className="clients-hero-chip">
+              <div>
                 <span>Pipeline</span>
                 <strong>{fmtCurrency(pipelineValue)}</strong>
-                <small>Open opportunity value across the client base</small>
               </div>
-              <div className="clients-hero-chip">
-                <span>Outstanding invoices</span>
+              <div>
+                <span>Open invoices</span>
                 <strong>{openInvoiceCount}</strong>
-                <small>{fmtCurrency(openInvoiceValue)} still open across the book</small>
               </div>
             </div>
           </div>
-
-          <div className="clients-focus-card">
-            <span className="soft-pill">Operational view</span>
-            <h3>One place for client records, delivery history, billing, and follow-up</h3>
-            <div className="clients-focus-list">
-              <div className="clients-focus-item">
-                <strong>CRM visibility</strong>
-                <span>Searchable accounts, status filters, relationship health, and account ownership.</span>
-              </div>
-              <div className="clients-focus-item">
-                <strong>Commercial workflow</strong>
-                <span>Track pipeline value, invoice exposure, review cadence, and open tasks from the same record.</span>
-              </div>
-              <div className="clients-focus-item">
-                <strong>Fast actions</strong>
-                <span>{message}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       <section className="stats-grid">
         <StatCard label="Active clients" value={String(activeClients.length)} hint="Accounts currently in live service" />
@@ -570,6 +557,18 @@ export function ClientsPage() {
                     onChange={(event) => setLookupQuery(event.target.value)}
                   />
                 </label>
+                <label className="field">
+                  <span>Show results for</span>
+                  <select
+                    className="input"
+                    value={lookupScope}
+                    onChange={(event) => setLookupScope(event.target.value as LookupScopeFilter)}
+                  >
+                    <option value="group">Groups and head office</option>
+                    <option value="site">Single sites</option>
+                    <option value="all">All UK matches</option>
+                  </select>
+                </label>
                 <button
                   className="button button-secondary self-end"
                   disabled={lookupLoading}
@@ -582,9 +581,9 @@ export function ClientsPage() {
 
               <p className="muted-copy">{lookupMessage}</p>
 
-              {lookupResults.length ? (
+              {visibleLookupResults.length ? (
                 <div className="crm-lookup-results">
-                  {lookupResults.map((result) => (
+                  {visibleLookupResults.map((result) => (
                     <article className="crm-lookup-card" key={result.id}>
                       <div className="crm-lookup-card-top">
                         <div className="crm-lookup-logo-shell">
@@ -673,6 +672,10 @@ export function ClientsPage() {
                     </article>
                   ))}
                 </div>
+              ) : lookupResults.length ? (
+                <p className="muted-copy">
+                  No results match the current filter. Try switching between groups and sites.
+                </p>
               ) : null}
             </section>
 

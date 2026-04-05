@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { createEmptyClientData, normalizeClientData } from '../lib/clientData';
+import { createEmptyClientData, normalizeClientData } from '../features/clients/clientData';
 import type { ClientProfile, ClientRecord } from '../types';
 
 const TABLE = 'clients';

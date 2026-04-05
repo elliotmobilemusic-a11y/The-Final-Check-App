@@ -1,9 +1,10 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { StatCard } from '../components/StatCard';
-import { openPrintableHtmlDocument } from '../lib/clientExports';
-import { deleteAudit, getAuditById, listAudits, saveAudit } from '../services/audits';
-import { listClients } from '../services/clients';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
+import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
+import { listClients } from '../../services/clients';
 import type {
   AuditActionItem,
   AuditCategoryScores,
@@ -14,7 +15,7 @@ import type {
   AuditWasteItem,
   ClientRecord,
   SupabaseRecord
-} from '../types';
+} from '../../types';
 import {
   downloadText,
   fmtCurrency,
@@ -24,7 +25,7 @@ import {
   safe,
   todayIso,
   uid
-} from '../lib/utils';
+} from '../../lib/utils';
 
 function blankWasteItem(): AuditWasteItem {
   return { id: uid('waste'), item: '', cost: 0, cause: '', fix: '' };
@@ -1423,123 +1424,86 @@ export function KitchenAuditPage() {
 
   return (
     <div className="page-stack">
-      <section className="page-heading audit-hero">
-        <div className="audit-hero-grid">
-          <div className="audit-hero-copy">
-            <div className="brand-badge">Kitchen Profit Audit</div>
-            <h2>Build a faster, clearer kitchen audit from evidence to action plan</h2>
-            <p>
-              Capture findings quickly, surface the main operational risks, and build a
-              client-ready report while you work through the site visit.
-            </p>
-
-            <div className="hero-actions">
-              <button className="button button-secondary" onClick={newAudit}>
-                New audit
-              </button>
-              <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
-                {isSaving ? 'Saving...' : 'Save audit'}
-              </button>
-              <button className="button button-secondary" onClick={exportPdf}>
-                Export PDF
-              </button>
-              <button className="button button-secondary" onClick={exportJson}>
-                Export JSON
-              </button>
-              <label className="button button-secondary inline-file-button">
-                Load JSON
-                <input accept="application/json" hidden type="file" onChange={loadFromJson} />
-              </label>
-            </div>
-
-            <div className="audit-preset-row">
-              <button className="button button-ghost" onClick={() => applyPreset('operations')}>
-                Systems preset
-              </button>
-              <button className="button button-ghost" onClick={() => applyPreset('margin')}>
-                Margin preset
-              </button>
-              <button className="button button-ghost" onClick={() => applyPreset('opening')}>
-                Opening preset
-              </button>
-              <button className="button button-ghost" onClick={generateActions}>
-                Generate action plan
-              </button>
-              <button className="button button-ghost" onClick={draftNarrative}>
-                Draft narrative
-              </button>
-              <button className="button button-ghost" onClick={estimateSalesFromTradingProfile}>
-                Estimate sales
-              </button>
-            </div>
-
-            <div className="audit-readiness-grid">
-              {readinessItems.map((item) => (
-                <div className="audit-readiness-card" key={item.label}>
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
-                  <small>{item.detail}</small>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="audit-summary-card">
-            <div className="audit-summary-top">
-              <span className={scoreClass(calc.score)}>
-                {scoreLabel(calc.score)} • {calc.score}/100
-              </span>
-              <div className="audit-summary-meta">{message}</div>
-            </div>
-
-            <div className="audit-summary-grid">
-              <div className="audit-summary-item">
+      <PageIntro
+        eyebrow="Audit tool"
+        title="Kitchen performance audit"
+        description="Capture findings quickly, keep the visit structured, and build the report as you work instead of rewriting everything afterwards."
+        actions={
+          <>
+            <button className="button button-secondary" onClick={newAudit}>
+              New audit
+            </button>
+            <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+              {isSaving ? 'Saving...' : 'Save audit'}
+            </button>
+            <button className="button button-secondary" onClick={exportPdf}>
+              Export PDF
+            </button>
+            <button className="button button-secondary" onClick={exportJson}>
+              Export JSON
+            </button>
+            <label className="button button-secondary inline-file-button">
+              Load JSON
+              <input accept="application/json" hidden type="file" onChange={loadFromJson} />
+            </label>
+          </>
+        }
+        side={
+          <div className="page-intro-summary">
+            <span className={scoreClass(calc.score)}>
+              {scoreLabel(calc.score)} • {calc.score}/100
+            </span>
+            <strong>Audit snapshot</strong>
+            <p>{message}</p>
+            <div className="page-intro-summary-list">
+              <div>
                 <span>Completion</span>
                 <strong>{completion.percent}%</strong>
               </div>
-              <div className="audit-summary-item">
+              <div>
                 <span>GP gap</span>
                 <strong>
                   {form.weeklySales > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'Awaiting data'}
                 </strong>
               </div>
-              <div className="audit-summary-item">
-                <span>Waste</span>
-                <strong>
-                  {form.actualWasteValue > 0 ? fmtPercent(calc.wastePercent) : 'Not logged'}
-                </strong>
-              </div>
-              <div className="audit-summary-item">
-                <span>Portion risk</span>
-                <strong>{calc.portionRisk}</strong>
-              </div>
-              <div className="audit-summary-item">
+              <div>
                 <span>Controls</span>
                 <strong>{Math.round(calc.controlScore)}%</strong>
               </div>
-              <div className="audit-summary-item">
-                <span>Ops score</span>
-                <strong>{calc.operationsAverage.toFixed(1)}/10</strong>
-              </div>
-              <div className="audit-summary-item">
-                <span>GP opportunity</span>
-                <strong>{calc.gpOpportunityValue > 0 ? fmtCurrency(calc.gpOpportunityValue) : 'Protected'}</strong>
-              </div>
-            </div>
-
-            <div className="audit-progress-block">
-              <div className="audit-progress-row">
-                <strong>Audit progress</strong>
-                <span>
-                  {completion.complete}/{completion.total} checkpoints
-                </span>
-              </div>
-              <div className="audit-progress-track">
-                <div className="audit-progress-fill" style={{ width: `${completion.percent}%` }} />
-              </div>
             </div>
           </div>
+        }
+      >
+        <div className="audit-preset-row">
+          <button className="button button-ghost" onClick={() => applyPreset('operations')}>
+            Systems preset
+          </button>
+          <button className="button button-ghost" onClick={() => applyPreset('margin')}>
+            Margin preset
+          </button>
+          <button className="button button-ghost" onClick={() => applyPreset('opening')}>
+            Opening preset
+          </button>
+          <button className="button button-ghost" onClick={generateActions}>
+            Generate action plan
+          </button>
+          <button className="button button-ghost" onClick={draftNarrative}>
+            Draft narrative
+          </button>
+          <button className="button button-ghost" onClick={estimateSalesFromTradingProfile}>
+            Estimate sales
+          </button>
         </div>
+      </PageIntro>
+
+      <section className="audit-readiness-grid">
+        {readinessItems.map((item) => (
+          <div className="audit-readiness-card" key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <small>{item.detail}</small>
+          </div>
+        ))}
       </section>
 
       <section className="stats-grid">

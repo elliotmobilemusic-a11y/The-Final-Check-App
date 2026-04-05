@@ -1,14 +1,15 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { StatCard } from '../components/StatCard';
-import { useAuth } from '../context/AuthContext';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
+import { useAuth } from '../../context/AuthContext';
 import {
   type LandingPage,
   themeOptions,
   type ThemeMode,
   usePreferences
-} from '../context/PreferencesContext';
-import { getRememberPreference, setRememberPreference } from '../lib/authStorage';
-import { supabase } from '../lib/supabase';
+} from '../../context/PreferencesContext';
+import { getRememberPreference, setRememberPreference } from '../../lib/authStorage';
+import { supabase } from '../../lib/supabase';
 
 type ThemePreview = {
   value: ThemeMode;
@@ -143,27 +144,21 @@ export function SettingsPage() {
 
   return (
     <div className="page-stack settings-page">
-      <section className="page-heading settings-hero">
-        <div className="settings-hero-grid">
-          <div className="settings-hero-copy">
-            <div className="brand-badge">Settings</div>
-            <h2>Control your account, theme, and device behaviour</h2>
-            <p>
-              This is where you shape how the app feels day to day: update your display
-              name and profile image, pick a theme, control what the app remembers on this
-              device, and set the page you want to open first.
-            </p>
-
-            <div className="hero-actions">
-              <button className="button button-primary" form="settings-form" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save settings'}
-              </button>
-              <button className="button button-secondary" onClick={handleResetDevicePreferences}>
-                Reset device preferences
-              </button>
-            </div>
-          </div>
-
+      <PageIntro
+        eyebrow="Settings"
+        title="Account and device preferences"
+        description="Control your profile, themes, startup behaviour, and device defaults from one place without hunting through the app."
+        actions={
+          <>
+            <button className="button button-primary" form="settings-form" disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save settings'}
+            </button>
+            <button className="button button-secondary" onClick={handleResetDevicePreferences}>
+              Reset device preferences
+            </button>
+          </>
+        }
+        side={
           <div className="settings-profile-card">
             <div className="settings-profile-top">
               {avatarPreview ? (
@@ -213,8 +208,8 @@ export function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       <section className="stats-grid compact">
         <StatCard

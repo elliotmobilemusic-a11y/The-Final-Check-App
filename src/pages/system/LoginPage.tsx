@@ -1,9 +1,9 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { usePreferences } from '../context/PreferencesContext';
-import { getRememberPreference, setRememberPreference } from '../lib/authStorage';
-import { hasSupabaseEnv, supabase } from '../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
+import { usePreferences } from '../../context/PreferencesContext';
+import { getRememberPreference, setRememberPreference } from '../../lib/authStorage';
+import { hasSupabaseEnv, supabase } from '../../lib/supabase';
 
 export function LoginPage() {
   const { session } = useAuth();

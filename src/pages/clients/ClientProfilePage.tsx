@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { StatCard } from '../components/StatCard';
-import { buildClientPdfHtml, buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
-import { clientRecordToProfile } from '../lib/clientData';
+import { StatCard } from '../../components/ui/StatCard';
+import { buildClientPdfHtml, buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
   getBusinessProfile,
   searchBusinessProfiles,
   type BusinessLookupProfile,
   type BusinessLookupResult
-} from '../lib/businessLookup';
-import { getClientById, updateClient } from '../services/clients';
-import { listAudits } from '../services/audits';
-import { listMenuProjects } from '../services/menus';
+} from '../../features/clients/businessLookup';
+import { getClientById, updateClient } from '../../services/clients';
+import { listAudits } from '../../services/audits';
+import { listMenuProjects } from '../../services/menus';
 import type {
   AuditFormState,
   ClientContact,
@@ -25,8 +25,10 @@ import type {
   ClientTimelineItem,
   MenuProjectState,
   SupabaseRecord
-} from '../types';
-import { fmtCurrency, num, safe, todayIso, uid } from '../lib/utils';
+} from '../../types';
+import { fmtCurrency, num, safe, todayIso, uid } from '../../lib/utils';
+
+type LookupScopeFilter = 'group' | 'site' | 'all';
 
 function splitLines(value: string) {
   return value
@@ -237,6 +239,7 @@ export function ClientProfilePage() {
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupScope, setLookupScope] = useState<LookupScopeFilter>('group');
   const [lookupMessage, setLookupMessage] = useState(
     'Use the business finder to refresh the company name, logo, website, location, and profile summary from the strongest matched record.'
   );
@@ -319,6 +322,12 @@ export function ClientProfilePage() {
         .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0)
     };
   }, [form?.data.invoices]);
+  const visibleLookupResults = useMemo(() => {
+    if (lookupScope === 'all') return lookupResults;
+    return lookupResults.filter((result) =>
+      lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
+    );
+  }, [lookupResults, lookupScope]);
 
   if (!client || !form) {
     return (
@@ -629,16 +638,9 @@ function removeInvoice(invoiceId: string) {
 
   return (
     <div className="page-stack">
-      <section
-        className="client-cover"
-        style={{
-          backgroundImage: form.coverUrl
-            ? `linear-gradient(rgba(30,30,35,.42), rgba(30,30,35,.52)), url(${form.coverUrl})`
-            : 'linear-gradient(135deg, #4b4950 0%, #605b65 100%)'
-        }}
-      >
-        <div className="client-cover-inner">
-          <div className="client-brand-row">
+      <section className="record-header">
+        <div className="record-header-main">
+          <div className="record-header-brand">
             <div className="client-logo-shell">
               {form.logoUrl ? (
                 <img src={form.logoUrl} alt={form.companyName} className="client-logo-lg" />
@@ -649,24 +651,29 @@ function removeInvoice(invoiceId: string) {
               )}
             </div>
 
-            <div className="client-brand-copy">
-              <div className="brand-badge">{form.status}</div>
+            <div className="record-header-copy">
+              <div className="record-header-topline">
+                <span className="brand-badge">{form.status}</span>
+                <span className="soft-pill">{form.data.accountScope}</span>
+              </div>
               <h2>{form.companyName}</h2>
               <p>
                 {form.industry || 'Industry not set'} • {form.location || 'Location not set'} •{' '}
                 {form.tier || 'Standard'}
               </p>
-              <div className="client-tag-row">
-                {form.tags.map((tag) => (
-                  <span className="soft-pill" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              {form.tags.length ? (
+                <div className="client-tag-row">
+                  {form.tags.map((tag) => (
+                    <span className="soft-pill" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div className="hero-actions">
+          <div className="record-header-actions">
             <button
               className="button button-secondary"
               onClick={() => setEditing((value) => !value)}
@@ -695,39 +702,36 @@ function removeInvoice(invoiceId: string) {
               </a>
             ) : null}
           </div>
+        </div>
 
-          <div className="client-hero-metrics">
-            <div className="client-hero-metric">
-              <span>Workstreams</span>
-              <strong>{linkedWorkstreams}</strong>
-              <small>{audits.length} audits and {menus.length} menu projects linked</small>
-            </div>
-            <div className="client-hero-metric">
-              <span>Review cadence</span>
-              <strong>{reviewLabel(form.nextReviewDate)}</strong>
-              <small>{formatShortDate(form.nextReviewDate)}</small>
-            </div>
-            <div className="client-hero-metric">
-              <span>Account scope</span>
-              <strong>{form.data.accountScope}</strong>
-              <small>
-                {form.data.siteCountEstimate > 1
-                  ? `${form.data.siteCountEstimate} sites expected across this account`
-                  : 'Single operating site or head-office record'}
-              </small>
-            </div>
-            <div className="client-hero-metric">
-              <span>Pipeline value</span>
-              <strong>{fmtCurrency(pipelineValue)}</strong>
-              <small>{stats.deals} open opportunit{stats.deals === 1 ? 'y' : 'ies'} tracked in CRM</small>
-            </div>
-            <div className="client-hero-metric">
-              <span>Outstanding invoices</span>
-              <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
-              <small>{stats.invoicesOpen} invoice{stats.invoicesOpen === 1 ? '' : 's'} not yet paid</small>
+        <aside className="record-header-side">
+          <div className="record-header-summary">
+            <span className="soft-pill">Account snapshot</span>
+            <strong>Current operating view</strong>
+            <div className="record-header-grid">
+              <div>
+                <span>Workstreams</span>
+                <strong>{linkedWorkstreams}</strong>
+                <small>{audits.length} audits and {menus.length} menu projects</small>
+              </div>
+              <div>
+                <span>Review cadence</span>
+                <strong>{reviewLabel(form.nextReviewDate)}</strong>
+                <small>{formatShortDate(form.nextReviewDate)}</small>
+              </div>
+              <div>
+                <span>Pipeline</span>
+                <strong>{fmtCurrency(pipelineValue)}</strong>
+                <small>{stats.deals} open opportunit{stats.deals === 1 ? 'y' : 'ies'}</small>
+              </div>
+              <div>
+                <span>Outstanding</span>
+                <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
+                <small>{stats.invoicesOpen} invoice{stats.invoicesOpen === 1 ? '' : 's'} not paid</small>
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
       </section>
 
       <section className="stats-grid">
@@ -776,6 +780,21 @@ function removeInvoice(invoiceId: string) {
                       onChange={(e) => setLookupQuery(e.target.value)}
                     />
                   </label>
+                  <label className="field">
+                    <span>Show results for</span>
+                    <select
+                      className="input"
+                      disabled={!editing}
+                      value={lookupScope}
+                      onChange={(event) =>
+                        setLookupScope(event.target.value as LookupScopeFilter)
+                      }
+                    >
+                      <option value="group">Groups and head office</option>
+                      <option value="site">Single sites</option>
+                      <option value="all">All UK matches</option>
+                    </select>
+                  </label>
                   <button
                     className="button button-secondary self-end"
                     disabled={!editing || lookupLoading}
@@ -788,9 +807,9 @@ function removeInvoice(invoiceId: string) {
 
                 <p className="muted-copy">{lookupMessage}</p>
 
-                {lookupResults.length ? (
+                {visibleLookupResults.length ? (
                   <div className="crm-lookup-results">
-                    {lookupResults.map((result) => (
+                    {visibleLookupResults.map((result) => (
                       <article className="crm-lookup-card" key={result.id}>
                         <div className="crm-lookup-card-top">
                           <div className="crm-lookup-logo-shell">
@@ -879,6 +898,10 @@ function removeInvoice(invoiceId: string) {
                       </article>
                     ))}
                   </div>
+                ) : lookupResults.length ? (
+                  <p className="muted-copy">
+                    No results match the current filter. Switch between groups and sites to narrow the search.
+                  </p>
                 ) : null}
               </section>
 

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { StatCard } from '../components/StatCard';
-import type { ClientRecord } from '../types';
-import { listAudits } from '../services/audits';
-import { listClients } from '../services/clients';
-import { listMenuProjects } from '../services/menus';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
+import type { ClientRecord } from '../../types';
+import { listAudits } from '../../services/audits';
+import { listClients } from '../../services/clients';
+import { listMenuProjects } from '../../services/menus';
 
 type AuditRows = Awaited<ReturnType<typeof listAudits>>;
 type ClientRows = Awaited<ReturnType<typeof listClients>>;
@@ -456,108 +457,47 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack">
-      <section className="hero-panel dashboard-hero">
-        <div className="dashboard-hero-grid">
-          <div className="dashboard-hero-copy">
-            <div className="brand-badge">Portfolio overview</div>
-            <h2>Track clients, live work, and the next actions that matter</h2>
-            <p>
-              Use the dashboard to review current activity, check account pressure points, and
-              move straight into the client, audit, or menu work that needs attention next.
-            </p>
-
-            <div className="dashboard-inline-note">
-              {loading ? 'Loading latest data...' : message}
-            </div>
-
-            <div className="hero-actions">
-              <Link className="button button-primary" to="/clients">
-                Open clients
-              </Link>
-              <Link className="button button-secondary" to="/audit">
-                Start audit
-              </Link>
-              <Link className="button button-secondary" to="/menu">
-                Open menu builder
-              </Link>
-            </div>
-
-            <div className="dashboard-hero-chip-row">
-              <div className="dashboard-hero-chip">
-                <span>Portfolio</span>
-                <strong>{pluralize(clients.length, 'client')}</strong>
-                <small>{pluralize(totalSites, 'site')} across the active client book</small>
-              </div>
-              <div className="dashboard-hero-chip">
-                <span>Coverage</span>
-                <strong>{coveragePercent}% linked</strong>
-                <small>{pluralize(linkedProjects, 'project')} connected to a client record</small>
-              </div>
-              <div className="dashboard-hero-chip">
-                <span>Follow-up</span>
-                <strong>{pluralize(openTaskCount, 'open task')}</strong>
-                <small>
-                  {pluralize(dueSoonReviews.length + overdueReviews.length, 'review')} due soon or overdue
-                </small>
-              </div>
-            </div>
-          </div>
-
-          <div className="dashboard-live-card">
-            <div className="dashboard-live-top">
-              <div className="stack gap-12">
-                <span className={statusTone(systemStatus.tone)}>{systemStatus.label}</span>
-                <div>
-                  <h3>Operations board</h3>
-                  <p>{systemStatus.detail}</p>
-                </div>
-              </div>
-
-              <div className="dashboard-live-updated">
+      <PageIntro
+        eyebrow="Overview"
+        title="Portfolio overview"
+        description="See the client book, active delivery work, and the next operational actions without hunting through the app."
+        actions={
+          <>
+            <Link className="button button-primary" to="/clients">
+              Open clients
+            </Link>
+            <Link className="button button-secondary" to="/audit">
+              Start audit
+            </Link>
+            <Link className="button button-secondary" to="/menu">
+              Open menu builder
+            </Link>
+          </>
+        }
+        side={
+          <div className="page-intro-summary">
+            <span className={statusTone(systemStatus.tone)}>{systemStatus.label}</span>
+            <strong>Operations board</strong>
+            <p>{systemStatus.detail}</p>
+            <div className="page-intro-summary-list">
+              <div>
                 <span>Last activity</span>
                 <strong>{loading ? 'Syncing' : latestUpdated}</strong>
               </div>
-            </div>
-
-            <div className="dashboard-live-grid">
-              <div className="dashboard-live-item">
-                <span>Active clients</span>
-                <strong>{activeClients.length}</strong>
-                <small>Businesses currently in motion</small>
-              </div>
-              <div className="dashboard-live-item">
-                <span>Total projects</span>
-                <strong>{totalProjects}</strong>
-                <small>Audits and menu reviews combined</small>
-              </div>
-              <div className="dashboard-live-item">
-                <span>Full coverage</span>
-                <strong>{clientsWithBothModules.length}</strong>
-                <small>Clients with audit and menu history</small>
-              </div>
-              <div className="dashboard-live-item">
-                <span>Queue pressure</span>
-                <strong>{overdueReviews.length + dueSoonReviews.length}</strong>
-                <small>Upcoming or overdue review checkpoints</small>
-              </div>
-            </div>
-
-            <div className="dashboard-live-footer">
               <div>
-                <span>System note</span>
-                <strong>
-                  {clientsWithoutWorkstreams.length > 0
-                    ? `${pluralize(clientsWithoutWorkstreams.length, 'client')} still needs first linked workstream.`
-                    : 'Every current client has at least one linked project.'}
-                </strong>
+                <span>Coverage</span>
+                <strong>{coveragePercent}% linked</strong>
               </div>
-              <Link className="button button-secondary" to="/clients">
-                Review portfolio
-              </Link>
+              <div>
+                <span>Queue</span>
+                <strong>{pluralize(dueSoonReviews.length + overdueReviews.length, 'review')}</strong>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        }
+      >
+        <div className="page-inline-note">{loading ? 'Loading latest data...' : message}</div>
+      </PageIntro>
 
       <section className="stats-grid">
         <StatCard

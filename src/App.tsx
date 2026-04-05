@@ -1,16 +1,16 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { AppShell } from './components/AppShell';
-import { SupportHub } from './components/SupportHub';
+import { AppShell } from './components/layout/AppShell';
+import { SupportHub } from './components/support/SupportHub';
 import { usePreferences } from './context/PreferencesContext';
-import { DashboardPage } from './pages/DashboardPage';
-import { KitchenAuditPage } from './pages/KitchenAuditPage';
-import { LoginPage } from './pages/LoginPage';
-import { MenuBuilderPage } from './pages/MenuBuilderPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { ClientsPage } from './pages/ClientsPage';
-import { ClientProfilePage } from './pages/ClientProfilePage';
-import { SettingsPage } from './pages/SettingsPage';
+import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { KitchenAuditPage } from './pages/audit/KitchenAuditPage';
+import { LoginPage } from './pages/system/LoginPage';
+import { MenuBuilderPage } from './pages/menu/MenuBuilderPage';
+import { NotFoundPage } from './pages/system/NotFoundPage';
+import { ClientsPage } from './pages/clients/ClientsPage';
+import { ClientProfilePage } from './pages/clients/ClientProfilePage';
+import { SettingsPage } from './pages/settings/SettingsPage';
 
 function HomeRedirect() {
   const { preferences } = usePreferences();
