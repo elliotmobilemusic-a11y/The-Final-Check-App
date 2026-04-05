@@ -480,9 +480,12 @@ body.reduced-motion *::after {
 .brand-link {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
   min-width: 0;
   text-decoration: none;
+}
+
+.brand-copy-textonly {
+  gap: 3px;
 }
 
 .brand-icon-shell {
@@ -526,9 +529,9 @@ body.reduced-motion *::after {
 .brand-copy strong {
   display: block;
   color: var(--text);
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.05;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -1079,20 +1082,39 @@ body.reduced-motion *::after {
 }
 
 .auth-brand-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  display: block;
   margin-bottom: 22px;
 }
 
-.auth-brand-wordmark {
-  width: min(320px, 100%);
-  height: auto;
-  max-height: 88px;
-  object-fit: contain;
-  object-position: left center;
-  filter: contrast(1.08) saturate(1.08);
-  flex-shrink: 0;
+.auth-brand-text {
+  display: grid;
+  gap: 6px;
+}
+
+.auth-brand-kicker {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.auth-brand-text strong {
+  color: var(--white);
+  font-size: clamp(18px, 2.4vw, 24px);
+  line-height: 1.02;
+  letter-spacing: 0.14em;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auth-brand-text small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .auth-card {
@@ -2918,11 +2940,6 @@ body[data-theme="midnight"] .data-table td {
     align-items: flex-start;
   }
 
-  .brand-icon-shell {
-    width: 48px;
-    height: 48px;
-  }
-
   .brand-copy strong {
     font-size: 16px;
   }
@@ -3034,9 +3051,6 @@ body[data-theme="midnight"] .data-table td {
     width: 100%;
   }
 
-  .auth-brand-wordmark {
-    max-height: 90px;
-  }
 }
 
 /* ---------- Dashboard upgrade ---------- */

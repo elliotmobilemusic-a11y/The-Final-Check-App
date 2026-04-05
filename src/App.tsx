@@ -10,6 +10,7 @@ import { MenuBuilderPage } from './pages/menu/MenuBuilderPage';
 import { NotFoundPage } from './pages/system/NotFoundPage';
 import { ClientsPage } from './pages/clients/ClientsPage';
 import { ClientProfilePage } from './pages/clients/ClientProfilePage';
+import { NewClientPage } from './pages/clients/NewClientPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 
 function HomeRedirect() {
@@ -33,6 +34,7 @@ export default function App() {
           <Route index element={<HomeRedirect />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="clients" element={<ClientsPage />} />
+          <Route path="clients/new" element={<NewClientPage />} />
           <Route path="clients/:clientId" element={<ClientProfilePage />} />
           <Route path="audit" element={<KitchenAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />

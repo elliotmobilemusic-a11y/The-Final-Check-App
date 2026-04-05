@@ -52,15 +52,7 @@ export function AppShell() {
         <header className="shell-topbar">
           <div className="shell-toolbar">
             <NavLink className="brand-link" to="/dashboard">
-              <span className="brand-icon-shell">
-                <img
-                  src="/the-final-check-favicon.png"
-                  alt="The Final Check logo"
-                  className="brand-icon-image"
-                />
-              </span>
-              <span className="brand-copy">
-                <span className="brand-kicker">Consultancy platform</span>
+              <span className="brand-copy brand-copy-textonly">
                 <strong>The Final Check</strong>
                 <span className="brand-subtitle">Profit and performance consultancy</span>
               </span>
