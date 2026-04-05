@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { buildClientPdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../lib/clientExports';
 import { clientRecordToProfile, createEmptyClientData } from '../lib/clientData';
@@ -91,8 +91,20 @@ function relationshipTone(health?: string | null) {
 
 type SortMode = 'updated' | 'review' | 'value' | 'company' | 'attention';
 
+function clientSitesFromLookup(lookup: BusinessLookupProfile) {
+  return lookup.sites.map((site, index) => ({
+    id: `site-${lookup.id}-${index}`,
+    name: site.name,
+    address: site.address,
+    website: site.website,
+    status: site.status || 'Active',
+    notes: site.notes || 'Imported from AI business search.'
+  }));
+}
+
 function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupProfile): ClientProfile {
   const nextTags = [...new Set([lookup.industry, ...current.tags].filter(Boolean))];
+  const nextSites = current.data.sites.length ? current.data.sites : clientSitesFromLookup(lookup);
 
   return {
     ...current,
@@ -107,7 +119,20 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
     data: {
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
+      sites: nextSites,
+      accountScope: lookup.accountScope || current.data.accountScope,
+      operatingCountry: lookup.country || current.data.operatingCountry,
+      siteCountEstimate:
+        current.data.siteCountEstimate > 1
+          ? current.data.siteCountEstimate
+          : lookup.siteCountEstimate || nextSites.length || current.data.siteCountEstimate,
+      registeredName: current.data.registeredName || lookup.officialName || lookup.name,
+      registeredAddress:
+        current.data.registeredAddress || lookup.registeredAddress || lookup.addressLine,
       billingName: current.data.billingName || lookup.name,
+      billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
+      companyNumber: current.data.companyNumber || lookup.companyNumber,
+      vatNumber: current.data.vatNumber || lookup.vatNumber,
       leadSource: current.data.leadSource || 'AI business search'
     }
   };
@@ -126,6 +151,7 @@ export function ClientsPage() {
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('updated');
 
@@ -205,6 +231,46 @@ export function ClientsPage() {
     } finally {
       setLookupLoading(false);
     }
+  }
+
+  function updateDraftSite(id: string, key: 'name' | 'address' | 'website' | 'status' | 'notes', value: string) {
+    setForm((current) => ({
+      ...current,
+      data: {
+        ...current.data,
+        sites: current.data.sites.map((site) => (site.id === id ? { ...site, [key]: value } : site))
+      }
+    }));
+  }
+
+  function removeDraftSite(id: string) {
+    setForm((current) => ({
+      ...current,
+      data: {
+        ...current.data,
+        sites: current.data.sites.filter((site) => site.id !== id)
+      }
+    }));
+  }
+
+  function addDraftSite() {
+    setForm((current) => ({
+      ...current,
+      data: {
+        ...current.data,
+        sites: [
+          ...current.data.sites,
+          {
+            id: `site-draft-${Date.now()}`,
+            name: '',
+            address: '',
+            website: '',
+            status: 'Active',
+            notes: ''
+          }
+        ]
+      }
+    }));
   }
 
   async function handleDelete(id: string) {
@@ -322,7 +388,7 @@ export function ClientsPage() {
   );
 
   const filteredClients = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
 
     const filtered = clients.filter((client) => {
       const matchesSearch =
@@ -380,7 +446,7 @@ export function ClientsPage() {
 
       return getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at);
     });
-  }, [clients, search, sortMode, statusFilter]);
+  }, [clients, deferredSearch, sortMode, statusFilter]);
 
   return (
     <div className="page-stack">
@@ -486,8 +552,9 @@ export function ClientsPage() {
                 <div>
                   <h4>AI-assisted business finder</h4>
                   <p className="muted-copy">
-                    Search across venue and company data, then pull in the strongest public match
-                    with website, location, logo, industry, and contact signals before you save.
+                    Search for UK hospitality groups, managed pub companies, restaurant brands,
+                    hotels, or individual venues, then load the strongest operating record before
+                    you save.
                   </p>
                 </div>
                 <span className="soft-pill">Smart enrichment</span>
@@ -541,8 +608,9 @@ export function ClientsPage() {
                           <div className="crm-lookup-meta-row">
                             <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
                             <span className="crm-alert-chip">
-                              {result.resultType === 'group' ? 'Group or brand' : 'Site or venue'}
+                              {result.accountScope}
                             </span>
+                            <span className="crm-alert-chip">UK</span>
                             <span className="crm-alert-chip">{result.sourceLabel}</span>
                             {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                           </div>
@@ -557,10 +625,29 @@ export function ClientsPage() {
                             {result.website ? (
                               <span className="crm-alert-chip">{result.website.replace(/^https?:\/\//, '')}</span>
                             ) : null}
+                            {result.siteCountEstimate > 1 ? (
+                              <span className="crm-alert-chip is-stable">
+                                {result.siteCountEstimate} known sites
+                              </span>
+                            ) : null}
+                            {result.companyNumber ? (
+                              <span className="crm-alert-chip">Co. {result.companyNumber}</span>
+                            ) : null}
                           </div>
 
                           {result.signals.length ? (
                             <p className="crm-lookup-note">{result.signals.join(' • ')}</p>
+                          ) : null}
+
+                          {result.sites.length ? (
+                            <div className="crm-lookup-site-list">
+                              {result.sites.slice(0, 4).map((site) => (
+                                <div className="crm-lookup-site-item" key={`${result.id}-${site.name}`}>
+                                  <strong>{site.name}</strong>
+                                  <span>{site.address || 'UK site address not captured yet'}</span>
+                                </div>
+                              ))}
+                            </div>
                           ) : null}
                         </div>
                       </div>
@@ -661,6 +748,27 @@ export function ClientsPage() {
 
             <div className="form-grid three-balance">
               <label className="field">
+                <span>Account scope</span>
+                <select
+                  className="input"
+                  value={form.data.accountScope}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        accountScope: event.target.value as typeof form.data.accountScope
+                      }
+                    })
+                  }
+                >
+                  <option>Single site</option>
+                  <option>Multi-site group</option>
+                  <option>Group / head office</option>
+                </select>
+              </label>
+
+              <label className="field">
                 <span>Review date</span>
                 <input
                   className="input"
@@ -707,6 +815,61 @@ export function ClientsPage() {
               </label>
             </div>
 
+            <div className="form-grid three-balance">
+              <label className="field">
+                <span>Operating country</span>
+                <input
+                  className="input"
+                  value={form.data.operatingCountry}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        operatingCountry: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>Estimated site count</span>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  value={form.data.siteCountEstimate}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        siteCountEstimate: Number(event.target.value)
+                      }
+                    })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>Company number</span>
+                <input
+                  className="input"
+                  value={form.data.companyNumber}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        companyNumber: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
+            </div>
+
             <label className="field">
               <span>Profile summary</span>
               <textarea
@@ -743,6 +906,132 @@ export function ClientsPage() {
                 />
               </label>
             </div>
+
+            <div className="form-grid two-columns">
+              <label className="field">
+                <span>Registered name</span>
+                <input
+                  className="input"
+                  value={form.data.registeredName}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        registeredName: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
+
+              <label className="field">
+                <span>VAT number</span>
+                <input
+                  className="input"
+                  value={form.data.vatNumber}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      data: {
+                        ...form.data,
+                        vatNumber: event.target.value
+                      }
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Registered / billing address</span>
+              <textarea
+                className="input textarea"
+                value={form.data.registeredAddress || form.data.billingAddress}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    data: {
+                      ...form.data,
+                      registeredAddress: event.target.value,
+                      billingAddress: form.data.billingAddress || event.target.value
+                    }
+                  })
+                }
+              />
+            </label>
+
+            <section className="crm-site-planner">
+              <div className="feature-top">
+                <div>
+                  <h4>Site planner</h4>
+                  <p className="muted-copy">
+                    Use one account for the group, then keep the live site list underneath it for
+                    venues, kitchens, or regions.
+                  </p>
+                </div>
+                <button className="button button-secondary" onClick={addDraftSite} type="button">
+                  Add site
+                </button>
+              </div>
+
+              {form.data.sites.length === 0 ? (
+                <div className="dashboard-empty">
+                  No sites added yet. Group matches can load sample UK sites automatically.
+                </div>
+              ) : (
+                <div className="crm-site-list">
+                  {form.data.sites.map((site) => (
+                    <article className="crm-site-card" key={site.id}>
+                      <div className="crm-site-card-top">
+                        <strong>{site.name || 'Untitled site'}</strong>
+                        <button
+                          className="button button-ghost danger-text"
+                          onClick={() => removeDraftSite(site.id)}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="form-grid two-columns">
+                        <label className="field">
+                          <span>Site name</span>
+                          <input
+                            className="input"
+                            value={site.name}
+                            onChange={(event) => updateDraftSite(site.id, 'name', event.target.value)}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Status</span>
+                          <input
+                            className="input"
+                            value={site.status}
+                            onChange={(event) => updateDraftSite(site.id, 'status', event.target.value)}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Address</span>
+                          <input
+                            className="input"
+                            value={site.address}
+                            onChange={(event) => updateDraftSite(site.id, 'address', event.target.value)}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Website</span>
+                          <input
+                            className="input"
+                            value={site.website}
+                            onChange={(event) => updateDraftSite(site.id, 'website', event.target.value)}
+                          />
+                        </label>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
 
             <div className="header-actions">
               <button className="button button-primary" disabled={saving}>
@@ -882,7 +1171,7 @@ export function ClientsPage() {
                     <div>
                       <strong>{client.company_name}</strong>
                       <p>
-                        {client.industry || 'Industry not set'} • {client.location || 'Location not set'} •{' '}
+                        {data.accountScope || 'Single site'} • {client.location || 'Location not set'} •{' '}
                         {client.contact_name || 'Main contact not set'}
                       </p>
                     </div>
@@ -898,6 +1187,10 @@ export function ClientsPage() {
                     <div className="crm-metric-card">
                       <span>Account owner</span>
                       <strong>{data.accountOwner || 'Not set'}</strong>
+                    </div>
+                    <div className="crm-metric-card">
+                      <span>Account scope</span>
+                      <strong>{data.accountScope}</strong>
                     </div>
                     <div className="crm-metric-card">
                       <span>Next review</span>
@@ -924,6 +1217,10 @@ export function ClientsPage() {
                       <strong>{openTasks}</strong>
                     </div>
                     <div className="crm-metric-card">
+                      <span>Sites</span>
+                      <strong>{Math.max(data.sites.length, data.siteCountEstimate || 0)}</strong>
+                    </div>
+                    <div className="crm-metric-card">
                       <span>Updated</span>
                       <strong>{formatShortDate(client.updated_at)}</strong>
                     </div>
@@ -946,6 +1243,8 @@ export function ClientsPage() {
                   </div>
 
                   <div className="client-tag-row">
+                    <span className="soft-pill">{data.operatingCountry || 'United Kingdom'}</span>
+                    {data.companyNumber ? <span className="soft-pill">Co. {data.companyNumber}</span> : null}
                     {(client.tags ?? []).slice(0, 5).map((tag) => (
                       <span className="soft-pill" key={tag}>
                         {tag}

@@ -1718,6 +1718,53 @@ body.reduced-motion *::after {
   gap: 10px;
 }
 
+.crm-site-planner {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: linear-gradient(180deg, rgba(252, 249, 245, 0.94), rgba(247, 242, 237, 0.92));
+}
+
+.crm-site-list,
+.crm-lookup-site-list {
+  display: grid;
+  gap: 10px;
+}
+
+.crm-site-card,
+.crm-lookup-site-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.crm-site-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.crm-site-card strong,
+.crm-lookup-site-item strong,
+.crm-site-card-top strong {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.crm-site-card span,
+.crm-lookup-site-item span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .crm-lookup-shell {
   display: grid;
   gap: 16px;

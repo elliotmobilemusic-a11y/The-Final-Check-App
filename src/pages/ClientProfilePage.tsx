@@ -93,6 +93,7 @@ function blankSite(): ClientSite {
     id: uid('site'),
     name: '',
     address: '',
+    website: '',
     status: 'Active',
     notes: ''
   };
@@ -180,6 +181,16 @@ function relationshipTone(health: ClientProfileData['relationshipHealth']) {
 
 function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupProfile): ClientProfile {
   const nextTags = [...new Set([lookup.industry, ...current.tags].filter(Boolean))];
+  const nextSites = current.data.sites.length
+    ? current.data.sites
+    : lookup.sites.map((site, index) => ({
+        id: `site-${lookup.id}-${index}`,
+        name: site.name,
+        address: site.address,
+        website: site.website,
+        status: site.status || 'Active',
+        notes: site.notes || 'Imported from AI business search.'
+      }));
 
   return {
     ...current,
@@ -194,7 +205,20 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
     data: {
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
+      sites: nextSites,
+      accountScope: lookup.accountScope || current.data.accountScope,
+      operatingCountry: lookup.country || current.data.operatingCountry,
+      siteCountEstimate:
+        current.data.siteCountEstimate > 1
+          ? current.data.siteCountEstimate
+          : lookup.siteCountEstimate || nextSites.length || current.data.siteCountEstimate,
+      registeredName: current.data.registeredName || lookup.officialName || lookup.name,
+      registeredAddress:
+        current.data.registeredAddress || lookup.registeredAddress || lookup.addressLine,
       billingName: current.data.billingName || lookup.name,
+      billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
+      companyNumber: current.data.companyNumber || lookup.companyNumber,
+      vatNumber: current.data.vatNumber || lookup.vatNumber,
       leadSource: current.data.leadSource || 'AI business search'
     }
   };
@@ -354,6 +378,20 @@ function updateSite(id: string, key: keyof ClientSite, value: string) {
             sites: current.data.sites.map((item) =>
               item.id === id ? { ...item, [key]: value } : item
             )
+          }
+        }
+      : current
+  );
+}
+
+function removeSite(id: string) {
+  setForm((current) =>
+    current
+      ? {
+          ...current,
+          data: {
+            ...current.data,
+            sites: current.data.sites.filter((item) => item.id !== id)
           }
         }
       : current
@@ -670,9 +708,13 @@ function removeInvoice(invoiceId: string) {
               <small>{formatShortDate(form.nextReviewDate)}</small>
             </div>
             <div className="client-hero-metric">
-              <span>Relationship</span>
-              <strong>{form.contactName || primaryContact?.name || 'Main contact not set'}</strong>
-              <small>{form.contactEmail || primaryContact?.email || 'No email stored yet'}</small>
+              <span>Account scope</span>
+              <strong>{form.data.accountScope}</strong>
+              <small>
+                {form.data.siteCountEstimate > 1
+                  ? `${form.data.siteCountEstimate} sites expected across this account`
+                  : 'Single operating site or head-office record'}
+              </small>
             </div>
             <div className="client-hero-metric">
               <span>Pipeline value</span>
@@ -690,7 +732,11 @@ function removeInvoice(invoiceId: string) {
 
       <section className="stats-grid">
         <StatCard label="Contacts" value={String(stats.contacts)} hint="Key people" />
-        <StatCard label="Sites" value={String(stats.sites)} hint="Locations and venues" />
+        <StatCard
+          label="Sites"
+          value={String(Math.max(stats.sites, form.data.siteCountEstimate || 0))}
+          hint="Locations and venues"
+        />
         <StatCard label="Open tasks" value={String(stats.tasksOpen)} hint="Follow-up actions" />
         <StatCard label="Open deals" value={String(stats.deals)} hint="Pipeline opportunities in play" />
       </section>
@@ -711,8 +757,9 @@ function removeInvoice(invoiceId: string) {
                   <div>
                     <h4>AI-assisted business finder</h4>
                     <p className="muted-copy">
-                      Search across venue and company data, then refresh this account with the
-                      strongest public match and its best available signals.
+                      Search for UK hospitality groups, pub companies, restaurant brands, hotels,
+                      or individual venues, then refresh this account with the strongest matched
+                      operating record.
                     </p>
                   </div>
                   <span className="soft-pill">Smart enrichment</span>
@@ -766,9 +813,8 @@ function removeInvoice(invoiceId: string) {
 
                             <div className="crm-lookup-meta-row">
                               <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
-                              <span className="crm-alert-chip">
-                                {result.resultType === 'group' ? 'Group or brand' : 'Site or venue'}
-                              </span>
+                              <span className="crm-alert-chip">{result.accountScope}</span>
+                              <span className="crm-alert-chip">UK</span>
                               <span className="crm-alert-chip">{result.sourceLabel}</span>
                               {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                             </div>
@@ -785,10 +831,29 @@ function removeInvoice(invoiceId: string) {
                                   {result.website.replace(/^https?:\/\//, '')}
                                 </span>
                               ) : null}
+                              {result.siteCountEstimate > 1 ? (
+                                <span className="crm-alert-chip is-stable">
+                                  {result.siteCountEstimate} known sites
+                                </span>
+                              ) : null}
+                              {result.companyNumber ? (
+                                <span className="crm-alert-chip">Co. {result.companyNumber}</span>
+                              ) : null}
                             </div>
 
                             {result.signals.length ? (
                               <p className="crm-lookup-note">{result.signals.join(' • ')}</p>
+                            ) : null}
+
+                            {result.sites.length ? (
+                              <div className="crm-lookup-site-list">
+                                {result.sites.slice(0, 4).map((site) => (
+                                  <div className="crm-lookup-site-item" key={`${result.id}-${site.name}`}>
+                                    <strong>{site.name}</strong>
+                                    <span>{site.address || 'UK site address not captured yet'}</span>
+                                  </div>
+                                ))}
+                              </div>
                             ) : null}
                           </div>
                         </div>
@@ -866,6 +931,21 @@ function removeInvoice(invoiceId: string) {
                   </select>
                 </label>
                 <label className="field">
+                  <span>Account scope</span>
+                  <select
+                    className="input"
+                    value={form.data.accountScope}
+                    onChange={(e) =>
+                      updateData('accountScope', e.target.value as ClientProfileData['accountScope'])
+                    }
+                    disabled={!editing}
+                  >
+                    <option>Single site</option>
+                    <option>Multi-site group</option>
+                    <option>Group / head office</option>
+                  </select>
+                </label>
+                <label className="field">
                   <span>Website</span>
                   <input
                     className="input"
@@ -881,6 +961,15 @@ function removeInvoice(invoiceId: string) {
                     type="date"
                     value={form.nextReviewDate}
                     onChange={(e) => updateField('nextReviewDate', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Operating country</span>
+                  <input
+                    className="input"
+                    value={form.data.operatingCountry}
+                    onChange={(e) => updateData('operatingCountry', e.target.value)}
                     disabled={!editing}
                   />
                 </label>
@@ -1033,6 +1122,26 @@ function removeInvoice(invoiceId: string) {
                   />
                 </label>
                 <label className="field">
+                  <span>Estimated site count</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    value={form.data.siteCountEstimate}
+                    onChange={(e) => updateData('siteCountEstimate', Number(e.target.value))}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
+                  <span>Registered name</span>
+                  <input
+                    className="input"
+                    value={form.data.registeredName}
+                    onChange={(e) => updateData('registeredName', e.target.value)}
+                    disabled={!editing}
+                  />
+                </label>
+                <label className="field">
                   <span>Billing name</span>
                   <input
                     className="input"
@@ -1080,6 +1189,16 @@ function removeInvoice(invoiceId: string) {
                   />
                 </label>
               </div>
+
+              <label className="field">
+                <span>Registered address</span>
+                <textarea
+                  className="input textarea"
+                  value={form.data.registeredAddress}
+                  onChange={(e) => updateData('registeredAddress', e.target.value)}
+                  disabled={!editing}
+                />
+              </label>
 
               <label className="field">
                 <span>Billing address</span>
@@ -1374,6 +1493,18 @@ function removeInvoice(invoiceId: string) {
             <div className="stack gap-12">
               {form.data.sites.map((site) => (
                 <div className="repeat-card" key={site.id}>
+                  <div className="saved-actions">
+                    <span className="soft-pill">{site.status || 'Active'}</span>
+                    {editing ? (
+                      <button
+                        className="button button-ghost danger-text"
+                        onClick={() => removeSite(site.id)}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
                   <div className="form-grid two-columns">
                     <label className="field">
                       <span>Site name</span>
@@ -1393,6 +1524,15 @@ function removeInvoice(invoiceId: string) {
                         disabled={!editing}
                       />
                     </label>
+                    <label className="field">
+                      <span>Website</span>
+                      <input
+                        className="input"
+                        value={site.website}
+                        onChange={(e) => updateSite(site.id, 'website', e.target.value)}
+                        disabled={!editing}
+                      />
+                    </label>
                   </div>
                   <label className="field">
                     <span>Address</span>
@@ -1400,6 +1540,15 @@ function removeInvoice(invoiceId: string) {
                       className="input"
                       value={site.address}
                       onChange={(e) => updateSite(site.id, 'address', e.target.value)}
+                      disabled={!editing}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Notes</span>
+                    <textarea
+                      className="input textarea"
+                      value={site.notes}
+                      onChange={(e) => updateSite(site.id, 'notes', e.target.value)}
                       disabled={!editing}
                     />
                   </label>

@@ -513,11 +513,14 @@ export function buildClientPdfHtml(
 
     <div class="summary-grid">
       <div class="meta-card"><span>Account owner</span><strong>${escapeHtml(client.data.accountOwner || client.contactName || 'Not set')}</strong></div>
+      <div class="meta-card"><span>Account scope</span><strong>${escapeHtml(client.data.accountScope || 'Single site')}</strong></div>
       <div class="meta-card"><span>Next review</span><strong>${escapeHtml(formatDate(client.nextReviewDate))}</strong></div>
       <div class="meta-card"><span>Monthly value</span><strong>${escapeHtml(fmtCurrency(num(client.data.estimatedMonthlyValue)))}</strong></div>
       <div class="meta-card"><span>Pipeline value</span><strong>${escapeHtml(fmtCurrency(pipelineValue))}</strong></div>
+      <div class="meta-card"><span>Operating country</span><strong>${escapeHtml(client.data.operatingCountry || 'United Kingdom')}</strong></div>
       <div class="meta-card"><span>Outstanding invoices</span><strong>${openInvoices.length} open / ${escapeHtml(fmtCurrency(outstandingValue))}</strong></div>
       <div class="meta-card"><span>Linked work</span><strong>${audits.length} audits / ${menus.length} menu projects</strong></div>
+      <div class="meta-card"><span>Site count</span><strong>${escapeHtml(String(Math.max(client.data.sites.length, client.data.siteCountEstimate || 0)))}</strong></div>
     </div>
 
     <section>
@@ -538,6 +541,12 @@ export function buildClientPdfHtml(
         <div><h3>Email</h3><p>${escapeHtml(client.contactEmail || 'Not recorded')}</p></div>
         <div><h3>Phone</h3><p>${escapeHtml(client.contactPhone || 'Not recorded')}</p></div>
         <div><h3>Website</h3><p>${escapeHtml(client.website || 'Not recorded')}</p></div>
+      </div>
+      <div class="report-grid columns-4">
+        <div><h3>Registered name</h3><p>${escapeHtml(client.data.registeredName || client.companyName || 'Not recorded')}</p></div>
+        <div><h3>Company number</h3><p>${escapeHtml(client.data.companyNumber || 'Not recorded')}</p></div>
+        <div><h3>VAT number</h3><p>${escapeHtml(client.data.vatNumber || 'Not recorded')}</p></div>
+        <div><h3>Country</h3><p>${escapeHtml(client.data.operatingCountry || 'United Kingdom')}</p></div>
       </div>
     </section>
 
@@ -564,6 +573,12 @@ export function buildClientPdfHtml(
     ${listMarkup('Risks', client.data.risks)}
     ${listMarkup('Opportunities', client.data.opportunities)}
     ${listMarkup('Tags', client.tags)}
+    ${listMarkup(
+      'Sites',
+      client.data.sites.map((site) =>
+        `${site.name || 'Unnamed site'}${site.address ? ` — ${site.address}` : ''}${site.website ? `, ${site.website}` : ''}${site.notes ? `, ${site.notes}` : ''}`
+      )
+    )}
     ${listMarkup(
       'Contacts',
       client.data.contacts.map((contact) =>

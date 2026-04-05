@@ -16,7 +16,10 @@ function normalizeContacts(value: ClientContact[] | undefined) {
 }
 
 function normalizeSites(value: ClientSite[] | undefined) {
-  return value ?? [];
+  return (value ?? []).map((site) => ({
+    ...site,
+    website: site.website ?? ''
+  }));
 }
 
 function normalizeTimeline(value: ClientTimelineItem[] | undefined) {
@@ -78,8 +81,13 @@ export function createEmptyClientData(): ClientProfileData {
     tasks: [],
     accountOwner: '',
     leadSource: '',
+    accountScope: 'Single site',
+    operatingCountry: 'United Kingdom',
     relationshipHealth: 'Strong',
     estimatedMonthlyValue: 0,
+    siteCountEstimate: 1,
+    registeredName: '',
+    registeredAddress: '',
     billingName: '',
     billingEmail: '',
     billingAddress: '',
@@ -105,9 +113,12 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
     timeline: normalizeTimeline(data?.timeline),
     tasks: normalizeTasks(data?.tasks),
     estimatedMonthlyValue: Number(data?.estimatedMonthlyValue ?? empty.estimatedMonthlyValue) || 0,
+    siteCountEstimate: Number(data?.siteCountEstimate ?? empty.siteCountEstimate) || 0,
     paymentTermsDays: Number(data?.paymentTermsDays ?? empty.paymentTermsDays) || 30,
     deals: normalizeDeals(data?.deals),
     invoices: normalizeInvoices(data?.invoices),
+    accountScope: data?.accountScope ?? empty.accountScope,
+    operatingCountry: data?.operatingCountry ?? empty.operatingCountry,
     relationshipHealth: data?.relationshipHealth ?? 'Strong'
   };
 }

@@ -37,19 +37,35 @@ type AiBusinessLookupResponse = {
   matches?: Array<Partial<BusinessLookupResult>>;
 };
 
+export type BusinessLookupSite = {
+  name: string;
+  address: string;
+  website: string;
+  status: string;
+  notes: string;
+};
+
 export type BusinessLookupResult = {
   id: string;
   name: string;
+  officialName: string;
   description: string;
   resultType: 'group' | 'site';
+  accountScope: 'Single site' | 'Multi-site group' | 'Group / head office';
   website: string;
   industry: string;
   location: string;
+  country: string;
   logoUrl: string;
   sourceUrl: string;
   sourceLabel: string;
   phone: string;
   addressLine: string;
+  registeredAddress: string;
+  companyNumber: string;
+  vatNumber: string;
+  siteCountEstimate: number;
+  sites: BusinessLookupSite[];
   wikidataId: string;
   confidenceScore: number;
   confidenceLabel: string;
@@ -156,6 +172,31 @@ function uniqueStrings(values: string[]) {
 
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
+}
+
+function normalizeAccountScope(value?: string, resultType: 'group' | 'site' = 'group') {
+  const normalized = String(value ?? '').toLowerCase();
+  if (normalized.includes('multi')) return 'Multi-site group';
+  if (normalized.includes('head')) return 'Group / head office';
+  if (normalized.includes('single')) return 'Single site';
+  return resultType === 'site' ? 'Single site' : 'Group / head office';
+}
+
+function normalizeLookupSites(value?: Array<Partial<BusinessLookupSite>>) {
+  return (value ?? [])
+    .map((site) => {
+      const name = String(site?.name ?? '').trim();
+      if (!name) return null;
+
+      return {
+        name,
+        address: String(site?.address ?? '').trim(),
+        website: normalizeWebsite(String(site?.website ?? '').trim()),
+        status: String(site?.status ?? 'Active').trim() || 'Active',
+        notes: String(site?.notes ?? '').trim()
+      } satisfies BusinessLookupSite;
+    })
+    .filter(isPresent);
 }
 
 function hospitalityLabel(place: OpenStreetMapPlace) {
@@ -388,16 +429,24 @@ function baseWikidataResult(
   return {
     id: `wd:${entity.id}`,
     name,
+    officialName: name,
     description: entityDescription(entity),
     resultType: 'group',
+    accountScope: 'Group / head office',
     website,
     industry,
     location,
+    country: location.includes('United Kingdom') || location.includes('UK') ? 'United Kingdom' : '',
     logoUrl,
     sourceUrl: `${WIKIDATA_PAGE}/${entity.id}`,
     sourceLabel: 'Wikidata',
     phone: '',
     addressLine: '',
+    registeredAddress: '',
+    companyNumber: '',
+    vatNumber: '',
+    siteCountEstimate: 0,
+    sites: [],
     wikidataId: entity.id,
     confidenceScore: score,
     confidenceLabel: confidenceLabel(score),
@@ -450,16 +499,24 @@ function baseOpenStreetMapResult(
   return {
     id: `osm:${place.place_id}`,
     name,
+    officialName: name,
     description,
     resultType: 'site',
+    accountScope: 'Single site',
     website,
     industry,
     location,
+    country: location.includes('United Kingdom') || location.includes('UK') ? 'United Kingdom' : '',
     logoUrl,
     sourceUrl: openStreetMapUrl(place),
     sourceLabel: wikidataResult ? 'OpenStreetMap + Wikidata' : 'OpenStreetMap',
     phone,
     addressLine: addressLine(place),
+    registeredAddress: '',
+    companyNumber: '',
+    vatNumber: '',
+    siteCountEstimate: 1,
+    sites: [],
     wikidataId: wikidataResult?.wikidataId || place.extratags?.['brand:wikidata'] || place.extratags?.wikidata || '',
     confidenceScore: score,
     confidenceLabel: confidenceLabel(score),
@@ -479,10 +536,16 @@ function mergeBusinessResults(current: BusinessLookupResult, incoming: BusinessL
 
   return {
     ...preferred,
+    officialName: preferred.officialName || secondary.officialName,
     description: preferred.description || secondary.description,
+    accountScope:
+      preferred.accountScope !== 'Group / head office' || !secondary.accountScope
+        ? preferred.accountScope
+        : secondary.accountScope,
     website: preferred.website || secondary.website,
     industry: preferred.industry || secondary.industry,
     location: preferred.location || secondary.location,
+    country: preferred.country || secondary.country,
     logoUrl: preferred.logoUrl || secondary.logoUrl,
     sourceUrl: preferred.sourceUrl || secondary.sourceUrl,
     sourceLabel:
@@ -494,6 +557,11 @@ function mergeBusinessResults(current: BusinessLookupResult, incoming: BusinessL
           ),
     phone: preferred.phone || secondary.phone,
     addressLine: preferred.addressLine || secondary.addressLine,
+    registeredAddress: preferred.registeredAddress || secondary.registeredAddress,
+    companyNumber: preferred.companyNumber || secondary.companyNumber,
+    vatNumber: preferred.vatNumber || secondary.vatNumber,
+    siteCountEstimate: Math.max(preferred.siteCountEstimate, secondary.siteCountEstimate),
+    sites: preferred.sites.length ? preferred.sites : secondary.sites,
     wikidataId: preferred.wikidataId || secondary.wikidataId,
     confidenceScore: Math.max(current.confidenceScore, incoming.confidenceScore),
     confidenceLabel: confidenceLabel(Math.max(current.confidenceScore, incoming.confidenceScore)),
@@ -509,9 +577,13 @@ function resultKey(result: BusinessLookupResult) {
 function buildBusinessSummary(result: BusinessLookupResult, summaryText?: string) {
   const parts = [
     summaryText || result.description,
+    result.accountScope ? `Account scope: ${result.accountScope}` : '',
     result.industry ? `Industry: ${result.industry}` : '',
+    result.country ? `Country: ${result.country}` : '',
     result.location ? `Location: ${result.location}` : '',
     result.addressLine ? `Address: ${result.addressLine}` : '',
+    result.companyNumber ? `Company number: ${result.companyNumber}` : '',
+    result.siteCountEstimate > 1 ? `Sites: approximately ${result.siteCountEstimate}` : '',
     result.phone ? `Phone: ${result.phone}` : '',
     result.website ? `Website: ${result.website}` : ''
   ].filter(Boolean);
@@ -544,16 +616,27 @@ async function searchBusinessProfilesWithAi(query: string): Promise<BusinessLook
         return {
           id: String(match.id ?? `ai:${normalizeName(name) || index}`),
           name,
+          officialName: String(match.officialName ?? name).trim() || name,
           description: String(match.description ?? '').trim(),
           resultType: match.resultType === 'site' ? 'site' : 'group',
+          accountScope: normalizeAccountScope(
+            String(match.accountScope ?? ''),
+            match.resultType === 'site' ? 'site' : 'group'
+          ),
           website,
           industry: String(match.industry ?? '').trim(),
           location: String(match.location ?? '').trim(),
+          country: String(match.country ?? 'United Kingdom').trim() || 'United Kingdom',
           logoUrl: String(match.logoUrl ?? '').trim() || domainLogoUrl(website),
           sourceUrl: String(match.sourceUrl ?? '').trim(),
           sourceLabel: String(match.sourceLabel ?? 'OpenAI web search').trim(),
           phone: String(match.phone ?? '').trim(),
           addressLine: String(match.addressLine ?? '').trim(),
+          registeredAddress: String(match.registeredAddress ?? '').trim(),
+          companyNumber: String(match.companyNumber ?? '').trim(),
+          vatNumber: String(match.vatNumber ?? '').trim(),
+          siteCountEstimate: Number(match.siteCountEstimate ?? 0) || 0,
+          sites: normalizeLookupSites(match.sites),
           wikidataId: String(match.wikidataId ?? '').trim(),
           confidenceScore,
           confidenceLabel:
@@ -588,7 +671,7 @@ async function searchWikidata(query: string) {
 }
 
 async function searchOpenStreetMap(query: string) {
-  const url = `${NOMINATIM_API}?format=jsonv2&limit=8&addressdetails=1&namedetails=1&extratags=1&dedupe=1&q=${encodeURIComponent(query)}`;
+  const url = `${NOMINATIM_API}?format=jsonv2&limit=8&addressdetails=1&namedetails=1&extratags=1&dedupe=1&countrycodes=gb&q=${encodeURIComponent(query)}`;
   return fetchJson<OpenStreetMapPlace[]>(url);
 }
 

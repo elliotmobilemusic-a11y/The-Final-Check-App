@@ -172,6 +172,7 @@ export type ClientSite = {
   id: string;
   name: string;
   address: string;
+  website: string;
   status: string;
   notes: string;
 };
@@ -232,8 +233,13 @@ export type ClientProfileData = {
   tasks: ClientTask[];
   accountOwner: string;
   leadSource: string;
+  accountScope: 'Single site' | 'Multi-site group' | 'Group / head office';
+  operatingCountry: string;
   relationshipHealth: 'Strong' | 'Watch' | 'At Risk';
   estimatedMonthlyValue: number;
+  siteCountEstimate: number;
+  registeredName: string;
+  registeredAddress: string;
   billingName: string;
   billingEmail: string;
   billingAddress: string;
