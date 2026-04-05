@@ -3,6 +3,14 @@ import { useAuth } from './AuthContext';
 
 export type ThemeMode = 'sandstone' | 'coastal' | 'cedar' | 'sunrise' | 'midnight';
 export type LandingPage = '/dashboard' | '/clients' | '/audit' | '/menu' | '/settings';
+export type ThemeOption = {
+  value: ThemeMode;
+  label: string;
+  description: string;
+  accentName: string;
+  mood: string;
+  bestFor: string;
+};
 
 export type AppPreferences = {
   displayName: string;
@@ -136,30 +144,45 @@ export function usePreferences() {
   return useContext(PreferencesContext);
 }
 
-export const themeOptions: Array<{ value: ThemeMode; label: string; description: string }> = [
+export const themeOptions: ThemeOption[] = [
   {
     value: 'sandstone',
     label: 'Sandstone',
-    description: 'The current warm consultancy look and feel.'
+    description: 'Warm, executive, and understated for everyday client and reporting work.',
+    accentName: 'Brushed gold',
+    mood: 'Calm consultancy',
+    bestFor: 'Best for balanced daily operations'
   },
   {
     value: 'coastal',
     label: 'Coastal',
-    description: 'A cleaner cool-toned workspace with softer blues and stone neutrals.'
+    description: 'Cooler, cleaner surfaces with a sharper analytical feel.',
+    accentName: 'Atlantic blue',
+    mood: 'Clean planning',
+    bestFor: 'Best for longer strategy and admin sessions'
   },
   {
     value: 'cedar',
     label: 'Cedar',
-    description: 'A richer green-led workspace with a more grounded operational feel.'
+    description: 'Grounded green-led surfaces with a stronger operational tone.',
+    accentName: 'Olive cedar',
+    mood: 'Operational control',
+    bestFor: 'Best for audits, checklists, and site work'
   },
   {
     value: 'sunrise',
     label: 'Sunrise',
-    description: 'A lighter premium palette with warmer accents and brighter panels.'
+    description: 'A brighter premium palette with softer warmth and lighter panels.',
+    accentName: 'Copper amber',
+    mood: 'Light editorial',
+    bestFor: 'Best for presenting reports and client-ready work'
   },
   {
     value: 'midnight',
     label: 'Dark mode',
-    description: 'A darker workspace for lower glare and a more focused operating feel.'
+    description: 'A lower-glare dark workspace with tighter contrast for focused work.',
+    accentName: 'Bronzed brass',
+    mood: 'Focused after-hours',
+    bestFor: 'Best for low-light and dense working sessions'
   }
 ];

@@ -74,6 +74,28 @@ export function SettingsPage() {
     setRememberMe(getRememberPreference());
   }, [preferences]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const body = window.document.body;
+    body.dataset.theme = theme;
+    body.classList.toggle('compact-mode', compactMode);
+    body.classList.toggle('reduced-motion', reducedMotion);
+
+    return () => {
+      body.dataset.theme = preferences.theme;
+      body.classList.toggle('compact-mode', preferences.compactMode);
+      body.classList.toggle('reduced-motion', preferences.reducedMotion);
+    };
+  }, [
+    compactMode,
+    preferences.compactMode,
+    preferences.reducedMotion,
+    preferences.theme,
+    reducedMotion,
+    theme
+  ]);
+
   const effectiveDisplayName = useMemo(
     () =>
       displayName.trim() ||
@@ -183,7 +205,9 @@ export function SettingsPage() {
             <div className="settings-theme-pill">
               <strong>Current theme</strong>
               <span>{currentTheme.label}</span>
-              <small>{currentTheme.description}</small>
+              <small>
+                {currentTheme.accentName} • {currentTheme.mood}
+              </small>
             </div>
 
             <div className="settings-profile-meta">
@@ -288,7 +312,7 @@ export function SettingsPage() {
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Theme and appearance</h4>
-                  <span className="soft-pill">Remembered on this device</span>
+                  <span className="soft-pill">Live preview enabled</span>
                 </div>
 
                 <div className="settings-theme-grid">
@@ -301,12 +325,37 @@ export function SettingsPage() {
                         onClick={() => setTheme(option.value)}
                         type="button"
                       >
-                        <div className={`settings-theme-preview ${preview?.accentClass ?? ''}`} />
+                        <div className={`settings-theme-preview ${preview?.accentClass ?? ''}`}>
+                          <span className="settings-theme-preview-bar" />
+                          <span className="settings-theme-preview-pane" />
+                        </div>
                         <strong>{option.label}</strong>
                         <p>{option.description}</p>
+                        <div className="settings-theme-card-meta">
+                          <span>{option.mood}</span>
+                          <small>{option.bestFor}</small>
+                        </div>
                       </button>
                     );
                   })}
+                </div>
+
+                <div className="settings-theme-detail-grid">
+                  <div className="settings-theme-detail-card">
+                    <span>Accent</span>
+                    <strong>{currentTheme.accentName}</strong>
+                    <p>The main highlight colour used across buttons, pills, and report emphasis.</p>
+                  </div>
+                  <div className="settings-theme-detail-card">
+                    <span>Mood</span>
+                    <strong>{currentTheme.mood}</strong>
+                    <p>Sets the overall workspace feel so the app matches how you prefer to work.</p>
+                  </div>
+                  <div className="settings-theme-detail-card">
+                    <span>Best use</span>
+                    <strong>{currentTheme.bestFor}</strong>
+                    <p>Choose the palette that best suits your screen, lighting, and working session.</p>
+                  </div>
                 </div>
 
                 <div className="settings-toggle-grid">

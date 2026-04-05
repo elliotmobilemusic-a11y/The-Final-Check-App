@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { supabase } from '../../lib/supabase';
@@ -8,6 +8,34 @@ const navItems = [
   { to: '/clients', label: 'Clients' },
   { to: '/audit', label: 'Audit Tool' },
   { to: '/menu', label: 'Menu Builder' }
+];
+
+const workspaceDetails = [
+  {
+    match: '/dashboard',
+    label: 'Portfolio overview',
+    detail: 'Track client coverage, recent delivery work, and the next priority action.'
+  },
+  {
+    match: '/clients',
+    label: 'CRM workspace',
+    detail: 'Manage accounts, contacts, sites, commercial detail, and follow-up.'
+  },
+  {
+    match: '/audit',
+    label: 'Audit workspace',
+    detail: 'Capture findings, structure evidence, and build a client-ready report.'
+  },
+  {
+    match: '/menu',
+    label: 'Menu workspace',
+    detail: 'Review dish performance, pricing, and engineering decisions in one flow.'
+  },
+  {
+    match: '/settings',
+    label: 'System settings',
+    detail: 'Control profile, themes, device defaults, and working preferences.'
+  }
 ];
 
 function deriveDisplayName(email?: string | null) {
@@ -27,6 +55,7 @@ function getInitials(name: string) {
 
 export function AppShell() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
   const displayName =
@@ -40,6 +69,9 @@ export function AppShell() {
     (typeof session?.user.user_metadata?.avatar_url === 'string'
       ? session.user.user_metadata.avatar_url
       : '');
+  const activeWorkspace =
+    workspaceDetails.find((item) => location.pathname.startsWith(item.match)) ??
+    workspaceDetails[0];
 
   async function handleSignOut() {
     await supabase?.auth.signOut();
@@ -53,12 +85,13 @@ export function AppShell() {
           <div className="shell-toolbar">
             <NavLink className="brand-link" to="/dashboard">
               <span className="brand-copy brand-copy-textonly">
+                <span className="brand-kicker">Consultancy operating system</span>
                 <strong>The Final Check</strong>
                 <span className="brand-subtitle">Profit and performance consultancy</span>
               </span>
             </NavLink>
 
-            <div className="shell-toolbar-main">
+            <div className="shell-toolbar-main shell-main-stack">
               <nav className="shell-primary-nav" aria-label="Primary navigation">
                 {navItems.map((item) => (
                   <NavLink
@@ -71,9 +104,24 @@ export function AppShell() {
                   </NavLink>
                 ))}
               </nav>
+              <div className="shell-context-line">
+                <span className="shell-section-label">{activeWorkspace.label}</span>
+                <span className="shell-context-copy">{activeWorkspace.detail}</span>
+              </div>
             </div>
 
             <div className="shell-toolbar-actions">
+              <div className="shell-quick-actions" aria-label="Quick actions">
+                <Link className="shell-utility-link" to="/clients/new">
+                  New client
+                </Link>
+                <Link className="shell-utility-link" to="/audit">
+                  New audit
+                </Link>
+                <Link className="shell-utility-link" to="/menu">
+                  New menu
+                </Link>
+              </div>
               <Link className="user-chip shell-profile-link" to="/settings">
                 {avatarUrl ? (
                   <img
