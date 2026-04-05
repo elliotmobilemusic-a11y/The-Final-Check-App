@@ -90,192 +90,178 @@ function shellHtml(title: string, bodyHtml: string) {
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>${safeTitle}</title>
       <style>
+        @page {
+          size: A4;
+          margin: 16mm 14mm 18mm;
+        }
         :root {
           color-scheme: light;
-          --ink: #2f2c33;
-          --muted: #706962;
+          --ink: #2d2b31;
+          --muted: #6d6863;
           --accent: #c6a161;
-          --accent-strong: #8f6d2f;
-          --accent-soft: rgba(198, 161, 97, 0.12);
+          --accent-strong: #8e6b2c;
+          --accent-soft: rgba(198, 161, 97, 0.1);
           --panel: #ffffff;
           --line: rgba(86, 81, 91, 0.14);
-          --paper: #f6f2ee;
-          --paper-strong: #fcf8f3;
-          --shadow: 0 30px 80px rgba(36, 31, 38, 0.12);
-          --radius-xl: 32px;
-          --radius-lg: 24px;
-          --radius-md: 18px;
+          --paper: #f3efe9;
+          --paper-strong: #fbf8f4;
+          --shadow: 0 26px 60px rgba(36, 31, 38, 0.08);
+          --radius-xl: 28px;
+          --radius-lg: 20px;
+          --radius-md: 16px;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         * { box-sizing: border-box; }
         body {
           margin: 0;
-          padding: 40px;
+          padding: 32px;
           color: var(--ink);
-          background:
-            radial-gradient(circle at top left, rgba(198, 161, 97, 0.12), transparent 0 22%),
-            linear-gradient(180deg, #efe8df 0%, var(--paper) 36%, #f8f4ef 100%);
+          background: linear-gradient(180deg, #ece6de 0%, var(--paper) 100%);
         }
         .print-toolbar {
           position: sticky;
-          top: 16px;
+          top: 18px;
           z-index: 10;
           display: flex;
           justify-content: flex-end;
-          gap: 12px;
-          max-width: 960px;
-          margin: 0 auto 18px;
+          gap: 10px;
+          max-width: 1080px;
+          margin: 0 auto 20px;
         }
         .print-toolbar button {
           appearance: none;
           border: 1px solid rgba(86, 81, 91, 0.14);
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(255, 255, 255, 0.94);
           color: var(--ink);
-          padding: 12px 16px;
+          padding: 11px 15px;
           border-radius: 999px;
           font: inherit;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 12px 24px rgba(36, 31, 38, 0.08);
+          box-shadow: 0 10px 20px rgba(36, 31, 38, 0.06);
         }
         main {
-          max-width: 960px;
+          max-width: 1080px;
           margin: 0 auto;
-          display: grid;
-          gap: 18px;
         }
-        .brand-hero {
-          position: relative;
-          overflow: hidden;
-          display: grid;
-          gap: 22px;
-          padding: 28px 30px;
+        .report-document {
+          padding: 34px 36px 28px;
           border-radius: var(--radius-xl);
-          color: #ffffff;
-          background:
-            radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 0 26%),
-            linear-gradient(135deg, #403c46 0%, #625b68 100%);
+          background: var(--panel);
+          border: 1px solid rgba(86, 81, 91, 0.08);
           box-shadow: var(--shadow);
         }
-        .brand-hero::after {
-          content: "";
-          position: absolute;
-          right: -44px;
-          top: -56px;
-          width: 180px;
-          height: 180px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 70%);
-          pointer-events: none;
-        }
-        .brand-hero > * {
-          position: relative;
-          z-index: 1;
-        }
-        .brand-hero-top {
+        .report-masthead {
           display: flex;
           justify-content: space-between;
-          align-items: start;
-          gap: 20px;
+          align-items: flex-start;
+          gap: 18px;
+          padding-bottom: 18px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.12);
         }
-        .brand-lockup {
+        .report-brand {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
           min-width: 0;
         }
-        .brand-logo-shell {
-          width: 72px;
-          height: 72px;
+        .report-brand-mark {
+          width: 60px;
+          height: 60px;
           flex-shrink: 0;
           display: grid;
           place-items: center;
-          padding: 6px;
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.94);
-          box-shadow: 0 18px 32px rgba(19, 14, 24, 0.16);
+          padding: 5px;
+          border-radius: 20px;
+          background: var(--paper-strong);
+          border: 1px solid rgba(198, 161, 97, 0.18);
         }
-        .brand-logo-shell img {
+        .report-brand-mark img {
           width: 100%;
           height: 100%;
           object-fit: contain;
-          border-radius: 20px;
+          border-radius: 16px;
         }
-        .brand-copy {
+        .report-brand-copy {
           display: grid;
-          gap: 6px;
+          gap: 5px;
         }
-        .brand-copy strong {
-          font-size: 22px;
-          line-height: 1.02;
+        .report-brand-copy strong {
+          font-size: 18px;
+          line-height: 1.05;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
-        .brand-copy span {
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 12px;
-          line-height: 1.45;
+        .report-brand-copy span {
+          color: var(--muted);
+          font-size: 11px;
+          line-height: 1.5;
           letter-spacing: 0.12em;
           text-transform: uppercase;
         }
-        .brand-meta {
+        .report-meta-block {
           display: grid;
           gap: 8px;
           justify-items: end;
+          text-align: right;
         }
-        .brand-meta-chip {
-          padding: 9px 12px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.12);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: rgba(255, 255, 255, 0.92);
+        .report-meta-block span {
+          color: var(--muted);
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
-        .brand-title {
+        .report-meta-block strong {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        .report-title-block {
           display: grid;
           gap: 10px;
-          max-width: 720px;
+          padding: 22px 0 28px;
+          border-bottom: 2px solid var(--accent);
         }
-        .brand-title h1 {
+        .report-title-block span {
+          color: var(--accent-strong);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .report-title-block h1 {
           margin: 0;
           font-size: 38px;
           line-height: 0.98;
           letter-spacing: -0.04em;
         }
-        .brand-title p {
-          color: rgba(255, 255, 255, 0.84);
-          font-size: 15px;
+        .report-title-block p {
+          max-width: 760px;
+          color: var(--muted);
+          font-size: 14px;
           line-height: 1.7;
-        }
-        .report-document {
-          padding: 40px;
-          border-radius: 28px;
-          background: var(--panel);
-          box-shadow: 0 24px 60px rgba(36, 31, 38, 0.08);
         }
         header {
           display: grid;
-          gap: 12px;
-          margin-bottom: 28px;
-          padding: 24px;
-          border-radius: var(--radius-lg);
-          background:
-            linear-gradient(180deg, rgba(248, 243, 236, 0.94), rgba(255, 255, 255, 0.9));
-          border: 1px solid rgba(198, 161, 97, 0.16);
+          gap: 10px;
+          margin: 28px 0 24px;
+          padding: 0 0 18px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.12);
         }
         h1, h2, h3, p { margin: 0; }
         h1 { font-size: 34px; line-height: 1; letter-spacing: -0.04em; }
         h2 {
-          font-size: 22px;
+          font-size: 20px;
           margin-bottom: 14px;
-          color: var(--accent-strong);
+          color: var(--ink);
           letter-spacing: -0.02em;
         }
-        h3 { font-size: 15px; margin-bottom: 10px; }
+        h3 {
+          font-size: 15px;
+          margin-bottom: 10px;
+          color: var(--ink);
+        }
         .eyebrow {
           color: var(--accent-strong);
           font-size: 11px;
@@ -288,16 +274,14 @@ function shellHtml(title: string, bodyHtml: string) {
         .meta-grid, .summary-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
+          gap: 14px;
           margin: 22px 0 28px;
         }
         .meta-card {
-          padding: 18px;
+          padding: 18px 18px 16px;
           border-radius: var(--radius-md);
           border: 1px solid var(--line);
-          background:
-            linear-gradient(180deg, rgba(252, 248, 243, 0.98), rgba(255, 255, 255, 0.94));
-          box-shadow: 0 10px 26px rgba(36, 31, 38, 0.04);
+          background: linear-gradient(180deg, rgba(251, 248, 244, 0.92), rgba(255, 255, 255, 0.98));
         }
         .meta-card span {
           display: block;
@@ -314,11 +298,9 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         section {
           margin-top: 24px;
-          padding: 24px;
-          border-radius: var(--radius-lg);
-          border: 1px solid rgba(86, 81, 91, 0.08);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 247, 242, 0.9));
-          box-shadow: 0 10px 26px rgba(36, 31, 38, 0.04);
+          padding-top: 20px;
+          border-top: 1px solid rgba(86, 81, 91, 0.1);
+          page-break-inside: avoid;
         }
         .report-meta,
         .report-columns,
@@ -357,13 +339,14 @@ function shellHtml(title: string, bodyHtml: string) {
           font-size: 14px;
           overflow: hidden;
           border: 1px solid rgba(86, 81, 91, 0.1);
-          border-radius: 18px;
+          border-radius: 16px;
           background: #ffffff;
         }
         th, td {
-          padding: 12px 10px;
+          padding: 12px 12px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.1);
           text-align: left;
+          vertical-align: top;
         }
         th {
           color: var(--accent-strong);
@@ -388,8 +371,8 @@ function shellHtml(title: string, bodyHtml: string) {
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-top: 22px;
-          padding-top: 14px;
+          margin-top: 28px;
+          padding-top: 16px;
           border-top: 1px solid rgba(86, 81, 91, 0.1);
           color: var(--muted);
           font-size: 12px;
@@ -405,28 +388,25 @@ function shellHtml(title: string, bodyHtml: string) {
           }
           main {
             max-width: none;
-            box-shadow: none;
-            border-radius: 0;
             padding: 0;
           }
-          .brand-hero,
-          .report-document,
-          section,
-          header {
+          .report-document {
+            padding: 0;
+            border: none;
             box-shadow: none;
+          }
+          .print-toolbar {
+            display: none;
           }
         }
         @media (max-width: 760px) {
           body {
             padding: 18px;
           }
-          .brand-hero,
-          .report-document,
-          header,
-          section {
-            padding: 22px;
+          .report-document {
+            padding: 24px;
           }
-          .brand-hero-top,
+          .report-masthead,
           .report-footer {
             flex-direction: column;
             align-items: flex-start;
@@ -449,33 +429,32 @@ function shellHtml(title: string, bodyHtml: string) {
         <button type="button" onclick="window.close()">Close</button>
       </div>
       <main>
-        <section class="brand-hero">
-          <div class="brand-hero-top">
-            <div class="brand-lockup">
-              <div class="brand-logo-shell">
+        <article class="report-document">
+          <div class="report-masthead">
+            <div class="report-brand">
+              <div class="report-brand-mark">
                 <img src="/the-final-check-logo.png" alt="The Final Check logo" />
               </div>
-              <div class="brand-copy">
+              <div class="report-brand-copy">
                 <strong>The Final Check</strong>
                 <span>Profit and Performance Consultancy</span>
               </div>
             </div>
 
-            <div class="brand-meta">
-              <div class="brand-meta-chip">Branded report export</div>
-              <div class="brand-meta-chip">Generated ${escapeHtml(generatedOn)}</div>
+            <div class="report-meta-block">
+              <span>Prepared</span>
+              <strong>${escapeHtml(generatedOn)}</strong>
             </div>
           </div>
 
-          <div class="brand-title">
+          <div class="report-title-block">
+            <span>Client-ready document</span>
             <h1>${safeTitle}</h1>
             <p>
-              Client-ready document styling for exports, presentations, and PDF handover packs.
+              Branded working export prepared for presentation, review, record keeping, and PDF handover.
             </p>
           </div>
-        </section>
 
-        <article class="report-document">
           ${bodyHtml}
           <div class="report-footer">
             <span>The Final Check • Profit and Performance Consultancy</span>

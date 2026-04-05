@@ -114,7 +114,7 @@ export function AppShell() {
               </div>
             </NavLink>
 
-            <div className="shell-toolbar-actions">
+            <div className="shell-toolbar-main">
               <nav className="shell-primary-nav" aria-label="Primary navigation">
                 {navItems.map((item) => (
                   <NavLink
@@ -127,7 +127,9 @@ export function AppShell() {
                   </NavLink>
                 ))}
               </nav>
+            </div>
 
+            <div className="shell-toolbar-actions">
               <Link className="user-chip shell-profile-link" to="/settings">
                 {avatarUrl ? (
                   <img
@@ -155,15 +157,11 @@ export function AppShell() {
           <div className="shell-pagebar">
             <div className="shell-pagebar-copy">
               <span className="shell-section-label">{meta.eyebrow}</span>
-              <h1>{meta.title}</h1>
-              <p>{meta.description}</p>
-            </div>
-
-            <div className="shell-pagebar-side">
-              <div className="shell-pagebar-focus">
-                <span>Current focus</span>
-                <strong>{meta.focus}</strong>
+              <div className="shell-pagebar-title-row">
+                <h1>{meta.title}</h1>
+                <span className="shell-inline-focus">{meta.focus}</span>
               </div>
+              <p>{meta.description}</p>
             </div>
           </div>
         </header>

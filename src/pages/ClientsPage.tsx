@@ -102,12 +102,13 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
     coverUrl: lookup.coverUrl || current.coverUrl || lookup.logoUrl,
     industry: lookup.industry || current.industry,
     website: lookup.website || current.website,
+    contactPhone: lookup.phone || current.contactPhone,
     tags: nextTags,
     data: {
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
       billingName: current.data.billingName || lookup.name,
-      leadSource: current.data.leadSource || 'Business lookup'
+      leadSource: current.data.leadSource || 'Smart business finder'
     }
   };
 }
@@ -120,7 +121,9 @@ export function ClientsPage() {
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupMessage, setLookupMessage] = useState('Search a recognised business to prefill the core account details.');
+  const [lookupMessage, setLookupMessage] = useState(
+    'Use the smart business finder to search brand, venue, or website and pull the strongest public match into the CRM.'
+  );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -178,8 +181,8 @@ export function ClientsPage() {
       setLookupResults(results);
       setLookupMessage(
         results.length
-          ? `Found ${results.length} recognised business match${results.length === 1 ? '' : 'es'}. Pick the right one to prefill the form.`
-          : 'No recognised business matches found. Try a clearer company name.'
+          ? `Found ${results.length} business match${results.length === 1 ? '' : 'es'}. Start with the highest-confidence result and review the details before saving.`
+          : 'No recognised business matches found. Try the trading name, location, or website.'
       );
     } catch (error) {
       setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
@@ -193,7 +196,7 @@ export function ClientsPage() {
     try {
       setLookupLoading(true);
       setLookupSelectionId(result.id);
-      const profile = await getBusinessProfile(result.id);
+      const profile = await getBusinessProfile(result);
       setForm((current) => mergeLookupIntoClient(current, profile));
       setLookupMessage(`Loaded details for ${profile.name}. Review the contact and billing fields before saving.`);
       setMessage(`Business details loaded for ${profile.name}.`);
@@ -481,13 +484,13 @@ export function ClientsPage() {
             <section className="crm-lookup-shell">
               <div className="crm-lookup-top">
                 <div>
-                  <h4>Business lookup</h4>
+                  <h4>AI-assisted business finder</h4>
                   <p className="muted-copy">
-                    Search for a recognised business and pull in the public company name, industry,
-                    website, location, and logo before you save the CRM record.
+                    Search across venue and company data, then pull in the strongest public match
+                    with website, location, logo, industry, and contact signals before you save.
                   </p>
                 </div>
-                <span className="soft-pill">Quick fill</span>
+                <span className="soft-pill">Smart enrichment</span>
               </div>
 
               <div className="crm-lookup-bar">
@@ -495,7 +498,7 @@ export function ClientsPage() {
                   <span>Business name search</span>
                   <input
                     className="input"
-                    placeholder="Search for a restaurant, pub, group, or hospitality business"
+                    placeholder="Search by venue, group, brand, or website"
                     value={lookupQuery}
                     onChange={(event) => setLookupQuery(event.target.value)}
                   />
@@ -530,9 +533,15 @@ export function ClientsPage() {
                         <div className="stack gap-12">
                           <div>
                             <strong>{result.name}</strong>
-                            <p className="muted-copy">
+                            <p className="crm-lookup-description">
                               {result.description || 'Public business profile recognised.'}
                             </p>
+                          </div>
+
+                          <div className="crm-lookup-meta-row">
+                            <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
+                            <span className="crm-alert-chip">{result.sourceLabel}</span>
+                            {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                           </div>
 
                           <div className="crm-alert-row">
@@ -546,6 +555,10 @@ export function ClientsPage() {
                               <span className="crm-alert-chip">{result.website.replace(/^https?:\/\//, '')}</span>
                             ) : null}
                           </div>
+
+                          {result.signals.length ? (
+                            <p className="crm-lookup-note">{result.signals.join(' • ')}</p>
+                          ) : null}
                         </div>
                       </div>
 
@@ -556,7 +569,7 @@ export function ClientsPage() {
                           onClick={() => handleUseLookup(result)}
                           type="button"
                         >
-                          {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Use details'}
+                          {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Apply match'}
                         </button>
                         <a
                           className="button button-ghost"

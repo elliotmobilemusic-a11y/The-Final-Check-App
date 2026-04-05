@@ -189,12 +189,13 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
     coverUrl: lookup.coverUrl || current.coverUrl || lookup.logoUrl,
     industry: lookup.industry || current.industry,
     website: lookup.website || current.website,
+    contactPhone: lookup.phone || current.contactPhone,
     tags: nextTags,
     data: {
       ...current.data,
       profileSummary: current.data.profileSummary || lookup.summary,
       billingName: current.data.billingName || lookup.name,
-      leadSource: current.data.leadSource || 'Business lookup'
+      leadSource: current.data.leadSource || 'Smart business finder'
     }
   };
 }
@@ -213,7 +214,7 @@ export function ClientProfilePage() {
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupMessage, setLookupMessage] = useState(
-    'Search a recognised business to refresh the company name, logo, website, industry, and summary.'
+    'Use the smart business finder to refresh the company name, logo, website, location, and profile summary.'
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
 
@@ -544,8 +545,8 @@ function removeInvoice(invoiceId: string) {
       setLookupResults(results);
       setLookupMessage(
         results.length
-          ? `Found ${results.length} recognised business match${results.length === 1 ? '' : 'es'}. Pick the right one to enrich this account record.`
-          : 'No recognised business matches found. Try a more precise company name.'
+          ? `Found ${results.length} business match${results.length === 1 ? '' : 'es'}. Start with the strongest match and review the record before saving.`
+          : 'No recognised business matches found. Try the trading name, location, or website.'
       );
     } catch (error) {
       setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
@@ -561,7 +562,7 @@ function removeInvoice(invoiceId: string) {
     try {
       setLookupLoading(true);
       setLookupSelectionId(result.id);
-      const profile = await getBusinessProfile(result.id);
+      const profile = await getBusinessProfile(result);
       setForm((current) => (current ? mergeLookupIntoClient(current, profile) : current));
       setLookupMessage(`Loaded business details for ${profile.name}. Save the profile to keep the updated account data.`);
       setMessage(`Business details loaded for ${profile.name}.`);
@@ -708,13 +709,13 @@ function removeInvoice(invoiceId: string) {
               <section className="crm-lookup-shell">
                 <div className="crm-lookup-top">
                   <div>
-                    <h4>Business lookup</h4>
+                    <h4>AI-assisted business finder</h4>
                     <p className="muted-copy">
-                      Refresh this record from public business data when you want a faster way to fill
-                      company details, website, logo, and industry context.
+                      Search across venue and company data, then refresh this account with the
+                      strongest public match and its best available signals.
                     </p>
                   </div>
-                  <span className="soft-pill">Enrich record</span>
+                  <span className="soft-pill">Smart enrichment</span>
                 </div>
 
                 <div className="crm-lookup-bar">
@@ -723,7 +724,7 @@ function removeInvoice(invoiceId: string) {
                     <input
                       className="input"
                       disabled={!editing}
-                      placeholder="Search the live business name to enrich this account"
+                      placeholder="Search by venue, group, brand, or website"
                       value={lookupQuery}
                       onChange={(e) => setLookupQuery(e.target.value)}
                     />
@@ -758,9 +759,15 @@ function removeInvoice(invoiceId: string) {
                           <div className="stack gap-12">
                             <div>
                               <strong>{result.name}</strong>
-                              <p className="muted-copy">
+                              <p className="crm-lookup-description">
                                 {result.description || 'Public business profile recognised.'}
                               </p>
+                            </div>
+
+                            <div className="crm-lookup-meta-row">
+                              <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
+                              <span className="crm-alert-chip">{result.sourceLabel}</span>
+                              {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                             </div>
 
                             <div className="crm-alert-row">
@@ -776,6 +783,10 @@ function removeInvoice(invoiceId: string) {
                                 </span>
                               ) : null}
                             </div>
+
+                            {result.signals.length ? (
+                              <p className="crm-lookup-note">{result.signals.join(' • ')}</p>
+                            ) : null}
                           </div>
                         </div>
 
@@ -786,7 +797,7 @@ function removeInvoice(invoiceId: string) {
                             onClick={() => handleUseLookup(result)}
                             type="button"
                           >
-                            {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Use details'}
+                            {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Apply match'}
                           </button>
                           <a
                             className="button button-ghost"
