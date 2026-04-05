@@ -37,6 +37,7 @@ export type BusinessLookupResult = {
   id: string;
   name: string;
   description: string;
+  resultType: 'group' | 'site';
   website: string;
   industry: string;
   location: string;
@@ -59,6 +60,40 @@ export type BusinessLookupProfile = BusinessLookupResult & {
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const WIKIDATA_PAGE = 'https://www.wikidata.org/wiki';
 const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
+const HOSPITALITY_BUSINESS_HINTS = [
+  'restaurant',
+  'pub',
+  'bar',
+  'brewery',
+  'hotel',
+  'cafe',
+  'coffeehouse',
+  'coffee shop',
+  'bakery',
+  'hospitality',
+  'foodservice',
+  'food service',
+  'leisure',
+  'operator',
+  'retailer',
+  'chain',
+  'company',
+  'group'
+];
+const SITE_DESCRIPTION_HINTS = [
+  'pub in ',
+  'restaurant in ',
+  'bar in ',
+  'cafe in ',
+  'hotel in ',
+  'railway station',
+  'architectural structure',
+  'building in ',
+  'street in ',
+  'district',
+  'ward of ',
+  'suburb of '
+];
 
 function normalizeWebsite(value?: string) {
   if (!value) return '';
@@ -101,8 +136,22 @@ function queryTokens(value: string) {
   return normalizeName(value).split(' ').filter(Boolean);
 }
 
+function queryVariants(value: string) {
+  const trimmed = value.trim();
+  return uniqueStrings([
+    trimmed,
+    trimmed.replace(/\band\b/gi, '&'),
+    trimmed.replace(/&/g, 'and'),
+    trimmed.replace(/\bj d\b/gi, 'jd')
+  ]).filter((item) => item.length >= 2);
+}
+
 function uniqueStrings(values: string[]) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
 }
 
 function hospitalityLabel(place: OpenStreetMapPlace) {
@@ -119,6 +168,23 @@ function hospitalityLabel(place: OpenStreetMapPlace) {
   if (place.category) return place.category.replace(/_/g, ' ');
 
   return '';
+}
+
+function hasKeyword(value: string, keywords: string[]) {
+  const normalized = value.toLowerCase();
+  return keywords.some((keyword) => normalized.includes(keyword));
+}
+
+function looksLikeHospitalityBusiness(description: string) {
+  return hasKeyword(description, HOSPITALITY_BUSINESS_HINTS);
+}
+
+function looksLikeSiteDescription(description: string) {
+  return hasKeyword(description, SITE_DESCRIPTION_HINTS);
+}
+
+function queryLooksLikeSiteSearch(query: string) {
+  return /\d/.test(query) || /,/.test(query) || /\b(road|street|lane|avenue|way|close|station|hotel|postcode|high street)\b/i.test(query);
 }
 
 function locationFromAddress(address?: Record<string, string>) {
@@ -319,6 +385,7 @@ function baseWikidataResult(
     id: `wd:${entity.id}`,
     name,
     description: entityDescription(entity),
+    resultType: 'group',
     website,
     industry,
     location,
@@ -380,6 +447,7 @@ function baseOpenStreetMapResult(
     id: `osm:${place.place_id}`,
     name,
     description,
+    resultType: 'site',
     website,
     industry,
     location,
@@ -448,9 +516,20 @@ function buildBusinessSummary(result: BusinessLookupResult, summaryText?: string
 }
 
 async function searchWikidata(query: string) {
-  const searchUrl = `${WIKIDATA_API}?action=wbsearchentities&format=json&language=en&origin=*&type=item&limit=8&search=${encodeURIComponent(query)}`;
-  const response = await fetchJson<WikidataResponse>(searchUrl);
-  return response.search ?? [];
+  const searches = await Promise.all(
+    queryVariants(query).map(async (variant) => {
+      const searchUrl = `${WIKIDATA_API}?action=wbsearchentities&format=json&language=en&origin=*&type=item&limit=8&search=${encodeURIComponent(variant)}`;
+      const response = await fetchJson<WikidataResponse>(searchUrl);
+      return response.search ?? [];
+    })
+  );
+
+  const deduped = new Map<string, WikidataSearchResult>();
+  searches.flat().forEach((item) => {
+    if (item.id && !deduped.has(item.id)) deduped.set(item.id, item);
+  });
+
+  return [...deduped.values()];
 }
 
 async function searchOpenStreetMap(query: string) {
@@ -461,10 +540,31 @@ async function searchOpenStreetMap(query: string) {
 export async function searchBusinessProfiles(query: string): Promise<BusinessLookupResult[]> {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
+  const siteSearch = queryLooksLikeSiteSearch(trimmed);
 
   const [wikidataSearch, places] = await Promise.all([searchWikidata(trimmed), searchOpenStreetMap(trimmed)]);
 
-  const directIds = wikidataSearch.map((item) => item.id).filter(Boolean);
+  const directIds = wikidataSearch
+    .filter((item) => {
+      const description = (item.description ?? '').toLowerCase();
+      const score = scoreBusinessMatch(trimmed, {
+        name: item.label ?? '',
+        website: '',
+        industry: '',
+        location: '',
+        logoUrl: '',
+        hasVenueSource: false,
+        hasKnowledgeSource: true
+      });
+
+      if (looksLikeSiteDescription(description) && !siteSearch) {
+        return false;
+      }
+
+      return looksLikeHospitalityBusiness(description) || score >= 48;
+    })
+    .map((item) => item.id)
+    .filter(Boolean);
   const placeWikidataIds = places
     .flatMap((place) => [place.extratags?.['brand:wikidata'], place.extratags?.wikidata])
     .filter((value): value is string => Boolean(value));
@@ -481,26 +581,35 @@ export async function searchBusinessProfiles(query: string): Promise<BusinessLoo
 
   directIds
     .map((id) => baseWikidataResult(entities[id], labelsById, trimmed))
-    .filter((item): item is BusinessLookupResult => Boolean(item))
+    .filter(isPresent)
     .forEach((result) => {
       results.set(resultKey(result), result);
     });
 
-  places
-    .map((place) => {
-      const linkedId = place.extratags?.['brand:wikidata'] || place.extratags?.wikidata || '';
-      const linked = linkedId ? baseWikidataResult(entities[linkedId], labelsById, trimmed) : null;
-      return baseOpenStreetMapResult(place, trimmed, linked);
-    })
-    .filter((item): item is BusinessLookupResult => Boolean(item))
-    .forEach((result) => {
-      const key = resultKey(result);
-      const existing = results.get(key);
-      results.set(key, existing ? mergeBusinessResults(existing, result) : result);
-    });
+  const strongGroupResults = [...results.values()].filter(
+    (result) => result.resultType === 'group' && result.confidenceScore >= 58
+  );
+
+  if (siteSearch || strongGroupResults.length === 0) {
+    places
+      .map((place) => {
+        const linkedId = place.extratags?.['brand:wikidata'] || place.extratags?.wikidata || '';
+        const linked = linkedId ? baseWikidataResult(entities[linkedId], labelsById, trimmed) : null;
+        return baseOpenStreetMapResult(place, trimmed, linked);
+      })
+      .filter(isPresent)
+      .forEach((result) => {
+        const key = resultKey(result);
+        const existing = results.get(key);
+        results.set(key, existing ? mergeBusinessResults(existing, result) : result);
+      });
+  }
 
   return [...results.values()]
     .sort((a, b) => {
+      if (a.resultType !== b.resultType) {
+        return a.resultType === 'group' ? -1 : 1;
+      }
       if (b.confidenceScore !== a.confidenceScore) return b.confidenceScore - a.confidenceScore;
       return b.signals.length - a.signals.length;
     })

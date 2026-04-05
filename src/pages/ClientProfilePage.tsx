@@ -766,6 +766,9 @@ function removeInvoice(invoiceId: string) {
 
                             <div className="crm-lookup-meta-row">
                               <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
+                              <span className="crm-alert-chip">
+                                {result.resultType === 'group' ? 'Group or brand' : 'Site or venue'}
+                              </span>
                               <span className="crm-alert-chip">{result.sourceLabel}</span>
                               {result.phone ? <span className="crm-alert-chip">{result.phone}</span> : null}
                             </div>
