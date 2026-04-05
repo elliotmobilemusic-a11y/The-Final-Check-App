@@ -100,154 +100,143 @@ function shellHtml(title: string, bodyHtml: string) {
           --muted: #6d6863;
           --accent: #c6a161;
           --accent-strong: #8e6b2c;
-          --accent-soft: rgba(198, 161, 97, 0.1);
           --panel: #ffffff;
-          --line: rgba(86, 81, 91, 0.14);
-          --paper: #f3efe9;
-          --paper-strong: #fbf8f4;
-          --shadow: 0 26px 60px rgba(36, 31, 38, 0.08);
-          --radius-xl: 28px;
-          --radius-lg: 20px;
-          --radius-md: 16px;
+          --line: rgba(86, 81, 91, 0.12);
+          --paper: #f1ebe3;
+          --paper-strong: #faf7f2;
+          --shadow: 0 18px 36px rgba(36, 31, 38, 0.06);
+          --radius-xl: 18px;
+          --radius-lg: 12px;
+          --radius-md: 10px;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         * { box-sizing: border-box; }
         body {
           margin: 0;
-          padding: 18px;
+          padding: 16px;
           color: var(--ink);
-          background: #ece7df;
+          background: #ebe5dd;
         }
         .print-toolbar {
           position: sticky;
-          top: 18px;
+          top: 14px;
           z-index: 10;
           display: flex;
           justify-content: flex-end;
-          gap: 10px;
+          gap: 8px;
           max-width: 1080px;
-          margin: 0 auto 20px;
+          margin: 0 auto 14px;
         }
         .print-toolbar button {
           appearance: none;
-          border: 1px solid rgba(86, 81, 91, 0.14);
-          background: rgba(255, 255, 255, 0.94);
+          border: 1px solid rgba(86, 81, 91, 0.12);
+          background: rgba(255, 255, 255, 0.98);
           color: var(--ink);
-          padding: 11px 15px;
+          padding: 10px 14px;
           border-radius: 999px;
           font: inherit;
           font-size: 12px;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 10px 20px rgba(36, 31, 38, 0.06);
+          box-shadow: 0 8px 18px rgba(36, 31, 38, 0.05);
         }
         main {
           max-width: 1080px;
           margin: 0 auto;
         }
         .report-document {
-          padding: 18px 20px 20px;
-          border-radius: 16px;
+          padding: 20px 22px 22px;
+          border-radius: 14px;
           background: var(--panel);
-          border: 1px solid rgba(86, 81, 91, 0.08);
-          box-shadow: 0 16px 30px rgba(36, 31, 38, 0.05);
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          box-shadow: var(--shadow);
         }
         .report-masthead {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: end;
           gap: 18px;
-          padding-bottom: 16px;
-          border-bottom: 1px solid rgba(86, 81, 91, 0.12);
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.1);
         }
         .report-brand {
           display: grid;
-          gap: 10px;
+          gap: 6px;
           min-width: 0;
         }
         .report-brand-mark {
           display: grid;
-          gap: 4px;
+          gap: 3px;
         }
         .report-brand-mark span {
           color: var(--muted);
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
-          letter-spacing: 0.22em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
         }
         .report-brand-mark strong {
           color: var(--ink);
-          font-size: 22px;
+          font-size: 18px;
           line-height: 1;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
         }
         .report-kicker {
           color: var(--accent-strong);
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
-        }
-        .report-brand-copy {
-          display: grid;
-          gap: 6px;
-        }
-        .report-brand-copy p {
-          max-width: 420px;
-          color: var(--muted);
-          font-size: 12px;
-          line-height: 1.55;
         }
         .report-meta-block {
           display: grid;
-          gap: 6px;
+          gap: 5px;
           justify-items: end;
           text-align: right;
         }
         .report-meta-block span {
           color: var(--muted);
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
         }
         .report-meta-block strong {
-          font-size: 13px;
-          line-height: 1.45;
+          font-size: 12px;
+          line-height: 1.4;
         }
         .report-section-lead {
           margin-top: 4px;
           color: var(--muted);
           font-size: 13px;
-          line-height: 1.7;
+          line-height: 1.6;
         }
         header {
           display: grid;
-          gap: 8px;
-          margin: 16px 0 16px;
-          padding: 0 0 12px;
-          border-bottom: 1px solid rgba(86, 81, 91, 0.12);
+          gap: 6px;
+          margin: 18px 0 18px;
+          padding: 0 0 14px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.1);
         }
         h1, h2, h3, p { margin: 0; }
-        h1 { font-size: 30px; line-height: 1; letter-spacing: -0.03em; }
+        h1 { font-size: 32px; line-height: 1.02; letter-spacing: -0.035em; }
         h2 {
-          font-size: 18px;
-          margin-bottom: 12px;
+          font-size: 17px;
+          margin-bottom: 10px;
           color: var(--ink);
           letter-spacing: -0.02em;
         }
         h3 {
           font-size: 14px;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           color: var(--ink);
         }
         .eyebrow {
           color: var(--accent-strong);
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
         }
         .muted { color: var(--muted); }
@@ -256,31 +245,31 @@ function shellHtml(title: string, bodyHtml: string) {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
-          margin: 14px 0 18px;
+          margin: 12px 0 18px;
         }
         .meta-card {
-          padding: 12px 14px;
-          border-radius: 10px;
-          border: 1px solid rgba(86, 81, 91, 0.08);
-          background: #faf7f2;
+          padding: 12px 13px;
+          border-radius: 8px;
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          background: #fcfaf6;
         }
         .meta-card span {
           display: block;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
           color: var(--muted);
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
         }
         .meta-card strong {
-          font-size: 16px;
-          line-height: 1.35;
+          font-size: 15px;
+          line-height: 1.3;
         }
         section {
-          margin-top: 16px;
+          margin-top: 18px;
           padding-top: 14px;
-          border-top: 1px solid rgba(86, 81, 91, 0.1);
+          border-top: 1px solid rgba(86, 81, 91, 0.08);
           page-break-inside: avoid;
         }
         .report-meta,
@@ -289,7 +278,7 @@ function shellHtml(title: string, bodyHtml: string) {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
-          margin: 14px 0 18px;
+          margin: 12px 0 18px;
         }
         .report-meta.columns-4,
         .report-grid.columns-4 {
@@ -298,20 +287,25 @@ function shellHtml(title: string, bodyHtml: string) {
         .report-meta > div,
         .report-columns > div,
         .report-grid > div {
-          padding: 12px 12px 12px 14px;
-          border-radius: 10px;
-          border: 1px solid rgba(86, 81, 91, 0.08);
-          border-top: 3px solid rgba(198, 161, 97, 0.48);
-          background: #faf7f2;
+          padding: 12px 13px;
+          border-radius: 8px;
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          background: #fcfaf6;
+        }
+        .report-meta > div strong,
+        .report-columns > div strong,
+        .report-grid > div strong {
+          display: block;
+          margin-bottom: 4px;
         }
         ul {
           margin: 0;
           padding-left: 18px;
           color: var(--ink);
-          line-height: 1.7;
+          line-height: 1.65;
         }
         li + li {
-          margin-top: 10px;
+          margin-top: 8px;
         }
         table,
         .report-table {
@@ -320,44 +314,52 @@ function shellHtml(title: string, bodyHtml: string) {
           border-spacing: 0;
           font-size: 13px;
           overflow: hidden;
-          border: 1px solid rgba(86, 81, 91, 0.1);
-          border-radius: 10px;
+          border: 1px solid rgba(86, 81, 91, 0.12);
+          border-radius: 12px;
           background: #ffffff;
         }
         th, td {
-          padding: 9px 10px;
-          border-bottom: 1px solid rgba(86, 81, 91, 0.1);
+          padding: 10px 12px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.08);
           text-align: left;
           vertical-align: top;
         }
         th {
           color: var(--accent-strong);
-          font-size: 11px;
-          letter-spacing: 0.08em;
+          font-size: 10px;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          background: #f6efe3;
+          background: #f2e9db;
+        }
+        tbody tr:nth-child(even) td {
+          background: #fcfaf6;
+        }
+        tbody tr:last-child td,
+        table tr:last-child td,
+        .report-table tr:last-child td {
+          border-bottom: none;
         }
         .totals {
           display: flex;
           justify-content: flex-end;
-          margin-top: 18px;
+          margin-top: 16px;
         }
         .totals strong {
-          padding: 14px 18px;
-          border-radius: 16px;
-          background: linear-gradient(180deg, #fcf7ef, #fffdf8);
-          border: 1px solid rgba(198, 161, 97, 0.28);
+          padding: 12px 16px;
+          border-radius: 10px;
+          background: #fcf6ea;
+          border: 1px solid rgba(198, 161, 97, 0.3);
         }
         .report-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-top: 18px;
+          margin-top: 20px;
           padding-top: 12px;
-          border-top: 1px solid rgba(86, 81, 91, 0.1);
+          border-top: 1px solid rgba(86, 81, 91, 0.08);
           color: var(--muted);
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.6;
         }
         @media print {
@@ -383,10 +385,10 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         @media (max-width: 760px) {
           body {
-            padding: 18px;
+            padding: 14px;
           }
           .report-document {
-            padding: 20px;
+            padding: 16px;
           }
           .report-masthead,
           .report-footer {
@@ -418,17 +420,14 @@ function shellHtml(title: string, bodyHtml: string) {
                 <span>Jason Wardill</span>
                 <strong>The Final Check</strong>
               </div>
-              <div class="report-brand-copy">
-                <span class="report-kicker">Profit and performance consultancy</span>
-                <p>Prepared for client presentation, review meetings, and professional handover.</p>
-              </div>
+              <span class="report-kicker">Profit and performance consultancy</span>
             </div>
 
             <div class="report-meta-block">
-              <span>Document</span>
-              <strong>${safeTitle}</strong>
               <span>Prepared</span>
               <strong>${escapeHtml(generatedOn)}</strong>
+              <span>Format</span>
+              <strong>Client-ready PDF</strong>
             </div>
           </div>
 
