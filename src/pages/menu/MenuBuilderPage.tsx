@@ -1687,7 +1687,7 @@ export function MenuBuilderPage() {
                           </div>
 
                           <div className="ingredient-card-grid">
-                            <label className="field">
+                            <label className="field ingredient-field ingredient-field-name">
                               <span>Ingredient</span>
                               <input
                                 className="input"
@@ -1697,7 +1697,7 @@ export function MenuBuilderPage() {
                                 }
                               />
                             </label>
-                            <label className="field">
+                            <label className="field ingredient-field ingredient-field-qty">
                               <span>Qty used</span>
                               <div className="unit-input-row">
                                 <input
@@ -1727,7 +1727,7 @@ export function MenuBuilderPage() {
                                 </select>
                               </div>
                             </label>
-                            <label className="field">
+                            <label className="field ingredient-field ingredient-field-pack">
                               <span>Pack size</span>
                               <div className="unit-input-row">
                                 <input
@@ -1761,7 +1761,7 @@ export function MenuBuilderPage() {
                                 </select>
                               </div>
                             </label>
-                            <label className="field">
+                            <label className="field ingredient-field ingredient-field-cost">
                               <span>Pack cost (£)</span>
                               <input
                                 className="input"

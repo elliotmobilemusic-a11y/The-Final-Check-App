@@ -2957,9 +2957,22 @@ body[data-theme="midnight"] .data-table td {
 
 .ingredient-card-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: 12px;
   align-items: end;
+}
+
+.ingredient-field {
+  min-width: 0;
+}
+
+.ingredient-field-name {
+  grid-column: 1 / -1;
+}
+
+.ingredient-card-grid .unit-input-row {
+  grid-template-columns: minmax(86px, 0.9fr) minmax(118px, 1fr);
+  min-width: 0;
 }
 
 /* ---------- Report preview ---------- */
