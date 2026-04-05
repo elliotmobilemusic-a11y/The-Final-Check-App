@@ -81,20 +81,30 @@ function invoiceTable(invoice: ClientInvoice) {
 }
 
 function shellHtml(title: string, bodyHtml: string) {
+  const generatedOn = formatDate(new Date().toISOString());
+  const safeTitle = escapeHtml(title);
   return `<!doctype html>
   <html lang="en">
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>${escapeHtml(title)}</title>
+      <title>${safeTitle}</title>
       <style>
         :root {
           color-scheme: light;
           --ink: #2f2c33;
           --muted: #706962;
           --accent: #c6a161;
+          --accent-strong: #8f6d2f;
+          --accent-soft: rgba(198, 161, 97, 0.12);
           --panel: #ffffff;
           --line: rgba(86, 81, 91, 0.14);
+          --paper: #f6f2ee;
+          --paper-strong: #fcf8f3;
+          --shadow: 0 30px 80px rgba(36, 31, 38, 0.12);
+          --radius-xl: 32px;
+          --radius-lg: 24px;
+          --radius-md: 18px;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         * { box-sizing: border-box; }
@@ -102,7 +112,9 @@ function shellHtml(title: string, bodyHtml: string) {
           margin: 0;
           padding: 40px;
           color: var(--ink);
-          background: #f6f2ee;
+          background:
+            radial-gradient(circle at top left, rgba(198, 161, 97, 0.12), transparent 0 22%),
+            linear-gradient(180deg, #efe8df 0%, var(--paper) 36%, #f8f4ef 100%);
         }
         .print-toolbar {
           position: sticky;
@@ -117,7 +129,7 @@ function shellHtml(title: string, bodyHtml: string) {
         .print-toolbar button {
           appearance: none;
           border: 1px solid rgba(86, 81, 91, 0.14);
-          background: #ffffff;
+          background: rgba(255, 255, 255, 0.9);
           color: var(--ink);
           padding: 12px 16px;
           border-radius: 999px;
@@ -130,6 +142,116 @@ function shellHtml(title: string, bodyHtml: string) {
         main {
           max-width: 960px;
           margin: 0 auto;
+          display: grid;
+          gap: 18px;
+        }
+        .brand-hero {
+          position: relative;
+          overflow: hidden;
+          display: grid;
+          gap: 22px;
+          padding: 28px 30px;
+          border-radius: var(--radius-xl);
+          color: #ffffff;
+          background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 0 26%),
+            linear-gradient(135deg, #403c46 0%, #625b68 100%);
+          box-shadow: var(--shadow);
+        }
+        .brand-hero::after {
+          content: "";
+          position: absolute;
+          right: -44px;
+          top: -56px;
+          width: 180px;
+          height: 180px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 70%);
+          pointer-events: none;
+        }
+        .brand-hero > * {
+          position: relative;
+          z-index: 1;
+        }
+        .brand-hero-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: start;
+          gap: 20px;
+        }
+        .brand-lockup {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          min-width: 0;
+        }
+        .brand-logo-shell {
+          width: 72px;
+          height: 72px;
+          flex-shrink: 0;
+          display: grid;
+          place-items: center;
+          padding: 6px;
+          border-radius: 24px;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 18px 32px rgba(19, 14, 24, 0.16);
+        }
+        .brand-logo-shell img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 20px;
+        }
+        .brand-copy {
+          display: grid;
+          gap: 6px;
+        }
+        .brand-copy strong {
+          font-size: 22px;
+          line-height: 1.02;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .brand-copy span {
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 12px;
+          line-height: 1.45;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .brand-meta {
+          display: grid;
+          gap: 8px;
+          justify-items: end;
+        }
+        .brand-meta-chip {
+          padding: 9px 12px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .brand-title {
+          display: grid;
+          gap: 10px;
+          max-width: 720px;
+        }
+        .brand-title h1 {
+          margin: 0;
+          font-size: 38px;
+          line-height: 0.98;
+          letter-spacing: -0.04em;
+        }
+        .brand-title p {
+          color: rgba(255, 255, 255, 0.84);
+          font-size: 15px;
+          line-height: 1.7;
+        }
+        .report-document {
           padding: 40px;
           border-radius: 28px;
           background: var(--panel);
@@ -137,23 +259,32 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         header {
           display: grid;
-          gap: 10px;
+          gap: 12px;
           margin-bottom: 28px;
-          padding-bottom: 24px;
-          border-bottom: 1px solid var(--line);
+          padding: 24px;
+          border-radius: var(--radius-lg);
+          background:
+            linear-gradient(180deg, rgba(248, 243, 236, 0.94), rgba(255, 255, 255, 0.9));
+          border: 1px solid rgba(198, 161, 97, 0.16);
         }
         h1, h2, h3, p { margin: 0; }
-        h1 { font-size: 34px; line-height: 1; }
-        h2 { font-size: 22px; margin-bottom: 12px; }
+        h1 { font-size: 34px; line-height: 1; letter-spacing: -0.04em; }
+        h2 {
+          font-size: 22px;
+          margin-bottom: 14px;
+          color: var(--accent-strong);
+          letter-spacing: -0.02em;
+        }
         h3 { font-size: 15px; margin-bottom: 10px; }
         .eyebrow {
-          color: #8c6b2c;
+          color: var(--accent-strong);
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.14em;
           text-transform: uppercase;
         }
         .muted { color: var(--muted); }
+        .muted-copy { color: var(--muted); }
         .meta-grid, .summary-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -161,10 +292,12 @@ function shellHtml(title: string, bodyHtml: string) {
           margin: 22px 0 28px;
         }
         .meta-card {
-          padding: 16px;
-          border-radius: 18px;
+          padding: 18px;
+          border-radius: var(--radius-md);
           border: 1px solid var(--line);
-          background: #fcfaf8;
+          background:
+            linear-gradient(180deg, rgba(252, 248, 243, 0.98), rgba(255, 255, 255, 0.94));
+          box-shadow: 0 10px 26px rgba(36, 31, 38, 0.04);
         }
         .meta-card span {
           display: block;
@@ -181,8 +314,11 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         section {
           margin-top: 24px;
-          padding-top: 20px;
-          border-top: 1px solid rgba(86, 81, 91, 0.08);
+          padding: 24px;
+          border-radius: var(--radius-lg);
+          border: 1px solid rgba(86, 81, 91, 0.08);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(251, 247, 242, 0.9));
+          box-shadow: 0 10px 26px rgba(36, 31, 38, 0.04);
         }
         .report-meta,
         .report-columns,
@@ -200,9 +336,9 @@ function shellHtml(title: string, bodyHtml: string) {
         .report-columns > div,
         .report-grid > div {
           padding: 16px;
-          border-radius: 18px;
+          border-radius: var(--radius-md);
           border: 1px solid var(--line);
-          background: #fcfaf8;
+          background: var(--paper-strong);
         }
         ul {
           margin: 0;
@@ -210,11 +346,19 @@ function shellHtml(title: string, bodyHtml: string) {
           color: var(--ink);
           line-height: 1.7;
         }
+        li + li {
+          margin-top: 10px;
+        }
         table,
         .report-table {
           width: 100%;
-          border-collapse: collapse;
+          border-collapse: separate;
+          border-spacing: 0;
           font-size: 14px;
+          overflow: hidden;
+          border: 1px solid rgba(86, 81, 91, 0.1);
+          border-radius: 18px;
+          background: #ffffff;
         }
         th, td {
           padding: 12px 10px;
@@ -222,13 +366,11 @@ function shellHtml(title: string, bodyHtml: string) {
           text-align: left;
         }
         th {
-          color: var(--muted);
+          color: var(--accent-strong);
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-        }
-        .muted-copy {
-          color: var(--muted);
+          background: rgba(198, 161, 97, 0.08);
         }
         .totals {
           display: flex;
@@ -238,8 +380,20 @@ function shellHtml(title: string, bodyHtml: string) {
         .totals strong {
           padding: 14px 18px;
           border-radius: 16px;
-          background: #fcf7ef;
+          background: linear-gradient(180deg, #fcf7ef, #fffdf8);
           border: 1px solid rgba(198, 161, 97, 0.28);
+        }
+        .report-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          margin-top: 22px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(86, 81, 91, 0.1);
+          color: var(--muted);
+          font-size: 12px;
+          line-height: 1.6;
         }
         @media print {
           .print-toolbar {
@@ -255,8 +409,28 @@ function shellHtml(title: string, bodyHtml: string) {
             border-radius: 0;
             padding: 0;
           }
+          .brand-hero,
+          .report-document,
+          section,
+          header {
+            box-shadow: none;
+          }
         }
         @media (max-width: 760px) {
+          body {
+            padding: 18px;
+          }
+          .brand-hero,
+          .report-document,
+          header,
+          section {
+            padding: 22px;
+          }
+          .brand-hero-top,
+          .report-footer {
+            flex-direction: column;
+            align-items: flex-start;
+          }
           .meta-grid,
           .summary-grid,
           .report-meta,
@@ -274,7 +448,41 @@ function shellHtml(title: string, bodyHtml: string) {
         <button type="button" onclick="window.print()">Print / Save PDF</button>
         <button type="button" onclick="window.close()">Close</button>
       </div>
-      <main>${bodyHtml}</main>
+      <main>
+        <section class="brand-hero">
+          <div class="brand-hero-top">
+            <div class="brand-lockup">
+              <div class="brand-logo-shell">
+                <img src="/the-final-check-logo.png" alt="The Final Check logo" />
+              </div>
+              <div class="brand-copy">
+                <strong>The Final Check</strong>
+                <span>Profit and Performance Consultancy</span>
+              </div>
+            </div>
+
+            <div class="brand-meta">
+              <div class="brand-meta-chip">Branded report export</div>
+              <div class="brand-meta-chip">Generated ${escapeHtml(generatedOn)}</div>
+            </div>
+          </div>
+
+          <div class="brand-title">
+            <h1>${safeTitle}</h1>
+            <p>
+              Client-ready document styling for exports, presentations, and PDF handover packs.
+            </p>
+          </div>
+        </section>
+
+        <article class="report-document">
+          ${bodyHtml}
+          <div class="report-footer">
+            <span>The Final Check • Profit and Performance Consultancy</span>
+            <span>Prepared ${escapeHtml(generatedOn)}</span>
+          </div>
+        </article>
+      </main>
       <script>
         window.addEventListener('load', () => {
           setTimeout(() => {
