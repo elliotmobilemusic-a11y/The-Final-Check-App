@@ -101,17 +101,21 @@ function buildMenuReport(project: MenuProjectState) {
     totalSellByMix > 0 ? ((totalSellByMix - totalCostByMix) / totalSellByMix) * 100 : 0;
 
   return `
-    <h1>Menu Builder Report</h1>
-    <p><strong>${safe(project.menuName) || 'Untitled menu'}</strong>${
-      safe(project.siteName) ? ` • ${safe(project.siteName)}` : ''
-    }</p>
-
     <div class="report-meta">
       <div><strong>Review date</strong><br />${safe(project.reviewDate) || 'Not recorded'}</div>
       <div><strong>Sections</strong><br />${project.sections.length}</div>
       <div><strong>Total dishes</strong><br />${allDishes.length}</div>
       <div><strong>Weighted theo GP</strong><br />${fmtPercent(weightedGp)}</div>
     </div>
+
+    <section>
+      <h2>Menu summary</h2>
+      <p class="report-section-lead">
+        <strong>${safe(project.menuName) || 'Untitled menu'}</strong>${
+          safe(project.siteName) ? ` • ${safe(project.siteName)}` : ''
+        }
+      </p>
+    </section>
 
     ${project.sections
       .map(

@@ -634,15 +634,19 @@ function makeAuditReport(state: AuditFormState) {
   };
 
   return `
-    <h1>Kitchen Profit Audit Report</h1>
-    <p><strong>${safe(state.businessName) || 'Unnamed site'}</strong>${safe(state.location) ? ` • ${safe(state.location)}` : ''}</p>
-
     <div class="report-meta">
       <div><strong>Visit date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
       <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
       <div><strong>Site contact</strong><br />${safe(state.contactName) || 'Not recorded'}</div>
       <div><strong>Audit type</strong><br />${safe(state.auditType) || 'Not recorded'}</div>
     </div>
+
+    <section>
+      <h2>Site summary</h2>
+      <p class="report-section-lead">
+        <strong>${safe(state.businessName) || 'Unnamed site'}</strong>${safe(state.location) ? ` • ${safe(state.location)}` : ''}
+      </p>
+    </section>
 
     <h2>Site and trading profile</h2>
     <div class="report-grid columns-4">
