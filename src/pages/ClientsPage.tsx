@@ -546,7 +546,7 @@ export function ClientsPage() {
             <span className="soft-pill">New account</span>
           </div>
 
-          <form className="stack gap-20" onSubmit={handleSubmit}>
+          <form className="stack gap-24" onSubmit={handleSubmit}>
             <section className="crm-lookup-shell">
               <div className="crm-lookup-top">
                 <div>
@@ -1050,7 +1050,7 @@ export function ClientsPage() {
             <span className="soft-pill">List controls</span>
           </div>
 
-          <div className="stack gap-16">
+          <div className="stack gap-20">
             <label className="field">
               <span>Search clients</span>
               <input

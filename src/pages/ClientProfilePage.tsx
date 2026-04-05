@@ -742,7 +742,7 @@ function removeInvoice(invoiceId: string) {
       </section>
 
       <section className="workspace-grid client-workspace">
-        <div className="workspace-main">
+        <div className="workspace-main section-stack">
           <div className="card-grid two-columns">
             <article className="feature-card">
               <div className="feature-top">
@@ -1917,7 +1917,7 @@ function removeInvoice(invoiceId: string) {
           </article>
         </div>
 
-        <aside className="workspace-side stack gap-20">
+        <aside className="workspace-side section-stack">
           <div className="panel">
             <div className="panel-header">
               <div>

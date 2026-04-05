@@ -235,7 +235,7 @@ export function SettingsPage() {
       </section>
 
       <section className="workspace-grid">
-        <div className="workspace-main">
+        <div className="workspace-main section-stack">
           <form className="panel" id="settings-form" onSubmit={handleSave}>
             <div className="panel-header">
               <div>
@@ -247,7 +247,7 @@ export function SettingsPage() {
               <div className="soft-pill">{message}</div>
             </div>
 
-            <div className="panel-body stack gap-20">
+            <div className="panel-body stack gap-24">
               <section className="sub-panel">
                 <div className="sub-panel-header">
                   <h4>Account profile</h4>
@@ -414,7 +414,7 @@ export function SettingsPage() {
           </form>
         </div>
 
-        <aside className="workspace-side stack gap-20">
+        <aside className="workspace-side section-stack">
           <div className="panel">
             <div className="panel-header">
               <div>

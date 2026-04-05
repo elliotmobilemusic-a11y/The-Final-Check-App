@@ -268,6 +268,10 @@ p {
   align-content: start;
 }
 
+.gap-8 {
+  gap: 8px;
+}
+
 .gap-12 {
   gap: 12px;
 }
@@ -278,6 +282,43 @@ p {
 
 .gap-20 {
   gap: 20px;
+}
+
+.gap-24 {
+  gap: 24px;
+}
+
+.gap-28 {
+  gap: 28px;
+}
+
+.section-stack,
+.surface-stack {
+  display: grid;
+  align-content: start;
+}
+
+.section-stack {
+  gap: 24px;
+}
+
+.surface-stack {
+  gap: 18px;
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.cluster-between {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .full-width {
@@ -1941,7 +1982,7 @@ body.reduced-motion *::after {
 
 .page-stack {
   display: grid;
-  gap: var(--section-gap);
+  gap: clamp(18px, 2vw, 24px);
   min-width: 0;
 }
 
@@ -1950,8 +1991,8 @@ body.reduced-motion *::after {
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 16px;
-  padding: 26px 28px;
+  gap: 18px;
+  padding: 28px 30px;
   border-radius: 24px;
   background: var(--hero-shell);
   border: 1px solid var(--hero-border);
@@ -2023,7 +2064,7 @@ body.reduced-motion *::after {
 .saved-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -2037,7 +2078,7 @@ body.reduced-motion *::after {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .stats-grid.compact {
@@ -2124,7 +2165,7 @@ body.reduced-motion *::after {
 
 .card-grid {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .card-grid.two-columns {
@@ -2132,14 +2173,22 @@ body.reduced-motion *::after {
 }
 
 .feature-card {
-  padding: 26px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 24px;
 }
 
 .feature-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 18px;
+  gap: 16px;
+}
+
+.feature-top > div {
+  display: grid;
+  gap: 6px;
 }
 
 .feature-top h3 {
@@ -2153,12 +2202,9 @@ body.reduced-motion *::after {
   line-height: 1.7;
 }
 
-.feature-body {
-  margin-top: 16px;
-}
-
+.feature-body,
 .feature-actions {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .soft-pill {
@@ -2205,14 +2251,14 @@ body.reduced-motion *::after {
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.92fr);
-  gap: 18px;
+  gap: 20px;
   align-items: start;
 }
 
 .workspace-main,
 .workspace-side {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .workspace-side {
@@ -2229,6 +2275,13 @@ body.reduced-motion *::after {
   gap: 16px;
 }
 
+.panel-header > div,
+.sub-panel-header > div,
+.repeat-header > div {
+  display: grid;
+  gap: 6px;
+}
+
 .panel-header {
   padding: 22px 24px;
   border-bottom: 1px solid rgba(86, 81, 91, 0.08);
@@ -2242,11 +2295,15 @@ body.reduced-motion *::after {
 }
 
 .panel-body {
+  display: grid;
+  gap: 18px;
   padding: 22px;
 }
 
 .sub-panel,
 .repeat-card {
+  display: grid;
+  gap: 14px;
   padding: 16px;
   border-radius: 18px;
   border: 1px solid rgba(86, 81, 91, 0.08);
@@ -2262,8 +2319,7 @@ body.reduced-motion *::after {
 }
 
 .repeat-card {
-  display: grid;
-  gap: 14px;
+  min-width: 0;
 }
 
 /* ---------- Forms ---------- */
@@ -3276,7 +3332,7 @@ body[data-theme="midnight"] .data-table td {
 .dashboard-record-list {
   display: grid;
   gap: 14px;
-  margin-top: 22px;
+  margin-top: 0;
 }
 
 .dashboard-record {
@@ -3482,7 +3538,7 @@ body[data-theme="midnight"] .data-table td {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 22px;
+  margin-top: 0;
 }
 
 .dashboard-command-card,
@@ -3566,7 +3622,7 @@ body[data-theme="midnight"] .data-table td {
 .dashboard-queue-list {
   display: grid;
   gap: 14px;
-  margin-top: 22px;
+  margin-top: 0;
 }
 
 .dashboard-health-row {
