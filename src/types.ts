@@ -155,6 +155,7 @@ export interface SupabaseRecord<T> {
   id: string;
   user_id: string;
   client_id?: string | null;
+  client_site_id?: string | null;
   title: string;
   site_name: string | null;
   location?: string | null;

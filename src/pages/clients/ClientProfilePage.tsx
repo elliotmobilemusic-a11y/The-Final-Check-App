@@ -10,8 +10,8 @@ import {
   type BusinessLookupResult
 } from '../../features/clients/businessLookup';
 import { getClientById, updateClient } from '../../services/clients';
-import { listAudits } from '../../services/audits';
-import { listMenuProjects } from '../../services/menus';
+import { deleteAudit, listAudits } from '../../services/audits';
+import { deleteMenuProject, listMenuProjects } from '../../services/menus';
 import type {
   AuditFormState,
   ClientContact,
@@ -264,6 +264,7 @@ export function ClientProfilePage() {
     'Use the business finder to refresh the company name, logo, website, location, and profile summary from the strongest matched record.'
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
+  const [deletingWorkKey, setDeletingWorkKey] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -355,6 +356,11 @@ export function ClientProfilePage() {
   const isLookupFallbackVisible =
     lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
   const activeSection = isClientSectionKey(section) ? section : null;
+  const siteNameById = useMemo(
+    () => new Map((form?.data.sites ?? []).map((site) => [site.id, site.name || 'Unnamed site'])),
+    [form?.data.sites]
+  );
+  const linkedClientId = client?.id ?? clientId;
 
   if (!client || !form) {
     return (
@@ -663,6 +669,161 @@ function removeInvoice(invoiceId: string) {
     );
   }
 
+  function workstreamSiteLabel(record: {
+    client_site_id?: string | null;
+    site_name?: string | null;
+  }) {
+    if (record.client_site_id) {
+      return siteNameById.get(record.client_site_id) || record.site_name || 'Linked site';
+    }
+
+    return record.site_name || 'Account level';
+  }
+
+  async function handleDeleteAuditRecord(audit: SupabaseRecord<AuditFormState>) {
+    const confirmed = window.confirm(
+      `Delete the audit "${audit.title}" from this client? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingWorkKey(`audit:${audit.id}`);
+      await deleteAudit(audit.id);
+      setAudits((current) => current.filter((item) => item.id !== audit.id));
+      setMessage(`Deleted audit "${audit.title}".`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not delete audit.');
+    } finally {
+      setDeletingWorkKey(null);
+    }
+  }
+
+  async function handleDeleteMenuRecord(menu: SupabaseRecord<MenuProjectState>) {
+    const confirmed = window.confirm(
+      `Delete the menu project "${menu.title}" from this client? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingWorkKey(`menu:${menu.id}`);
+      await deleteMenuProject(menu.id);
+      setMenus((current) => current.filter((item) => item.id !== menu.id));
+      setMessage(`Deleted menu project "${menu.title}".`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not delete menu project.');
+    } finally {
+      setDeletingWorkKey(null);
+    }
+  }
+
+  function renderLinkedWorkPanels() {
+    return (
+      <>
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Linked audits</h3>
+              <p className="muted-copy">
+                Operational reviews already connected to this account.
+              </p>
+            </div>
+            <div className="saved-actions">
+              <span className="soft-pill">{audits.length}</span>
+              <Link className="button button-secondary" to={`/audit?client=${linkedClientId}`}>
+                New audit
+              </Link>
+            </div>
+          </div>
+          <div className="panel-body stack gap-12">
+            {audits.length === 0 ? <div className="muted-copy">No audits yet.</div> : null}
+            {audits.map((audit) => {
+              const deleteKey = `audit:${audit.id}`;
+
+              return (
+                <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
+                  <div className="workstream-item-main">
+                    <strong>{audit.title}</strong>
+                    <div className="saved-meta">{workstreamSiteLabel(audit)}</div>
+                    <div className="workstream-meta-row">
+                      <span>Review {formatShortDate(audit.review_date || audit.updated_at)}</span>
+                      <span>Last updated {formatShortDate(audit.updated_at)}</span>
+                    </div>
+                  </div>
+                  <div className="saved-actions">
+                    <Link
+                      className="button button-ghost"
+                      to={`/audit?client=${linkedClientId}&load=${audit.id}`}
+                    >
+                      Open
+                    </Link>
+                    <button
+                      className="button button-ghost danger-text"
+                      disabled={deletingWorkKey === deleteKey}
+                      onClick={() => handleDeleteAuditRecord(audit)}
+                    >
+                      {deletingWorkKey === deleteKey ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Linked menu projects</h3>
+              <p className="muted-copy">
+                Commercial menu work already attached to this business record.
+              </p>
+            </div>
+            <div className="saved-actions">
+              <span className="soft-pill">{menus.length}</span>
+              <Link className="button button-secondary" to={`/menu?client=${linkedClientId}`}>
+                New menu
+              </Link>
+            </div>
+          </div>
+          <div className="panel-body stack gap-12">
+            {menus.length === 0 ? <div className="muted-copy">No menu projects yet.</div> : null}
+            {menus.map((menu) => {
+              const deleteKey = `menu:${menu.id}`;
+
+              return (
+                <div className="saved-item saved-item-rich workstream-item" key={menu.id}>
+                  <div className="workstream-item-main">
+                    <strong>{menu.title}</strong>
+                    <div className="saved-meta">{workstreamSiteLabel(menu)}</div>
+                    <div className="workstream-meta-row">
+                      <span>Review {formatShortDate(menu.review_date || menu.updated_at)}</span>
+                      <span>Last updated {formatShortDate(menu.updated_at)}</span>
+                    </div>
+                  </div>
+                  <div className="saved-actions">
+                    <Link
+                      className="button button-ghost"
+                      to={`/menu?client=${linkedClientId}&load=${menu.id}`}
+                    >
+                      Open
+                    </Link>
+                    <button
+                      className="button button-ghost danger-text"
+                      disabled={deletingWorkKey === deleteKey}
+                      onClick={() => handleDeleteMenuRecord(menu)}
+                    >
+                      {deletingWorkKey === deleteKey ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const sectionCards: Array<{
     key: ClientSectionKey;
     label: string;
@@ -949,55 +1110,7 @@ function removeInvoice(invoiceId: string) {
             </div>
 
             <aside className="workspace-side section-stack">
-              <div className="panel">
-                <div className="panel-header">
-                  <div>
-                    <h3>Linked audits</h3>
-                    <p className="muted-copy">Operational reviews already connected to this account.</p>
-                  </div>
-                </div>
-                <div className="panel-body stack gap-12">
-                  {audits.length === 0 ? <div className="muted-copy">No audits yet.</div> : null}
-                  {audits.map((audit) => (
-                    <div className="saved-item saved-item-rich" key={audit.id}>
-                      <div>
-                        <strong>{audit.title}</strong>
-                        <div className="saved-meta">
-                          {formatShortDate(audit.review_date || audit.updated_at)}
-                        </div>
-                      </div>
-                      <Link className="button button-ghost" to={`/audit?client=${client.id}&load=${audit.id}`}>
-                        Open
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="panel">
-                <div className="panel-header">
-                  <div>
-                    <h3>Linked menu projects</h3>
-                    <p className="muted-copy">Commercial menu work already attached to this business record.</p>
-                  </div>
-                </div>
-                <div className="panel-body stack gap-12">
-                  {menus.length === 0 ? <div className="muted-copy">No menu projects yet.</div> : null}
-                  {menus.map((menu) => (
-                    <div className="saved-item saved-item-rich" key={menu.id}>
-                      <div>
-                        <strong>{menu.title}</strong>
-                        <div className="saved-meta">
-                          {formatShortDate(menu.review_date || menu.updated_at)}
-                        </div>
-                      </div>
-                      <Link className="button button-ghost" to={`/menu?client=${client.id}&load=${menu.id}`}>
-                        Open
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {renderLinkedWorkPanels()}
             </aside>
           </section>
         </section>
@@ -2315,55 +2428,7 @@ function removeInvoice(invoiceId: string) {
                     </div>
 
                     <aside className="workspace-side section-stack">
-                      <div className="panel">
-                        <div className="panel-header">
-                          <div>
-                            <h3>Linked audits</h3>
-                            <p className="muted-copy">Operational reviews already connected to this account.</p>
-                          </div>
-                        </div>
-                        <div className="panel-body stack gap-12">
-                          {audits.length === 0 ? <div className="muted-copy">No audits yet.</div> : null}
-                          {audits.map((audit) => (
-                            <div className="saved-item saved-item-rich" key={audit.id}>
-                              <div>
-                                <strong>{audit.title}</strong>
-                                <div className="saved-meta">
-                                  {formatShortDate(audit.review_date || audit.updated_at)}
-                                </div>
-                              </div>
-                              <Link className="button button-ghost" to={`/audit?client=${client.id}&load=${audit.id}`}>
-                                Open
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="panel">
-                        <div className="panel-header">
-                          <div>
-                            <h3>Linked menu projects</h3>
-                            <p className="muted-copy">Commercial menu work already attached to this business record.</p>
-                          </div>
-                        </div>
-                        <div className="panel-body stack gap-12">
-                          {menus.length === 0 ? <div className="muted-copy">No menu projects yet.</div> : null}
-                          {menus.map((menu) => (
-                            <div className="saved-item saved-item-rich" key={menu.id}>
-                              <div>
-                                <strong>{menu.title}</strong>
-                                <div className="saved-meta">
-                                  {formatShortDate(menu.review_date || menu.updated_at)}
-                                </div>
-                              </div>
-                              <Link className="button button-ghost" to={`/menu?client=${client.id}&load=${menu.id}`}>
-                                Open
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      {renderLinkedWorkPanels()}
                     </aside>
                   </section>
                 </div>
