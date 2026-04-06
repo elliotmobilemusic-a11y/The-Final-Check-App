@@ -143,7 +143,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
   const generatedOn = formatDate(new Date().toISOString());
   const safeTitle = escapeHtml(title);
   const pageSize = options.landscape ? 'A4 landscape' : 'A4';
-  const documentWidth = options.landscape ? '1360px' : '1080px';
+  const documentWidth = options.landscape ? '1240px' : '960px';
   return `<!doctype html>
   <html lang="en">
     <head>
@@ -229,47 +229,50 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
         }
         .report-masthead {
-          display: flex;
-          justify-content: space-between;
-          align-items: end;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: start;
           gap: 18px;
           padding-bottom: 14px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
         }
         .report-brand {
           display: grid;
-          gap: 6px;
+          gap: 5px;
           min-width: 0;
+          align-content: start;
         }
         .report-brand-mark {
           display: grid;
-          gap: 3px;
+          gap: 5px;
         }
         .report-brand-mark span {
           color: var(--muted);
-          font-size: 9px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.18em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
         }
         .report-brand-mark strong {
           color: var(--ink);
-          font-size: 18px;
+          font-size: 22px;
           line-height: 1;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.035em;
           text-transform: uppercase;
         }
         .report-kicker {
           color: var(--accent-strong);
-          font-size: 9px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.16em;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
         }
         .report-meta-block {
           display: grid;
           gap: 5px;
+          min-width: 180px;
           justify-items: end;
+          align-self: start;
           text-align: right;
         }
         .report-meta-block span {
@@ -298,9 +301,10 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         }
         .report-hero {
           display: grid;
-          grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
+          grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
           gap: 18px;
           margin: 18px 0 20px;
+          align-items: start;
         }
         .report-hero-main {
           display: grid;
@@ -542,7 +546,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             display: none;
           }
         }
-        @media (max-width: 760px) {
+        @media screen and (max-width: 760px) {
           body {
             padding: 14px;
           }
