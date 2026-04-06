@@ -214,63 +214,66 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           margin: 0 auto;
         }
         .report-document {
-          padding: 16px;
-          border-radius: 24px;
+          padding: 14px;
+          border-radius: 20px;
           background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
           border: 2px solid var(--paper-line);
           box-shadow: var(--shadow);
+          -webkit-box-decoration-break: clone;
+          box-decoration-break: clone;
         }
         .report-sheet {
-          min-height: calc(100vh - 92px);
-          padding: 20px 22px 18px;
-          border-radius: 20px;
+          padding: 18px 18px 16px;
+          border-radius: 16px;
           background: linear-gradient(180deg, #fffefe 0%, #fcfaf6 100%);
           border: 2px solid var(--sheet-line);
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+          -webkit-box-decoration-break: clone;
+          box-decoration-break: clone;
         }
         .report-masthead {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
           align-items: start;
-          gap: 18px;
-          padding-bottom: 14px;
+          gap: 14px;
+          padding-bottom: 12px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
         }
         .report-brand {
           display: grid;
-          gap: 5px;
+          gap: 4px;
           min-width: 0;
           align-content: start;
         }
         .report-brand-mark {
           display: grid;
-          gap: 5px;
+          gap: 3px;
         }
         .report-brand-mark span {
           color: var(--muted);
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
         }
         .report-brand-mark strong {
           color: var(--ink);
-          font-size: 22px;
-          line-height: 1;
-          letter-spacing: 0.035em;
+          font-size: 18px;
+          line-height: 1.05;
+          letter-spacing: 0.02em;
           text-transform: uppercase;
         }
         .report-kicker {
           color: var(--accent-strong);
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
         }
         .report-meta-block {
           display: grid;
-          gap: 5px;
-          min-width: 180px;
+          gap: 4px;
+          min-width: 144px;
           justify-items: end;
           align-self: start;
           text-align: right;
@@ -283,7 +286,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           text-transform: uppercase;
         }
         .report-meta-block strong {
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.4;
         }
         .report-section-lead {
@@ -295,22 +298,24 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         header {
           display: grid;
           gap: 6px;
-          margin: 18px 0 20px;
-          padding: 0 0 14px;
+          margin: 14px 0 16px;
+          padding: 0 0 12px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.1);
         }
         .report-hero {
           display: grid;
           grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
-          gap: 18px;
-          margin: 18px 0 20px;
+          gap: 16px;
+          margin: 14px 0 16px;
           align-items: start;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-hero-main {
           display: grid;
-          gap: 10px;
+          gap: 8px;
           min-height: 100%;
-          padding: 20px 22px;
+          padding: 18px 18px;
           border-radius: 16px;
           border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #fffdfa 0%, #fbf7f1 100%);
@@ -325,7 +330,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          margin-top: 4px;
+          margin-top: 6px;
         }
         .report-chip {
           display: inline-flex;
@@ -343,12 +348,12 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         }
         .report-hero-side {
           display: grid;
-          gap: 12px;
+          gap: 10px;
           align-content: start;
         }
         .report-summary-card {
-          padding: 16px;
-          border-radius: 14px;
+          padding: 14px;
+          border-radius: 12px;
           border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
         }
@@ -399,10 +404,12 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
-          margin: 12px 0 18px;
+          margin: 10px 0 14px;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .meta-card {
-          padding: 14px 14px;
+          padding: 12px 13px;
           border-radius: 12px;
           border: 1px solid var(--card-line);
           background: #fcfaf6;
@@ -421,10 +428,11 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           line-height: 1.3;
         }
         section {
-          margin-top: 20px;
-          padding-top: 16px;
+          margin-top: 16px;
+          padding-top: 14px;
           border-top: 1px solid rgba(86, 81, 91, 0.08);
           page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-meta,
         .report-columns,
@@ -432,7 +440,9 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
-          margin: 12px 0 18px;
+          margin: 10px 0 14px;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-meta.columns-4,
         .report-grid.columns-4 {
@@ -441,7 +451,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-meta > div,
         .report-columns > div,
         .report-grid > div {
-          padding: 14px 14px;
+          padding: 12px 13px;
           border-radius: 12px;
           border: 1px solid var(--card-line);
           background: #fcfaf6;
@@ -471,9 +481,10 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border: 1px solid var(--card-line);
           border-radius: 14px;
           background: #ffffff;
+          page-break-inside: auto;
         }
         th, td {
-          padding: 11px 12px;
+          padding: 10px 11px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
           text-align: left;
           vertical-align: top;
@@ -493,10 +504,16 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-table tr:last-child td {
           border-bottom: none;
         }
+        tr,
+        td,
+        th {
+          page-break-inside: avoid;
+          break-inside: avoid-page;
+        }
         .totals {
           display: flex;
           justify-content: flex-end;
-          margin-top: 16px;
+          margin-top: 12px;
         }
         .totals strong {
           padding: 12px 16px;
@@ -509,8 +526,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-top: 18px;
-          padding-top: 14px;
+          margin-top: 14px;
+          padding-top: 12px;
           border-top: 1px solid rgba(86, 81, 91, 0.08);
           color: var(--muted);
           font-size: 11px;
@@ -529,16 +546,16 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             padding: 0;
           }
           .report-document {
-            padding: 10px;
-            border-radius: 18px;
+            padding: 8px;
+            border-radius: 16px;
             border: 2px solid var(--paper-line);
             box-shadow: none;
             background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
           }
           .report-sheet {
             min-height: auto;
-            padding: 16px 18px 14px;
-            border-radius: 14px;
+            padding: 14px 14px 12px;
+            border-radius: 12px;
             border: 2px solid var(--sheet-line);
             box-shadow: none;
           }
