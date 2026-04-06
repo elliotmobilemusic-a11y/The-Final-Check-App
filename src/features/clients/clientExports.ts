@@ -238,6 +238,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           gap: 14px;
           padding-bottom: 12px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-brand {
           display: grid;
@@ -319,6 +321,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-radius: 16px;
           border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #fffdfa 0%, #fbf7f1 100%);
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-hero-lead {
           color: var(--ink);
@@ -356,6 +360,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-radius: 12px;
           border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-summary-card span {
           display: block;
@@ -413,6 +419,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-radius: 12px;
           border: 1px solid var(--card-line);
           background: #fcfaf6;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .meta-card span {
           display: block;
@@ -433,6 +441,11 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-top: 1px solid rgba(86, 81, 91, 0.08);
           page-break-inside: avoid;
           break-inside: avoid-page;
+        }
+        section > h2,
+        section > h3 {
+          page-break-after: avoid;
+          break-after: avoid-page;
         }
         .report-meta,
         .report-columns,
@@ -455,6 +468,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-radius: 12px;
           border: 1px solid var(--card-line);
           background: #fcfaf6;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         .report-meta > div strong,
         .report-columns > div strong,
@@ -467,6 +482,13 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           padding-left: 18px;
           color: var(--ink);
           line-height: 1.65;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
+        }
+        p,
+        li {
+          orphans: 3;
+          widows: 3;
         }
         li + li {
           margin-top: 8px;
@@ -477,11 +499,17 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-collapse: separate;
           border-spacing: 0;
           font-size: 13px;
-          overflow: hidden;
+          overflow: visible;
           border: 1px solid var(--card-line);
           border-radius: 14px;
           background: #ffffff;
           page-break-inside: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+        tfoot {
+          display: table-footer-group;
         }
         th, td {
           padding: 10px 11px;
@@ -532,21 +560,24 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           color: var(--muted);
           font-size: 11px;
           line-height: 1.6;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         @media print {
           .print-toolbar {
             display: none;
           }
           body {
-            padding: 0;
+            padding: 2mm 0;
             background: white;
           }
           main {
             max-width: none;
             padding: 0;
+            width: 100%;
           }
           .report-document {
-            padding: 8px;
+            padding: 6px;
             border-radius: 16px;
             border: 2px solid var(--paper-line);
             box-shadow: none;
@@ -554,10 +585,18 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           }
           .report-sheet {
             min-height: auto;
-            padding: 14px 14px 12px;
+            padding: 12px 12px 10px;
             border-radius: 12px;
             border: 2px solid var(--sheet-line);
             box-shadow: none;
+            overflow: visible;
+          }
+          .report-hero {
+            margin: 12px 0 14px;
+          }
+          section {
+            margin-top: 14px;
+            padding-top: 12px;
           }
           .print-toolbar {
             display: none;
