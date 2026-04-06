@@ -135,9 +135,15 @@ export function buildReportHeroHtml(options: {
   `;
 }
 
-function shellHtml(title: string, bodyHtml: string) {
+type PrintLayoutOptions = {
+  landscape?: boolean;
+};
+
+function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions = {}) {
   const generatedOn = formatDate(new Date().toISOString());
   const safeTitle = escapeHtml(title);
+  const pageSize = options.landscape ? 'A4 landscape' : 'A4';
+  const documentWidth = options.landscape ? '1360px' : '1080px';
   return `<!doctype html>
   <html lang="en">
     <head>
@@ -146,8 +152,8 @@ function shellHtml(title: string, bodyHtml: string) {
       <title>${safeTitle}</title>
       <style>
         @page {
-          size: A4;
-          margin: 16mm 14mm 18mm;
+          size: ${pageSize};
+          margin: 12mm;
         }
         :root {
           color-scheme: light;
@@ -157,20 +163,23 @@ function shellHtml(title: string, bodyHtml: string) {
           --accent-strong: #8e6b2c;
           --panel: #ffffff;
           --line: rgba(86, 81, 91, 0.12);
-          --paper: #f1ebe3;
-          --paper-strong: #faf7f2;
-          --shadow: 0 18px 36px rgba(36, 31, 38, 0.06);
+          --paper: #e7ddd1;
+          --paper-strong: #f7f1e8;
+          --paper-line: rgba(178, 158, 125, 0.26);
+          --sheet-line: rgba(190, 171, 142, 0.4);
+          --shadow: 0 22px 48px rgba(36, 31, 38, 0.08);
           --radius-xl: 18px;
           --radius-lg: 12px;
           --radius-md: 10px;
+          --document-width: ${documentWidth};
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         * { box-sizing: border-box; }
         body {
           margin: 0;
-          padding: 16px;
+          padding: 20px;
           color: var(--ink);
-          background: #ebe5dd;
+          background: linear-gradient(180deg, #e7ddd1 0%, #e3d8ca 100%);
         }
         .print-toolbar {
           position: sticky;
@@ -179,7 +188,7 @@ function shellHtml(title: string, bodyHtml: string) {
           display: flex;
           justify-content: flex-end;
           gap: 8px;
-          max-width: 1080px;
+          max-width: var(--document-width);
           margin: 0 auto 14px;
         }
         .print-toolbar button {
@@ -196,23 +205,31 @@ function shellHtml(title: string, bodyHtml: string) {
           box-shadow: 0 8px 18px rgba(36, 31, 38, 0.05);
         }
         main {
-          max-width: 1080px;
+          max-width: var(--document-width);
           margin: 0 auto;
         }
         .report-document {
-          padding: 18px 20px 22px;
-          border-radius: 12px;
-          background: var(--panel);
-          border: 1px solid rgba(86, 81, 91, 0.1);
+          padding: 16px;
+          border-radius: 24px;
+          background: linear-gradient(180deg, rgba(248, 242, 234, 0.96), rgba(240, 232, 222, 0.92));
+          border: 1px solid var(--paper-line);
           box-shadow: var(--shadow);
+        }
+        .report-sheet {
+          min-height: calc(100vh - 92px);
+          padding: 20px 22px 18px;
+          border-radius: 20px;
+          background: var(--panel);
+          border: 1px solid var(--sheet-line);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
         }
         .report-masthead {
           display: flex;
           justify-content: space-between;
           align-items: end;
           gap: 18px;
-          padding-bottom: 12px;
-          border-bottom: 1px solid rgba(86, 81, 91, 0.1);
+          padding-bottom: 14px;
+          border-bottom: 1px solid rgba(86, 81, 91, 0.08);
         }
         .report-brand {
           display: grid;
@@ -270,23 +287,24 @@ function shellHtml(title: string, bodyHtml: string) {
         header {
           display: grid;
           gap: 6px;
-          margin: 18px 0 18px;
+          margin: 18px 0 20px;
           padding: 0 0 14px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.1);
         }
         .report-hero {
           display: grid;
-          grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.9fr);
-          gap: 16px;
+          grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
+          gap: 18px;
           margin: 18px 0 20px;
         }
         .report-hero-main {
           display: grid;
-          gap: 8px;
-          padding: 18px;
-          border-radius: 12px;
-          border: 1px solid rgba(86, 81, 91, 0.1);
-          background: linear-gradient(180deg, #fdfaf5 0%, #fbf7f1 100%);
+          gap: 10px;
+          min-height: 100%;
+          padding: 20px 22px;
+          border-radius: 16px;
+          border: 1px solid rgba(190, 171, 142, 0.34);
+          background: linear-gradient(180deg, #fffdfa 0%, #fbf7f1 100%);
         }
         .report-hero-lead {
           color: var(--ink);
@@ -316,14 +334,14 @@ function shellHtml(title: string, bodyHtml: string) {
         }
         .report-hero-side {
           display: grid;
-          gap: 10px;
+          gap: 12px;
           align-content: start;
         }
         .report-summary-card {
-          padding: 14px;
-          border-radius: 10px;
-          border: 1px solid rgba(86, 81, 91, 0.1);
-          background: #fcfaf6;
+          padding: 16px;
+          border-radius: 14px;
+          border: 1px solid rgba(190, 171, 142, 0.3);
+          background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
         }
         .report-summary-card span {
           display: block;
@@ -375,9 +393,9 @@ function shellHtml(title: string, bodyHtml: string) {
           margin: 12px 0 18px;
         }
         .meta-card {
-          padding: 12px 13px;
-          border-radius: 8px;
-          border: 1px solid rgba(86, 81, 91, 0.1);
+          padding: 14px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(190, 171, 142, 0.28);
           background: #fcfaf6;
         }
         .meta-card span {
@@ -394,8 +412,8 @@ function shellHtml(title: string, bodyHtml: string) {
           line-height: 1.3;
         }
         section {
-          margin-top: 18px;
-          padding-top: 14px;
+          margin-top: 20px;
+          padding-top: 16px;
           border-top: 1px solid rgba(86, 81, 91, 0.08);
           page-break-inside: avoid;
         }
@@ -414,9 +432,9 @@ function shellHtml(title: string, bodyHtml: string) {
         .report-meta > div,
         .report-columns > div,
         .report-grid > div {
-          padding: 12px 13px;
-          border-radius: 8px;
-          border: 1px solid rgba(86, 81, 91, 0.1);
+          padding: 14px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(190, 171, 142, 0.28);
           background: #fcfaf6;
         }
         .report-meta > div strong,
@@ -441,12 +459,12 @@ function shellHtml(title: string, bodyHtml: string) {
           border-spacing: 0;
           font-size: 13px;
           overflow: hidden;
-          border: 1px solid rgba(86, 81, 91, 0.12);
-          border-radius: 12px;
+          border: 1px solid rgba(190, 171, 142, 0.3);
+          border-radius: 14px;
           background: #ffffff;
         }
         th, td {
-          padding: 10px 12px;
+          padding: 11px 12px;
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
           text-align: left;
           vertical-align: top;
@@ -482,8 +500,8 @@ function shellHtml(title: string, bodyHtml: string) {
           justify-content: space-between;
           align-items: center;
           gap: 12px;
-          margin-top: 20px;
-          padding-top: 12px;
+          margin-top: 18px;
+          padding-top: 14px;
           border-top: 1px solid rgba(86, 81, 91, 0.08);
           color: var(--muted);
           font-size: 11px;
@@ -503,6 +521,14 @@ function shellHtml(title: string, bodyHtml: string) {
           }
           .report-document {
             padding: 0;
+            border: none;
+            box-shadow: none;
+            background: white;
+          }
+          .report-sheet {
+            min-height: auto;
+            padding: 0;
+            border-radius: 0;
             border: none;
             box-shadow: none;
           }
@@ -545,27 +571,29 @@ function shellHtml(title: string, bodyHtml: string) {
       </div>
       <main>
         <article class="report-document">
-          <div class="report-masthead">
-            <div class="report-brand">
-              <div class="report-brand-mark">
-                <span>Jason Wardill</span>
-                <strong>The Final Check</strong>
+          <div class="report-sheet">
+            <div class="report-masthead">
+              <div class="report-brand">
+                <div class="report-brand-mark">
+                  <span>Jason Wardill</span>
+                  <strong>The Final Check</strong>
+                </div>
+                <span class="report-kicker">Profit and performance consultancy</span>
               </div>
-              <span class="report-kicker">Profit and performance consultancy</span>
+
+              <div class="report-meta-block">
+                <span>Prepared</span>
+                <strong>${escapeHtml(generatedOn)}</strong>
+                <span>Format</span>
+                <strong>${options.landscape ? 'Landscape client-ready PDF' : 'Client-ready PDF'}</strong>
+              </div>
             </div>
 
-            <div class="report-meta-block">
-              <span>Prepared</span>
-              <strong>${escapeHtml(generatedOn)}</strong>
-              <span>Format</span>
-              <strong>Client-ready PDF</strong>
+            ${bodyHtml}
+            <div class="report-footer">
+              <span>The Final Check</span>
+              <span>Prepared ${escapeHtml(generatedOn)}</span>
             </div>
-          </div>
-
-          ${bodyHtml}
-          <div class="report-footer">
-            <span>The Final Check</span>
-            <span>Prepared ${escapeHtml(generatedOn)}</span>
           </div>
         </article>
       </main>
@@ -585,7 +613,11 @@ function shellHtml(title: string, bodyHtml: string) {
   </html>`;
 }
 
-export function openPrintableHtmlDocument(title: string, bodyHtml: string) {
+export function openPrintableHtmlDocument(
+  title: string,
+  bodyHtml: string,
+  options: PrintLayoutOptions = {}
+) {
   const popup = window.open('', '_blank', 'width=1200,height=900');
   if (!popup) {
     throw new Error('Enable pop-ups to export PDFs from this workspace.');
@@ -598,7 +630,7 @@ export function openPrintableHtmlDocument(title: string, bodyHtml: string) {
   }
 
   popup.document.open();
-  popup.document.write(shellHtml(title, bodyHtml));
+  popup.document.write(shellHtml(title, bodyHtml, options));
   popup.document.close();
   popup.focus();
 }

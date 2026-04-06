@@ -1524,7 +1524,8 @@ export function KitchenAuditPage() {
   function exportPdf() {
     openPrintableHtmlDocument(
       `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
-      reportHtml
+      reportHtml,
+      { landscape: true }
     );
   }
 
