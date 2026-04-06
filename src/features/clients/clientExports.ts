@@ -165,14 +165,19 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           --line: rgba(86, 81, 91, 0.12);
           --paper: #e7ddd1;
           --paper-strong: #f7f1e8;
-          --paper-line: rgba(178, 158, 125, 0.26);
-          --sheet-line: rgba(190, 171, 142, 0.4);
+          --paper-line: rgba(178, 158, 125, 0.56);
+          --sheet-line: rgba(190, 171, 142, 0.62);
+          --card-line: rgba(190, 171, 142, 0.52);
           --shadow: 0 22px 48px rgba(36, 31, 38, 0.08);
           --radius-xl: 18px;
           --radius-lg: 12px;
           --radius-md: 10px;
           --document-width: ${documentWidth};
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        }
+        html {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         * { box-sizing: border-box; }
         body {
@@ -211,17 +216,17 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-document {
           padding: 16px;
           border-radius: 24px;
-          background: linear-gradient(180deg, rgba(248, 242, 234, 0.96), rgba(240, 232, 222, 0.92));
-          border: 1px solid var(--paper-line);
+          background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
+          border: 2px solid var(--paper-line);
           box-shadow: var(--shadow);
         }
         .report-sheet {
           min-height: calc(100vh - 92px);
           padding: 20px 22px 18px;
           border-radius: 20px;
-          background: var(--panel);
-          border: 1px solid var(--sheet-line);
-          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+          background: linear-gradient(180deg, #fffefe 0%, #fcfaf6 100%);
+          border: 2px solid var(--sheet-line);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
         }
         .report-masthead {
           display: flex;
@@ -303,7 +308,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           min-height: 100%;
           padding: 20px 22px;
           border-radius: 16px;
-          border: 1px solid rgba(190, 171, 142, 0.34);
+          border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #fffdfa 0%, #fbf7f1 100%);
         }
         .report-hero-lead {
@@ -340,7 +345,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-summary-card {
           padding: 16px;
           border-radius: 14px;
-          border: 1px solid rgba(190, 171, 142, 0.3);
+          border: 1px solid var(--card-line);
           background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
         }
         .report-summary-card span {
@@ -395,7 +400,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .meta-card {
           padding: 14px 14px;
           border-radius: 12px;
-          border: 1px solid rgba(190, 171, 142, 0.28);
+          border: 1px solid var(--card-line);
           background: #fcfaf6;
         }
         .meta-card span {
@@ -434,7 +439,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-grid > div {
           padding: 14px 14px;
           border-radius: 12px;
-          border: 1px solid rgba(190, 171, 142, 0.28);
+          border: 1px solid var(--card-line);
           background: #fcfaf6;
         }
         .report-meta > div strong,
@@ -459,7 +464,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-spacing: 0;
           font-size: 13px;
           overflow: hidden;
-          border: 1px solid rgba(190, 171, 142, 0.3);
+          border: 1px solid var(--card-line);
           border-radius: 14px;
           background: #ffffff;
         }
@@ -520,16 +525,17 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             padding: 0;
           }
           .report-document {
-            padding: 0;
-            border: none;
+            padding: 10px;
+            border-radius: 18px;
+            border: 2px solid var(--paper-line);
             box-shadow: none;
-            background: white;
+            background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
           }
           .report-sheet {
             min-height: auto;
-            padding: 0;
-            border-radius: 0;
-            border: none;
+            padding: 16px 18px 14px;
+            border-radius: 14px;
+            border: 2px solid var(--sheet-line);
             box-shadow: none;
           }
           .print-toolbar {
