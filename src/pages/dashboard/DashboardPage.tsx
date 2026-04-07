@@ -463,6 +463,7 @@ export function DashboardPage() {
 
   const coveragePercent =
     totalProjects > 0 ? Math.round((linkedProjects / totalProjects) * 100) : 0;
+  const reviewQueueCount = dueSoonReviews.length + overdueReviews.length;
   const welcomeName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -476,11 +477,11 @@ export function DashboardPage() {
       <PageIntro
         eyebrow="Overview"
         title={`Welcome, ${welcomeLabel}`}
-        description="Here is the working overview for clients, active delivery, upcoming reviews, and the next actions that need your attention."
+        description="Use this board to monitor portfolio health, jump back into delivery work, and keep client follow-up from slipping."
         actions={
           <>
-            <Link className="button button-primary" to="/clients">
-              Open clients
+            <Link className="button button-primary" to="/clients/new">
+              New client
             </Link>
             <Link className="button button-secondary" to="/audit">
               Start audit
@@ -506,7 +507,7 @@ export function DashboardPage() {
               </div>
               <div>
                 <span>Queue</span>
-                <strong>{pluralize(dueSoonReviews.length + overdueReviews.length, 'review')}</strong>
+                <strong>{pluralize(reviewQueueCount, 'review')}</strong>
               </div>
             </div>
           </div>
@@ -514,6 +515,44 @@ export function DashboardPage() {
       >
         <div className="page-inline-note">{loading ? 'Loading latest data...' : message}</div>
       </PageIntro>
+
+      <section className="dashboard-system-strip">
+        <article className="dashboard-system-panel dashboard-system-panel-primary">
+          <span className="dashboard-system-label">Portfolio coverage</span>
+          <strong>{coveragePercent}% linked</strong>
+          <p>
+            {linkedProjects} of {totalProjects} saved projects are tied back to a client record.
+          </p>
+        </article>
+
+        <article className="dashboard-system-panel">
+          <span className="dashboard-system-label">Active clients</span>
+          <strong>{activeClients.length}</strong>
+          <p>{clients.length > 0 ? `${pluralize(totalSites, 'site')} tracked across the book.` : 'Start by creating the first account.'}</p>
+        </article>
+
+        <article className="dashboard-system-panel">
+          <span className="dashboard-system-label">Review pressure</span>
+          <strong>{reviewQueueCount}</strong>
+          <p>
+            {overdueReviews.length > 0
+              ? `${pluralize(overdueReviews.length, 'review')} already overdue.`
+              : dueSoonReviews.length > 0
+                ? `${pluralize(dueSoonReviews.length, 'review')} due in the next 14 days.`
+                : 'No immediate review pressure right now.'}
+          </p>
+        </article>
+
+        <article className="dashboard-system-panel">
+          <span className="dashboard-system-label">Open actions</span>
+          <strong>{openTaskCount}</strong>
+          <p>
+            {openTaskCount > 0
+              ? 'Outstanding client actions still need to be closed out.'
+              : 'No open client actions are currently recorded.'}
+          </p>
+        </article>
+      </section>
 
       <section className="stats-grid">
         <StatCard
@@ -537,7 +576,7 @@ export function DashboardPage() {
         />
         <StatCard
           label="Review queue"
-          value={String(overdueReviews.length + dueSoonReviews.length)}
+          value={String(reviewQueueCount)}
           hint={
             overdueReviews.length > 0
               ? `${pluralize(overdueReviews.length, 'review')} overdue`
@@ -548,7 +587,7 @@ export function DashboardPage() {
         />
       </section>
 
-      <section className="dashboard-command-grid">
+      <section className="dashboard-board-grid">
         <article className="feature-card">
           <div className="feature-top">
             <div>
@@ -573,29 +612,31 @@ export function DashboardPage() {
           </div>
         </article>
 
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>System health</h3>
-              <p>Track whether the platform is behaving like a joined-up consultancy system.</p>
-            </div>
-            <span className="soft-pill">{systemStatus.label}</span>
-          </div>
-
-          <div className="dashboard-health-list">
-            {healthRows.map((row) => (
-              <div className="dashboard-health-row" key={row.id}>
-                <div>
-                  <strong>{row.title}</strong>
-                  <p>{row.detail}</p>
-                </div>
-                <span className={statusTone(row.tone as 'success' | 'warning' | 'danger')}>
-                  {row.label}
-                </span>
+        <div className="dashboard-board-side">
+          <article className="feature-card">
+            <div className="feature-top">
+              <div>
+                <h3>System health</h3>
+                <p>Track whether the platform is behaving like a joined-up consultancy system.</p>
               </div>
-            ))}
-          </div>
-        </article>
+              <span className="soft-pill">{systemStatus.label}</span>
+            </div>
+
+            <div className="dashboard-health-list">
+              {healthRows.map((row) => (
+                <div className="dashboard-health-row" key={row.id}>
+                  <div>
+                    <strong>{row.title}</strong>
+                    <p>{row.detail}</p>
+                  </div>
+                  <span className={statusTone(row.tone as 'success' | 'warning' | 'danger')}>
+                    {row.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
       </section>
 
       <section className="dashboard-insight-grid">
