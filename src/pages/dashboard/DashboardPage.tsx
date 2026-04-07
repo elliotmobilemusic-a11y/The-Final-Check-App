@@ -103,6 +103,10 @@ function deriveDisplayName(email?: string | null) {
   return email.split('@')[0].replace(/[._-]+/g, ' ');
 }
 
+const repoBaseUrl = 'https://github.com/elliotmobilemusic-a11y/The-Final-Check-App';
+const desktopActionsUrl = `${repoBaseUrl}/actions/workflows/desktop-release.yml`;
+const desktopReleasesUrl = `${repoBaseUrl}/releases`;
+
 export function DashboardPage() {
   const { session } = useAuth();
   const { preferences } = usePreferences();
@@ -473,6 +477,36 @@ export function DashboardPage() {
 
   return (
     <div className="page-stack">
+      <section className="dashboard-download-card">
+        <div className="dashboard-download-copy">
+          <span className="dashboard-download-kicker">Download</span>
+          <strong>Install The Final Check on Mac or Windows</strong>
+          <p>
+            Open the desktop build page to download the latest test app, or use Releases when a
+            versioned installer has been published.
+          </p>
+        </div>
+
+        <div className="dashboard-download-actions">
+          <a
+            className="button button-primary"
+            href={desktopActionsUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open Desktop Builds
+          </a>
+          <a
+            className="button button-secondary"
+            href={desktopReleasesUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open Releases
+          </a>
+        </div>
+      </section>
+
       <PageIntro
         eyebrow="Overview"
         title={`Welcome, ${welcomeLabel}`}
