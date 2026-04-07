@@ -112,24 +112,18 @@ export function AppShell() {
         <aside className="desktop-sidebar">
           <div className="desktop-sidebar-top">
             <NavLink className="brand-link desktop-brand-link" to="/dashboard">
-              <span className="desktop-brand-mark">
-                <span className="brand-icon-shell desktop-brand-icon-shell">
-                  <img
-                    src="/the-final-check-logo.png"
-                    alt="The Final Check logo"
-                    className="brand-icon-image"
-                  />
-                </span>
+              <span className="brand-icon-shell desktop-brand-icon-shell">
+                <img
+                  src="/the-final-check-logo.png"
+                  alt="The Final Check logo"
+                  className="brand-icon-image"
+                />
               </span>
-              <span className="brand-copy desktop-brand-copy">
+              <span className="brand-copy">
                 <span className="brand-kicker">
                   {isDesktop ? 'Desktop operating system' : 'Connected operating system'}
                 </span>
-                <img
-                  src="/the-final-check-wordmark.png"
-                  alt="The Final Check"
-                  className="desktop-brand-wordmark"
-                />
+                <strong>The Final Check</strong>
                 <span className="brand-subtitle">Profit and performance consultancy</span>
               </span>
             </NavLink>
@@ -141,16 +135,6 @@ export function AppShell() {
                 Move between CRM, audit delivery, menu analysis, and account settings from one
                 unified workspace.
               </p>
-              <div className="desktop-status-grid">
-                <div className="desktop-status-metric">
-                  <span>Runtime</span>
-                  <strong>{isDesktop ? 'Desktop app' : 'Web app'}</strong>
-                </div>
-                <div className="desktop-status-metric">
-                  <span>Workspace</span>
-                  <strong>{preferences.compactMode ? 'Compact' : 'Comfortable'}</strong>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -230,9 +214,6 @@ export function AppShell() {
             </div>
 
             <div className="desktop-topbar-actions">
-              <Link className="button button-secondary" to="/dashboard">
-                Dashboard
-              </Link>
               <Link className="button button-ghost" to="/clients/new">
                 New client
               </Link>
