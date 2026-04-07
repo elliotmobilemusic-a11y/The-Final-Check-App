@@ -1,44 +1,38 @@
-# Kitchen Performance Platform (React + TypeScript + Supabase)
+# The Final Check
 
-This is a TypeScript / TSX rebuild of your original kitchen dashboard, kitchen profit audit, and menu builder.
+The Final Check is a React, TypeScript, and Supabase consultancy operating system for food-business delivery work.
 
-It keeps the same **core concepts and operational flow**, but restructures the project into a proper VS Code app with:
+It now supports:
 
-- React + TypeScript + TSX
-- Vite project structure
-- Protected routes
-- Supabase login
-- Remember me support
-- Supabase cloud storage for audits and menu projects
-- Shared styling and reusable components
+- installable desktop packaging for macOS and Windows
+- Electron-based local runtime with preload-safe desktop APIs
+- in-app desktop update checks
+- GitHub Actions release automation for ongoing desktop updates
+- the existing web app workflow for faster day-to-day iteration
 
-## What stayed the same
+## Core stack
 
-The rebuild preserves the original ideas from your uploaded HTML files:
-
-- dashboard entry point
-- kitchen audit workflow
-- commercial metrics like GP, waste, labour, and priority score
-- menu costing and menu engineering
-- generated report previews
-- JSON / HTML exports
-
-## What changed
-
-- single-file HTML pages were moved into routed React pages
-- shared layout and styling now lives in reusable components
-- sign-in is required before the user can access dashboard pages
-- data can be saved into Supabase per user
-- the codebase is now much easier to extend in VS Code
+- React + TypeScript + Vite
+- Supabase authentication and data storage
+- Electron desktop wrapper
+- electron-builder packaging
+- electron-updater release/update support
 
 ## Project structure
 
 ```txt
 kitchen-performance-tsx/
+├─ electron/
+│  ├─ main.mjs
+│  └─ preload.mjs
+├─ .github/
+│  └─ workflows/
+│     └─ desktop-release.yml
 ├─ public/
 ├─ src/
 │  ├─ components/
 │  ├─ context/
+│  ├─ features/
 │  ├─ lib/
 │  ├─ pages/
 │  ├─ services/
@@ -48,7 +42,7 @@ kitchen-performance-tsx/
 │  └─ types.ts
 ├─ supabase/
 │  └─ schema.sql
-├─ .env.example
+├─ electron-builder.config.mjs
 ├─ package.json
 ├─ tsconfig.app.json
 ├─ tsconfig.json
@@ -56,23 +50,54 @@ kitchen-performance-tsx/
 └─ vite.config.ts
 ```
 
-## How to run in VS Code
+## Local development
 
-1. Open the folder in VS Code
-2. Run:
+Web app:
 
 ```bash
 npm install
 npm run dev
 ```
 
-3. Copy `.env.example` to `.env`
-4. Add your Supabase project values:
+Desktop app during development:
+
+```bash
+npm install
+npm run dev:desktop
+```
+
+Add your Supabase values in `.env`:
 
 ```env
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
+
+## Build desktop installers
+
+Build a local packaged desktop app for the current platform:
+
+```bash
+npm run pack:desktop
+```
+
+Build a distributable macOS installer:
+
+```bash
+npm run dist:mac
+```
+
+Build a distributable Windows installer:
+
+```bash
+npm run dist:win
+```
+
+Note:
+
+- local macOS packaging is configured to skip code signing by default
+- production macOS signing should be enabled by providing `CSC_NAME`
+- Windows packaging is best handled in CI on `windows-latest`
 
 ## Supabase setup
 
@@ -90,9 +115,33 @@ This starter is built so that:
 - each user only sees their own saved audits and menu projects
 - storage is protected by Row Level Security policies
 
+## Desktop auto-updates
+
+The desktop app now includes an update bridge and an in-app update panel in Settings.
+
+To publish builds with update support:
+
+1. Push the project to GitHub
+2. Create a tag like `v0.1.0`
+3. Let `.github/workflows/desktop-release.yml` build and publish macOS and Windows releases
+
+The release workflow uses these environment values:
+
+- `UPDATE_PROVIDER=github`
+- `UPDATE_OWNER`
+- `UPDATE_REPO`
+
+If you prefer a non-GitHub update server, set these instead when building:
+
+- `UPDATE_PROVIDER=generic`
+- `UPDATE_URL`
+
+Without publish configuration, local desktop builds still work, but auto-update checks stay disabled.
+
 ## Easy next upgrades
 
-- PDF export with a branded print layout
+- proper `.icns` and `.ico` installer icons
+- code splitting to reduce the main app bundle size
 - photo uploads for audit evidence
 - white-label branding controls
 - role-based access for admin vs consultant

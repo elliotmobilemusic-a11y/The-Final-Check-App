@@ -1,15 +1,28 @@
 {
   "name": "kitchen-performance-tsx",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "The Final Check desktop and web operating system for food-business consultancy delivery.",
+  "author": "The Final Check",
   "type": "module",
+  "main": "electron/main.mjs",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 127.0.0.1",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:desktop": "concurrently -k \"npm:dev:web\" \"npm:desktop-shell\"",
+    "desktop-shell": "wait-on tcp:5173 && electron electron/main.mjs",
     "build": "tsc -b && vite build",
+    "build:web": "tsc -b && vite build",
+    "build:desktop": "npm run build:web && electron-builder --config electron-builder.config.mjs",
+    "pack:desktop": "npm run build:web && electron-builder --dir --config electron-builder.config.mjs",
+    "dist:mac": "npm run build:web && electron-builder --mac --config electron-builder.config.mjs",
+    "dist:win": "npm run build:web && electron-builder --win --config electron-builder.config.mjs",
+    "release:desktop": "npm run build:web && electron-builder --publish always --config electron-builder.config.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.2",
+    "electron-updater": "^6.8.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1"
@@ -18,7 +31,11 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.2.1",
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "wait-on": "^9.0.4"
   }
 }

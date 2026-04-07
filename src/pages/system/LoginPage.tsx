@@ -55,8 +55,15 @@ export function LoginPage() {
       <div className="auth-panel">
         <div className="auth-copy">
           <div className="auth-brand-row">
+            <div className="auth-brand-mark">
+              <img
+                src="/the-final-check-logo.png"
+                alt="The Final Check logo"
+                className="auth-brand-logo"
+              />
+            </div>
             <div className="auth-brand-textlock">
-              <span>Jason Wardill</span>
+              <span>Consultancy operating system</span>
               <strong>The Final Check</strong>
               <small>Profit and performance consultancy for food businesses</small>
             </div>
@@ -70,6 +77,24 @@ export function LoginPage() {
           <div className="auth-side-note">
             <strong>Inside the system</strong>
             <p>Client records, audit work, menu reviews, and billing stay connected in one place.</p>
+          </div>
+
+          <div className="auth-feature-grid">
+            <div className="auth-feature-card">
+              <span>CRM</span>
+              <strong>Client accounts</strong>
+              <p>Sites, contacts, reviews, goals, and delivery history in one profile.</p>
+            </div>
+            <div className="auth-feature-card">
+              <span>Delivery</span>
+              <strong>Audit and menu workflows</strong>
+              <p>Operational reviews and commercial menu analysis live in the same workspace.</p>
+            </div>
+            <div className="auth-feature-card">
+              <span>Desktop</span>
+              <strong>Installable workflow</strong>
+              <p>Package the app for Mac and Windows and keep shipping updates as the system evolves.</p>
+            </div>
           </div>
         </div>
 

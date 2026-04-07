@@ -10,6 +10,14 @@ import {
   usePreferences
 } from '../../context/PreferencesContext';
 import { getRememberPreference, setRememberPreference } from '../../lib/authStorage';
+import {
+  checkForDesktopUpdates,
+  getDesktopAppInfo,
+  installDesktopUpdate,
+  subscribeToDesktopUpdates,
+  type DesktopAppInfo,
+  type DesktopUpdateStatus
+} from '../../lib/desktop';
 import { supabase } from '../../lib/supabase';
 
 type ThemePreview = {
@@ -104,6 +112,19 @@ export function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Settings ready.');
+  const [desktopInfo, setDesktopInfo] = useState<DesktopAppInfo>({
+    isDesktop: false,
+    isPackaged: false,
+    platform: 'web',
+    version: 'web',
+    canCheckForUpdates: false,
+    updateConfigured: false
+  });
+  const [desktopStatus, setDesktopStatus] = useState<DesktopUpdateStatus>({
+    state: 'idle',
+    message: 'No update check has been run yet.'
+  });
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
 
   useEffect(() => {
     setDisplayName(preferences.displayName);
@@ -114,6 +135,30 @@ export function SettingsPage() {
     setReducedMotion(preferences.reducedMotion);
     setRememberMe(getRememberPreference());
   }, [preferences]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getDesktopAppInfo().then((info) => {
+      if (!cancelled) {
+        setDesktopInfo(info);
+      }
+    });
+
+    const unsubscribe = subscribeToDesktopUpdates((status) => {
+      if (!cancelled) {
+        setDesktopStatus(status);
+        if (status.state !== 'checking' && status.state !== 'progress') {
+          setIsCheckingUpdates(false);
+        }
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -205,6 +250,20 @@ export function SettingsPage() {
     setCompactMode(false);
     setReducedMotion(false);
     setMessage('Device preferences reset to default.');
+  }
+
+  async function handleDesktopUpdateCheck() {
+    setIsCheckingUpdates(true);
+    const status = await checkForDesktopUpdates();
+    setDesktopStatus(status);
+
+    if (status.state !== 'checking' && status.state !== 'progress') {
+      setIsCheckingUpdates(false);
+    }
+  }
+
+  async function handleInstallDesktopUpdate() {
+    await installDesktopUpdate();
   }
 
   return (
@@ -473,6 +532,68 @@ export function SettingsPage() {
                       onChange={(event) => setRememberMe(event.target.checked)}
                     />
                   </label>
+                </div>
+
+                <div className="settings-desktop-panel">
+                  <div className="settings-desktop-panel-top">
+                    <div>
+                      <strong>Desktop app delivery</strong>
+                      <p>
+                        Package this app for macOS and Windows, then use in-app update checks to
+                        stay current as you keep shipping improvements.
+                      </p>
+                    </div>
+                    <span className="soft-pill">
+                      {desktopInfo.isDesktop ? 'Desktop runtime' : 'Web runtime'}
+                    </span>
+                  </div>
+
+                  <div className="settings-desktop-grid">
+                    <div className="settings-desktop-card">
+                      <span>Runtime</span>
+                      <strong>{desktopInfo.isDesktop ? 'Installed app' : 'Browser session'}</strong>
+                      <p>
+                        {desktopInfo.isDesktop
+                          ? `Running on ${desktopInfo.platform} with app version ${desktopInfo.version}.`
+                          : 'The web version is still available, but desktop-only update checks are disabled here.'}
+                      </p>
+                    </div>
+                    <div className="settings-desktop-card">
+                      <span>Updates</span>
+                      <strong>
+                        {desktopInfo.updateConfigured ? 'Configured' : 'Not configured yet'}
+                      </strong>
+                      <p>
+                        {desktopInfo.updateConfigured
+                          ? 'This build can check for published releases and prompt for installation.'
+                          : 'Auto-updates become active once release publishing is configured for desktop builds.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="settings-desktop-status">
+                    <span>Status</span>
+                    <strong>{desktopStatus.message}</strong>
+                  </div>
+
+                  <div className="header-actions">
+                    <button
+                      className="button button-secondary"
+                      disabled={!desktopInfo.canCheckForUpdates || isCheckingUpdates}
+                      type="button"
+                      onClick={handleDesktopUpdateCheck}
+                    >
+                      {isCheckingUpdates ? 'Checking...' : 'Check for desktop updates'}
+                    </button>
+                    <button
+                      className="button button-primary"
+                      disabled={desktopStatus.state !== 'downloaded'}
+                      type="button"
+                      onClick={handleInstallDesktopUpdate}
+                    >
+                      Install downloaded update
+                    </button>
+                  </div>
                 </div>
               </section>
               ) : null}
