@@ -33,7 +33,7 @@ const publish = createPublishConfig();
 export default {
   appId: 'com.thefinalcheck.desktop',
   productName: 'The Final Check',
-  artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
+  artifactName: 'the-final-check-${os}.${ext}',
   directories: {
     output: 'release',
     buildResources: 'public'

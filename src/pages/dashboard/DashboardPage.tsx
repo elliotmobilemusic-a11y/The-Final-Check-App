@@ -104,7 +104,8 @@ function deriveDisplayName(email?: string | null) {
 }
 
 const repoBaseUrl = 'https://github.com/elliotmobilemusic-a11y/The-Final-Check-App';
-const desktopActionsUrl = `${repoBaseUrl}/actions/workflows/desktop-release.yml`;
+const macDownloadUrl = `${repoBaseUrl}/releases/latest/download/the-final-check-mac.dmg`;
+const windowsDownloadUrl = `${repoBaseUrl}/releases/latest/download/the-final-check-win.exe`;
 const desktopReleasesUrl = `${repoBaseUrl}/releases`;
 
 export function DashboardPage() {
@@ -474,35 +475,61 @@ export function DashboardPage() {
       : '') ||
     deriveDisplayName(session?.user.email);
   const welcomeLabel = welcomeName.split(/\s+/).filter(Boolean)[0] || welcomeName;
+  const platform =
+    typeof navigator === 'undefined'
+      ? ''
+      : `${navigator.userAgent} ${navigator.platform}`.toLowerCase();
+  const primaryDownloadUrl = platform.includes('mac') ? macDownloadUrl : windowsDownloadUrl;
+  const primaryDownloadLabel = platform.includes('mac')
+    ? 'Download for Mac'
+    : platform.includes('win')
+      ? 'Download for Windows'
+      : 'Download Desktop App';
 
   return (
     <div className="page-stack">
       <section className="dashboard-download-card">
         <div className="dashboard-download-copy">
           <span className="dashboard-download-kicker">Download</span>
-          <strong>Install The Final Check on Mac or Windows</strong>
+          <strong>Download The Final Check as a desktop app</strong>
           <p>
-            Open the desktop build page to download the latest test app, or use Releases when a
-            versioned installer has been published.
+            Use the button below to download the latest published desktop installer for your
+            device. If you need a different platform, use the Mac or Windows link beside it.
           </p>
         </div>
 
         <div className="dashboard-download-actions">
           <a
             className="button button-primary"
-            href={desktopActionsUrl}
+            href={primaryDownloadUrl}
             target="_blank"
             rel="noreferrer"
           >
-            Open Desktop Builds
+            {primaryDownloadLabel}
           </a>
           <a
             className="button button-secondary"
+            href={macDownloadUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Mac
+          </a>
+          <a
+            className="button button-secondary"
+            href={windowsDownloadUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Windows
+          </a>
+          <a
+            className="button button-ghost"
             href={desktopReleasesUrl}
             target="_blank"
             rel="noreferrer"
           >
-            Open Releases
+            All releases
           </a>
         </div>
       </section>
