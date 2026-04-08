@@ -3841,8 +3841,9 @@ body[data-theme="midnight"] .data-table td {
 
 .settings-section-link {
   display: grid;
-  gap: 8px;
-  padding: 22px 24px;
+  place-items: center;
+  padding: 16px;
+  min-height: 52px;
   border-radius: 26px;
   border: 1px solid var(--shell-line);
   background: var(--surface-card);

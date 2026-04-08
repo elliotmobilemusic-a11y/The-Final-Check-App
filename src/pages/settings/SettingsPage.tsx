@@ -295,7 +295,6 @@ export function SettingsPage() {
             className={({ isActive }) => `settings-section-link ${isActive ? 'active' : ''}`}
           >
             <strong>{item.label}</strong>
-            <span>{item.description}</span>
           </NavLink>
         ))}
       </nav>
