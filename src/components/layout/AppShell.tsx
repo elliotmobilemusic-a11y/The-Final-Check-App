@@ -73,6 +73,7 @@ export function AppShell() {
   const { preferences } = usePreferences();
   const [navExpanded, setNavExpanded] = useState(true);
   const navRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(window.scrollY);
 
   useEffect(() => {
     if (!preferences.autoShowNav || preferences.reducedMotion) {
@@ -80,7 +81,7 @@ export function AppShell() {
       return;
     }
 
-    let lastScrollY = window.scrollY;
+    lastScrollY.current = window.scrollY;
     let hideTimeout: ReturnType<typeof setTimeout>;
 
     const scheduleHide = () => {
@@ -100,17 +101,17 @@ export function AppShell() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      if (currentScrollY < lastScrollY) {
+      if (currentScrollY < lastScrollY.current) {
         // Scrolling up - show nav
         setNavExpanded(true);
         scheduleHide();
-      } else if (currentScrollY > lastScrollY && currentScrollY > 24) {
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 24) {
         // Scrolling down - hide nav immediately with zero threshold
         clearTimeout(hideTimeout);
         setNavExpanded(false);
       }
       
-      lastScrollY = currentScrollY;
+      lastScrollY.current = currentScrollY;
     };
 
     const handleMouseEnter = () => {
@@ -138,7 +139,7 @@ export function AppShell() {
         navRef.current.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, [preferences.autoShowNav, preferences.reducedMotion]);
+  }, [preferences.autoShowNav, preferences.reducedMotion, location.pathname]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -170,6 +171,13 @@ export function AppShell() {
     // Hard redirect immediately - don't wait for anything
     window.location.href = '/';
   }
+
+  useEffect(() => {
+    // Reset scroll position tracking on page navigation
+    lastScrollY.current = window.scrollY;
+    // Force nav to show when navigating to new page
+    setNavExpanded(true);
+  }, [location.pathname]);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
