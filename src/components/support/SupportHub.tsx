@@ -293,11 +293,8 @@ export function SupportHub() {
   return (
     <>
       <div className="support-launcher">
-        <button className="button button-secondary" onClick={() => setGuideOpen(true)} type="button">
-          Help me
-        </button>
-        <button className="button button-primary" onClick={() => setAssistantOpen(true)} type="button">
-          Quick help
+        <button className="support-fab" onClick={() => setGuideOpen(true)} type="button">
+          ❔
         </button>
       </div>
 
