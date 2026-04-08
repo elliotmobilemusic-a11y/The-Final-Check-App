@@ -539,7 +539,33 @@ export function DashboardPage() {
     window.open(desktopReleasesUrl, '_blank', 'noopener,noreferrer');
   }
 
+  type TaskItem = {
+    id: string;
+    text: string;
+    completed: boolean;
+  };
+
+  type TaskGroup = {
+    id: string;
+    title: string;
+    tasks: TaskItem[];
+    collapsed: boolean;
+  };
+
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [taskGroups, setTaskGroups] = useState<TaskGroup[]>([
+    {
+      id: '1',
+      title: 'Today',
+      collapsed: false,
+      tasks: [
+        { id: '1', text: 'Create your first client', completed: false },
+        { id: '2', text: 'Run first kitchen audit', completed: false },
+        { id: '3', text: 'Setup menu builder', completed: false }
+      ]
+    }
+  ]);
+  const [newTaskText, setNewTaskText] = useState('');
 
   // Show install prompt randomly after random times
   useEffect(() => {
@@ -557,6 +583,72 @@ export function DashboardPage() {
 
   function dismissInstallPrompt() {
     setShowInstallPrompt(false);
+  }
+
+  function toggleTaskComplete(groupId: string, taskId: string) {
+    setTaskGroups(groups => groups.map(group => {
+      if (group.id !== groupId) return group;
+      return {
+        ...group,
+        tasks: group.tasks.map(task => {
+          if (task.id !== taskId) return task;
+          return { ...task, completed: !task.completed };
+        })
+      };
+    }));
+  }
+
+  function addTask(groupId: string) {
+    if (!newTaskText.trim()) return;
+    setTaskGroups(groups => groups.map(group => {
+      if (group.id !== groupId) return group;
+      return {
+        ...group,
+        tasks: [...group.tasks, {
+          id: Date.now().toString(),
+          text: newTaskText.trim(),
+          completed: false
+        }]
+      };
+    }));
+    setNewTaskText('');
+  }
+
+  function deleteTask(groupId: string, taskId: string) {
+    setTaskGroups(groups => groups.map(group => {
+      if (group.id !== groupId) return group;
+      return {
+        ...group,
+        tasks: group.tasks.filter(task => task.id !== taskId)
+      };
+    }));
+  }
+
+  function toggleGroupCollapse(groupId: string) {
+    setTaskGroups(groups => groups.map(group => {
+      if (group.id !== groupId) return group;
+      return { ...group, collapsed: !group.collapsed };
+    }));
+  }
+
+  function addNewGroup() {
+    setTaskGroups(groups => [...groups, {
+      id: Date.now().toString(),
+      title: 'New list',
+      collapsed: false,
+      tasks: []
+    }]);
+  }
+
+  function updateGroupTitle(groupId: string, title: string) {
+    setTaskGroups(groups => groups.map(group => {
+      if (group.id !== groupId) return group;
+      return { ...group, title };
+    }));
+  }
+
+  function deleteGroup(groupId: string) {
+    setTaskGroups(groups => groups.filter(group => group.id !== groupId));
   }
 
   return (
@@ -626,34 +718,79 @@ export function DashboardPage() {
         <article className="feature-card">
           <div className="feature-top">
             <div>
-              <h3>Today's tasks</h3>
-              <p>Your personal daily todo list</p>
+              <h3>Tasks</h3>
+              <p>Organised check lists</p>
             </div>
+            <button className="button button-small button-ghost" onClick={addNewGroup}>+ New list</button>
           </div>
-          <div style={{ padding: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <input type="text" placeholder="Add a task for today..." style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                fontSize: '14px'
-              }} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <input type="checkbox" />
-                  <span>Create your first client</span>
+
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {taskGroups.map((group) => (
+              <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                    <button onClick={() => toggleGroupCollapse(group.id)} style={{ background: 'none', border: 0, cursor: 'pointer', padding: '4px' }}>
+                      {group.collapsed ? '▶' : '▼'}
+                    </button>
+                    <input
+                      type="text"
+                      value={group.title}
+                      onChange={(e) => updateGroupTitle(group.id, e.target.value)}
+                      style={{ border: 0, background: 'transparent', fontWeight: 600, fontSize: '15px', flex: 1 }}
+                    />
+                    <button onClick={() => deleteGroup(group.id)} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>×</button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <input type="checkbox" />
-                  <span>Run first kitchen audit</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0' }}>
-                  <input type="checkbox" />
-                  <span>Setup menu builder</span>
-                </div>
+
+                {!group.collapsed && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '30px' }}>
+                    {group.tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '6px 0',
+                          opacity: task.completed ? 0.5 : 1,
+                          transition: 'all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          transform: task.completed ? 'translateX(4px)' : 'translateX(0)'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTaskComplete(group.id, task.id)}
+                          style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
+                        />
+                        <span style={{ flex: 1, textDecoration: task.completed ? 'line-through' : 'none', transition: 'all 0.22s ease' }}>
+                          {task.text}
+                        </span>
+                        <button onClick={() => deleteTask(group.id, task.id)} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', opacity: 0, transition: 'opacity 0.15s ease' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}>×</button>
+                      </div>
+                    ))}
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <input
+                        type="text"
+                        placeholder="Add task..."
+                        value={newTaskText}
+                        onChange={(e) => setNewTaskText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
+                        style={{
+                          flex: 1,
+                          padding: '8px 10px',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '6px',
+                          fontSize: '13px'
+                        }}
+                      />
+                      <button className="button button-small" onClick={() => addTask(group.id)}>+</button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
           </div>
         </article>
 
