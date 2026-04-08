@@ -1559,31 +1559,6 @@ export function KitchenAuditPage() {
             </label>
           </>
         }
-        side={
-          <div className="page-intro-summary">
-            <span className={scoreClass(calc.score)}>
-              {scoreLabel(calc.score)} • {calc.score}/100
-            </span>
-            <strong>Audit snapshot</strong>
-            <p>{message}</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Completion</span>
-                <strong>{completion.percent}%</strong>
-              </div>
-              <div>
-                <span>GP gap</span>
-                <strong>
-                  {form.weeklySales > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'Awaiting data'}
-                </strong>
-              </div>
-              <div>
-                <span>Controls</span>
-                <strong>{Math.round(calc.controlScore)}%</strong>
-              </div>
-            </div>
-          </div>
-        }
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0 0 0' }}>
           <div style={{ flex: 1 }}>
