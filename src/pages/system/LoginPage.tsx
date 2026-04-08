@@ -19,6 +19,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMeState] = useState(getRememberPreference());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const [error, setError] = useState('');
 
   if (session) {
@@ -43,6 +44,13 @@ export function LoginPage() {
       if (signInError) {
         throw signInError;
       }
+
+      // Success animation state
+      setLoginSuccess(true);
+      
+      // Add delay for animation before navigation
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Sign in failed.');
     } finally {
@@ -106,7 +114,7 @@ export function LoginPage() {
             </div>
           ) : null}
 
-          <form className="stack gap-20" onSubmit={handleSubmit}>
+          <form className={`stack gap-20 ${loginSuccess ? 'login-success' : ''}`} onSubmit={handleSubmit}>
             <label className="field">
               <span>Email</span>
               <input
@@ -147,10 +155,10 @@ export function LoginPage() {
             {error ? <div className="notice notice-danger">{error}</div> : null}
 
             <button
-              className="button button-primary full-width"
-              disabled={isSubmitting || !hasSupabaseEnv}
+              className={`button button-primary full-width ${isSubmitting ? 'loading' : ''} ${loginSuccess ? 'success' : ''}`}
+              disabled={isSubmitting || !hasSupabaseEnv || loginSuccess}
             >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {loginSuccess ? '✓ Welcome' : isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
         </div>

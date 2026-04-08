@@ -1380,6 +1380,91 @@ body.reduced-motion *::after {
   line-height: 1.6;
 }
 
+/* Login Animations */
+.button.button-primary.loading {
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.button.button-primary.loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+.button.button-primary.success {
+  background: linear-gradient(135deg, #4f8e67 0%, #3d7a57 100%) !important;
+  transform: scale(1.02);
+  box-shadow: 0 16px 40px rgba(79, 142, 103, 0.3);
+  animation: successPulse 0.6s ease-out;
+}
+
+form.login-success {
+  animation: fadeOutUp 1s ease-out 0.6s forwards;
+  pointer-events: none;
+}
+
+.auth-card:has(form.login-success) {
+  animation: cardSuccess 1.4s ease-out;
+}
+
+@keyframes shimmer {
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes fadeOutUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes cardSuccess {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.015);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Hover effects */
+.field:hover .input {
+  border-color: rgba(198, 161, 97, 0.5);
+}
+
+.input:focus {
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
 /* ---------- Loading / 404 ---------- */
 
 .screen-center {
