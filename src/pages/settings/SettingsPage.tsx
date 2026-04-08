@@ -59,11 +59,6 @@ const settingsSections: Array<{
     description: 'Theme, spacing, motion, and visual working preferences.'
   },
   {
-    value: 'workflow',
-    label: 'Workflow',
-    description: 'Startup, landing-page, and device behaviour controls.'
-  },
-  {
     value: 'security',
     label: 'Security',
     description: 'Password updates and sign-in persistence preferences.'
@@ -74,7 +69,6 @@ function isSettingsSection(value?: string): value is SettingsSection {
   return (
     value === 'profile' ||
     value === 'appearance' ||
-    value === 'workflow' ||
     value === 'security'
   );
 }
@@ -493,110 +487,6 @@ export function SettingsPage() {
               </section>
               ) : null}
 
-              {activeSection === 'workflow' ? (
-              <section className="sub-panel">
-                <div className="sub-panel-header">
-                  <h4>Device and workflow preferences</h4>
-                  <span className="soft-pill">Startup behaviour</span>
-                </div>
-
-                <div className="form-grid two-columns">
-                  <label className="field">
-                    <span>Default landing page</span>
-                    <select
-                      className="input"
-                      value={defaultLandingPage}
-                      onChange={(event) =>
-                        setDefaultLandingPage(event.target.value as LandingPage)
-                      }
-                    >
-                      {landingPages.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="settings-remember-card">
-                    <div>
-                      <strong>Remember me on this device</strong>
-                      <p>
-                        Keep the browser signed in between sessions instead of treating each login
-                        as temporary.
-                      </p>
-                    </div>
-                    <input
-                      checked={rememberMe}
-                      type="checkbox"
-                      onChange={(event) => setRememberMe(event.target.checked)}
-                    />
-                  </label>
-                </div>
-
-                <div className="settings-desktop-panel">
-                  <div className="settings-desktop-panel-top">
-                    <div>
-                      <strong>Desktop app delivery</strong>
-                      <p>
-                        Package this app for macOS and Windows, then use in-app update checks to
-                        stay current as you keep shipping improvements.
-                      </p>
-                    </div>
-                    <span className="soft-pill">
-                      {desktopInfo.isDesktop ? 'Desktop runtime' : 'Web runtime'}
-                    </span>
-                  </div>
-
-                  <div className="settings-desktop-grid">
-                    <div className="settings-desktop-card">
-                      <span>Runtime</span>
-                      <strong>{desktopInfo.isDesktop ? 'Installed app' : 'Browser session'}</strong>
-                      <p>
-                        {desktopInfo.isDesktop
-                          ? `Running on ${desktopInfo.platform} with app version ${desktopInfo.version}.`
-                          : 'The web version is still available, but desktop-only update checks are disabled here.'}
-                      </p>
-                    </div>
-                    <div className="settings-desktop-card">
-                      <span>Updates</span>
-                      <strong>
-                        {desktopInfo.updateConfigured ? 'Configured' : 'Not configured yet'}
-                      </strong>
-                      <p>
-                        {desktopInfo.updateConfigured
-                          ? 'This build can check for published releases and prompt for installation.'
-                          : 'Auto-updates become active once release publishing is configured for desktop builds.'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="settings-desktop-status">
-                    <span>Status</span>
-                    <strong>{desktopStatus.message}</strong>
-                  </div>
-
-                  <div className="header-actions">
-                    <button
-                      className="button button-secondary"
-                      disabled={!desktopInfo.canCheckForUpdates || isCheckingUpdates}
-                      type="button"
-                      onClick={handleDesktopUpdateCheck}
-                    >
-                      {isCheckingUpdates ? 'Checking...' : 'Check for desktop updates'}
-                    </button>
-                    <button
-                      className="button button-primary"
-                      disabled={desktopStatus.state !== 'downloaded'}
-                      type="button"
-                      onClick={handleInstallDesktopUpdate}
-                    >
-                      Install downloaded update
-                    </button>
-                  </div>
-                </div>
-              </section>
-              ) : null}
 
               {activeSection === 'security' ? (
               <section className="sub-panel">
