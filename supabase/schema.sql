@@ -230,6 +230,42 @@ begin
 end
 $$;
 
+update public.audits a
+set client_id = null
+where client_id is not null
+  and not exists (
+    select 1
+    from public.clients c
+    where c.id = a.client_id
+  );
+
+update public.menu_projects m
+set client_id = null
+where client_id is not null
+  and not exists (
+    select 1
+    from public.clients c
+    where c.id = m.client_id
+  );
+
+update public.food_safety_audits f
+set client_id = null
+where client_id is not null
+  and not exists (
+    select 1
+    from public.clients c
+    where c.id = f.client_id
+  );
+
+update public.mystery_shop_audits m
+set client_id = null
+where client_id is not null
+  and not exists (
+    select 1
+    from public.clients c
+    where c.id = m.client_id
+  );
+
 update public.audits
 set
   client_id = coalesce(
