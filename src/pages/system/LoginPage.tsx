@@ -54,23 +54,13 @@ export function LoginPage() {
     <div className="auth-page">
       <div className="auth-panel">
         <div className="auth-copy">
-          <div className="auth-brand-row">
-            <div className="auth-brand-mark">
-              <img
-                src="/the-final-check-logo.png"
-                alt="The Final Check logo"
-                className="auth-brand-logo"
-              />
-            </div>
-            <div className="auth-brand-textlock">
-              <span>Consultancy operating system</span>
-              <strong>The Final Check</strong>
-              <small>Profit and performance consultancy for food businesses</small>
-            </div>
+          <div className="auth-brand-textlock">
+            <span>Consultancy operating system</span>
+            <strong>The Final Check</strong>
+            <small>Profit and performance consultancy for food businesses</small>
           </div>
 
-          <h1>The Final Check</h1>
-          <p>
+          <p style={{ marginTop: '28px' }}>
             Sign in to manage clients, site reviews, menu work, billing, and follow-up from one
             secure workspace.
           </p>
@@ -116,7 +106,7 @@ export function LoginPage() {
             </div>
           ) : null}
 
-          <form className="stack gap-16" onSubmit={handleSubmit}>
+          <form className="stack gap-20" onSubmit={handleSubmit}>
             <label className="field">
               <span>Email</span>
               <input
