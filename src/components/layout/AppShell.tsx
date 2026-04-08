@@ -73,16 +73,15 @@ export function AppShell() {
   const { preferences } = usePreferences();
   const [navExpanded, setNavExpanded] = useState(true);
   const navRef = useRef<HTMLElement>(null);
-  const lastScrollY = useRef(window.scrollY);
+  const lastScrollY = useRef(0);
 
+  // Global scroll handler that lives forever
   useEffect(() => {
     if (!preferences.autoShowNav || preferences.reducedMotion) {
       setNavExpanded(true);
       return;
     }
 
-    // Reset state completely on every navigation
-    lastScrollY.current = window.scrollY;
     let hideTimeout: ReturnType<typeof setTimeout>;
 
     const scheduleHide = () => {
@@ -92,24 +91,14 @@ export function AppShell() {
       }, 2200);
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientY < 50) {
-        setNavExpanded(true);
-        scheduleHide();
-      }
-    };
-
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const delta = currentScrollY - lastScrollY.current;
       
-      // Absolute direction detection - ignore small noise
       if (delta < -1) {
-        // Scrolling UP - show nav
         setNavExpanded(true);
         scheduleHide();
       } else if (delta > 1 && currentScrollY > 48) {
-        // Scrolling DOWN - hide nav immediately
         clearTimeout(hideTimeout);
         setNavExpanded(false);
       }
@@ -117,38 +106,13 @@ export function AppShell() {
       lastScrollY.current = currentScrollY;
     };
 
-    const handleMouseEnter = () => {
-      clearTimeout(hideTimeout);
-    };
-
-    const handleMouseLeave = () => {
-      scheduleHide();
-    };
-
-    // Cleanup before attaching new listeners
-    document.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('scroll', handleScroll);
-    
-    document.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    if (navRef.current) {
-      navRef.current.removeEventListener('mouseenter', handleMouseEnter);
-      navRef.current.removeEventListener('mouseleave', handleMouseLeave);
-      navRef.current.addEventListener('mouseenter', handleMouseEnter);
-      navRef.current.addEventListener('mouseleave', handleMouseLeave);
-    }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(hideTimeout);
-      if (navRef.current) {
-        navRef.current.removeEventListener('mouseenter', handleMouseEnter);
-        navRef.current.removeEventListener('mouseleave', handleMouseLeave);
-      }
     };
-  }, [preferences.autoShowNav, preferences.reducedMotion, location.pathname]);
+  }, [preferences.autoShowNav, preferences.reducedMotion]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
