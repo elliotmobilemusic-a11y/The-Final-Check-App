@@ -287,6 +287,19 @@ export function SettingsPage() {
 
   return (
     <div className="page-stack settings-page">
+      <nav className="settings-section-nav" aria-label="Settings sections">
+        {settingsSections.map((item) => (
+          <NavLink
+            key={item.value}
+            to={`/settings/${item.value}`}
+            className={({ isActive }) => `settings-section-link ${isActive ? 'active' : ''}`}
+          >
+            <strong>{item.label}</strong>
+            <span>{item.description}</span>
+          </NavLink>
+        ))}
+      </nav>
+
       <div className="profile-header">
         <div className="profile-header-content">
           <div className="profile-avatar-container">
@@ -346,19 +359,6 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-      <nav className="settings-section-nav" aria-label="Settings sections">
-        {settingsSections.map((item) => (
-          <NavLink
-            key={item.value}
-            to={`/settings/${item.value}`}
-            className={({ isActive }) => `settings-section-link ${isActive ? 'active' : ''}`}
-          >
-            <strong>{item.label}</strong>
-            <span>{item.description}</span>
-          </NavLink>
-        ))}
-      </nav>
-
       </div>
 
       <section className="stats-grid compact">
