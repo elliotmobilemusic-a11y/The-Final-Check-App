@@ -129,9 +129,16 @@ function createDefaultFoodSafetyAudit(): FoodSafetyAuditState {
     followUpDate: '',
     checks: defaultFoodSafetyChecks(),
     temperatureLog: [
-      blankFoodSafetyTemperature({ area: 'Walk-in fridge', target: '0C to 5C' }),
+      blankFoodSafetyTemperature({ area: 'Walk-in fridge 1', target: '0C to 5C' }),
+      blankFoodSafetyTemperature({ area: 'Walk-in fridge 2', target: '0C to 5C' }),
+      blankFoodSafetyTemperature({ area: 'Prep fridge', target: '0C to 5C' }),
+      blankFoodSafetyTemperature({ area: 'Dessert or dairy fridge', target: '0C to 5C' }),
       blankFoodSafetyTemperature({ area: 'Freezer', target: '-18C or below' }),
-      blankFoodSafetyTemperature({ area: 'Hot hold', target: '63C or above' })
+      blankFoodSafetyTemperature({ area: 'Hot hold', target: '63C or above' }),
+      blankFoodSafetyTemperature({ area: 'Cooked food probe', target: '75C or above' }),
+      blankFoodSafetyTemperature({ area: 'Cooling check', target: '63C to 20C in 2 hours, 20C to 5C in 4 hours' }),
+      blankFoodSafetyTemperature({ area: 'Delivery chilled goods', target: '0C to 5C' }),
+      blankFoodSafetyTemperature({ area: 'Delivery frozen goods', target: '-18C or below' })
     ],
     actionItems: [blankActionItem()]
   };
@@ -399,6 +406,26 @@ export function FoodSafetyAuditPage() {
     }));
   }
 
+  function addTemperatureReading() {
+    setForm((current) => ({
+      ...current,
+      temperatureLog: [
+        ...current.temperatureLog,
+        blankFoodSafetyTemperature({ area: `Additional reading ${current.temperatureLog.length + 1}` })
+      ]
+    }));
+  }
+
+  function removeTemperatureReading(id: string) {
+    setForm((current) => ({
+      ...current,
+      temperatureLog:
+        current.temperatureLog.length > 1
+          ? current.temperatureLog.filter((item) => item.id !== id)
+          : current.temperatureLog
+    }));
+  }
+
   function updateAction(id: string, key: keyof AuditActionItem, value: string) {
     setForm((current) => ({
       ...current,
@@ -592,8 +619,11 @@ export function FoodSafetyAuditPage() {
             <div className="panel-header">
               <div>
                 <h3>Temperature log</h3>
-                <p className="muted-copy">Record cold chain, freezer, and hot hold evidence during the visit.</p>
+                <p className="muted-copy">Record every key fridge, freezer, delivery, cooking, cooling, and hot-hold reading during the visit.</p>
               </div>
+              <button className="button button-ghost" onClick={addTemperatureReading}>
+                Add reading
+              </button>
             </div>
             <div className="panel-body tool-list">
               {form.temperatureLog.map((item) => (
@@ -614,6 +644,16 @@ export function FoodSafetyAuditPage() {
                     <span>Note</span>
                     <input className="input" value={item.note} onChange={(event) => updateTemperature(item.id, 'note', event.target.value)} />
                   </label>
+                  <div className="tool-row-actions">
+                    <button
+                      className="button button-secondary"
+                      disabled={form.temperatureLog.length === 1}
+                      onClick={() => removeTemperatureReading(item.id)}
+                      type="button"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

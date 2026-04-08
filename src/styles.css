@@ -2773,9 +2773,14 @@ textarea.input,
 
 .tool-temp-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 14px;
   padding: 16px;
+}
+
+.tool-row-actions {
+  display: grid;
+  align-content: end;
 }
 
 .tool-score-grid {
