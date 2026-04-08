@@ -191,7 +191,7 @@ export function AppShell() {
                </span>
              </NavLink>
 
-             <div className="shell-toolbar-main">
+               <div className="shell-toolbar-main">
                <nav className="shell-primary-nav" aria-label="Primary navigation">
                  {navItems.map((item) => (
                    <NavLink
@@ -200,14 +200,10 @@ export function AppShell() {
                      end={item.to !== '/clients'}
                      className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
                    >
-                     {item.label}
+                     <span className="nav-link-inner">{item.label}</span>
                    </NavLink>
                  ))}
                </nav>
-               <div className="shell-context-line">
-                 <span className="shell-section-label">{activeWorkspace.label}</span>
-                 <span className="shell-context-copy">{activeWorkspace.detail}</span>
-               </div>
              </div>
 
              <div className="shell-toolbar-actions">

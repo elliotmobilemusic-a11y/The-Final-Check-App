@@ -797,28 +797,60 @@ body.reduced-motion *::after {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 38px;
-  padding: 0 14px;
+  min-height: 42px;
+  padding: 0 16px;
   border-radius: 999px;
   text-decoration: none;
   color: var(--text);
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   background: var(--nav-chip-bg);
   border: 1px solid rgba(86, 81, 91, 0.12);
   transition:
-    transform 0.18s ease,
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+    transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.shell-primary-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 50%);
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+.shell-primary-link .nav-link-inner {
+  position: relative;
+  z-index: 1;
+  transform: translateY(0);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .shell-primary-link:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.02);
   background: var(--nav-chip-bg);
-  border-color: var(--nav-chip-border);
-  box-shadow: var(--shadow-soft);
+  border-color: rgba(198, 161, 97, 0.24);
+  box-shadow:
+    0 18px 40px rgba(36, 31, 38, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.shell-primary-link:hover::before {
+  opacity: 0.6;
+}
+
+.shell-primary-link:hover .nav-link-inner {
+  transform: translateY(-1px);
+}
+
+.shell-primary-link:active {
+  transform: translateY(-1px) scale(0.98);
 }
 
 .shell-primary-link.active {
@@ -826,8 +858,13 @@ body.reduced-motion *::after {
   border-color: rgba(255, 255, 255, 0.08);
   color: var(--white);
   box-shadow:
-    0 16px 32px rgba(36, 31, 38, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 20px 44px rgba(36, 31, 38, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.shell-primary-link.active::before {
+  opacity: 0.2;
 }
 
 .user-chip {
