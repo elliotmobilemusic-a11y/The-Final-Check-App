@@ -93,13 +93,12 @@ export function AppShell() {
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const delta = currentScrollY - lastScrollY.current;
       
-      if (delta < -1) {
+      if (currentScrollY < lastScrollY.current) {
+        // Scrolling UP
         setNavExpanded(true);
-        scheduleHide();
-      } else if (delta > 1 && currentScrollY > 48) {
-        clearTimeout(hideTimeout);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 24) {
+        // Scrolling DOWN
         setNavExpanded(false);
       }
       
