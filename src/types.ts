@@ -111,6 +111,95 @@ export interface AuditFormState {
   updatedAt?: string;
 }
 
+export interface FoodSafetyCheckItem {
+  id: string;
+  area: string;
+  item: string;
+  status: 'Pass' | 'Watch' | 'Fail' | 'N/A';
+  note: string;
+}
+
+export interface FoodSafetyTemperatureItem {
+  id: string;
+  area: string;
+  reading: string;
+  target: string;
+  note: string;
+}
+
+export interface FoodSafetyAuditState {
+  id?: string;
+  title: string;
+  siteName: string;
+  location: string;
+  auditDate: string;
+  auditorName: string;
+  managerName: string;
+  servicePeriod: string;
+  hygieneRating: string;
+  summary: string;
+  goodPractice: string;
+  criticalConcerns: string;
+  immediateActions: string;
+  followUpDate: string;
+  checks: FoodSafetyCheckItem[];
+  temperatureLog: FoodSafetyTemperatureItem[];
+  actionItems: AuditActionItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MysteryShopObservation {
+  id: string;
+  area: string;
+  touchpoint: string;
+  score: number;
+  note: string;
+}
+
+export interface MysteryShopScorecard {
+  arrival: number;
+  service: number;
+  product: number;
+  cleanliness: number;
+  atmosphere: number;
+  value: number;
+}
+
+export interface MysteryShopAuditState {
+  id?: string;
+  title: string;
+  siteName: string;
+  location: string;
+  visitDate: string;
+  shopperName: string;
+  visitWindow: string;
+  spendAmount: number;
+  overallSummary: string;
+  firstImpression: string;
+  serviceStory: string;
+  foodAndDrink: string;
+  cleanlinessNotes: string;
+  recommendations: string;
+  followUpDate: string;
+  scorecard: MysteryShopScorecard;
+  observations: MysteryShopObservation[];
+  actionItems: AuditActionItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LocalToolRecord<T> {
+  id: string;
+  title: string;
+  siteName: string;
+  location: string;
+  reviewDate: string;
+  createdAt: string;
+  updatedAt: string;
+  data: T;
+}
+
 export interface DishIngredient {
   id: string;
   name: string;

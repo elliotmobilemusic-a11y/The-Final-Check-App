@@ -4,9 +4,11 @@ import { AppShell } from './components/layout/AppShell';
 import { SupportHub } from './components/support/SupportHub';
 import { usePreferences } from './context/PreferencesContext';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { FoodSafetyAuditPage } from './pages/audit/FoodSafetyAuditPage';
 import { KitchenAuditPage } from './pages/audit/KitchenAuditPage';
 import { LoginPage } from './pages/system/LoginPage';
 import { MenuBuilderPage } from './pages/menu/MenuBuilderPage';
+import { MysteryShopAuditPage } from './pages/audit/MysteryShopAuditPage';
 import { NotFoundPage } from './pages/system/NotFoundPage';
 import { ClientsPage } from './pages/clients/ClientsPage';
 import { ClientProfilePage } from './pages/clients/ClientProfilePage';
@@ -38,6 +40,8 @@ export default function App() {
           <Route path="clients/:clientId" element={<ClientProfilePage />} />
           <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
           <Route path="audit" element={<KitchenAuditPage />} />
+          <Route path="food-safety" element={<FoodSafetyAuditPage />} />
+          <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
           <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
           <Route path="settings/:section" element={<SettingsPage />} />

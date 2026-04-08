@@ -7,6 +7,8 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/clients', label: 'Clients' },
   { to: '/audit', label: 'Audit Tool' },
+  { to: '/food-safety', label: 'Food Safety' },
+  { to: '/mystery-shop', label: 'Mystery Shop' },
   { to: '/menu', label: 'Menu Builder' }
 ];
 
@@ -25,6 +27,16 @@ const workspaceDetails = [
     match: '/audit',
     label: 'Audit workspace',
     detail: 'Capture findings, structure evidence, and build a client-ready report.'
+  },
+  {
+    match: '/food-safety',
+    label: 'Food safety workspace',
+    detail: 'Run site compliance checks, temperature logging, and immediate action follow-up.'
+  },
+  {
+    match: '/mystery-shop',
+    label: 'Mystery shop workspace',
+    detail: 'Score the guest journey, capture service moments, and build a clean follow-up review.'
   },
   {
     match: '/menu',
