@@ -391,16 +391,6 @@ export function SettingsPage() {
                   </label>
 
                   <label className="field">
-                    <span>Avatar image URL</span>
-                    <input
-                      className="input"
-                      placeholder="https://..."
-                      value={avatarUrl}
-                      onChange={(event) => setAvatarUrl(event.target.value)}
-                    />
-                  </label>
-
-                  <label className="field">
                     <span>Account email</span>
                     <input
                       className="input"
@@ -410,8 +400,23 @@ export function SettingsPage() {
                   </label>
 
                   <label className="field">
-                    <span>User ID</span>
-                    <input className="input" disabled value={session?.user.id ?? ''} />
+                    <span>Job title</span>
+                    <input
+                      className="input"
+                      placeholder="e.g. Auditor, Manager"
+                      value={preferences.jobTitle || ''}
+                      onChange={(event) => updatePreferences({ jobTitle: event.target.value })}
+                    />
+                  </label>
+
+                  <label className="field">
+                    <span>Organisation</span>
+                    <input
+                      className="input"
+                      placeholder="Company name"
+                      value={preferences.organisation || ''}
+                      onChange={(event) => updatePreferences({ organisation: event.target.value })}
+                    />
                   </label>
                 </div>
               </section>
@@ -631,21 +636,14 @@ export function SettingsPage() {
               </section>
               ) : null}
 
-              <div className="settings-save-bar">
-                <div className="settings-save-copy">
-                  <span className="soft-pill">{message}</span>
-                  <p className="muted-copy">
-                    Save changes from the bottom of the page once you have finished reviewing this section.
-                  </p>
-                </div>
-                <div className="header-actions">
-                  <button className="button button-secondary" onClick={handleResetDevicePreferences} type="button">
-                    Reset device preferences
-                  </button>
-                  <button className="button button-primary" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save changes'}
-                  </button>
-                </div>
+              <div className="settings-save-bar fixed-bottom-right">
+                <span className="soft-pill">{message}</span>
+                <button className="button button-secondary" onClick={handleResetDevicePreferences} type="button">
+                  Reset
+                </button>
+                <button className="button button-primary" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save changes'}
+                </button>
               </div>
             </div>
           </form>

@@ -21,6 +21,8 @@ export type AppPreferences = {
   displayName: string;
   avatarUrl: string;
   avatarPosition: { x: number; y: number; scale: number };
+  jobTitle: string;
+  organisation: string;
   theme: ThemeMode;
   defaultLandingPage: LandingPage;
   compactMode: boolean;
@@ -39,6 +41,8 @@ const defaultPreferences: AppPreferences = {
   displayName: '',
   avatarUrl: '',
   avatarPosition: { x: 50, y: 50, scale: 1 },
+  jobTitle: '',
+  organisation: '',
   theme: 'sandstone',
   defaultLandingPage: '/dashboard',
   compactMode: false,
@@ -118,7 +122,9 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
         ...current,
         displayName: current.displayName || metadataDisplayName,
         avatarUrl: current.avatarUrl || metadataAvatarUrl,
-        avatarPosition: metadataAvatarPosition
+        avatarPosition: metadataAvatarPosition,
+        jobTitle: current.jobTitle || (typeof metadata.job_title === 'string' ? metadata.job_title.trim() : ''),
+        organisation: current.organisation || (typeof metadata.organisation === 'string' ? metadata.organisation.trim() : '')
       };
 
       if (
