@@ -490,27 +490,6 @@ export function SettingsPage() {
                   </label>
                 </div>
 
-                <div className="sub-panel-header">
-                  <h4>Selected theme details</h4>
-                </div>
-
-                <div className="settings-theme-detail-grid">
-                  <div className="settings-theme-detail-card">
-                    <span>Accent</span>
-                    <strong>{currentTheme.accentName}</strong>
-                    <p>The main highlight colour used across buttons, pills, and report emphasis.</p>
-                  </div>
-                  <div className="settings-theme-detail-card">
-                    <span>Mood</span>
-                    <strong>{currentTheme.mood}</strong>
-                    <p>Sets the overall workspace feel so the app matches how you prefer to work.</p>
-                  </div>
-                  <div className="settings-theme-detail-card">
-                    <span>Best use</span>
-                    <strong>{currentTheme.bestFor}</strong>
-                    <p>Choose the palette that best suits your screen, lighting, and working session.</p>
-                  </div>
-                </div>
               </section>
               ) : null}
 
