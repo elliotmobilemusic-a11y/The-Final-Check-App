@@ -22,7 +22,7 @@ import type {
   MenuProjectState,
   SupabaseRecord
 } from '../../types';
-import { downloadText, fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
+import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 
 const ingredientUnitOptions: Array<{ value: MeasurementUnit; label: string }> = [
   { value: 'g', label: 'Grams' },
@@ -906,14 +906,6 @@ export function MenuBuilderPage() {
     setMessage('New menu started.');
   }
 
-  function exportJson() {
-    downloadText(
-      `${safe(project.menuName || 'menu-builder').replace(/\s+/g, '-').toLowerCase()}.json`,
-      JSON.stringify(project, null, 2),
-      'application/json'
-    );
-  }
-
   function exportPdf() {
     openPrintableHtmlDocument(
       `${safe(project.menuName || 'Menu Builder Report')} report`,
@@ -989,9 +981,6 @@ export function MenuBuilderPage() {
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
-            </button>
-            <button className="button button-secondary" onClick={exportJson}>
-              Export JSON
             </button>
             <label className="button button-secondary inline-file-button">
               Load JSON

@@ -23,7 +23,7 @@ import type {
   FoodSafetyTemperatureItem,
   LocalToolRecord
 } from '../../types';
-import { downloadText, lines, safe, todayIso, uid } from '../../lib/utils';
+import { lines, safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
 
@@ -585,14 +585,6 @@ export function FoodSafetyAuditPage() {
     setMessage('Saved food safety audit deleted.');
   }
 
-  function handleExportJson() {
-    downloadText(
-      `${safe(form.siteName || 'food-safety-audit').replace(/\s+/g, '-').toLowerCase()}.json`,
-      JSON.stringify(form, null, 2),
-      'application/json'
-    );
-  }
-
   function handleExportPrint() {
     openPrintableHtmlDocument(
       `${form.title || 'Food Safety Audit'} printout`,
@@ -644,10 +636,7 @@ export function FoodSafetyAuditPage() {
               Save audit
             </button>
             <button className="button button-secondary" onClick={handleExportPrint}>
-              Print report
-            </button>
-            <button className="button button-secondary" onClick={handleExportJson}>
-              Export JSON
+              Export PDF
             </button>
           </>
         }

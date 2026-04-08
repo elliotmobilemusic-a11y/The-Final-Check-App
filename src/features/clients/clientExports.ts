@@ -568,7 +568,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             display: none;
           }
           body {
-            padding: 2mm 0;
+            padding: 0;
             background: white;
           }
           main {
@@ -577,29 +577,37 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             width: 100%;
           }
           .report-document {
-            padding: 6px;
-            border-radius: 16px;
+            padding: 10px;
+            border-radius: 20px;
             border: 2px solid var(--paper-line);
             box-shadow: none;
             background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
           }
           .report-sheet {
             min-height: auto;
-            padding: 12px 12px 10px;
-            border-radius: 12px;
+            padding: 18px 18px 16px;
+            border-radius: 16px;
             border: 2px solid var(--sheet-line);
             box-shadow: none;
             overflow: visible;
           }
           .report-hero {
-            margin: 12px 0 14px;
+            margin: 14px 0 16px;
           }
           section {
-            margin-top: 14px;
-            padding-top: 12px;
+            margin-top: 16px;
+            padding-top: 14px;
           }
-          .print-toolbar {
-            display: none;
+          table,
+          .report-table {
+            font-size: 12px;
+          }
+          th,
+          td {
+            padding: 9px 10px;
+          }
+          .report-footer {
+            margin-top: 12px;
           }
         }
         @media screen and (max-width: 760px) {

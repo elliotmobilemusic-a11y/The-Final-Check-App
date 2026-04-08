@@ -23,7 +23,7 @@ import type {
   MysteryShopObservation,
   MysteryShopScorecard
 } from '../../types';
-import { downloadText, safe, todayIso, uid } from '../../lib/utils';
+import { safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
 
@@ -514,14 +514,6 @@ export function MysteryShopAuditPage() {
     setMessage('Saved mystery shop audit deleted.');
   }
 
-  function handleExportJson() {
-    downloadText(
-      `${safe(form.siteName || 'mystery-shop-audit').replace(/\s+/g, '-').toLowerCase()}.json`,
-      JSON.stringify(form, null, 2),
-      'application/json'
-    );
-  }
-
   function handleExportPrint() {
     openPrintableHtmlDocument(
       `${form.title || 'Mystery Shop Audit'} printout`,
@@ -541,10 +533,7 @@ export function MysteryShopAuditPage() {
               Save audit
             </button>
             <button className="button button-secondary" onClick={handleExportPrint}>
-              Print report
-            </button>
-            <button className="button button-secondary" onClick={handleExportJson}>
-              Export JSON
+              Export PDF
             </button>
           </>
         }

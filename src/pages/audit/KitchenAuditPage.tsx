@@ -21,7 +21,6 @@ import type {
   SupabaseRecord
 } from '../../types';
 import {
-  downloadText,
   fmtCurrency,
   fmtPercent,
   lines,
@@ -1513,14 +1512,6 @@ export function KitchenAuditPage() {
     setMessage('Narrative sections drafted from the current audit data.');
   }
 
-  function exportJson() {
-    downloadText(
-      `${safe(form.businessName || 'audit').replace(/\s+/g, '-').toLowerCase()}.json`,
-      JSON.stringify(form, null, 2),
-      'application/json'
-    );
-  }
-
   function exportPdf() {
     openPrintableHtmlDocument(
       `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
@@ -1561,9 +1552,6 @@ export function KitchenAuditPage() {
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
-            </button>
-            <button className="button button-secondary" onClick={exportJson}>
-              Export JSON
             </button>
             <label className="button button-secondary inline-file-button">
               Load JSON
