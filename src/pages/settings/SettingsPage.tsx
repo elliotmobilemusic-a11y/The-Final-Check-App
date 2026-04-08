@@ -360,26 +360,8 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <section className="stats-grid compact">
-        <StatCard
-          label="Signed in as"
-          value={effectiveDisplayName}
-          hint={session?.user.email ?? 'No account email'}
-        />
-        <StatCard
-          label="Theme"
-          value={currentTheme.label}
-          hint="Remembered on this device"
-        />
-        <StatCard
-          label="Start page"
-          value={landingPages.find((item) => item.value === defaultLandingPage)?.label ?? 'Dashboard'}
-          hint="Used when there is no redirected route"
-        />
-      </section>
-
-      <section className="workspace-grid">
-        <div className="workspace-main section-stack">
+      <section className="workspace-grid full-width">
+        <div className="workspace-main section-stack full-width">
           <form className="panel" id="settings-form" onSubmit={handleSave}>
             <div className="panel-header">
               <div>
@@ -668,42 +650,6 @@ export function SettingsPage() {
             </div>
           </form>
         </div>
-
-        <aside className="workspace-side section-stack">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>What these settings do</h3>
-                <p className="muted-copy">
-                  A quick explanation of the most important controls in this page.
-                </p>
-              </div>
-            </div>
-
-            <div className="panel-body stack gap-12">
-              <div className="settings-note-card">
-                <strong>Display name and avatar</strong>
-                <p>These personalise the shell and make the app feel like your own account.</p>
-              </div>
-              <div className="settings-note-card">
-                <strong>Theme selection</strong>
-                <p>Your chosen theme is saved on this device, so the app opens the same way next time.</p>
-              </div>
-              <div className="settings-note-card">
-                <strong>Default landing page</strong>
-                <p>
-                  This controls where the app sends you when there is no deeper page redirect waiting.
-                </p>
-              </div>
-              <div className="settings-note-card">
-                <strong>Remember me</strong>
-                <p>
-                  This affects whether sign-in persists in local storage or stays session-only on the device.
-                </p>
-              </div>
-            </div>
-          </div>
-        </aside>
       </section>
     </div>
   );
