@@ -119,6 +119,64 @@ alter table public.menu_projects alter column data set default '{}'::jsonb;
 alter table public.menu_projects alter column created_at set default now();
 alter table public.menu_projects alter column updated_at set default now();
 
+create table if not exists public.food_safety_audits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  client_id uuid references public.clients(id) on delete set null,
+  client_site_id text,
+  title text not null default 'Food Safety Audit',
+  site_name text,
+  location text,
+  review_date date,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.food_safety_audits add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.food_safety_audits add column if not exists client_id uuid references public.clients(id) on delete set null;
+alter table public.food_safety_audits add column if not exists client_site_id text;
+alter table public.food_safety_audits add column if not exists title text not null default 'Food Safety Audit';
+alter table public.food_safety_audits add column if not exists site_name text;
+alter table public.food_safety_audits add column if not exists location text;
+alter table public.food_safety_audits add column if not exists review_date date;
+alter table public.food_safety_audits add column if not exists data jsonb not null default '{}'::jsonb;
+alter table public.food_safety_audits add column if not exists created_at timestamptz not null default now();
+alter table public.food_safety_audits add column if not exists updated_at timestamptz not null default now();
+alter table public.food_safety_audits alter column user_id set default auth.uid();
+alter table public.food_safety_audits alter column data set default '{}'::jsonb;
+alter table public.food_safety_audits alter column created_at set default now();
+alter table public.food_safety_audits alter column updated_at set default now();
+
+create table if not exists public.mystery_shop_audits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  client_id uuid references public.clients(id) on delete set null,
+  client_site_id text,
+  title text not null default 'Mystery Shop Audit',
+  site_name text,
+  location text,
+  review_date date,
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.mystery_shop_audits add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.mystery_shop_audits add column if not exists client_id uuid references public.clients(id) on delete set null;
+alter table public.mystery_shop_audits add column if not exists client_site_id text;
+alter table public.mystery_shop_audits add column if not exists title text not null default 'Mystery Shop Audit';
+alter table public.mystery_shop_audits add column if not exists site_name text;
+alter table public.mystery_shop_audits add column if not exists location text;
+alter table public.mystery_shop_audits add column if not exists review_date date;
+alter table public.mystery_shop_audits add column if not exists data jsonb not null default '{}'::jsonb;
+alter table public.mystery_shop_audits add column if not exists created_at timestamptz not null default now();
+alter table public.mystery_shop_audits add column if not exists updated_at timestamptz not null default now();
+alter table public.mystery_shop_audits alter column user_id set default auth.uid();
+alter table public.mystery_shop_audits alter column data set default '{}'::jsonb;
+alter table public.mystery_shop_audits alter column created_at set default now();
+alter table public.mystery_shop_audits alter column updated_at set default now();
+
 do $$
 begin
   if to_regclass('public.audit_reports') is not null then
@@ -237,6 +295,28 @@ begin
       add constraint menu_projects_client_id_fkey
       foreign key (client_id) references public.clients(id) on delete set null;
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'food_safety_audits_client_id_fkey'
+      and conrelid = 'public.food_safety_audits'::regclass
+  ) then
+    alter table public.food_safety_audits
+      add constraint food_safety_audits_client_id_fkey
+      foreign key (client_id) references public.clients(id) on delete set null;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'mystery_shop_audits_client_id_fkey'
+      and conrelid = 'public.mystery_shop_audits'::regclass
+  ) then
+    alter table public.mystery_shop_audits
+      add constraint mystery_shop_audits_client_id_fkey
+      foreign key (client_id) references public.clients(id) on delete set null;
+  end if;
 end
 $$;
 
@@ -254,6 +334,16 @@ create index if not exists menu_projects_client_id_idx on public.menu_projects(c
 create index if not exists menu_projects_client_site_id_idx on public.menu_projects(client_site_id);
 create index if not exists menu_projects_review_date_idx on public.menu_projects(review_date desc);
 
+create index if not exists food_safety_audits_user_id_idx on public.food_safety_audits(user_id);
+create index if not exists food_safety_audits_client_id_idx on public.food_safety_audits(client_id);
+create index if not exists food_safety_audits_client_site_id_idx on public.food_safety_audits(client_site_id);
+create index if not exists food_safety_audits_review_date_idx on public.food_safety_audits(review_date desc);
+
+create index if not exists mystery_shop_audits_user_id_idx on public.mystery_shop_audits(user_id);
+create index if not exists mystery_shop_audits_client_id_idx on public.mystery_shop_audits(client_id);
+create index if not exists mystery_shop_audits_client_site_id_idx on public.mystery_shop_audits(client_site_id);
+create index if not exists mystery_shop_audits_review_date_idx on public.mystery_shop_audits(review_date desc);
+
 drop trigger if exists set_clients_updated_at on public.clients;
 create trigger set_clients_updated_at
 before update on public.clients
@@ -269,14 +359,28 @@ create trigger set_menu_projects_updated_at
 before update on public.menu_projects
 for each row execute procedure public.set_updated_at();
 
+drop trigger if exists set_food_safety_audits_updated_at on public.food_safety_audits;
+create trigger set_food_safety_audits_updated_at
+before update on public.food_safety_audits
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists set_mystery_shop_audits_updated_at on public.mystery_shop_audits;
+create trigger set_mystery_shop_audits_updated_at
+before update on public.mystery_shop_audits
+for each row execute procedure public.set_updated_at();
+
 grant usage on schema public to authenticated, service_role;
 grant all on table public.clients to authenticated, service_role;
 grant all on table public.audits to authenticated, service_role;
 grant all on table public.menu_projects to authenticated, service_role;
+grant all on table public.food_safety_audits to authenticated, service_role;
+grant all on table public.mystery_shop_audits to authenticated, service_role;
 
 alter table public.clients enable row level security;
 alter table public.audits enable row level security;
 alter table public.menu_projects enable row level security;
+alter table public.food_safety_audits enable row level security;
+alter table public.mystery_shop_audits enable row level security;
 
 drop policy if exists "Users can view own clients" on public.clients;
 create policy "Users can view own clients"
@@ -350,5 +454,55 @@ with check (auth.uid() = user_id);
 drop policy if exists "Users can delete own menu projects" on public.menu_projects;
 create policy "Users can delete own menu projects"
 on public.menu_projects
+for delete
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can view own food safety audits" on public.food_safety_audits;
+create policy "Users can view own food safety audits"
+on public.food_safety_audits
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own food safety audits" on public.food_safety_audits;
+create policy "Users can insert own food safety audits"
+on public.food_safety_audits
+for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own food safety audits" on public.food_safety_audits;
+create policy "Users can update own food safety audits"
+on public.food_safety_audits
+for update
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own food safety audits" on public.food_safety_audits;
+create policy "Users can delete own food safety audits"
+on public.food_safety_audits
+for delete
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can view own mystery shop audits" on public.mystery_shop_audits;
+create policy "Users can view own mystery shop audits"
+on public.mystery_shop_audits
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own mystery shop audits" on public.mystery_shop_audits;
+create policy "Users can insert own mystery shop audits"
+on public.mystery_shop_audits
+for insert
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own mystery shop audits" on public.mystery_shop_audits;
+create policy "Users can update own mystery shop audits"
+on public.mystery_shop_audits
+for update
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own mystery shop audits" on public.mystery_shop_audits;
+create policy "Users can delete own mystery shop audits"
+on public.mystery_shop_audits
 for delete
 using (auth.uid() = user_id);
