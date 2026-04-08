@@ -215,21 +215,35 @@ export function SettingsPage() {
     try {
       setIsSaving(true);
 
+      // Save preview image if uploaded, otherwise use manual URL
+      const finalAvatarUrl = avatarPreview || avatarUrl.trim();
+
       if (supabase && session) {
-        const { error } = await supabase.auth.updateUser({
+        const { data, error } = await supabase.auth.updateUser({
           data: {
             display_name: displayName.trim(),
-            avatar_url: avatarUrl.trim()
+            avatar_url: finalAvatarUrl,
+            avatar_position: avatarPosition
           },
           ...(newPassword ? { password: newPassword } : {})
         });
 
         if (error) throw error;
+
+        // Force refresh session with new metadata so navigation updates immediately
+        await supabase.auth.refreshSession();
       }
 
+      // Clear local preview state after successful save
+      setAvatarFile(null);
+      setAvatarPreview('');
+      setIsAvatarEditorOpen(false);
+
+      // Explicitly update preferences with saved values
       updatePreferences({
         displayName: displayName.trim(),
-        avatarUrl: avatarUrl.trim(),
+        avatarUrl: finalAvatarUrl,
+        avatarPosition,
         theme,
         defaultLandingPage,
         compactMode,

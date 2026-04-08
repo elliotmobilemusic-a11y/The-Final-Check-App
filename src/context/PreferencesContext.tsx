@@ -20,6 +20,7 @@ export type ThemeOption = {
 export type AppPreferences = {
   displayName: string;
   avatarUrl: string;
+  avatarPosition: { x: number; y: number; scale: number };
   theme: ThemeMode;
   defaultLandingPage: LandingPage;
   compactMode: boolean;
@@ -37,6 +38,7 @@ const STORAGE_KEY = 'the-final-check-preferences-v1';
 const defaultPreferences: AppPreferences = {
   displayName: '',
   avatarUrl: '',
+  avatarPosition: { x: 50, y: 50, scale: 1 },
   theme: 'sandstone',
   defaultLandingPage: '/dashboard',
   compactMode: false,
@@ -107,11 +109,16 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
 
     if (!metadataDisplayName && !metadataAvatarUrl) return;
 
+    const metadataAvatarPosition = typeof metadata.avatar_position === 'object' 
+      ? metadata.avatar_position 
+      : { x: 50, y: 50, scale: 1 };
+
     setPreferences((current) => {
       const next = {
         ...current,
         displayName: current.displayName || metadataDisplayName,
-        avatarUrl: current.avatarUrl || metadataAvatarUrl
+        avatarUrl: current.avatarUrl || metadataAvatarUrl,
+        avatarPosition: metadataAvatarPosition
       };
 
       if (

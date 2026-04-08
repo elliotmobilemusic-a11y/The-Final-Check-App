@@ -81,6 +81,7 @@ export function AppShell() {
     (typeof session?.user.user_metadata?.avatar_url === 'string'
       ? session.user.user_metadata.avatar_url
       : '');
+  const avatarPosition = preferences.avatarPosition || { x: 50, y: 50, scale: 1 };
   const activeWorkspace =
     workspaceDetails.find((item) => location.pathname.startsWith(item.match)) ??
     workspaceDetails[0];
@@ -124,12 +125,16 @@ export function AppShell() {
 
              <div className="shell-toolbar-actions">
                <Link className="user-chip shell-profile-link" to="/settings/profile">
-                {avatarUrl ? (
-                  <img
-                    alt={`${displayName} avatar`}
-                    className="user-chip-avatar"
-                    src={avatarUrl}
-                  />
+                 {avatarUrl ? (
+                   <img
+                     alt={`${displayName} avatar`}
+                     className="user-chip-avatar"
+                     src={avatarUrl}
+                     style={{
+                       objectPosition: `${avatarPosition.x}% ${avatarPosition.y}%`,
+                       transform: `scale(${avatarPosition.scale})`
+                     }}
+                   />
                 ) : (
                   <span className="user-chip-avatar user-chip-avatar-fallback">
                     {getInitials(displayName)}
