@@ -595,6 +595,11 @@ export function DashboardPage() {
 
       <section className="stats-grid">
         <StatCard
+          label="Today"
+          value={new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+          hint={new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+        />
+        <StatCard
           label="Client accounts"
           value={String(clients.length)}
           hint={clients[0]?.company_name ?? 'No clients created yet'}
@@ -603,15 +608,6 @@ export function DashboardPage() {
           label="Total projects"
           value={String(totalProjects)}
           hint={loading ? 'Loading active work...' : 'Audits and menu projects combined'}
-        />
-        <StatCard
-          label="Open actions"
-          value={String(openTaskCount)}
-          hint={
-            openTaskCount > 0
-              ? 'Client tasks still in progress across the portfolio'
-              : 'No client tasks currently open'
-          }
         />
         <StatCard
           label="Review queue"
@@ -626,241 +622,61 @@ export function DashboardPage() {
         />
       </section>
 
-      <section className="dashboard-command-grid">
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Command centre</h3>
-              <p>
-                Jump straight into the next meaningful action instead of hunting through the
-                system.
-              </p>
-            </div>
-            <span className="soft-pill">Core actions</span>
-          </div>
-
-          <div className="dashboard-command-card-grid">
-            {commandDeck.map((item) => (
-              <Link className="dashboard-command-card" key={item.id} to={item.href}>
-                <span className="dashboard-command-kicker">{item.kicker}</span>
-                <strong>{item.title}</strong>
-                <p>{item.detail}</p>
-                <span className="dashboard-command-action">{item.action}</span>
-              </Link>
-            ))}
-          </div>
-        </article>
-
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>System health</h3>
-              <p>Track whether the platform is behaving like a joined-up consultancy system.</p>
-            </div>
-            <span className="soft-pill">{systemStatus.label}</span>
-          </div>
-
-          <div className="dashboard-health-list">
-            {healthRows.map((row) => (
-              <div className="dashboard-health-row" key={row.id}>
-                <div>
-                  <strong>{row.title}</strong>
-                  <p>{row.detail}</p>
-                </div>
-                <span className={statusTone(row.tone as 'success' | 'warning' | 'danger')}>
-                  {row.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </article>
-      </section>
-
-      <section className="dashboard-insight-grid">
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Recent activity</h3>
-              <p>The latest client, audit, and menu changes across the app.</p>
-            </div>
-            <span className="soft-pill">Live feed</span>
-          </div>
-
-          <div className="dashboard-activity-list">
-            {activityFeed.length === 0 ? (
-              <div className="dashboard-empty">
-                The activity feed will populate once the first client or project is saved.
-              </div>
-            ) : null}
-
-            {activityFeed.map((item) => (
-              <Link className="dashboard-activity-item" key={item.id} to={item.href}>
-                <div className="dashboard-activity-top">
-                  <span className="dashboard-activity-label">{item.label}</span>
-                  <span className="dashboard-activity-date">{formatShortDate(item.updatedAt)}</span>
-                </div>
-                <strong>{item.title}</strong>
-                <p>{item.detail}</p>
-                <span className="dashboard-activity-action">{item.action}</span>
-              </Link>
-            ))}
-          </div>
-        </article>
-
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Client spotlight</h3>
-              <p>The strongest or busiest client records currently in the system.</p>
-            </div>
-            <span className="soft-pill">Portfolio</span>
-          </div>
-
-          <div className="dashboard-client-list">
-            {spotlightClients.length === 0 ? (
-              <div className="dashboard-empty">
-                Create a client profile to begin building a connected portfolio.
-              </div>
-            ) : null}
-
-            {spotlightClients.map((item) => (
-              <Link
-                className="dashboard-client-item"
-                key={item.client.id}
-                to={`/clients/${item.client.id}`}
-              >
-                <div className="dashboard-client-top">
-                  <div>
-                    <strong>{item.client.company_name}</strong>
-                    <p>
-                      {item.client.industry || 'Industry not set'} •{' '}
-                      {item.client.location || 'Location not set'}
-                    </p>
-                  </div>
-                  <span className="dashboard-client-status">{item.client.status || 'Active'}</span>
-                </div>
-
-                <div className="dashboard-client-metrics">
-                  <div className="dashboard-client-metric">
-                    <span>Audits</span>
-                    <strong>{item.audits}</strong>
-                  </div>
-                  <div className="dashboard-client-metric">
-                    <span>Menus</span>
-                    <strong>{item.menus}</strong>
-                  </div>
-                  <div className="dashboard-client-metric">
-                    <span>Tasks</span>
-                    <strong>{item.openTasks}</strong>
-                  </div>
-                </div>
-
-                <span className="dashboard-command-action">Open client</span>
-              </Link>
-            ))}
-          </div>
-        </article>
-
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Follow-up queue</h3>
-              <p>The clients most likely to need immediate review, setup, or next-step action.</p>
-            </div>
-            <span className="soft-pill">Priority</span>
-          </div>
-
-          <div className="dashboard-queue-list">
-            {queueItems.length === 0 ? (
-              <div className="dashboard-empty">
-                The queue is clear. New follow-up items will appear here as work builds up.
-              </div>
-            ) : null}
-
-            {queueItems.map((item) => (
-              <Link className="dashboard-queue-item" key={item.id} to={item.href}>
-                <div className="dashboard-queue-top">
-                  <strong>{item.title}</strong>
-                  <span className={statusTone(item.tone)}>{item.status}</span>
-                </div>
-                <p>{item.detail}</p>
-                <span className="dashboard-command-action">{item.action}</span>
-              </Link>
-            ))}
-          </div>
-        </article>
-      </section>
-
       <section className="card-grid two-columns">
         <article className="feature-card">
           <div className="feature-top">
             <div>
-              <h3>Recent audits</h3>
-              <p>Reopen the latest operational reviews without leaving the dashboard.</p>
+              <h3>Today's tasks</h3>
+              <p>Your personal daily todo list</p>
             </div>
-            <span className="soft-pill">{audits.length}</span>
           </div>
-
-          <div className="dashboard-record-list">
-            {!loading && recentAudits.length === 0 ? (
-              <div className="dashboard-empty">
-                No audits saved yet. Start with your first site review.
-              </div>
-            ) : null}
-
-            {recentAudits.map((audit) => (
-              <div className="dashboard-record" key={audit.id}>
-                <div>
-                  <strong>{audit.title}</strong>
-                  <div className="saved-meta">
-                    {clientNameById.get(audit.client_id ?? '') ??
-                      audit.site_name ??
-                      'Unlinked audit'}{' '}
-                    •{' '}
-                    {formatShortDate(audit.review_date || audit.updated_at)}
-                  </div>
+          <div style={{ padding: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input type="text" placeholder="Add a task for today..." style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <input type="checkbox" />
+                  <span>Create your first client</span>
                 </div>
-                <Link className="button button-ghost" to={`/audit?load=${audit.id}`}>
-                  Open
-                </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <input type="checkbox" />
+                  <span>Run first kitchen audit</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0' }}>
+                  <input type="checkbox" />
+                  <span>Setup menu builder</span>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </article>
 
         <article className="feature-card">
           <div className="feature-top">
             <div>
-              <h3>Recent menu projects</h3>
-              <p>Keep the latest pricing, GP, and engineering work visible and easy to resume.</p>
+              <h3>Quick actions</h3>
+              <p>Start work immediately</p>
             </div>
-            <span className="soft-pill">{menus.length}</span>
           </div>
-
-          <div className="dashboard-record-list">
-            {!loading && recentMenus.length === 0 ? (
-              <div className="dashboard-empty">
-                No menu projects saved yet. Build your first menu structure.
-              </div>
-            ) : null}
-
-            {recentMenus.map((menu) => (
-              <div className="dashboard-record" key={menu.id}>
-                <div>
-                  <strong>{menu.title}</strong>
-                  <div className="saved-meta">
-                    {clientNameById.get(menu.client_id ?? '') ??
-                      menu.site_name ??
-                      'Unlinked menu'}{' '}
-                    •{' '}
-                    {formatShortDate(menu.review_date || menu.updated_at)}
-                  </div>
-                </div>
-                <Link className="button button-ghost" to={`/menu?load=${menu.id}`}>
-                  Open
-                </Link>
-              </div>
-            ))}
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Link className="button button-primary" to="/clients/new" style={{ justifyContent: 'flex-start' }}>
+              ➕ Create new client
+            </Link>
+            <Link className="button button-secondary" to="/audit" style={{ justifyContent: 'flex-start' }}>
+              📋 Start kitchen audit
+            </Link>
+            <Link className="button button-secondary" to="/menu" style={{ justifyContent: 'flex-start' }}>
+              🍽️ Open menu builder
+            </Link>
+            <Link className="button button-secondary" to="/food-safety" style={{ justifyContent: 'flex-start' }}>
+              🧪 Food safety check
+            </Link>
           </div>
         </article>
       </section>
