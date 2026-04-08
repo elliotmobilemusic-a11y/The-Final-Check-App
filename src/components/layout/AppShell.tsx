@@ -171,6 +171,10 @@ export function AppShell() {
     window.location.href = '/';
   }
 
+  useEffect(() => {
+    document.documentElement.style.setProperty('--nav-offset', navExpanded ? '80px' : '0px');
+  }, [navExpanded]);
+
   return (
     <div className="app-shell">
       <div className="app-shell-frame">
@@ -236,7 +240,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="app-content">
+        <main className="app-content" style={{ paddingTop: 'var(--nav-offset)', transition: 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
           <Outlet />
         </main>
       </div>
