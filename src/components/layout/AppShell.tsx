@@ -87,12 +87,19 @@ export function AppShell() {
     workspaceDetails[0];
 
   async function handleSignOut() {
+    // Clear everything first immediately
+    window.localStorage.clear();
+    
     if (supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        // Ignore sign out errors - we are leaving anyway
+      }
     }
     
-    // No navigation needed - ProtectedRoute will automatically redirect
-    // when it detects the session is null on next auth state change
+    // Hard redirect immediately - don't wait for anything
+    window.location.href = '/';
   }
 
   return (
