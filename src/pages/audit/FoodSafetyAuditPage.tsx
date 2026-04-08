@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildReportHeroHtml,
   openPrintableHtmlDocument
@@ -15,6 +16,7 @@ import {
 } from '../../services/localToolStore';
 import type {
   AuditActionItem,
+  AuditAreaSummary,
   ClientRecord,
   FoodSafetyAuditState,
   FoodSafetyCheckItem,
@@ -59,6 +61,16 @@ function blankActionItem(partial?: Partial<AuditActionItem>): AuditActionItem {
     dueDate: '',
     status: 'Open',
     impact: '',
+    ...partial
+  };
+}
+
+function blankAreaSummary(partial?: Partial<AuditAreaSummary>): AuditAreaSummary {
+  return {
+    id: uid('fs-area'),
+    area: '',
+    summary: '',
+    actionPlan: '',
     ...partial
   };
 }
@@ -115,6 +127,8 @@ function defaultFoodSafetyChecks() {
 function createDefaultFoodSafetyAudit(): FoodSafetyAuditState {
   return {
     title: 'Food Safety Audit',
+    clientId: null,
+    clientSiteId: null,
     siteName: '',
     location: '',
     auditDate: todayIso(),
@@ -140,6 +154,7 @@ function createDefaultFoodSafetyAudit(): FoodSafetyAuditState {
       blankFoodSafetyTemperature({ area: 'Delivery chilled goods', target: '0C to 5C' }),
       blankFoodSafetyTemperature({ area: 'Delivery frozen goods', target: '-18C or below' })
     ],
+    focusAreas: [blankAreaSummary()],
     actionItems: [blankActionItem()]
   };
 }
@@ -158,6 +173,10 @@ function normalizeFoodSafetyAudit(data?: Partial<FoodSafetyAuditState> | null): 
       data?.temperatureLog?.length
         ? data.temperatureLog.map((item) => blankFoodSafetyTemperature(item))
         : defaults.temperatureLog,
+    focusAreas:
+      data?.focusAreas?.length
+        ? data.focusAreas.map((item) => blankAreaSummary(item))
+        : defaults.focusAreas,
     actionItems:
       data?.actionItems?.length
         ? data.actionItems.map((item) => blankActionItem(item))
@@ -203,6 +222,9 @@ function calculateFoodSafety(state: FoodSafetyAuditState) {
 function buildFoodSafetyReport(state: FoodSafetyAuditState) {
   const calc = calculateFoodSafety(state);
   const actions = state.actionItems.filter((item) => safe(item.title));
+  const focusAreas = state.focusAreas.filter(
+    (item) => safe(item.area) || safe(item.summary) || safe(item.actionPlan)
+  );
   const checkRows = state.checks.filter((item) => safe(item.item));
   const temperatureRows = state.temperatureLog.filter(
     (item) => safe(item.area) || safe(item.reading) || safe(item.target) || safe(item.note)
@@ -319,6 +341,36 @@ function buildFoodSafetyReport(state: FoodSafetyAuditState) {
     </section>
 
     <section>
+      <h2>Area summaries and action plans</h2>
+      ${
+        focusAreas.length
+          ? `
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Summary</th>
+              <th>Action plan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${focusAreas
+              .map(
+                (item) => `
+              <tr>
+                <td>${safe(item.area) || 'General'}</td>
+                <td>${safe(item.summary) || 'No summary recorded'}</td>
+                <td>${safe(item.actionPlan) || 'No action plan recorded'}</td>
+              </tr>`
+              )
+              .join('')}
+          </tbody>
+        </table>`
+          : '<p class="muted-copy">No area summaries recorded.</p>'
+      }
+    </section>
+
+    <section>
       <h2>Action register</h2>
       ${
         actions.length
@@ -364,6 +416,14 @@ export function FoodSafetyAuditPage() {
   const [message, setMessage] = useState('Food safety audit ready.');
 
   const calc = useMemo(() => calculateFoodSafety(form), [form]);
+  const activeClient = useMemo(
+    () => clients.find((client) => client.id === form.clientId) ?? null,
+    [clients, form.clientId]
+  );
+  const availableClientSites = useMemo(
+    () => selectableSitesForClient(activeClient),
+    [activeClient]
+  );
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
@@ -385,6 +445,34 @@ export function FoodSafetyAuditPage() {
     });
     setMessage(`Loaded "${record.title}".`);
   }, [searchParams]);
+
+  useEffect(() => {
+    const queryClientId = searchParams.get('client');
+    if (!queryClientId) return;
+
+    setForm((current) => {
+      if (current.clientId === queryClientId) return current;
+      return { ...current, clientId: queryClientId };
+    });
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!form.clientId) return;
+
+    const matchingSite = availableClientSites.find((site) => site.id === form.clientSiteId);
+    const singleSite = availableClientSites.length === 1 ? availableClientSites[0] : null;
+
+    if (matchingSite || !singleSite) return;
+
+    setForm((current) => ({
+      ...current,
+      clientSiteId: singleSite.id,
+      siteName:
+        !current.siteName.trim() ? singleSite.name || activeClient?.company_name || '' : current.siteName,
+      location:
+        !current.location.trim() ? singleSite.address || activeClient?.location || '' : current.location
+    }));
+  }, [activeClient, availableClientSites, form.clientId, form.clientSiteId]);
 
   function updateField<K extends keyof FoodSafetyAuditState>(key: K, value: FoodSafetyAuditState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -423,6 +511,32 @@ export function FoodSafetyAuditPage() {
         current.temperatureLog.length > 1
           ? current.temperatureLog.filter((item) => item.id !== id)
           : current.temperatureLog
+    }));
+  }
+
+  function updateFocusArea(id: string, key: keyof AuditAreaSummary, value: string) {
+    setForm((current) => ({
+      ...current,
+      focusAreas: current.focusAreas.map((item) =>
+        item.id === id ? { ...item, [key]: value } : item
+      )
+    }));
+  }
+
+  function addFocusArea() {
+    setForm((current) => ({
+      ...current,
+      focusAreas: [...current.focusAreas, blankAreaSummary()]
+    }));
+  }
+
+  function removeFocusArea(id: string) {
+    setForm((current) => ({
+      ...current,
+      focusAreas:
+        current.focusAreas.length > 1
+          ? current.focusAreas.filter((item) => item.id !== id)
+          : current.focusAreas
     }));
   }
 
@@ -486,7 +600,37 @@ export function FoodSafetyAuditPage() {
     );
   }
 
-  const suggestedClient = clients.find((client) => client.company_name === form.siteName);
+  function handleClientSelection(nextClientId: string | null) {
+    const nextClient = clients.find((client) => client.id === nextClientId) ?? null;
+    const nextSites = selectableSitesForClient(nextClient);
+    const singleSite = nextSites.length === 1 ? nextSites[0] : null;
+
+    setForm((current) => ({
+      ...current,
+      clientId: nextClientId,
+      clientSiteId: singleSite?.id ?? null,
+      siteName: singleSite
+        ? singleSite.name || nextClient?.company_name || current.siteName
+        : nextClientId && current.clientId !== nextClientId
+          ? nextClient?.company_name || current.siteName
+          : current.siteName,
+      location: singleSite
+        ? singleSite.address || nextClient?.location || current.location
+        : nextClientId && current.clientId !== nextClientId
+          ? nextClient?.location || current.location
+          : current.location
+    }));
+  }
+
+  function handleClientSiteSelection(nextSiteId: string | null) {
+    const nextSite = availableClientSites.find((site) => site.id === nextSiteId) ?? null;
+    setForm((current) => ({
+      ...current,
+      clientSiteId: nextSiteId,
+      siteName: nextSite?.name || current.siteName,
+      location: nextSite?.address || current.location
+    }));
+  }
 
   return (
     <div className="page-stack">
@@ -556,6 +700,38 @@ export function FoodSafetyAuditPage() {
                   <input className="input" value={form.siteName} onChange={(event) => updateField('siteName', event.target.value)} />
                 </label>
                 <label className="field">
+                  <span>Client profile</span>
+                  <select
+                    className="input"
+                    value={form.clientId || ''}
+                    onChange={(event) => handleClientSelection(event.target.value || null)}
+                  >
+                    <option value="">Select a client</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.company_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {availableClientSites.length > 1 ? (
+                  <label className="field">
+                    <span>Client site</span>
+                    <select
+                      className="input"
+                      value={form.clientSiteId || ''}
+                      onChange={(event) => handleClientSiteSelection(event.target.value || null)}
+                    >
+                      <option value="">Select a site</option>
+                      {availableClientSites.map((site) => (
+                        <option key={site.id} value={site.id}>
+                          {site.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label className="field">
                   <span>Location</span>
                   <input className="input" value={form.location} onChange={(event) => updateField('location', event.target.value)} />
                 </label>
@@ -584,6 +760,19 @@ export function FoodSafetyAuditPage() {
                   <input className="input" type="date" value={form.followUpDate} onChange={(event) => updateField('followUpDate', event.target.value)} />
                 </label>
               </div>
+              {availableClientSites.length > 1 ? (
+                <p className="muted-copy">
+                  This client has multiple recorded sites. Pick the location you are reviewing so the
+                  food safety audit stays tied to the right site.
+                </p>
+              ) : null}
+              {form.clientId ? (
+                <div className="header-actions">
+                  <Link className="button button-ghost" to={`/clients/${form.clientId}`}>
+                    Open client profile
+                  </Link>
+                </div>
+              ) : null}
             </div>
           </article>
 
@@ -686,6 +875,63 @@ export function FoodSafetyAuditPage() {
                 </label>
               </div>
 
+              <div className="panel">
+                <div className="panel-header">
+                  <div>
+                    <h3>Area summaries and action plans</h3>
+                    <p className="muted-copy">Add focused area-by-area summaries and next steps for the kitchen team.</p>
+                  </div>
+                  <button className="button button-ghost" onClick={addFocusArea} type="button">
+                    Add an area
+                  </button>
+                </div>
+                <div className="panel-body tool-action-list">
+                  {form.focusAreas.map((item) => (
+                    <div className="repeat-card" key={item.id}>
+                      <div className="repeat-header">
+                        <div>
+                          <strong>{item.area || 'New area'}</strong>
+                        </div>
+                        <button
+                          className="button button-secondary"
+                          disabled={form.focusAreas.length === 1}
+                          onClick={() => removeFocusArea(item.id)}
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="form-grid two-columns">
+                        <label className="field">
+                          <span>Area</span>
+                          <input
+                            className="input"
+                            value={item.area}
+                            onChange={(event) => updateFocusArea(item.id, 'area', event.target.value)}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Summary</span>
+                          <textarea
+                            className="input"
+                            value={item.summary}
+                            onChange={(event) => updateFocusArea(item.id, 'summary', event.target.value)}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Action plan</span>
+                          <textarea
+                            className="input"
+                            value={item.actionPlan}
+                            onChange={(event) => updateFocusArea(item.id, 'actionPlan', event.target.value)}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="tool-action-list">
                 {form.actionItems.map((item) => (
                   <div className="repeat-card" key={item.id}>
@@ -754,8 +1000,8 @@ export function FoodSafetyAuditPage() {
                 <strong>{calc.completedActions}/{Math.max(calc.totalActions, 1)}</strong>
               </div>
             </div>
-            {suggestedClient ? (
-              <Link className="button button-ghost" to="/clients">
+            {form.clientId ? (
+              <Link className="button button-ghost" to={`/clients/${form.clientId}`}>
                 Back to clients
               </Link>
             ) : null}

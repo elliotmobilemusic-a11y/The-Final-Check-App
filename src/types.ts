@@ -127,8 +127,17 @@ export interface FoodSafetyTemperatureItem {
   note: string;
 }
 
+export interface AuditAreaSummary {
+  id: string;
+  area: string;
+  summary: string;
+  actionPlan: string;
+}
+
 export interface FoodSafetyAuditState {
   id?: string;
+  clientId?: string | null;
+  clientSiteId?: string | null;
   title: string;
   siteName: string;
   location: string;
@@ -144,6 +153,7 @@ export interface FoodSafetyAuditState {
   followUpDate: string;
   checks: FoodSafetyCheckItem[];
   temperatureLog: FoodSafetyTemperatureItem[];
+  focusAreas: AuditAreaSummary[];
   actionItems: AuditActionItem[];
   createdAt?: string;
   updatedAt?: string;
@@ -168,6 +178,8 @@ export interface MysteryShopScorecard {
 
 export interface MysteryShopAuditState {
   id?: string;
+  clientId?: string | null;
+  clientSiteId?: string | null;
   title: string;
   siteName: string;
   location: string;
@@ -184,6 +196,7 @@ export interface MysteryShopAuditState {
   followUpDate: string;
   scorecard: MysteryShopScorecard;
   observations: MysteryShopObservation[];
+  focusAreas: AuditAreaSummary[];
   actionItems: AuditActionItem[];
   createdAt?: string;
   updatedAt?: string;
