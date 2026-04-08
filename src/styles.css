@@ -3834,53 +3834,55 @@ body[data-theme="midnight"] .data-table td {
 .settings-section-nav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  padding: 20px 20px 0 20px;
-  margin: 0 auto;
-  max-width: 1240px;
+  gap: 16px;
+  margin: 0 auto 20px auto;
+  max-width: 1320px;
+  padding: 0 20px;
 }
 
 .settings-section-link {
   display: grid;
-  gap: 6px;
-  padding: 18px 20px;
-  border-radius: 22px;
-  border: 1.5px solid transparent;
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(252,250,247,0.92));
+  gap: 8px;
+  padding: 22px 24px;
+  border-radius: 26px;
+  border: 1px solid var(--shell-line);
+  background: var(--surface-card);
   text-decoration: none;
-  box-shadow: 0 1px 3px rgba(30,25,20,0.04), 0 6px 18px rgba(30,25,20,0.02);
+  box-shadow: var(--shadow-soft);
   transition:
-    transform 0.22s cubic-bezier(0.2, 0, 0, 1),
-    border-color 0.22s ease,
-    box-shadow 0.22s ease,
-    background-color 0.22s ease;
+    transform 0.24s cubic-bezier(0.25, 0, 0, 1),
+    border-color 0.24s ease,
+    box-shadow 0.24s ease,
+    background 0.24s ease;
 }
 
 .settings-section-link strong {
   color: var(--text);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .settings-section-link span {
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.55;
-  opacity: 0.86;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.9;
 }
 
 .settings-section-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(30,25,20,0.06), 0 12px 32px rgba(30,25,20,0.04);
-  border-color: rgba(198, 161, 97, 0.18);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: rgba(198, 161, 97, 0.22);
 }
 
 .settings-section-link.active {
   border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(255,250,238,0.98), rgba(255,242,210,0.95));
-  box-shadow: 0 1px 4px rgba(198,161,97,0.12), 0 8px 24px rgba(198,161,97,0.1);
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, var(--accent-soft) 0%, rgba(255, 247, 225, 0.95));
+  box-shadow:
+    0 2px 8px rgba(198, 161, 97, 0.14),
+    0 12px 36px rgba(198, 161, 97, 0.11);
+  transform: translateY(-2px);
 }
 
 .settings-theme-card {
