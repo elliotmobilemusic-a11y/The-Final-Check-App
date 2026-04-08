@@ -102,6 +102,7 @@ export function SettingsPage() {
   const [rememberMe, setRememberMe] = useState(getRememberPreference());
   const [compactMode, setCompactMode] = useState(preferences.compactMode);
   const [reducedMotion, setReducedMotion] = useState(preferences.reducedMotion);
+  const [autoShowNav, setAutoShowNav] = useState(preferences.autoShowNav);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -131,6 +132,7 @@ export function SettingsPage() {
     setDefaultLandingPage(preferences.defaultLandingPage);
     setCompactMode(preferences.compactMode);
     setReducedMotion(preferences.reducedMotion);
+    setAutoShowNav(preferences.autoShowNav);
     setRememberMe(getRememberPreference());
   }, [preferences]);
 
@@ -241,7 +243,8 @@ export function SettingsPage() {
         theme,
         defaultLandingPage,
         compactMode,
-        reducedMotion
+        reducedMotion,
+        autoShowNav
       });
       setRememberPreference(rememberMe);
       setNewPassword('');
@@ -471,17 +474,30 @@ export function SettingsPage() {
                     />
                   </label>
 
-                  <label className="settings-toggle-card">
-                    <div>
-                      <strong>Reduced motion</strong>
-                      <p>Calm down transitions and movement for a steadier working experience.</p>
-                    </div>
-                    <input
-                      checked={reducedMotion}
-                      type="checkbox"
-                      onChange={(event) => setReducedMotion(event.target.checked)}
-                    />
-                  </label>
+                   <label className="settings-toggle-card">
+                     <div>
+                       <strong>Reduced motion</strong>
+                       <p>Calm down transitions and movement for a steadier working experience.</p>
+                     </div>
+                     <input
+                       checked={reducedMotion}
+                       type="checkbox"
+                       onChange={(event) => setReducedMotion(event.target.checked)}
+                     />
+                   </label>
+
+                   <label className="settings-toggle-card">
+                     <div>
+                       <strong>Auto show navigation</strong>
+                       <p>Navigation bar slides down automatically when moving the mouse near the top edge of the screen.</p>
+                     </div>
+                     <input
+                       checked={autoShowNav}
+                       type="checkbox"
+                       onChange={(event) => setAutoShowNav(event.target.checked)}
+                       disabled={reducedMotion}
+                     />
+                   </label>
                 </div>
 
               </section>

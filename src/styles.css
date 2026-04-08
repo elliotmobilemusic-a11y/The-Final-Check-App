@@ -453,6 +453,19 @@ body.reduced-motion *::after {
 
 .shell-topbar {
   position: sticky;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.shell-topbar.nav-collapsed {
+  transform: translateY(-100%);
+}
+
+html:not(.reduced-motion) .shell-topbar.nav-collapsed:hover,
+html:not(.reduced-motion) .shell-topbar.nav-collapsed:focus-within {
+  transform: translateY(0);
+}
+
+.shell-topbar {
   top: 18px;
   z-index: 50;
   isolation: isolate;
@@ -6302,6 +6315,8 @@ body {
   max-width: 100% !important;
   width: 100% !important;
 }
+
+.workspace-grid {
   grid-template-columns: minmax(0, 1.38fr) minmax(320px, 0.88fr);
 }
 

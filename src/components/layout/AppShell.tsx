@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -70,6 +71,38 @@ export function AppShell() {
   const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
+  const [navExpanded, setNavExpanded] = useState(true);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!preferences.autoShowNav || preferences.reducedMotion) {
+      setNavExpanded(true);
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY < 40 && !navExpanded) {
+        setNavExpanded(true);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      setNavExpanded(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    
+    if (navRef.current) {
+      navRef.current.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      if (navRef.current) {
+        navRef.current.removeEventListener('mouseleave', handleMouseLeave);
+      }
+    };
+  }, [preferences.autoShowNav, preferences.reducedMotion, navExpanded]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -105,7 +138,10 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <div className="app-shell-frame">
-        <header className="shell-topbar">
+        <header 
+          ref={navRef} 
+          className={`shell-topbar ${!navExpanded && preferences.autoShowNav && !preferences.reducedMotion ? 'nav-collapsed' : ''}`}
+        >
            <div className="shell-toolbar">
              <NavLink className="brand-link" to="/dashboard">
                <span className="brand-copy brand-copy-textonly">
