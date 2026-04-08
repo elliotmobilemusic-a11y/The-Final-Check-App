@@ -104,8 +104,8 @@ export function AppShell() {
         // Scrolling up - show nav
         setNavExpanded(true);
         scheduleHide();
-      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        // Scrolling down past threshold - hide nav immediately
+      } else if (currentScrollY > lastScrollY && currentScrollY > 24) {
+        // Scrolling down - hide nav immediately with zero threshold
         clearTimeout(hideTimeout);
         setNavExpanded(false);
       }
@@ -172,7 +172,7 @@ export function AppShell() {
   }
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--nav-offset', navExpanded ? '80px' : '0px');
+    document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
   }, [navExpanded]);
 
   return (
