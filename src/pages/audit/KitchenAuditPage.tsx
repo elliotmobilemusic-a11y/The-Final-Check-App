@@ -2584,7 +2584,7 @@ export function KitchenAuditPage() {
         </div>
       )}
 
-      <div style={{position: 'fixed', bottom: '24px', right: '24px', zIndex: 100}}>
+      <div style={{position: 'fixed', bottom: '24px', right: '24px', zIndex: 900}}>
         <button className="button button-primary" style={{
           minWidth: '180px',
           minHeight: '54px',
