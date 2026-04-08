@@ -147,8 +147,7 @@ export function AppShell() {
 
   useEffect(() => {
     // Reset scroll position tracking on page navigation
-    window.scrollTo(0, 0);
-    lastScrollY.current = 0;
+    lastScrollY.current = window.scrollY;
     // Force nav to show when navigating to new page
     setNavExpanded(true);
   }, [location.pathname]);
