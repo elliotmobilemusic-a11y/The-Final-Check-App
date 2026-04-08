@@ -590,27 +590,6 @@ export function DashboardPage() {
             </Link>
           </>
         }
-        side={
-          <div className="page-intro-summary">
-            <span className={statusTone(systemStatus.tone)}>{systemStatus.label}</span>
-            <strong>Operations board</strong>
-
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Last activity</span>
-                <strong>{loading ? 'Syncing' : latestUpdated}</strong>
-              </div>
-              <div>
-                <span>Coverage</span>
-                <strong>{coveragePercent}% linked</strong>
-              </div>
-              <div>
-                <span>Queue</span>
-                <strong>{pluralize(dueSoonReviews.length + overdueReviews.length, 'review')}</strong>
-              </div>
-            </div>
-          </div>
-        }
       >
       </PageIntro>
 
