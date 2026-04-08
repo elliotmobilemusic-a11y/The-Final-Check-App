@@ -429,6 +429,11 @@ export function SettingsPage() {
                   <span className="soft-pill">Live preview enabled</span>
                 </div>
 
+                <div className="sub-panel-header">
+                  <h4>Visual themes</h4>
+                  <span className="soft-pill">Live preview</span>
+                </div>
+
                 <div className="settings-theme-grid">
                   {themeOptions.map((option) => {
                     const preview = themePreviewClasses.find((item) => item.value === option.value);
@@ -454,22 +459,9 @@ export function SettingsPage() {
                   })}
                 </div>
 
-                <div className="settings-theme-detail-grid">
-                  <div className="settings-theme-detail-card">
-                    <span>Accent</span>
-                    <strong>{currentTheme.accentName}</strong>
-                    <p>The main highlight colour used across buttons, pills, and report emphasis.</p>
-                  </div>
-                  <div className="settings-theme-detail-card">
-                    <span>Mood</span>
-                    <strong>{currentTheme.mood}</strong>
-                    <p>Sets the overall workspace feel so the app matches how you prefer to work.</p>
-                  </div>
-                  <div className="settings-theme-detail-card">
-                    <span>Best use</span>
-                    <strong>{currentTheme.bestFor}</strong>
-                    <p>Choose the palette that best suits your screen, lighting, and working session.</p>
-                  </div>
+                <div className="sub-panel-header">
+                  <h4>Behaviour and accessibility</h4>
+                  <span className="soft-pill">Accessibility</span>
                 </div>
 
                 <div className="settings-toggle-grid">
@@ -496,6 +488,28 @@ export function SettingsPage() {
                       onChange={(event) => setReducedMotion(event.target.checked)}
                     />
                   </label>
+                </div>
+
+                <div className="sub-panel-header">
+                  <h4>Selected theme details</h4>
+                </div>
+
+                <div className="settings-theme-detail-grid">
+                  <div className="settings-theme-detail-card">
+                    <span>Accent</span>
+                    <strong>{currentTheme.accentName}</strong>
+                    <p>The main highlight colour used across buttons, pills, and report emphasis.</p>
+                  </div>
+                  <div className="settings-theme-detail-card">
+                    <span>Mood</span>
+                    <strong>{currentTheme.mood}</strong>
+                    <p>Sets the overall workspace feel so the app matches how you prefer to work.</p>
+                  </div>
+                  <div className="settings-theme-detail-card">
+                    <span>Best use</span>
+                    <strong>{currentTheme.bestFor}</strong>
+                    <p>Choose the palette that best suits your screen, lighting, and working session.</p>
+                  </div>
                 </div>
               </section>
               ) : null}
