@@ -4090,6 +4090,7 @@ body[data-theme="midnight"] .data-table td {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
 }
 

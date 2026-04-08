@@ -1,0 +1,24 @@
+{
+  "name": "The Final Check",
+  "short_name": "Final Check",
+  "description": "The Final Check consultancy operating system for audits, menu reviews, and client delivery work.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3ece2",
+  "theme_color": "#10141b",
+  "icons": [
+    {
+      "src": "/the-final-check-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/the-final-check-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

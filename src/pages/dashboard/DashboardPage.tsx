@@ -9,6 +9,11 @@ import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import { listMenuProjects } from '../../services/menus';
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
+
 type AuditRows = Awaited<ReturnType<typeof listAudits>>;
 type ClientRows = Awaited<ReturnType<typeof listClients>>;
 type MenuRows = Awaited<ReturnType<typeof listMenuProjects>>;
@@ -116,6 +121,8 @@ export function DashboardPage() {
   const [menus, setMenus] = useState<MenuRows>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Portfolio loaded.');
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installState, setInstallState] = useState<'ready' | 'installed' | 'manual'>('manual');
 
   useEffect(() => {
     async function load() {
@@ -138,6 +145,38 @@ export function DashboardPage() {
     }
 
     load();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isInstalled =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron'));
+
+    if (isInstalled) {
+      setInstallState('installed');
+      return;
+    }
+
+    function handleBeforeInstallPrompt(event: Event) {
+      event.preventDefault();
+      setInstallPromptEvent(event as BeforeInstallPromptEvent);
+      setInstallState('ready');
+    }
+
+    function handleInstalled() {
+      setInstallPromptEvent(null);
+      setInstallState('installed');
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   const clientNameById = useMemo(
@@ -479,41 +518,53 @@ export function DashboardPage() {
     typeof navigator === 'undefined'
       ? ''
       : `${navigator.userAgent} ${navigator.platform}`.toLowerCase();
-  const primaryDownloadUrl = platform.includes('mac') ? macDownloadUrl : windowsDownloadUrl;
-  const primaryDownloadLabel = platform.includes('mac')
-    ? 'Download for Mac'
-    : platform.includes('win')
-      ? 'Download for Windows'
-      : 'Download Desktop App';
+  const installCopy =
+    platform.includes('mac')
+      ? 'On Mac, the easiest option is Install App in Chrome or Edge. If your browser does not show the install prompt, use the browser menu and choose Install App.'
+      : platform.includes('win')
+        ? 'On Windows, install directly from Chrome or Edge for the smoothest app-style experience.'
+        : 'Install the app directly from Chrome or Edge for the simplest desktop-style setup.';
+
+  async function handleInstallApp() {
+    if (installPromptEvent) {
+      await installPromptEvent.prompt();
+      const choice = await installPromptEvent.userChoice;
+      if (choice.outcome === 'accepted') {
+        setInstallState('installed');
+        setInstallPromptEvent(null);
+        return;
+      }
+    }
+
+    window.open(desktopReleasesUrl, '_blank', 'noopener,noreferrer');
+  }
 
   return (
     <div className="page-stack">
       <section className="dashboard-download-card">
         <div className="dashboard-download-copy">
-          <span className="dashboard-download-kicker">Download</span>
-          <strong>Download The Final Check as a desktop app</strong>
+          <span className="dashboard-download-kicker">Install App</span>
+          <strong>Install The Final Check like a desktop app</strong>
           <p>
-            Use the button below to download the latest published desktop installer for your
-            device. If you need a different platform, use the Mac or Windows link beside it.
+            {installCopy}
           </p>
         </div>
 
         <div className="dashboard-download-actions">
-          <a
-            className="button button-primary"
-            href={primaryDownloadUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {primaryDownloadLabel}
-          </a>
+          {installState === 'installed' ? (
+            <span className="status-pill status-success">App already installed</span>
+          ) : (
+            <button className="button button-primary" onClick={handleInstallApp} type="button">
+              {installState === 'ready' ? 'Install App' : 'Open install options'}
+            </button>
+          )}
           <a
             className="button button-secondary"
             href={macDownloadUrl}
             target="_blank"
             rel="noreferrer"
           >
-            Mac
+            Download Mac
           </a>
           <a
             className="button button-secondary"
@@ -521,7 +572,7 @@ export function DashboardPage() {
             target="_blank"
             rel="noreferrer"
           >
-            Windows
+            Download Windows
           </a>
           <a
             className="button button-ghost"
