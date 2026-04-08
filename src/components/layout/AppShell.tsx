@@ -81,6 +81,7 @@ export function AppShell() {
       return;
     }
 
+    // Reset state completely on every navigation
     lastScrollY.current = window.scrollY;
     let hideTimeout: ReturnType<typeof setTimeout>;
 
@@ -100,13 +101,15 @@ export function AppShell() {
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY.current;
       
-      if (currentScrollY < lastScrollY.current) {
-        // Scrolling up - show nav
+      // Absolute direction detection - ignore small noise
+      if (delta < -1) {
+        // Scrolling UP - show nav
         setNavExpanded(true);
         scheduleHide();
-      } else if (currentScrollY > lastScrollY.current && currentScrollY > 24) {
-        // Scrolling down - hide nav immediately with zero threshold
+      } else if (delta > 1 && currentScrollY > 48) {
+        // Scrolling DOWN - hide nav immediately
         clearTimeout(hideTimeout);
         setNavExpanded(false);
       }
@@ -122,10 +125,16 @@ export function AppShell() {
       scheduleHide();
     };
 
+    // Cleanup before attaching new listeners
+    document.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('scroll', handleScroll);
+    
     document.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
     
     if (navRef.current) {
+      navRef.current.removeEventListener('mouseenter', handleMouseEnter);
+      navRef.current.removeEventListener('mouseleave', handleMouseLeave);
       navRef.current.addEventListener('mouseenter', handleMouseEnter);
       navRef.current.addEventListener('mouseleave', handleMouseLeave);
     }
