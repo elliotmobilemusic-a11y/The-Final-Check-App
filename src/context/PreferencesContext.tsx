@@ -27,6 +27,7 @@ export type AppPreferences = {
   defaultLandingPage: LandingPage;
   compactMode: boolean;
   reducedMotion: boolean;
+  autoShowNav: boolean;
 };
 
 type PreferencesContextValue = {
@@ -46,7 +47,8 @@ const defaultPreferences: AppPreferences = {
   theme: 'sandstone',
   defaultLandingPage: '/dashboard',
   compactMode: false,
-  reducedMotion: false
+  reducedMotion: false,
+  autoShowNav: true
 };
 
 const PreferencesContext = createContext<PreferencesContextValue>({
