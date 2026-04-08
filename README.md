@@ -96,8 +96,21 @@ npm run dist:win
 Note:
 
 - local macOS packaging is configured to skip code signing by default
-- production macOS signing should be enabled by providing `CSC_NAME`
+- production macOS signing and notarization should be enabled in CI
 - Windows packaging is best handled in CI on `windows-latest`
+
+To make desktop downloads open normally without Terminal workarounds, add these GitHub Actions secrets:
+
+- `MACOS_CERTIFICATE_P12`
+- `MACOS_CERTIFICATE_PASSWORD`
+- `MACOS_CERTIFICATE_NAME`
+- `APPLE_API_KEY`
+- `APPLE_API_KEY_ID`
+- `APPLE_API_ISSUER`
+- `WINDOWS_CERTIFICATE_P12`
+- `WINDOWS_CERTIFICATE_PASSWORD`
+
+Once those are set, `.github/workflows/desktop-release.yml` will produce signed desktop releases and notarized macOS builds.
 
 ## Supabase setup
 
