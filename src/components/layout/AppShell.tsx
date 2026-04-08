@@ -87,8 +87,15 @@ export function AppShell() {
     workspaceDetails[0];
 
   async function handleSignOut() {
-    await supabase?.auth.signOut();
-    navigate('/login');
+    if (supabase) {
+      // Clear session first before navigation
+      await supabase.auth.signOut();
+      // Force clear local session state
+      await supabase.auth.getSession();
+    }
+    
+    // Hard navigation to ensure full page reset
+    window.location.href = '/login';
   }
 
   return (
