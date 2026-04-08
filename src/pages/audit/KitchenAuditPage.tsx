@@ -1133,6 +1133,7 @@ export function KitchenAuditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Audit draft ready.');
   const [loadingSaved, setLoadingSaved] = useState(true);
+  const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const calc = useMemo(() => calculateAudit(form), [form]);
   const activeClient = useMemo(
@@ -1595,8 +1596,8 @@ export function KitchenAuditPage() {
         />
       </section>
 
-      <section className="workspace-grid">
-        <div className="workspace-main">
+      <section className="workspace-grid full-width">
+        <div className="workspace-main full-width">
           <div className="panel">
             <div className="panel-header">
               <div>
@@ -2494,42 +2495,40 @@ export function KitchenAuditPage() {
           </div>
         </div>
 
-        <aside className="workspace-side stack gap-20">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Audit control</h3>
-                <p className="muted-copy">
-                  The dashboard for this single audit: readiness, risks, and next focus.
-                </p>
-              </div>
-            </div>
+      </section>
 
-            <div className="panel-body stack gap-20">
-              <section className="audit-side-block">
+      {controlModalOpen && (
+        <div className="drawer-backdrop" onClick={() => setControlModalOpen(false)}>
+          <div className="drawer-panel" onClick={e => e.stopPropagation()}>
+            <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
+                <h2 style={{fontSize: '24px', fontWeight: 700}}>Audit Control Panel</h2>
+                <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
+                  Close ✕
+                </button>
+              </div>
+
+              <div className="audit-side-block">
                 <div className="audit-side-title-row">
                   <h4>Readiness</h4>
                   <span className="soft-pill">{completion.percent}% complete</span>
                 </div>
-
                 <div className="audit-progress-track">
                   <div
                     className="audit-progress-fill"
                     style={{ width: `${completion.percent}%` }}
                   />
                 </div>
-
                 <div className="audit-side-meta">
                   {completion.complete} of {completion.total} key checkpoints completed
                 </div>
-              </section>
+              </div>
 
-              <section className="audit-side-block">
+              <div className="audit-side-block" style={{marginTop: '24px'}}>
                 <div className="audit-side-title-row">
                   <h4>System checks</h4>
                   <span className="soft-pill">{insights.length}</span>
                 </div>
-
                 <div className="audit-insight-list">
                   {insights.map((insight, index) => (
                     <div className="audit-insight-card" key={`${insight.title}-${index}`}>
@@ -2541,13 +2540,12 @@ export function KitchenAuditPage() {
                     </div>
                   ))}
                 </div>
-              </section>
+              </div>
 
-              <section className="audit-side-block">
+              <div className="audit-side-block" style={{marginTop: '24px'}}>
                 <div className="audit-side-title-row">
                   <h4>Consultancy snapshot</h4>
                 </div>
-
                 <div className="audit-chip-row audit-chip-row-vertical">
                   <div className="audit-chip">
                     <strong>Current site</strong>
@@ -2579,68 +2577,24 @@ export function KitchenAuditPage() {
                     </span>
                   </div>
                 </div>
-              </section>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Generated report</h3>
-                <p className="muted-copy">Live preview from the current audit state.</p>
               </div>
-              <button className="button button-secondary" onClick={exportPdf}>
-                PDF / Print
-              </button>
-            </div>
-            <div className="panel-body">
-              <div className="report-preview" dangerouslySetInnerHTML={{ __html: reportHtml }} />
+
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Saved audits</h3>
-                <p className="muted-copy">
-                  {form.clientId
-                    ? 'Saved audits for the selected client.'
-                    : 'Stored under your signed-in account.'}
-                </p>
-              </div>
-            </div>
-            <div className="panel-body stack gap-12">
-              {loadingSaved ? <div className="muted-copy">Loading saved audits...</div> : null}
-              {!loadingSaved && savedAudits.length === 0 ? (
-                <div className="muted-copy">No audits saved yet.</div>
-              ) : null}
+      <div style={{position: 'fixed', bottom: '24px', right: '24px', zIndex: 100}}>
+        <button className="button button-primary" style={{
+          minWidth: '180px',
+          minHeight: '54px',
+          padding: '0 24px',
+          boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
+        }} onClick={() => setControlModalOpen(true)}>
+          📊 Audit Controls
+        </button>
+      </div>
 
-              {savedAudits.map((record) => (
-                <div className="saved-item" key={record.id}>
-                  <div>
-                    <strong>{record.title}</strong>
-                    <div className="saved-meta">
-                      {record.site_name || 'Unnamed site'} •{' '}
-                      {formatShortDate(record.review_date || record.updated_at)}
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    <button className="button button-ghost" onClick={() => handleLoad(record)}>
-                      Load
-                    </button>
-                    <button
-                      className="button button-ghost danger-text"
-                      onClick={() => handleDelete(record.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </section>
     </div>
   );
 }
