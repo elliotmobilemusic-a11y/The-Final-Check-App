@@ -146,10 +146,12 @@ export function AppShell() {
   }
 
   useEffect(() => {
-    // Reset scroll position tracking on page navigation
-    lastScrollY.current = window.scrollY;
-    // Force nav to show when navigating to new page
-    setNavExpanded(true);
+    // Reset scroll position tracking on page navigation AFTER browser has updated scroll position
+    setTimeout(() => {
+      lastScrollY.current = window.scrollY;
+      // Force nav to show when navigating to new page
+      setNavExpanded(true);
+    }, 0);
   }, [location.pathname]);
 
   useEffect(() => {
