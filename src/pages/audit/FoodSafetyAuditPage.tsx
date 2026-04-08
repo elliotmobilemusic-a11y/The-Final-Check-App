@@ -66,28 +66,48 @@ function blankActionItem(partial?: Partial<AuditActionItem>): AuditActionItem {
 function defaultFoodSafetyChecks() {
   return [
     blankFoodSafetyCheck({
-      area: 'Opening',
-      item: 'Opening hygiene checks are completed before service starts'
+      area: 'Cleanliness',
+      item: 'Overall cleanliness'
     }),
     blankFoodSafetyCheck({
       area: 'Storage',
-      item: 'Chilled, frozen, and dry stores are organised and labelled clearly'
+      item: 'Food storage'
     }),
     blankFoodSafetyCheck({
-      area: 'Temperatures',
-      item: 'Probe checks and refrigeration temperature logs are up to date'
-    }),
-    blankFoodSafetyCheck({
-      area: 'Cleaning',
-      item: 'Cleaning schedules are signed off and verified by management'
+      area: 'Labelling',
+      item: 'Date labelling'
     }),
     blankFoodSafetyCheck({
       area: 'Allergens',
-      item: 'Allergen information is accurate and accessible to the team'
+      item: 'Allergens'
     }),
     blankFoodSafetyCheck({
-      area: 'Traceability',
-      item: 'Supplier traceability and due-diligence records are available'
+      area: 'Pest Control',
+      item: 'Pest control in place'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Waste',
+      item: 'Bin areas'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Deliveries',
+      item: 'Delivery areas'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Hand Wash',
+      item: 'Hand wash basins'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Hand Wash',
+      item: 'Soap'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Hand Wash',
+      item: 'Means to dry hands'
+    }),
+    blankFoodSafetyCheck({
+      area: 'Due Diligence',
+      item: 'Due diligence check'
     })
   ];
 }
