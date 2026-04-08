@@ -125,6 +125,10 @@ export function SettingsPage() {
     message: 'No update check has been run yet.'
   });
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [avatarPosition, setAvatarPosition] = useState({ x: 50, y: 50, scale: 1 });
+  const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
 
   useEffect(() => {
     setDisplayName(preferences.displayName);
@@ -189,7 +193,8 @@ export function SettingsPage() {
       deriveDisplayName(session?.user.email),
     [displayName, preferences.displayName, session?.user.email]
   );
-  const avatarPreview = avatarUrl.trim() || preferences.avatarUrl;
+  
+  const currentAvatarSrc = avatarPreview || avatarUrl.trim() || preferences.avatarUrl;
   const currentTheme = themeOptions.find((option) => option.value === theme) ?? themeOptions[0];
   const activeSectionMeta =
     settingsSections.find((item) => item.value === activeSection) ?? settingsSections[0];
@@ -268,64 +273,66 @@ export function SettingsPage() {
 
   return (
     <div className="page-stack settings-page">
-      <PageIntro
-        eyebrow="Settings"
-        title={activeSectionMeta.label}
-        description={activeSectionMeta.description}
-        side={
-          <div className="settings-profile-card">
-            <div className="settings-profile-top">
-              {avatarPreview ? (
+      <div className="profile-header">
+        <div className="profile-header-content">
+          <div className="profile-avatar-container">
+            {currentAvatarSrc ? (
+              <div className="profile-avatar-wrapper">
                 <img
                   alt={`${effectiveDisplayName} avatar`}
-                  className="settings-avatar"
-                  src={avatarPreview}
+                  className="profile-avatar"
+                  src={currentAvatarSrc}
+                  style={{
+                    objectPosition: `${avatarPosition.x}% ${avatarPosition.y}%`,
+                    transform: `scale(${avatarPosition.scale})`
+                  }}
                 />
-              ) : (
-                <div className="settings-avatar settings-avatar-fallback">
-                  {getInitials(effectiveDisplayName)}
-                </div>
-              )}
-
-              <div className="settings-profile-copy">
-                <span className="soft-pill">Profile preview</span>
-                <strong>{effectiveDisplayName}</strong>
-                <p>{session?.user.email ?? 'No email available'}</p>
               </div>
-            </div>
-
-            <div className="settings-theme-pill">
-              <strong>Current theme</strong>
-              <span>{currentTheme.label}</span>
-              <small>
-                {currentTheme.accentName} • {currentTheme.mood}
-              </small>
-            </div>
-
-            <div className="settings-profile-meta">
-              <div>
-                <span>Landing page</span>
-                <strong>
-                  {landingPages.find((item) => item.value === defaultLandingPage)?.label ??
-                    'Dashboard'}
-                </strong>
+            ) : (
+              <div className="profile-avatar profile-avatar-fallback">
+                {getInitials(effectiveDisplayName)}
               </div>
-              <div>
-                <span>Remember me</span>
-                <strong>{rememberMe ? 'Enabled' : 'Session only'}</strong>
-              </div>
-              <div>
-                <span>Layout density</span>
-                <strong>{compactMode ? 'Compact' : 'Comfortable'}</strong>
-              </div>
-              <div>
-                <span>Motion</span>
-                <strong>{reducedMotion ? 'Reduced' : 'Standard'}</strong>
-              </div>
+            )}
+            
+            <div className="avatar-upload-controls">
+              <label className="avatar-upload-button button button-secondary">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setAvatarFile(file);
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        setAvatarPreview(ev.target?.result as string);
+                        setIsAvatarEditorOpen(true);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  hidden
+                />
+                Upload photo
+              </label>
             </div>
           </div>
-        }
-      />
+          
+          <div className="profile-info">
+            <h1>{effectiveDisplayName}</h1>
+            <p className="muted-copy">{session?.user.email ?? 'No email available'}</p>
+            
+            <div className="profile-status-badges">
+              <span className="soft-pill">{currentTheme.label} theme</span>
+              <span className="soft-pill">
+                {landingPages.find((item) => item.value === defaultLandingPage)?.label ?? 'Dashboard'} landing
+              </span>
+              <span className="soft-pill">{compactMode ? 'Compact' : 'Comfortable'} layout</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <nav className="settings-section-nav" aria-label="Settings sections">
         {settingsSections.map((item) => (

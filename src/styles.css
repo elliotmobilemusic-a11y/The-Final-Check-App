@@ -524,6 +524,90 @@ body.reduced-motion *::after {
   padding: 8px 0;
 }
 
+.profile-header {
+  background: var(--surface-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  padding: 32px;
+  margin-bottom: 8px;
+}
+
+.profile-header-content {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 3px solid var(--line-strong);
+  background: var(--bg-soft);
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.2s ease;
+}
+
+.profile-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: var(--white);
+  font-size: 42px;
+  font-weight: 900;
+  border: 3px solid var(--line-strong);
+}
+
+.avatar-upload-controls {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+}
+
+.avatar-upload-button {
+  padding: 8px 14px !important;
+  min-height: 36px !important;
+  font-size: 13px;
+  border-radius: 999px !important;
+  box-shadow: var(--shadow);
+}
+
+.profile-info {
+  flex: 1 1 300px;
+  display: grid;
+  gap: 8px;
+}
+
+.profile-info h1 {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.profile-status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
