@@ -539,51 +539,39 @@ export function DashboardPage() {
     window.open(desktopReleasesUrl, '_blank', 'noopener,noreferrer');
   }
 
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  // Show install prompt randomly after random times
+  useEffect(() => {
+    if (installState === 'installed') return;
+    
+    // Random chance to show prompt 15% chance after 12 seconds
+    const timer = setTimeout(() => {
+      if (Math.random() < 0.15) {
+        setShowInstallPrompt(true);
+      }
+    }, 12000);
+
+    return () => clearTimeout(timer);
+  }, [installState]);
+
+  function dismissInstallPrompt() {
+    setShowInstallPrompt(false);
+  }
+
   return (
     <div className="page-stack">
-      <section className="dashboard-download-card">
-        <div className="dashboard-download-copy">
-          <span className="dashboard-download-kicker">Install App</span>
-          <strong>Install The Final Check like a desktop app</strong>
-          <p>
-            {installCopy}
-          </p>
+      {showInstallPrompt && installState !== 'installed' && (
+        <div className="install-float-prompt">
+          <div className="install-float-copy">
+            <span>📥 Install desktop app</span>
+          </div>
+          <div className="install-float-actions">
+            <button className="button button-small" onClick={handleInstallApp}>Download</button>
+            <button className="button button-small button-ghost" onClick={dismissInstallPrompt}>Dismiss</button>
+          </div>
         </div>
-
-        <div className="dashboard-download-actions">
-          {installState === 'installed' ? (
-            <span className="status-pill status-success">App already installed</span>
-          ) : (
-            <button className="button button-primary" onClick={handleInstallApp} type="button">
-              {installState === 'ready' ? 'Install App' : 'Open install options'}
-            </button>
-          )}
-          <a
-            className="button button-secondary"
-            href={macDownloadUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Download Mac
-          </a>
-          <a
-            className="button button-secondary"
-            href={windowsDownloadUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Download Windows
-          </a>
-          <a
-            className="button button-ghost"
-            href={desktopReleasesUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            All releases
-          </a>
-        </div>
-      </section>
+      )}
 
       <PageIntro
         eyebrow="Overview"
