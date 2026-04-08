@@ -2750,8 +2750,8 @@ form.login-success {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  gap: 14px;
+  padding: 16px 22px;
+  gap: 16px;
   min-height: 0;
 }
 
