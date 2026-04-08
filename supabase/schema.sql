@@ -271,7 +271,13 @@ set
   client_id = coalesce(
     client_id,
     case
-      when coalesce(data ->> 'clientId', '') ~* '^[0-9a-f-]{36}$' then (data ->> 'clientId')::uuid
+      when coalesce(data ->> 'clientId', '') ~* '^[0-9a-f-]{36}$'
+        and exists (
+          select 1
+          from public.clients c
+          where c.id = (data ->> 'clientId')::uuid
+        )
+      then (data ->> 'clientId')::uuid
       else null
     end
   ),
@@ -292,7 +298,13 @@ set
   client_id = coalesce(
     client_id,
     case
-      when coalesce(data ->> 'clientId', '') ~* '^[0-9a-f-]{36}$' then (data ->> 'clientId')::uuid
+      when coalesce(data ->> 'clientId', '') ~* '^[0-9a-f-]{36}$'
+        and exists (
+          select 1
+          from public.clients c
+          where c.id = (data ->> 'clientId')::uuid
+        )
+      then (data ->> 'clientId')::uuid
       else null
     end
   ),
