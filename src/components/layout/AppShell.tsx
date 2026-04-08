@@ -94,36 +94,36 @@ export function AppShell() {
     <div className="app-shell">
       <div className="app-shell-frame">
         <header className="shell-topbar">
-          <div className="shell-toolbar">
-            <NavLink className="brand-link" to="/dashboard">
-              <span className="brand-copy brand-copy-textonly">
-                <span className="brand-kicker">Consultancy operating system</span>
-                <strong>The Final Check</strong>
-                <span className="brand-subtitle">Profit and performance consultancy</span>
-              </span>
-            </NavLink>
+           <div className="shell-toolbar">
+             <NavLink className="brand-link" to="/dashboard">
+               <span className="brand-copy brand-copy-textonly">
+                 <span className="brand-kicker">Consultancy operating system</span>
+                 <strong>The Final Check</strong>
+                 <span className="brand-subtitle">Profit and performance consultancy</span>
+               </span>
+             </NavLink>
 
-            <div className="shell-toolbar-main shell-main-stack">
-              <nav className="shell-primary-nav" aria-label="Primary navigation">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to !== '/clients'}
-                    className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </nav>
-              <div className="shell-context-line">
-                <span className="shell-section-label">{activeWorkspace.label}</span>
-                <span className="shell-context-copy">{activeWorkspace.detail}</span>
-              </div>
-            </div>
+             <div className="shell-toolbar-main">
+               <nav className="shell-primary-nav" aria-label="Primary navigation">
+                 {navItems.map((item) => (
+                   <NavLink
+                     key={item.to}
+                     to={item.to}
+                     end={item.to !== '/clients'}
+                     className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
+                   >
+                     {item.label}
+                   </NavLink>
+                 ))}
+               </nav>
+               <div className="shell-context-line">
+                 <span className="shell-section-label">{activeWorkspace.label}</span>
+                 <span className="shell-context-copy">{activeWorkspace.detail}</span>
+               </div>
+             </div>
 
-            <div className="shell-toolbar-actions">
-              <Link className="user-chip shell-profile-link" to="/settings/profile">
+             <div className="shell-toolbar-actions">
+               <Link className="user-chip shell-profile-link" to="/settings/profile">
                 {avatarUrl ? (
                   <img
                     alt={`${displayName} avatar`}
