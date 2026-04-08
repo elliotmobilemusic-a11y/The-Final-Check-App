@@ -179,30 +179,6 @@ export const themeOptions: ThemeOption[] = [
     bestFor: 'Best for balanced daily operations'
   },
   {
-    value: 'coastal',
-    label: 'Coastal',
-    description: 'Cooler, cleaner surfaces with a sharper analytical feel.',
-    accentName: 'Atlantic blue',
-    mood: 'Clean planning',
-    bestFor: 'Best for longer strategy and admin sessions'
-  },
-  {
-    value: 'cedar',
-    label: 'Cedar',
-    description: 'Grounded green-led surfaces with a stronger operational tone.',
-    accentName: 'Olive cedar',
-    mood: 'Operational control',
-    bestFor: 'Best for audits, checklists, and site work'
-  },
-  {
-    value: 'sunrise',
-    label: 'Sunrise',
-    description: 'A brighter premium palette with softer warmth and lighter panels.',
-    accentName: 'Copper amber',
-    mood: 'Light editorial',
-    bestFor: 'Best for presenting reports and client-ready work'
-  },
-  {
     value: 'midnight',
     label: 'Dark mode',
     description: 'A lower-glare dark workspace with tighter contrast for focused work.',
