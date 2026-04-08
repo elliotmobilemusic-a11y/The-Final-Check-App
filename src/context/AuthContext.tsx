@@ -34,6 +34,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setLoading(false);
+      
+      // If session was removed (signed out) hard refresh page to clean state
+      if (!nextSession) {
+        window.location.reload();
+      }
     });
 
     return () => {
