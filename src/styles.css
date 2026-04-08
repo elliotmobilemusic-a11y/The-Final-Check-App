@@ -3854,10 +3854,11 @@ body[data-theme="midnight"] .data-table td {
 
 .settings-section-nav {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  width: 100%;
-  padding: 0 20px 0 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: min(100%, 840px);
+  margin: 0 auto;
+  padding: 0;
 }
 
 .settings-section-link {
