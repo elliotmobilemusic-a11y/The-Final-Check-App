@@ -1553,23 +1553,11 @@ export function KitchenAuditPage() {
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
             </button>
-            <label className="button button-secondary inline-file-button">
-              Load JSON
-              <input accept="application/json" hidden type="file" onChange={loadFromJson} />
-            </label>
           </>
         }
       />
 
-      <section className="audit-readiness-grid">
-        {readinessItems.map((item) => (
-          <div className="audit-readiness-card" key={item.label}>
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-            <small>{item.detail}</small>
-          </div>
-        ))}
-      </section>
+
 
       <section className="stats-grid">
         <StatCard
