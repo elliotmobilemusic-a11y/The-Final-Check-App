@@ -594,7 +594,7 @@ export function DashboardPage() {
           <div className="page-intro-summary">
             <span className={statusTone(systemStatus.tone)}>{systemStatus.label}</span>
             <strong>Operations board</strong>
-            <p>{systemStatus.detail}</p>
+
             <div className="page-intro-summary-list">
               <div>
                 <span>Last activity</span>
@@ -612,7 +612,6 @@ export function DashboardPage() {
           </div>
         }
       >
-        <div className="page-inline-note">{loading ? 'Loading latest data...' : message}</div>
       </PageIntro>
 
       <section className="stats-grid">
