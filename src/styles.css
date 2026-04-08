@@ -2750,8 +2750,8 @@ form.login-success {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  gap: 12px;
+  padding: 14px 18px;
+  gap: 14px;
   min-height: 0;
 }
 
@@ -2780,16 +2780,17 @@ form.login-success {
 }
 
 .stat-value {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
   min-width: 70px;
   text-align: right;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .stat-hint {
-  font-size: 11px;
-  opacity: 0.65;
+  font-size: 12px;
+  opacity: 0.7;
   color: var(--muted);
 }
 
