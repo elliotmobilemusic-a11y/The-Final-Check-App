@@ -94,8 +94,8 @@ export function AppShell() {
       await supabase.auth.getSession();
     }
     
-    // Hard navigation to ensure full page reset
-    window.location.href = '/login';
+    // Hard navigation to ensure full page reset (HashRouter uses # prefix)
+    window.location.href = '/#/login';
   }
 
   return (
