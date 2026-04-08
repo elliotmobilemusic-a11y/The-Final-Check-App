@@ -88,14 +88,11 @@ export function AppShell() {
 
   async function handleSignOut() {
     if (supabase) {
-      // Clear session first before navigation
       await supabase.auth.signOut();
-      // Force clear local session state
-      await supabase.auth.getSession();
     }
     
-    // Hard navigation to ensure full page reset (HashRouter uses # prefix)
-    window.location.href = '/#/login';
+    // No navigation needed - ProtectedRoute will automatically redirect
+    // when it detects the session is null on next auth state change
   }
 
   return (
