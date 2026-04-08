@@ -1559,34 +1559,7 @@ export function KitchenAuditPage() {
             </label>
           </>
         }
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 0 0 0' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-              <span>Audit completion</span>
-              <strong>{completion.percent}%</strong>
-            </div>
-            <div style={{ height: '8px', background: 'var(--border-subtle)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                width: `${completion.percent}%`,
-                background: `linear-gradient(90deg, var(--accent-green), var(--accent))`,
-                borderRadius: '4px',
-                transition: 'width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
-              }} />
-            </div>
-          </div>
-
-          <div style={{ minWidth: '100px', textAlign: 'right' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>GP gap</div>
-            <div style={{ fontWeight: 600 }}>{form.weeklySales > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'Awaiting data'}</div>
-          </div>
-          <div style={{ minWidth: '100px', textAlign: 'right' }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Controls</div>
-            <div style={{ fontWeight: 600 }}>{Math.round(calc.controlScore)}%</div>
-          </div>
-        </div>
-      </PageIntro>
+      />
 
       <section className="audit-readiness-grid">
         {readinessItems.map((item) => (
