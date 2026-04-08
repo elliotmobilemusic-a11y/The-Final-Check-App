@@ -346,8 +346,6 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-      </div>
-
       <nav className="settings-section-nav" aria-label="Settings sections">
         {settingsSections.map((item) => (
           <NavLink
@@ -360,6 +358,8 @@ export function SettingsPage() {
           </NavLink>
         ))}
       </nav>
+
+      </div>
 
       <section className="stats-grid compact">
         <StatCard
