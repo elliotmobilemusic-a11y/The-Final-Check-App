@@ -80,29 +80,65 @@ export function AppShell() {
       return;
     }
 
+    let lastScrollY = window.scrollY;
+    let hideTimeout: ReturnType<typeof setTimeout>;
+
+    const scheduleHide = () => {
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        setNavExpanded(false);
+      }, 2200);
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientY < 40 && !navExpanded) {
+      if (e.clientY < 50) {
         setNavExpanded(true);
+        scheduleHide();
       }
     };
 
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < lastScrollY) {
+        // Scrolling up - show nav
+        setNavExpanded(true);
+        scheduleHide();
+      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Scrolling down past threshold - hide nav immediately
+        clearTimeout(hideTimeout);
+        setNavExpanded(false);
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    const handleMouseEnter = () => {
+      clearTimeout(hideTimeout);
+    };
+
     const handleMouseLeave = () => {
-      setNavExpanded(false);
+      scheduleHide();
     };
 
     document.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     if (navRef.current) {
+      navRef.current.addEventListener('mouseenter', handleMouseEnter);
       navRef.current.addEventListener('mouseleave', handleMouseLeave);
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(hideTimeout);
       if (navRef.current) {
+        navRef.current.removeEventListener('mouseenter', handleMouseEnter);
         navRef.current.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
-  }, [preferences.autoShowNav, preferences.reducedMotion, navExpanded]);
+  }, [preferences.autoShowNav, preferences.reducedMotion]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
