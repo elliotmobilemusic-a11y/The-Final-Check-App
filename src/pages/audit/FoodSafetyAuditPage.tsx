@@ -14,6 +14,7 @@ import {
   listLocalToolRecords,
   saveLocalToolRecord
 } from '../../services/localToolStore';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -26,6 +27,7 @@ import type {
 import { lines, safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
+const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
 
 function blankFoodSafetyCheck(partial?: Partial<FoodSafetyCheckItem>): FoodSafetyCheckItem {
   return {
@@ -411,7 +413,11 @@ function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 export function FoodSafetyAuditPage() {
   const [searchParams] = useSearchParams();
   const [clients, setClients] = useState<ClientRecord[]>([]);
-  const [form, setForm] = useState<FoodSafetyAuditState>(() => createDefaultFoodSafetyAudit());
+  const [form, setForm] = useState<FoodSafetyAuditState>(() =>
+    searchParams.get('load')
+      ? createDefaultFoodSafetyAudit()
+      : normalizeFoodSafetyAudit(readDraft<FoodSafetyAuditState>(FOOD_SAFETY_DRAFT_KEY))
+  );
   const [savedRecords, setSavedRecords] = useState<LocalToolRecord<FoodSafetyAuditState>[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Food safety audit ready.');
@@ -431,6 +437,10 @@ export function FoodSafetyAuditPage() {
     listClients().then(setClients).catch(() => {});
     setSavedRecords(listLocalToolRecords<FoodSafetyAuditState>(STORAGE_KEY));
   }, []);
+
+  useEffect(() => {
+    writeDraft(FOOD_SAFETY_DRAFT_KEY, form);
+  }, [form]);
 
   useEffect(() => {
     const loadId = searchParams.get('load');
@@ -582,6 +592,7 @@ export function FoodSafetyAuditPage() {
     deleteLocalToolRecord(STORAGE_KEY, id);
     refreshSaved();
     if (form.id === id) {
+      clearDraft(FOOD_SAFETY_DRAFT_KEY);
       setForm(createDefaultFoodSafetyAudit());
     }
     setMessage('Saved food safety audit deleted.');

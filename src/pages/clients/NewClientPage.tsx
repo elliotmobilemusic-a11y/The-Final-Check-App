@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { createEmptyClientData } from '../../features/clients/clientData';
@@ -9,6 +9,7 @@ import {
   type BusinessLookupResult
 } from '../../features/clients/businessLookup';
 import { createClient } from '../../services/clients';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type { ClientProfile } from '../../types';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
@@ -30,6 +31,7 @@ const blankClient: ClientProfile = {
   tags: [],
   data: createEmptyClientData()
 };
+const NEW_CLIENT_DRAFT_KEY = 'client-new-draft-v1';
 
 function clientSitesFromLookup(lookup: BusinessLookupProfile) {
   return lookup.sites.map((site, index) => ({
@@ -82,7 +84,9 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
 
 export function NewClientPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState<ClientProfile>(blankClient);
+  const [form, setForm] = useState<ClientProfile>(
+    () => readDraft<ClientProfile>(NEW_CLIENT_DRAFT_KEY) ?? blankClient
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('Set up the new account and then save it into the CRM.');
   const [lookupQuery, setLookupQuery] = useState('');
@@ -108,6 +112,27 @@ export function NewClientPage() {
 
   const isLookupFallbackVisible =
     lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
+  const setupChecklist = useMemo(
+    () => [
+      Boolean(form.companyName.trim()),
+      Boolean(form.contactName.trim() || form.contactEmail.trim()),
+      Boolean(form.data.accountOwner.trim()),
+      Boolean(form.data.profileSummary.trim()),
+      Boolean(form.website.trim() || form.logoUrl.trim() || form.data.registeredName.trim())
+    ],
+    [form]
+  );
+  const setupCompletionCount = setupChecklist.filter(Boolean).length;
+  const importedSites = form.data.sites.length;
+  const hasImportedBusinessData =
+    Boolean(form.logoUrl.trim()) ||
+    Boolean(form.website.trim()) ||
+    Boolean(form.data.registeredName.trim()) ||
+    importedSites > 0;
+
+  useEffect(() => {
+    writeDraft(NEW_CLIENT_DRAFT_KEY, form);
+  }, [form]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -120,6 +145,7 @@ export function NewClientPage() {
     try {
       setSaving(true);
       const created = await createClient(form);
+      clearDraft(NEW_CLIENT_DRAFT_KEY);
       setMessage('Client created.');
       navigate(`/clients/${created.id}`);
     } catch (error) {
@@ -215,7 +241,7 @@ export function NewClientPage() {
       <PageIntro
         eyebrow="Clients"
         title="Add new client"
-        description="Create the account once, pull in the right UK business record, and save it straight into the CRM with the core commercial and site details already structured."
+        description="Build the record once, pull in the right UK business details early, and save a cleaner account handoff into the CRM with commercial and site context already in place."
         actions={
           <>
             <button className="button button-primary" form="new-client-form" disabled={saving}>
@@ -229,25 +255,47 @@ export function NewClientPage() {
         side={
           <div className="page-intro-summary">
             <span className="soft-pill">Setup workflow</span>
-            <strong>Business finder first</strong>
+            <strong>Draft readiness</strong>
             <p>{message}</p>
             <div className="page-intro-summary-list">
               <div>
-                <span>Account scope</span>
-                <strong>{form.data.accountScope}</strong>
+                <span>Checklist</span>
+                <strong>{setupCompletionCount}/5 complete</strong>
+              </div>
+              <div>
+                <span>Imported data</span>
+                <strong>{hasImportedBusinessData ? 'Ready' : 'Pending'}</strong>
               </div>
               <div>
                 <span>Expected sites</span>
-                <strong>{form.data.siteCountEstimate}</strong>
-              </div>
-              <div>
-                <span>Lead source</span>
-                <strong>{form.data.leadSource || 'Not set'}</strong>
+                <strong>{Math.max(importedSites, form.data.siteCountEstimate)}</strong>
               </div>
             </div>
           </div>
         }
-      />
+      >
+        <div className="page-inline-note">Lookup matches: {visibleLookupResults.length}</div>
+        <div className="page-inline-note">Lead source: {form.data.leadSource || 'Not set'}</div>
+        <div className="page-inline-note">Account scope: {form.data.accountScope}</div>
+      </PageIntro>
+
+      <section className="crm-priority-grid client-setup-progress-grid">
+        <article className="crm-priority-card">
+          <span className="crm-priority-label">Setup completion</span>
+          <strong>{setupCompletionCount}/5</strong>
+          <p>Core account, contact, ownership, CRM summary, and legal or web detail.</p>
+        </article>
+        <article className="crm-priority-card">
+          <span className="crm-priority-label">Business finder</span>
+          <strong>{hasImportedBusinessData ? 'Used' : 'Waiting'}</strong>
+          <p>Importing a verified match gives the CRM a cleaner starting point.</p>
+        </article>
+        <article className="crm-priority-card">
+          <span className="crm-priority-label">Draft sites</span>
+          <strong>{importedSites}</strong>
+          <p>Site records already attached to the draft before the client is created.</p>
+        </article>
+      </section>
 
       <form className="panel" id="new-client-form" onSubmit={handleSubmit}>
         <div className="panel-header">

@@ -23,6 +23,9 @@ import type {
   SupabaseRecord
 } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+
+const MENU_BUILDER_DRAFT_KEY = 'menu-builder-draft-v1';
 
 const ingredientUnitOptions: Array<{ value: MeasurementUnit; label: string }> = [
   { value: 'g', label: 'Grams' },
@@ -460,7 +463,11 @@ export function MenuBuilderPage() {
   const queryLoadId = searchParams.get('load');
 
   const [project, setProject] = useState<MenuProjectState>(() =>
-    normalizeMenuProject(createDefaultMenu(queryClientId))
+    queryLoadId
+      ? normalizeMenuProject(createDefaultMenu(queryClientId))
+      : normalizeMenuProject(
+          readDraft<MenuProjectState>(MENU_BUILDER_DRAFT_KEY) ?? createDefaultMenu(queryClientId)
+        )
   );
   const [savedProjects, setSavedProjects] = useState<SupabaseRecord<MenuProjectState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -600,6 +607,10 @@ export function MenuBuilderPage() {
   useEffect(() => {
     refreshProjects();
   }, [refreshProjects]);
+
+  useEffect(() => {
+    writeDraft(MENU_BUILDER_DRAFT_KEY, project);
+  }, [project]);
 
   useEffect(() => {
     if (queryClientId) {
@@ -902,6 +913,7 @@ export function MenuBuilderPage() {
 
   function newProject() {
     const activeClientId = queryClientId || null;
+    clearDraft(MENU_BUILDER_DRAFT_KEY);
     setProject(normalizeMenuProject(createDefaultMenu(activeClientId)));
     setMessage('New menu started.');
   }

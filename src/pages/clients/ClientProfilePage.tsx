@@ -12,6 +12,7 @@ import {
 import { getClientById, updateClient } from '../../services/clients';
 import { deleteAudit, listAudits } from '../../services/audits';
 import { deleteMenuProject, listMenuProjects } from '../../services/menus';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditFormState,
   ClientContact,
@@ -246,6 +247,10 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
   };
 }
 
+function clientDraftKey(clientId: string) {
+  return `client-profile-draft-${clientId}`;
+}
+
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
 
@@ -277,8 +282,13 @@ export function ClientProfilePage() {
       if (!clientRow) return;
 
       const profile = clientRecordToProfile(clientRow);
+      const draft = readDraft<ClientProfile>(clientDraftKey(clientId));
       setClient(profile);
-      setForm(profile);
+      setForm(draft ?? profile);
+      if (draft) {
+        setEditing(true);
+        setMessage('Restored unsaved client draft.');
+      }
       setAudits(auditRows);
       setMenus(menuRows);
     }
@@ -289,6 +299,11 @@ export function ClientProfilePage() {
       });
     }
   }, [clientId]);
+
+  useEffect(() => {
+    if (!clientId || !form || !editing) return;
+    writeDraft(clientDraftKey(clientId), form);
+  }, [clientId, editing, form]);
 
   const stats = useMemo(() => {
     if (!client) {
@@ -599,6 +614,7 @@ function removeInvoice(invoiceId: string) {
     setSaving(true);
     const updated = await updateClient(client.id, form);
     const next = clientRecordToProfile(updated);
+    clearDraft(clientDraftKey(client.id));
     setClient(next);
     setForm(next);
     setEditing(false);
@@ -877,6 +893,29 @@ function removeInvoice(invoiceId: string) {
   const activeSectionCard = activeSection
     ? sectionCards.find((item) => item.key === activeSection) ?? null
     : null;
+  const sectionSummaryLabel = activeSectionCard?.label ?? 'CRM hub';
+  const prioritySummary = [
+    {
+      label: 'Relationship',
+      value: form.data.relationshipHealth,
+      detail: primaryContact?.name || form.contactName || 'Primary contact not set'
+    },
+    {
+      label: 'Review',
+      value: reviewLabel(form.nextReviewDate),
+      detail: formatShortDate(form.nextReviewDate)
+    },
+    {
+      label: 'Outstanding',
+      value: fmtCurrency(outstandingInvoiceValue),
+      detail: `${stats.invoicesOpen} open invoice${stats.invoicesOpen === 1 ? '' : 's'}`
+    },
+    {
+      label: 'Linked work',
+      value: `${linkedWorkstreams}`,
+      detail: `${audits.length} audits and ${menus.length} menu projects`
+    }
+  ];
 
   return (
     <div className="page-stack">
@@ -897,13 +936,22 @@ function removeInvoice(invoiceId: string) {
               <div className="record-header-topline">
                 <span className="brand-badge">{form.status}</span>
                 <span className="soft-pill">{form.data.accountScope}</span>
-                {activeSectionCard ? <span className="soft-pill">{activeSectionCard.label}</span> : null}
+                <span className="soft-pill">{sectionSummaryLabel}</span>
               </div>
               <h2>{form.companyName}</h2>
               <p>
                 {form.industry || 'Industry not set'} • {form.location || 'Location not set'} •{' '}
                 {form.tier || 'Standard'}
               </p>
+              <div className="client-inline-summary client-inline-summary-compact">
+                {prioritySummary.map((item) => (
+                  <div className="client-inline-summary-item" key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
+                  </div>
+                ))}
+              </div>
               {form.tags.length ? (
                 <div className="client-tag-row">
                   {form.tags.map((tag) => (
@@ -958,7 +1006,8 @@ function removeInvoice(invoiceId: string) {
         <aside className="record-header-side">
           <div className="record-header-summary">
             <span className="soft-pill">Account snapshot</span>
-            <strong>{activeSectionCard ? activeSectionCard.label : 'CRM hub'}</strong>
+            <strong>{sectionSummaryLabel}</strong>
+            <p>{activeSectionCard?.description || 'Use the hub to move between profile, commercial, strategy, and linked delivery work.'}</p>
             <div className="record-header-grid">
               <div>
                 <span>Workstreams</span>
@@ -984,6 +1033,11 @@ function removeInvoice(invoiceId: string) {
           </div>
         </aside>
       </section>
+
+      <div className="record-header-message">
+        <div className="page-inline-note">{message}</div>
+        <div className="page-inline-note">Editing: {editing ? 'Enabled' : 'Locked'}</div>
+      </div>
 
       <nav className="client-section-nav" aria-label="Client CRM sections">
         <Link

@@ -14,6 +14,7 @@ import {
   listLocalToolRecords,
   saveLocalToolRecord
 } from '../../services/localToolStore';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -26,6 +27,7 @@ import type {
 import { safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+const MYSTERY_SHOP_DRAFT_KEY = 'mystery-shop-audit-draft-v1';
 
 function blankObservation(partial?: Partial<MysteryShopObservation>): MysteryShopObservation {
   return {
@@ -322,7 +324,11 @@ function buildMysteryShopReport(state: MysteryShopAuditState) {
 export function MysteryShopAuditPage() {
   const [searchParams] = useSearchParams();
   const [clients, setClients] = useState<ClientRecord[]>([]);
-  const [form, setForm] = useState<MysteryShopAuditState>(() => createDefaultMysteryShopAudit());
+  const [form, setForm] = useState<MysteryShopAuditState>(() =>
+    searchParams.get('load')
+      ? createDefaultMysteryShopAudit()
+      : normalizeMysteryShopAudit(readDraft<MysteryShopAuditState>(MYSTERY_SHOP_DRAFT_KEY))
+  );
   const [savedRecords, setSavedRecords] = useState<LocalToolRecord<MysteryShopAuditState>[]>([]);
   const [message, setMessage] = useState('Mystery shop audit ready.');
 
@@ -340,6 +346,10 @@ export function MysteryShopAuditPage() {
     listClients().then(setClients).catch(() => {});
     setSavedRecords(listLocalToolRecords<MysteryShopAuditState>(STORAGE_KEY));
   }, []);
+
+  useEffect(() => {
+    writeDraft(MYSTERY_SHOP_DRAFT_KEY, form);
+  }, [form]);
 
   useEffect(() => {
     const loadId = searchParams.get('load');
@@ -509,6 +519,7 @@ export function MysteryShopAuditPage() {
     deleteLocalToolRecord(STORAGE_KEY, id);
     refreshSaved();
     if (form.id === id) {
+      clearDraft(MYSTERY_SHOP_DRAFT_KEY);
       setForm(createDefaultMysteryShopAudit());
     }
     setMessage('Saved mystery shop audit deleted.');

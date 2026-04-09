@@ -28,6 +28,9 @@ import {
   todayIso,
   uid
 } from '../../lib/utils';
+import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+
+const KITCHEN_AUDIT_DRAFT_KEY = 'kitchen-audit-draft-v1';
 
 function blankWasteItem(): AuditWasteItem {
   return { id: uid('waste'), item: '', cost: 0, cause: '', fix: '' };
@@ -1194,7 +1197,12 @@ const textareaFields: Array<{ key: TextareaFieldKey; label: string }> = [
 export function KitchenAuditPage() {
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState<AuditFormState>(() =>
-    normalizeAuditState({}, searchParams.get('client') || null)
+    searchParams.get('load')
+      ? normalizeAuditState({}, searchParams.get('client') || null)
+      : normalizeAuditState(
+          readDraft<AuditFormState>(KITCHEN_AUDIT_DRAFT_KEY) ?? {},
+          searchParams.get('client') || null
+        )
   );
   const [savedAudits, setSavedAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -1287,6 +1295,10 @@ export function KitchenAuditPage() {
   useEffect(() => {
     refreshAudits();
   }, [refreshAudits]);
+
+  useEffect(() => {
+    writeDraft(KITCHEN_AUDIT_DRAFT_KEY, form);
+  }, [form]);
 
   useEffect(() => {
     const clientId = searchParams.get('client');
@@ -1522,6 +1534,7 @@ export function KitchenAuditPage() {
     try {
       await deleteAudit(id);
       if (form.id === id) {
+        clearDraft(KITCHEN_AUDIT_DRAFT_KEY);
         setForm(createDefaultAudit(searchParams.get('client') || null));
       }
       await refreshAudits();
@@ -1533,6 +1546,7 @@ export function KitchenAuditPage() {
 
   function newAudit() {
     const activeClientId = searchParams.get('client') || null;
+    clearDraft(KITCHEN_AUDIT_DRAFT_KEY);
     setForm(createDefaultAudit(activeClientId));
     setMessage('Started a new audit.');
   }

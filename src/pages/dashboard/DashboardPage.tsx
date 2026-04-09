@@ -8,6 +8,7 @@ import type { ClientRecord } from '../../types';
 import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import { listMenuProjects } from '../../services/menus';
+import { readDraft, writeDraft } from '../../services/draftStore';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -112,6 +113,33 @@ const repoBaseUrl = 'https://github.com/elliotmobilemusic-a11y/The-Final-Check-A
 const macDownloadUrl = `${repoBaseUrl}/releases/latest/download/the-final-check-mac.dmg`;
 const windowsDownloadUrl = `${repoBaseUrl}/releases/latest/download/the-final-check-win.exe`;
 const desktopReleasesUrl = `${repoBaseUrl}/releases`;
+const DASHBOARD_TASKS_DRAFT_KEY = 'dashboard-task-groups-v1';
+
+type TaskItem = {
+  id: string;
+  text: string;
+  completed: boolean;
+};
+
+type TaskGroup = {
+  id: string;
+  title: string;
+  tasks: TaskItem[];
+  collapsed: boolean;
+};
+
+const defaultTaskGroups: TaskGroup[] = [
+  {
+    id: '1',
+    title: 'Today',
+    collapsed: false,
+    tasks: [
+      { id: '1', text: 'Create your first client', completed: false },
+      { id: '2', text: 'Run first kitchen audit', completed: false },
+      { id: '3', text: 'Setup menu builder', completed: false }
+    ]
+  }
+];
 
 export function DashboardPage() {
   const { session } = useAuth();
@@ -539,33 +567,15 @@ export function DashboardPage() {
     window.open(desktopReleasesUrl, '_blank', 'noopener,noreferrer');
   }
 
-  type TaskItem = {
-    id: string;
-    text: string;
-    completed: boolean;
-  };
-
-  type TaskGroup = {
-    id: string;
-    title: string;
-    tasks: TaskItem[];
-    collapsed: boolean;
-  };
-
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [taskGroups, setTaskGroups] = useState<TaskGroup[]>([
-    {
-      id: '1',
-      title: 'Today',
-      collapsed: false,
-      tasks: [
-        { id: '1', text: 'Create your first client', completed: false },
-        { id: '2', text: 'Run first kitchen audit', completed: false },
-        { id: '3', text: 'Setup menu builder', completed: false }
-      ]
-    }
-  ]);
+  const [taskGroups, setTaskGroups] = useState<TaskGroup[]>(
+    () => readDraft<TaskGroup[]>(DASHBOARD_TASKS_DRAFT_KEY) ?? defaultTaskGroups
+  );
   const [newTaskText, setNewTaskText] = useState('');
+
+  useEffect(() => {
+    writeDraft(DASHBOARD_TASKS_DRAFT_KEY, taskGroups);
+  }, [taskGroups]);
 
   // Show install prompt randomly after random times
   useEffect(() => {
