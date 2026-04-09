@@ -402,6 +402,125 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           font-size: 12px;
           line-height: 1.55;
         }
+        .report-cover-page {
+          display: grid;
+          gap: 10px;
+          page-break-after: always;
+          break-after: page;
+        }
+        .report-cover-block {
+          padding: 12px 14px 14px;
+          border-radius: 18px;
+          border: 1px solid var(--card-line);
+          background: linear-gradient(180deg, #fffefd 0%, #fbf7f0 100%);
+          page-break-inside: avoid;
+          break-inside: avoid-page;
+        }
+        .report-cover-heading {
+          color: var(--accent-strong);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        .report-cover-divider {
+          height: 1px;
+          margin: 12px 0 12px;
+          background: rgba(86, 81, 91, 0.14);
+        }
+        .report-cover-top {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 1.2fr);
+          gap: 12px;
+          align-items: stretch;
+        }
+        .report-cover-mini-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .report-cover-mini-card,
+        .report-cover-stat-card,
+        .report-cover-commercial {
+          display: grid;
+          gap: 8px;
+          align-content: start;
+          min-height: 60px;
+          padding: 12px 14px;
+          border-radius: 18px;
+          border: 1px solid var(--card-line);
+          background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
+        }
+        .report-cover-mini-label,
+        .report-cover-commercial-label,
+        .report-cover-stat-card span {
+          color: var(--muted);
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+        .report-cover-mini-value,
+        .report-cover-stat-card strong {
+          color: var(--ink);
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+        .report-cover-commercial {
+          min-height: 140px;
+          padding: 12px 16px;
+        }
+        .report-cover-commercial-label {
+          color: var(--muted);
+          font-size: 11px;
+        }
+        .report-cover-commercial-value {
+          margin-top: 8px;
+          color: #6f6b67;
+          font-size: 20px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+        }
+        .report-cover-commercial-detail {
+          margin-top: auto;
+          color: #7a746f;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        .report-cover-pill-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          margin-top: 12px;
+        }
+        .report-cover-pill {
+          display: grid;
+          place-items: center;
+          min-height: 46px;
+          padding: 0 14px;
+          border-radius: 18px;
+          border: 1px solid rgba(198, 161, 97, 0.52);
+          background: linear-gradient(180deg, #f2eadb 0%, #ece2d0 100%);
+          color: var(--accent-strong);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          text-align: center;
+          text-transform: uppercase;
+        }
+        .report-cover-stat-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .report-cover-stat-card {
+          min-height: 86px;
+          text-align: center;
+          align-content: center;
+          justify-items: center;
+        }
         h1, h2, h3, p { margin: 0; }
         h1 { font-size: 32px; line-height: 1.02; letter-spacing: -0.035em; }
         h2 {
@@ -644,6 +763,12 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           }
           .report-hero {
             display: grid;
+            grid-template-columns: 1fr;
+          }
+          .report-cover-top,
+          .report-cover-pill-row,
+          .report-cover-stat-grid,
+          .report-cover-mini-grid {
             grid-template-columns: 1fr;
           }
           .meta-grid,

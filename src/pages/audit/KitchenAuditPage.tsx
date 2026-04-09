@@ -4,7 +4,6 @@ import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildReportHeroHtml,
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
@@ -537,10 +536,6 @@ function makeAuditReport(state: AuditFormState) {
   const controlRows = state.controlChecks.filter(
     (item) => item.status !== 'N/A' || safe(item.note) || safe(item.label)
   );
-  const siteName = safe(state.businessName) || 'Unnamed site';
-  const siteLeadHtml = `<strong>${siteName}</strong>${
-    safe(state.location) ? ` • ${safe(state.location)}` : ''
-  }`;
   const scoreEntries = [
     ['Leadership', state.categoryScores.leadership],
     ['Food quality', state.categoryScores.foodQuality],
@@ -648,67 +643,79 @@ function makeAuditReport(state: AuditFormState) {
     return `<h3>${title}</h3><ul>${filtered.map(formatter).join('')}</ul>`;
   };
 
+  const coverMiniCard = (label: string, value: string) => `
+    <div class="report-cover-mini-card">
+      <span class="report-cover-mini-label">${label}</span>
+      <strong class="report-cover-mini-value">${value}</strong>
+    </div>
+  `;
+
+  const coverStatCard = (label: string, value: string) => `
+    <div class="report-cover-stat-card">
+      <span>${label}</span>
+      <strong>${value}</strong>
+    </div>
+  `;
+
+  const coverPageHtml = `
+    <div class="report-cover-page">
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Kitchen audit export</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-cover-top">
+          <div class="report-cover-mini-grid">
+            ${coverMiniCard('Visit date', formatShortDate(state.visitDate))}
+            ${coverMiniCard('Consultant', safe(state.consultantName) || 'Not recorded')}
+            ${coverMiniCard('Site contact', safe(state.contactName) || 'Not recorded')}
+            ${coverMiniCard('Site contact', safe(state.contactName) || 'Not recorded')}
+          </div>
+          <div class="report-cover-commercial">
+            <span class="report-cover-commercial-label">Commercial position</span>
+            <strong class="report-cover-commercial-value">${fmtPercent(calc.actualGp)}</strong>
+            <p class="report-cover-commercial-detail">Target ${fmtPercent(state.targetGp)} • Waste ${fmtCurrency(state.actualWasteValue)}</p>
+          </div>
+        </div>
+        <div class="report-cover-pill-row">
+          <div class="report-cover-pill">${safe(state.auditType) || 'Operational audit'}</div>
+          <div class="report-cover-pill">${scoreLabel(calc.score)}</div>
+          <div class="report-cover-pill">${calc.totalNamedActions} action${calc.totalNamedActions === 1 ? '' : 's'} logged</div>
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Site and trading profile</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-cover-stat-grid">
+          ${coverStatCard('Service style', safe(state.serviceStyle) || 'Not recorded')}
+          ${coverStatCard('Trading days', safe(state.tradingDays) || 'Not recorded')}
+          ${coverStatCard('Covers per week', state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded')}
+          ${coverStatCard('Average spend', state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded')}
+          ${coverStatCard('Kitchen team size', state.kitchenTeamSize > 0 ? String(state.kitchenTeamSize) : 'Not recorded')}
+          ${coverStatCard('Main supplier', safe(state.mainSupplier) || 'Not recorded')}
+          ${coverStatCard('Allergen confidence', safe(state.allergenConfidence) || 'Not recorded')}
+          ${coverStatCard('Equipment condition', safe(state.equipmentCondition) || 'Not recorded')}
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Commercial snapshot</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-cover-stat-grid">
+          ${coverStatCard('Weekly food sales', fmtCurrency(state.weeklySales))}
+          ${coverStatCard('Weekly food cost', fmtCurrency(state.weeklyFoodCost))}
+          ${coverStatCard('Target GP', fmtPercent(state.targetGp))}
+          ${coverStatCard('Waste % of sales', fmtPercent(calc.wastePercent))}
+          ${coverStatCard('Estimated sales from covers', calc.estimatedWeeklySales > 0 ? fmtCurrency(calc.estimatedWeeklySales) : 'Not available')}
+          ${coverStatCard('Actual GP', fmtPercent(calc.actualGp))}
+          ${coverStatCard('Waste value', fmtCurrency(state.actualWasteValue))}
+          ${coverStatCard('Kitchen labour %', fmtPercent(state.labourPercent))}
+        </div>
+      </div>
+    </div>
+  `;
+
   return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Kitchen audit export',
-      title: safe(state.title) || 'Kitchen Profit Audit Report',
-      leadHtml: siteLeadHtml,
-      description:
-        'Operational review, control scoring, and action planning prepared for client handover.',
-      chips: [
-        safe(state.auditType) || 'Operational audit',
-        `${scoreLabel(calc.score)} priority`,
-        `${calc.totalNamedActions} action${calc.totalNamedActions === 1 ? '' : 's'} logged`
-      ],
-      cards: [
-        {
-          label: 'Visit date',
-          value: formatShortDate(state.visitDate)
-        },
-        {
-          label: 'Consultant',
-          value: safe(state.consultantName) || 'Not recorded'
-        },
-        {
-          label: 'Site contact',
-          value: safe(state.contactName) || 'Not recorded'
-        },
-        {
-          label: 'Commercial position',
-          value: fmtPercent(calc.actualGp),
-          detail: `Target ${fmtPercent(state.targetGp)} • Waste ${fmtCurrency(state.actualWasteValue)}`
-        }
-      ]
-    })}
-
-    <section>
-      <h2>Site and trading profile</h2>
-      <div class="report-grid columns-4">
-        <div><strong>Service style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
-        <div><strong>Trading days</strong><br />${safe(state.tradingDays) || 'Not recorded'}</div>
-        <div><strong>Covers per week</strong><br />${state.coversPerWeek > 0 ? state.coversPerWeek : 'Not recorded'}</div>
-        <div><strong>Average spend</strong><br />${state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded'}</div>
-        <div><strong>Kitchen team size</strong><br />${state.kitchenTeamSize > 0 ? state.kitchenTeamSize : 'Not recorded'}</div>
-        <div><strong>Main supplier</strong><br />${safe(state.mainSupplier) || 'Not recorded'}</div>
-        <div><strong>Allergen confidence</strong><br />${state.allergenConfidence}</div>
-        <div><strong>Equipment condition</strong><br />${state.equipmentCondition}</div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Commercial snapshot</h2>
-      <div class="report-meta">
-        <div><strong>Weekly food sales</strong><br />${fmtCurrency(state.weeklySales)}</div>
-        <div><strong>Estimated sales from covers</strong><br />${calc.estimatedWeeklySales > 0 ? fmtCurrency(calc.estimatedWeeklySales) : 'Not available'}</div>
-        <div><strong>Weekly food cost</strong><br />${fmtCurrency(state.weeklyFoodCost)}</div>
-        <div><strong>Actual GP</strong><br />${fmtPercent(calc.actualGp)}</div>
-        <div><strong>Target GP</strong><br />${fmtPercent(state.targetGp)}</div>
-        <div><strong>Waste value</strong><br />${fmtCurrency(state.actualWasteValue)}</div>
-        <div><strong>Waste % of sales</strong><br />${fmtPercent(calc.wastePercent)}</div>
-        <div><strong>Kitchen labour %</strong><br />${fmtPercent(state.labourPercent)}</div>
-        <div><strong>Overall priority</strong><br />${scoreLabel(calc.score)} (${calc.score}/100)</div>
-      </div>
-    </section>
+    ${coverPageHtml}
 
     <section>
       <h2>Operational scorecard</h2>
