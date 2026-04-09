@@ -1682,12 +1682,6 @@ export function KitchenAuditPage() {
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
             </button>
-            <button className="button button-secondary" onClick={downloadHtmlReport}>
-              Download HTML
-            </button>
-            <button className="button button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
-              {isSharing ? 'Creating link...' : 'Share HTML page'}
-            </button>
           </>
         }
       />
