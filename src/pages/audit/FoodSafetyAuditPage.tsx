@@ -413,7 +413,9 @@ export function FoodSafetyAuditPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<FoodSafetyAuditState>(() => createDefaultFoodSafetyAudit());
   const [savedRecords, setSavedRecords] = useState<LocalToolRecord<FoodSafetyAuditState>[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Food safety audit ready.');
+  const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const calc = useMemo(() => calculateFoodSafety(form), [form]);
   const activeClient = useMemo(
@@ -1030,6 +1032,74 @@ export function FoodSafetyAuditPage() {
           </article>
         </aside>
       </section>
+
+      {controlModalOpen && (
+        <div className="drawer-backdrop" onClick={() => setControlModalOpen(false)}>
+          <div className="drawer-panel" onClick={e => e.stopPropagation()}>
+            <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
+                <h2 style={{fontSize: '24px', fontWeight: 700}}>Food Safety Audit Controls</h2>
+                <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
+                  Close ✕
+                </button>
+              </div>
+
+              <div className="audit-side-block">
+                <div className="audit-side-title-row">
+                  <h4>Current Status</h4>
+                  <span className="soft-pill">{calc.riskLabel}</span>
+                </div>
+                <div className="audit-progress-track">
+                  <div
+                    className="audit-progress-fill"
+                    style={{ width: `${calc.completion}%` }}
+                  />
+                </div>
+                <div className="audit-side-meta">
+                  {calc.passCount} pass • {calc.watchCount} watch • {calc.failCount} fail
+                </div>
+              </div>
+
+              <div className="audit-side-block" style={{marginTop: '24px'}}>
+                <div className="audit-side-title-row">
+                  <h4>Quick stats</h4>
+                </div>
+                <div className="audit-chip-row audit-chip-row-vertical">
+                  <div className="audit-chip">
+                    <strong>Site</strong>
+                    <span>{safe(form.siteName) || 'Unnamed site'}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Audit date</strong>
+                    <span>{safe(form.auditDate) || 'Not set'}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Control pass rate</strong>
+                    <span>{calc.completion}%</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Actions logged</strong>
+                    <span>{calc.totalActions}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{position: 'fixed', bottom: '24px', right: '24px', zIndex: 900}}>
+        <button className="button button-primary" style={{
+          minWidth: '180px',
+          minHeight: '54px',
+          padding: '0 24px',
+          boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
+        }} onClick={() => setControlModalOpen(true)}>
+          📊 Audit Controls
+        </button>
+      </div>
+
     </div>
   );
 }
