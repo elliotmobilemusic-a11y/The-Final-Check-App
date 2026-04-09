@@ -17,6 +17,7 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
       gap: '6px',
       textAlign: 'center',
       minHeight: '104px',
+      width: '100%',
       background: 'var(--surface-card-strong)',
       border: '1px solid var(--surface-shadow-line)',
       borderRadius: 'var(--radius-lg)',
