@@ -791,7 +791,6 @@ function makeAuditReport(state: AuditFormState) {
   `;
 
   const controlsPageHtml = `
-    <div class="report-page-block">
       <div class="report-cover-block">
         <div class="report-cover-heading">Controls and evidence register</div>
         <div class="report-cover-divider"></div>
@@ -831,11 +830,11 @@ function makeAuditReport(state: AuditFormState) {
             : '<p class="muted-copy">No control checks recorded.</p>'
         }
       </div>
-    </div>
   `;
 
   const actionPageHtml = `
     <div class="report-page-block report-page-block-final">
+      ${controlsPageHtml}
       <div class="report-cover-block">
         <div class="report-cover-heading">Kitchen layout review</div>
         <div class="report-cover-divider"></div>
@@ -929,7 +928,6 @@ function makeAuditReport(state: AuditFormState) {
   return `
     ${coverPageHtml}
     ${scorecardPageHtml}
-    ${controlsPageHtml}
     ${actionPageHtml}
   `;
 }
