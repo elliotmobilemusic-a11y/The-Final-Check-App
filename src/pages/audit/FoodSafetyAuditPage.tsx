@@ -670,8 +670,8 @@ export function FoodSafetyAuditPage() {
         <StatCard label="Fail" value={String(calc.failCount)} hint="Immediate action needed" />
       </section>
 
-      <section className="workspace-grid">
-        <div className="workspace-main">
+      <section>
+        <div>
           <article className="panel">
             <div className="panel-header">
               <div>
@@ -967,40 +967,6 @@ export function FoodSafetyAuditPage() {
           </article>
         </div>
 
-        <aside className="workspace-side">
-          <article className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Saved audits</h3>
-                <p className="muted-copy">Reopen or clear previous food safety reviews.</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              {savedRecords.length === 0 ? (
-                <div className="muted-copy">No food safety audits saved yet.</div>
-              ) : null}
-
-              {savedRecords.map((record) => (
-                <div className="saved-item" key={record.id}>
-                  <div>
-                    <strong>{record.title}</strong>
-                    <div className="saved-meta">
-                      {record.siteName} • {formatShortDate(record.reviewDate)} • {record.location || 'Location not set'}
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    <Link className="button button-ghost" to={`/food-safety?load=${record.id}`}>
-                      Open
-                    </Link>
-                    <button className="button button-secondary" onClick={() => handleDelete(record.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </article>
-        </aside>
       </section>
 
       {controlModalOpen && (
