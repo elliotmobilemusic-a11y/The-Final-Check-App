@@ -1008,46 +1008,6 @@ export function FoodSafetyAuditPage() {
                 </button>
               </div>
 
-              <div className="audit-side-block">
-                <div className="audit-side-title-row">
-                  <h4>Current Status</h4>
-                  <span className="soft-pill">{calc.riskLabel}</span>
-                </div>
-                <div className="audit-progress-track">
-                  <div
-                    className="audit-progress-fill"
-                    style={{ width: `${calc.completion}%` }}
-                  />
-                </div>
-                <div className="audit-side-meta">
-                  {calc.passCount} pass • {calc.watchCount} watch • {calc.failCount} fail
-                </div>
-              </div>
-
-              <div className="audit-side-block" style={{marginTop: '24px'}}>
-                <div className="audit-side-title-row">
-                  <h4>Quick stats</h4>
-                </div>
-                <div className="audit-chip-row audit-chip-row-vertical">
-                  <div className="audit-chip">
-                    <strong>Site</strong>
-                    <span>{safe(form.siteName) || 'Unnamed site'}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Audit date</strong>
-                    <span>{safe(form.auditDate) || 'Not set'}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Control pass rate</strong>
-                    <span>{calc.completion}%</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Actions logged</strong>
-                    <span>{calc.totalActions}</span>
-                  </div>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
