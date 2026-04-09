@@ -999,37 +999,6 @@ export function MenuBuilderPage() {
             </label>
           </>
         }
-        side={
-          <div className="page-intro-summary">
-            <span
-              className={
-                weightedGp >= project.defaultTargetGp
-                  ? 'status-pill status-success'
-                  : weightedGp >= project.defaultTargetGp - 3
-                    ? 'status-pill status-warning'
-                    : 'status-pill status-danger'
-              }
-            >
-              Theo GP {fmtPercent(weightedGp)}
-            </span>
-            <strong>Menu snapshot</strong>
-            <p>{message}</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Completion</span>
-                <strong>{completion.percent}%</strong>
-              </div>
-              <div>
-                <span>Dishes</span>
-                <strong>{allDishes.length}</strong>
-              </div>
-              <div>
-                <span>Price gap</span>
-                <strong>{fmtCurrency(pricingGapValue)}</strong>
-              </div>
-            </div>
-          </div>
-        }
       />
 
       <section className="stats-grid">
