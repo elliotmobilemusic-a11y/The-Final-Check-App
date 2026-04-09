@@ -9,6 +9,8 @@ import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
+import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
+import { fmtCurrency } from '../../lib/utils';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -265,6 +267,26 @@ export function DashboardPage() {
   const dueSoonReviews = portfolio.filter(
     (item) => item.nextReviewDays !== null && item.nextReviewDays >= 0 && item.nextReviewDays <= 14
   );
+  const latestAuditByClient = useMemo(() => {
+    const map = new Map<string, AuditRows[number]>();
+    for (const audit of audits) {
+      if (!audit.client_id || map.has(audit.client_id)) continue;
+      map.set(audit.client_id, audit);
+    }
+    return map;
+  }, [audits]);
+  const totalOpportunityIdentified = useMemo(
+    () =>
+      Array.from(latestAuditByClient.values()).reduce(
+        (sum, audit) => sum + calculateKitchenProfitMetrics(audit.data).totalWeeklyOpportunity,
+        0
+      ),
+    [latestAuditByClient]
+  );
+  const sitesNeedingAttention = overdueReviews.length + portfolio.filter((item) => {
+    const latestAudit = latestAuditByClient.get(item.client.id);
+    return latestAudit ? calculateKitchenProfitMetrics(latestAudit.data).totalWeeklyOpportunity > 0 : false;
+  }).length;
 
   const recentAudits = useMemo(() => audits.slice(0, 4), [audits]);
   const recentMenus = useMemo(() => menus.slice(0, 4), [menus]);
@@ -676,19 +698,19 @@ export function DashboardPage() {
       )}
 
       <PageIntro
-        eyebrow="Overview"
+        eyebrow="Command Centre"
         title={`Welcome, ${welcomeLabel}`}
-        description="Here is the working overview for clients, active delivery, upcoming reviews, and the next actions that need your attention."
+        description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
         actions={
           <>
             <Link className="button button-primary" to="/clients">
               Open clients
             </Link>
             <Link className="button button-secondary" to="/audit">
-              Start audit
+              Start Kitchen Profit Audit
             </Link>
             <Link className="button button-secondary" to="/menu">
-              Open menu builder
+              Open Menu Profit Engine
             </Link>
           </>
         }
@@ -697,22 +719,22 @@ export function DashboardPage() {
 
       <section className="stats-grid">
         <StatCard
-          label="Today"
-          value={new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-          hint={new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          label="Total opportunity identified"
+          value={fmtCurrency(totalOpportunityIdentified)}
+          hint="Based on the latest saved audit per client"
         />
         <StatCard
-          label="Client accounts"
-          value={String(clients.length)}
+          label="Active clients"
+          value={String(activeClients.length)}
           hint={clients[0]?.company_name ?? 'No clients created yet'}
         />
         <StatCard
-          label="Total projects"
-          value={String(totalProjects)}
-          hint={loading ? 'Loading active work...' : 'Audits and menu projects combined'}
+          label="Sites needing attention"
+          value={String(sitesNeedingAttention)}
+          hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
         />
         <StatCard
-          label="Review queue"
+          label="Follow-ups due"
           value={String(overdueReviews.length + dueSoonReviews.length)}
           hint={
             overdueReviews.length > 0

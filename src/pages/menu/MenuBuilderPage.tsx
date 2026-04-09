@@ -24,6 +24,16 @@ import type {
 } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import {
+  buildMenuProfitSummary,
+  dishActualGp,
+  dishIngredientCost,
+  dishPriceGap,
+  dishProfitPerSale,
+  dishRecommendedPrice,
+  dishWeeklyOpportunity,
+  dishWeeklyProfit
+} from '../../features/profit/menuProfit';
 
 const MENU_BUILDER_DRAFT_KEY = 'menu-builder-draft-v1';
 
@@ -67,6 +77,8 @@ function normalizeDish(dish?: Partial<MenuDish>): MenuDish {
     sellPrice: num(dish?.sellPrice),
     targetGp: num(dish?.targetGp),
     mix: num(dish?.mix),
+    salesMixPercent: num(dish?.salesMixPercent ?? dish?.mix),
+    weeklySalesVolume: num(dish?.weeklySalesVolume ?? dish?.mix),
     notes: String(dish?.notes ?? ''),
     ingredients:
       Array.isArray(dish?.ingredients) && dish.ingredients.length
@@ -84,32 +96,6 @@ function normalizeMenuProject(project: MenuProjectState): MenuProjectState {
       dishes: (section.dishes ?? []).map((dish) => normalizeDish(dish))
     }))
   };
-}
-
-const unitFamilies: Record<MeasurementUnit, 'weight' | 'volume' | 'count' | 'pack'> = {
-  g: 'weight',
-  kg: 'weight',
-  ml: 'volume',
-  l: 'volume',
-  each: 'count',
-  portion: 'count',
-  pack: 'pack'
-};
-
-const unitMultipliers: Record<MeasurementUnit, number> = {
-  g: 1,
-  kg: 1000,
-  ml: 1,
-  l: 1000,
-  each: 1,
-  portion: 1,
-  pack: 1
-};
-
-function convertUnitAmount(value: number, from: MeasurementUnit, to: MeasurementUnit) {
-  if (from === to) return value;
-  if (unitFamilies[from] !== unitFamilies[to]) return null;
-  return (value * unitMultipliers[from]) / unitMultipliers[to];
 }
 
 function createDefaultMenu(clientId: string | null = null): MenuProjectState {
@@ -135,41 +121,19 @@ function createDefaultMenu(clientId: string | null = null): MenuProjectState {
 }
 
 function dishUnitCost(dish: MenuDish) {
-  return dish.ingredients.reduce((sum, ingredient) => {
-    const qtyUsed = num(ingredient.qtyUsed);
-    const packQty = Math.max(num(ingredient.packQty), 1);
-    const packCost = num(ingredient.packCost);
-    const comparableQty =
-      convertUnitAmount(qtyUsed, ingredient.qtyUnit, ingredient.packUnit) ?? qtyUsed;
-
-    return sum + (comparableQty / packQty) * packCost;
-  }, 0);
+  return dishIngredientCost(dish);
 }
 
 function dishMixCost(dish: MenuDish) {
-  return dishUnitCost(dish) * Math.max(num(dish.mix), 0);
+  return dishUnitCost(dish) * Math.max(num(dish.weeklySalesVolume), 0);
 }
 
 function dishTheoGp(dish: MenuDish) {
-  const sell = num(dish.sellPrice);
-  if (sell <= 0) return 0;
-  return ((sell - dishUnitCost(dish)) / sell) * 100;
+  return dishActualGp(dish);
 }
 
 function dishProfit(dish: MenuDish) {
-  return num(dish.sellPrice) - dishUnitCost(dish);
-}
-
-function dishRecommendedPrice(dish: MenuDish) {
-  const unitCost = dishUnitCost(dish);
-  const targetGp = Math.min(Math.max(num(dish.targetGp), 1), 95);
-
-  if (unitCost <= 0) return 0;
-  return unitCost / (1 - targetGp / 100);
-}
-
-function dishPriceGap(dish: MenuDish) {
-  return dishRecommendedPrice(dish) - num(dish.sellPrice);
+  return dishProfitPerSale(dish);
 }
 
 function gpClass(dish: MenuDish) {
@@ -182,59 +146,52 @@ function gpClass(dish: MenuDish) {
 }
 
 function buildMenuReport(project: MenuProjectState) {
-  const allDishes = project.sections.flatMap((section) => section.dishes);
-  const totalSellByMix = allDishes.reduce(
-    (sum, dish) => sum + num(dish.sellPrice) * num(dish.mix),
-    0
-  );
-  const totalCostByMix = allDishes.reduce((sum, dish) => sum + dishMixCost(dish), 0);
-  const weightedGp =
-    totalSellByMix > 0 ? ((totalSellByMix - totalCostByMix) / totalSellByMix) * 100 : 0;
-  const belowTargetCount = allDishes.filter((dish) => dishTheoGp(dish) < num(dish.targetGp)).length;
+  const summary = buildMenuProfitSummary(project);
+  const allDishes = summary.dishes;
   const pricingMoveCount = allDishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length;
 
   return `
     ${buildReportHeroHtml({
-      eyebrow: 'Menu engineering export',
-      title: safe(project.menuName) || 'Menu Builder Report',
+      eyebrow: 'Menu Profit Engine',
+      title: safe(project.menuName) || 'Menu Profit Engine Report',
       leadHtml: `<strong>${safe(project.siteName) || 'Unnamed site'}</strong>${
         safe(project.reviewDate) ? ` • Review date ${formatShortDate(project.reviewDate)}` : ''
       }`,
       description:
-        'Menu pricing, section performance, and costing output prepared for client review and PDF handover.',
+        'Dish-level margin, weekly contribution, and pricing opportunity prepared for client review and PDF handover.',
       chips: [
         `${project.sections.length} section${project.sections.length === 1 ? '' : 's'}`,
         `${allDishes.length} dish${allDishes.length === 1 ? '' : 'es'}`,
-        `${belowTargetCount} below target GP`
+        `${summary.belowTargetCount} below target GP`
       ],
       cards: [
         {
-          label: 'Weighted theo GP',
-          value: fmtPercent(weightedGp)
+          label: 'Weighted GP',
+          value: fmtPercent(summary.weightedGp)
         },
         {
-          label: 'Mix revenue',
-          value: fmtCurrency(totalSellByMix)
+          label: 'Weekly revenue',
+          value: fmtCurrency(summary.weeklyRevenue)
         },
         {
-          label: 'Mix cost',
-          value: fmtCurrency(totalCostByMix)
+          label: 'Weekly profit',
+          value: fmtCurrency(summary.weeklyProfit)
         },
         {
-          label: 'Price moves',
-          value: String(pricingMoveCount),
-          detail: 'Dishes where current price differs from target sell'
+          label: 'Weekly opportunity',
+          value: fmtCurrency(summary.totalOpportunity),
+          detail: `${pricingMoveCount} dishes need pricing or cost correction`
         }
       ]
     })}
 
     <section>
-      <h2>Menu performance snapshot</h2>
+      <h2>Menu profit snapshot</h2>
       <div class="report-grid columns-4">
         <div><strong>Review date</strong><br />${formatShortDate(project.reviewDate)}</div>
         <div><strong>Sections</strong><br />${project.sections.length}</div>
         <div><strong>Total dishes</strong><br />${allDishes.length}</div>
-        <div><strong>Dishes below target</strong><br />${belowTargetCount}</div>
+        <div><strong>Dishes below target</strong><br />${summary.belowTargetCount}</div>
       </div>
     </section>
 
@@ -250,15 +207,16 @@ function buildMenuReport(project: MenuProjectState) {
           <thead>
             <tr>
               <th>Dish</th>
-              <th>Unit Cost</th>
-              <th>Mix Cost</th>
-              <th>Sell</th>
-              <th>Profit</th>
+              <th>Ingredient cost</th>
+              <th>Weekly cost</th>
+              <th>Sell price</th>
+              <th>Profit / sale</th>
               <th>Target GP</th>
-              <th>Theo GP</th>
-              <th>Target sell</th>
-              <th>Price move</th>
-              <th>Mix</th>
+              <th>Actual GP</th>
+              <th>Sales mix %</th>
+              <th>Weekly volume</th>
+              <th>Weekly profit</th>
+              <th>Opportunity</th>
             </tr>
           </thead>
           <tbody>
@@ -275,9 +233,10 @@ function buildMenuReport(project: MenuProjectState) {
                 <td>${fmtCurrency(dishProfit(dish))}</td>
                 <td>${fmtPercent(num(dish.targetGp))}</td>
                 <td>${fmtPercent(dishTheoGp(dish))}</td>
-                <td>${fmtCurrency(dishRecommendedPrice(dish))}</td>
-                <td>${fmtCurrency(dishPriceGap(dish))}</td>
-                <td>${num(dish.mix)}</td>
+                <td>${fmtPercent(num(dish.salesMixPercent))}</td>
+                <td>${num(dish.weeklySalesVolume)}</td>
+                <td>${fmtCurrency(dishWeeklyProfit(dish))}</td>
+                <td>${fmtCurrency(dishWeeklyOpportunity(dish))}</td>
               </tr>
             `
               )
@@ -321,7 +280,7 @@ function completionSummary(project: MenuProjectState) {
     )
       ? 'yes'
       : '',
-    allDishes.some((dish) => num(dish.mix) > 0) ? 'yes' : '',
+    allDishes.some((dish) => num(dish.weeklySalesVolume) > 0) ? 'yes' : '',
     allDishes.some((dish) => num(dish.targetGp) > 0) ? 'yes' : ''
   ];
 
@@ -382,13 +341,13 @@ function buildMenuInsights(
     insights.push({
       tone: 'danger',
       title: 'Theo GP is below target',
-      detail: `The menu is currently tracking at ${fmtPercent(weightedGp)} against a default target of ${fmtPercent(project.defaultTargetGp)}.`
+      detail: `The menu is currently tracking at ${fmtPercent(weightedGp)} against a default target of ${fmtPercent(project.defaultTargetGp)} and is leaking weekly profit.`
     });
   } else if (dishes.length > 0 && weightedGp < num(project.defaultTargetGp)) {
     insights.push({
       tone: 'warning',
       title: 'Theo GP is close to target',
-      detail: 'Some dishes likely need tighter costing, better pricing, or cleaner portion control.'
+      detail: 'Some dishes need tighter costing, better pricing, or cleaner portion control before the leakage compounds.'
     });
   } else if (dishes.length > 0) {
     insights.push({
@@ -434,7 +393,7 @@ function buildMenuInsights(
     insights.push({
       tone: 'warning',
       title: 'Revenue picture is weak',
-      detail: 'Add realistic mix values so the menu view reflects actual commercial weight.'
+      detail: 'Add realistic weekly sales volume so the menu view reflects actual commercial weight.'
     });
   }
 
@@ -442,7 +401,7 @@ function buildMenuInsights(
     insights.push({
       tone: 'success',
       title: 'Menu profit view is active',
-      detail: 'You can now use this page to compare dishes not just on GP, but on actual profit contribution.'
+      detail: 'You can now compare dishes not just on GP, but on actual weekly profit contribution and lost opportunity.'
     });
   }
 
@@ -493,25 +452,10 @@ export function MenuBuilderPage() {
     [project.sections]
   );
 
-  const totalRevenue = useMemo(
-    () => allDishes.reduce((sum, dish) => sum + num(dish.sellPrice) * num(dish.mix), 0),
-    [allDishes]
-  );
-
-  const totalProfit = useMemo(
-    () => allDishes.reduce((sum, dish) => sum + dishProfit(dish) * num(dish.mix), 0),
-    [allDishes]
-  );
-
-  const weightedGp = useMemo(() => {
-    const totalSellByMix = allDishes.reduce(
-      (sum, dish) => sum + num(dish.sellPrice) * num(dish.mix),
-      0
-    );
-    const totalCostByMix = allDishes.reduce((sum, dish) => sum + dishMixCost(dish), 0);
-
-    return totalSellByMix > 0 ? ((totalSellByMix - totalCostByMix) / totalSellByMix) * 100 : 0;
-  }, [allDishes]);
+  const menuSummary = useMemo(() => buildMenuProfitSummary(project), [project]);
+  const totalRevenue = menuSummary.weeklyRevenue;
+  const totalProfit = menuSummary.weeklyProfit;
+  const weightedGp = menuSummary.weightedGp;
 
   const reportHtml = useMemo(() => buildMenuReport(project), [project]);
   const completion = useMemo(() => completionSummary(project), [project]);
@@ -552,7 +496,7 @@ export function MenuBuilderPage() {
     () =>
       allDishes.reduce((sum, dish) => {
         const gap = dishPriceGap(dish);
-        return gap > 0 ? sum + gap * Math.max(num(dish.mix), 1) : sum;
+        return gap > 0 ? sum + gap * Math.max(num(dish.weeklySalesVolume), 1) : sum;
       }, 0),
     [allDishes]
   );
@@ -568,8 +512,11 @@ export function MenuBuilderPage() {
     }
 
     const dishes = selectedSection.dishes;
-    const revenue = dishes.reduce((sum, dish) => sum + num(dish.sellPrice) * num(dish.mix), 0);
-    const profit = dishes.reduce((sum, dish) => sum + dishProfit(dish) * num(dish.mix), 0);
+    const revenue = dishes.reduce(
+      (sum, dish) => sum + num(dish.sellPrice) * num(dish.weeklySalesVolume),
+      0
+    );
+    const profit = dishes.reduce((sum, dish) => sum + dishWeeklyProfit(dish), 0);
     const avgGp =
       dishes.length > 0
         ? dishes.reduce((sum, dish) => sum + dishTheoGp(dish), 0) / dishes.length
@@ -764,6 +711,8 @@ export function MenuBuilderPage() {
             sellPrice: 0,
             targetGp: project.defaultTargetGp,
             mix: 1,
+            salesMixPercent: 0,
+            weeklySalesVolume: 0,
             notes: '',
             ingredients: [blankIngredient()]
           })
@@ -976,9 +925,9 @@ export function MenuBuilderPage() {
   return (
     <div className="page-stack menu-page">
       <PageIntro
-        eyebrow="Menu builder"
-        title="Menu engineering and pricing"
-        description="Cost dishes from ingredients, track section performance, and tighten pricing with one working view that is built for menu reviews."
+        eyebrow="Menu Profit Engine"
+        title="Turn dish costing into weekly profit recovery"
+        description="Quantify dish-level profit, expose weak margins, and show where pricing, cost, or portion correction can recover cash each week."
         actions={
           <>
             <button className="button button-secondary" onClick={newProject}>
@@ -989,7 +938,7 @@ export function MenuBuilderPage() {
               disabled={saving}
               onClick={handleSaveProject}
             >
-              {saving ? 'Saving...' : 'Save menu'}
+              {saving ? 'Saving...' : 'Save profit engine'}
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
@@ -1004,24 +953,24 @@ export function MenuBuilderPage() {
 
       <section className="stats-grid">
         <StatCard
-          label="Weighted theo GP"
+          label="Weighted actual GP"
           value={fmtPercent(weightedGp)}
-          hint="Across all dishes by mix"
+          hint="Across all dishes by weekly sales volume"
         />
         <StatCard
-          label="Menu revenue"
+          label="Weekly menu revenue"
           value={fmtCurrency(totalRevenue)}
-          hint="Sell price × mix values"
+          hint="Sell price × weekly volume"
         />
         <StatCard
-          label="Menu profit"
+          label="Weekly menu profit"
           value={fmtCurrency(totalProfit)}
           hint="Commercial contribution view"
         />
         <StatCard
-          label="Live dishes"
-          value={String(allDishes.length)}
-          hint={`${project.sections.length} active section${project.sections.length === 1 ? '' : 's'}`}
+          label="Menu is losing"
+          value={fmtCurrency(menuSummary.totalOpportunity)}
+          hint={`${menuSummary.belowTargetCount} dishes are below target GP`}
         />
       </section>
 
@@ -1030,9 +979,9 @@ export function MenuBuilderPage() {
           <div className="panel">
             <div className="panel-header">
               <div>
-                <h3>Menu build</h3>
+                <h3>Menu Profit Engine</h3>
                 <p className="muted-copy">
-                  Control structure, costing, pricing, and mix from one central view.
+                  Control costing, pricing, mix, and weekly contribution from one commercial view.
                 </p>
               </div>
             </div>
@@ -1164,8 +1113,12 @@ export function MenuBuilderPage() {
                     <span>{fmtPercent(project.defaultTargetGp)}</span>
                   </div>
                   <div className="menu-chip">
-                    <strong>Current theo GP</strong>
+                    <strong>Current actual GP</strong>
                     <span>{fmtPercent(weightedGp)}</span>
+                  </div>
+                  <div className="menu-chip">
+                    <strong>Weekly opportunity</strong>
+                    <span>{fmtCurrency(menuSummary.totalOpportunity)}</span>
                   </div>
                   <div className="menu-chip">
                     <strong>Strong dishes</strong>
@@ -1291,22 +1244,25 @@ export function MenuBuilderPage() {
                       <thead>
                         <tr>
                           <th>Dish</th>
-                          <th>Unit cost</th>
-                          <th>Mix cost</th>
+                          <th>Ingredient cost</th>
+                          <th>Weekly cost</th>
                           <th>Sell</th>
-                          <th>Profit</th>
+                          <th>Profit / sale</th>
                           <th>Target GP</th>
-                          <th>Theo GP</th>
+                          <th>Actual GP</th>
                           <th>Target sell</th>
                           <th>Move</th>
-                          <th>Mix</th>
+                          <th>Sales mix %</th>
+                          <th>Weekly volume</th>
+                          <th>Weekly profit</th>
+                          <th>Opportunity</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {!selectedSection.dishes.length ? (
                           <tr>
-                            <td colSpan={11} className="empty-cell">
+                            <td colSpan={14} className="empty-cell">
                               No dishes in this section yet.
                             </td>
                           </tr>
@@ -1374,17 +1330,34 @@ export function MenuBuilderPage() {
                                 <input
                                   className="input compact-input"
                                   type="number"
-                                  value={dish.mix}
+                                  value={dish.salesMixPercent}
                                   onChange={(e) =>
                                     updateDishInline(
                                       selectedSection.id,
                                       dish.id,
-                                      'mix',
+                                      'salesMixPercent',
                                       num(e.target.value)
                                     )
                                   }
                                 />
                               </td>
+                              <td>
+                                <input
+                                  className="input compact-input"
+                                  type="number"
+                                  value={dish.weeklySalesVolume}
+                                  onChange={(e) =>
+                                    updateDishInline(
+                                      selectedSection.id,
+                                      dish.id,
+                                      'weeklySalesVolume',
+                                      num(e.target.value)
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td>{fmtCurrency(dishWeeklyProfit(dish))}</td>
+                              <td>{fmtCurrency(dishWeeklyOpportunity(dish))}</td>
                               <td>
                                 <div className="saved-actions">
                                   <button
@@ -1421,8 +1394,7 @@ export function MenuBuilderPage() {
               <div>
                 <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
                 <p className="muted-copy">
-                  Build each dish from ingredients, sell price, target GP, and mix. Use the
-                  target sell column to spot where pricing still needs work.
+                  Build each dish from ingredients, selling price, target GP, and weekly sales volume so the profit opportunity is explicit.
                 </p>
               </div>
               <button className="button button-ghost" onClick={closeDishEditor}>
@@ -1436,10 +1408,9 @@ export function MenuBuilderPage() {
                   <section className="sub-panel">
                     <div className="sub-panel-header">
                       <div>
-                        <h4>Dish basics</h4>
+                          <h4>Dish profit inputs</h4>
                         <p className="muted-copy">
-                          Name the dish, set the sell price, and enter the commercial targets used
-                          in the section analysis.
+                          Name the dish, set the selling price, and enter the commercial inputs used in the profit model.
                         </p>
                       </div>
                     </div>
@@ -1472,12 +1443,21 @@ export function MenuBuilderPage() {
                         />
                       </label>
                       <label className="field">
-                        <span>Sales mix</span>
+                        <span>Sales mix %</span>
                         <input
                           className="input"
                           type="number"
-                          value={dishDraft.mix}
-                          onChange={(e) => updateDish('mix', num(e.target.value))}
+                          value={dishDraft.salesMixPercent}
+                          onChange={(e) => updateDish('salesMixPercent', num(e.target.value))}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Weekly sales volume</span>
+                        <input
+                          className="input"
+                          type="number"
+                          value={dishDraft.weeklySalesVolume}
+                          onChange={(e) => updateDish('weeklySalesVolume', num(e.target.value))}
                         />
                       </label>
                     </div>
@@ -1621,23 +1601,24 @@ export function MenuBuilderPage() {
                   <section className="sub-panel">
                     <div className="sub-panel-header">
                       <div>
-                        <h4>Pricing snapshot</h4>
+                        <h4>Profit snapshot</h4>
                         <p className="muted-copy">
-                          Live costing updates as ingredients, pack sizes, and pricing are added.
+                          Live costing updates as ingredients, pack sizes, pricing, and weekly volume are added.
                         </p>
                       </div>
                     </div>
                     <div className="dish-editor-stat-grid">
-                      <StatCard label="Unit cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
-                      <StatCard label="Theo GP" value={fmtPercent(dishTheoGp(dishDraft))} />
+                      <StatCard label="Ingredient cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
+                      <StatCard label="Actual GP" value={fmtPercent(dishTheoGp(dishDraft))} />
                       <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
+                      <StatCard label="Weekly profit" value={fmtCurrency(dishWeeklyProfit(dishDraft))} />
                       <StatCard
                         label="Target sell"
                         value={fmtCurrency(dishRecommendedPrice(dishDraft))}
                       />
                       <StatCard
-                        label="Price move"
-                        value={`${dishPriceGap(dishDraft) > 0 ? '+' : ''}${fmtCurrency(dishPriceGap(dishDraft))}`}
+                        label="Opportunity"
+                        value={fmtCurrency(dishWeeklyOpportunity(dishDraft))}
                       />
                     </div>
                   </section>
@@ -1662,7 +1643,7 @@ export function MenuBuilderPage() {
           <div className="drawer-panel" onClick={e => e.stopPropagation()}>
             <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
-                <h2 style={{fontSize: '24px', fontWeight: 700}}>Menu Engineering Controls</h2>
+                <h2 style={{fontSize: '24px', fontWeight: 700}}>Menu Profit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
                   Close ✕
                 </button>
@@ -1704,7 +1685,7 @@ export function MenuBuilderPage() {
 
               <div className="audit-side-block" style={{marginTop: '24px'}}>
                 <div className="audit-side-title-row">
-                  <h4>Menu snapshot</h4>
+                  <h4>Profit snapshot</h4>
                 </div>
                 <div className="audit-chip-row audit-chip-row-vertical">
                   <div className="audit-chip">
@@ -1728,12 +1709,16 @@ export function MenuBuilderPage() {
                     <span>{riskDishCount}</span>
                   </div>
                   <div className="audit-chip">
-                    <strong>Total revenue</strong>
+                    <strong>Weekly revenue</strong>
                     <span>{fmtCurrency(totalRevenue)}</span>
                   </div>
                   <div className="audit-chip">
-                    <strong>Total profit</strong>
+                    <strong>Weekly profit</strong>
                     <span>{fmtCurrency(totalProfit)}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Weekly opportunity</strong>
+                    <span>{fmtCurrency(menuSummary.totalOpportunity)}</span>
                   </div>
                   <div className="audit-chip">
                     <strong>Total sections</strong>
@@ -1754,7 +1739,7 @@ export function MenuBuilderPage() {
           padding: '0 24px',
           boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
         }} onClick={() => setControlModalOpen(true)}>
-          📊 Menu Controls
+          Menu Controls
         </button>
       </div>
 

@@ -9,7 +9,7 @@ import { downloadText } from '../../lib/utils';
 export function SharedKitchenAuditPage() {
   const { token = '' } = useParams();
   const [audit, setAudit] = useState<AuditFormState | null>(null);
-  const [title, setTitle] = useState('Kitchen audit report');
+  const [title, setTitle] = useState('Kitchen Profit Audit report');
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [message, setMessage] = useState('Loading shared report...');
 
@@ -29,7 +29,7 @@ export function SharedKitchenAuditPage() {
         }
 
         setAudit(share.payload);
-        setTitle(share.title || 'Kitchen audit report');
+        setTitle(share.title || 'Kitchen Profit Audit report');
         setStatus('ready');
       })
       .catch((error) => {

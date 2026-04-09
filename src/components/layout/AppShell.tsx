@@ -5,19 +5,19 @@ import { usePreferences } from '../../context/PreferencesContext';
 import { supabase } from '../../lib/supabase';
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Command Centre' },
   { to: '/clients', label: 'Clients' },
-  { to: '/audit', label: 'Audit Tool' },
+  { to: '/audit', label: 'Profit Audit' },
   { to: '/food-safety', label: 'Food Safety' },
   { to: '/mystery-shop', label: 'Mystery Shop' },
-  { to: '/menu', label: 'Menu Builder' }
+  { to: '/menu', label: 'Menu Profit Engine' }
 ];
 
 const workspaceDetails = [
   {
     match: '/dashboard',
-    label: 'Portfolio overview',
-    detail: 'Track client coverage, recent delivery work, and the next priority action.'
+    label: 'Command centre',
+    detail: 'Track active clients, profit opportunity, follow-ups, and the next commercial priority.'
   },
   {
     match: '/clients',
@@ -26,8 +26,8 @@ const workspaceDetails = [
   },
   {
     match: '/audit',
-    label: 'Audit workspace',
-    detail: 'Capture findings, structure evidence, and build a client-ready report.'
+    label: 'Kitchen Profit Audit workspace',
+    detail: 'Quantify hidden profit, structure findings, and build a premium client-ready report.'
   },
   {
     match: '/food-safety',
@@ -41,8 +41,8 @@ const workspaceDetails = [
   },
   {
     match: '/menu',
-    label: 'Menu workspace',
-    detail: 'Review dish performance, pricing, and engineering decisions in one flow.'
+    label: 'Menu Profit Engine workspace',
+    detail: 'Track dish margin, weekly contribution, and pricing opportunities in one flow.'
   },
   {
     match: '/settings',

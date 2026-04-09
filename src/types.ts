@@ -85,6 +85,7 @@ export interface AuditFormState {
   targetGp: number;
   actualWasteValue: number;
   labourPercent: number;
+  targetLabourPercent: number;
   orderingScore: 'Low' | 'Moderate' | 'High';
   allergenConfidence: 'Low' | 'Moderate' | 'High';
   hygieneRisk: 'Low' | 'Moderate' | 'High';
@@ -229,6 +230,8 @@ export interface MenuDish {
   sellPrice: number;
   targetGp: number;
   mix: number;
+  salesMixPercent: number;
+  weeklySalesVolume: number;
   notes: string;
   ingredients: DishIngredient[];
 }

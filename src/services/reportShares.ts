@@ -43,7 +43,7 @@ export async function createKitchenAuditShare(
   const payload = {
     user_id: userId,
     report_type: KITCHEN_AUDIT_REPORT,
-    title: audit.businessName?.trim() || audit.title?.trim() || 'Kitchen audit report',
+    title: audit.businessName?.trim() || audit.title?.trim() || 'Kitchen Profit Audit report',
     token: createShareToken(),
     source_record_id: audit.id ?? null,
     payload: audit,

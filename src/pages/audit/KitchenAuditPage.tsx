@@ -32,6 +32,10 @@ import {
 } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
+import {
+  buildKitchenProfitNarrative,
+  calculateKitchenProfitMetrics
+} from '../../features/profit/kitchenProfit';
 
 const KITCHEN_AUDIT_DRAFT_KEY = 'kitchen-audit-draft-v1';
 
@@ -132,6 +136,7 @@ function createDefaultAudit(clientId: string | null = null): AuditFormState {
     targetGp: 70,
     actualWasteValue: 0,
     labourPercent: 0,
+    targetLabourPercent: 24,
     orderingScore: 'Moderate',
     allergenConfidence: 'Moderate',
     hygieneRisk: 'Moderate',
@@ -228,91 +233,7 @@ function scoreLabel(score: number) {
 }
 
 function calculateAudit(state: AuditFormState) {
-  const actualGp =
-    state.weeklySales > 0
-      ? ((state.weeklySales - state.weeklyFoodCost) / state.weeklySales) * 100
-      : 0;
-
-  const wastePercent =
-    state.weeklySales > 0 ? (state.actualWasteValue / state.weeklySales) * 100 : 0;
-
-  const totalPortionLoss = state.portionItems.reduce((sum, item) => sum + num(item.loss), 0);
-
-  const portionRisk =
-    state.portionItems.filter((item) => safe(item.dish)).length >= 4 || totalPortionLoss >= 250
-      ? 'High'
-      : state.portionItems.filter((item) => safe(item.dish)).length >= 2 || totalPortionLoss >= 100
-        ? 'Moderate'
-        : 'Low';
-
-  const scoreValues = Object.values(state.categoryScores);
-  const operationsAverage =
-    scoreValues.length > 0
-      ? scoreValues.reduce((sum, value) => sum + num(value), 0) / scoreValues.length
-      : 0;
-  const estimatedWeeklySales = num(state.coversPerWeek) * num(state.averageSpend);
-  const activeControlChecks = state.controlChecks.filter((item) => item.status !== 'N/A');
-  const controlScore =
-    activeControlChecks.length > 0
-      ? (activeControlChecks.reduce((sum, item) => {
-          if (item.status === 'In Place') return sum + 1;
-          if (item.status === 'Partial') return sum + 0.5;
-          return sum;
-        }, 0) /
-          activeControlChecks.length) *
-        100
-      : 0;
-  const missingControls = activeControlChecks.filter((item) => item.status === 'Missing').length;
-  const criticalMissingControls = activeControlChecks.filter(
-    (item) =>
-      item.status === 'Missing' &&
-      ['Compliance', 'Food safety', 'Hygiene'].includes(item.category)
-  ).length;
-  const gpOpportunityValue =
-    state.weeklySales > 0 && state.targetGp > actualGp
-      ? state.weeklySales * ((state.targetGp - actualGp) / 100)
-      : 0;
-  const totalNamedActions = state.actionItems.filter((item) => safe(item.title)).length;
-
-  let score = 0;
-  score += Math.max(0, Math.min(30, (state.targetGp - actualGp) * 2));
-  score += Math.max(0, Math.min(20, wastePercent * 4));
-  score += Math.max(0, Math.min(15, state.labourPercent > 0 ? state.labourPercent - 20 : 0));
-  score += Math.min(15, state.portionItems.filter((item) => safe(item.dish)).length * 4);
-  score += Math.min(10, state.orderingItems.filter((item) => safe(item.category)).length * 2.5);
-  score += Math.min(10, state.wasteItems.filter((item) => safe(item.item)).length * 2.5);
-  score += Math.max(0, Math.min(18, (8 - operationsAverage) * 5));
-  score += state.hygieneRisk === 'High' ? 10 : state.hygieneRisk === 'Moderate' ? 5 : 0;
-  score +=
-    state.allergenConfidence === 'Low'
-      ? 10
-      : state.allergenConfidence === 'Moderate'
-        ? 5
-        : 0;
-  score +=
-    state.equipmentCondition === 'Poor'
-      ? 8
-      : state.equipmentCondition === 'Mixed'
-        ? 4
-        : 0;
-  score += Math.min(14, missingControls * 2.5);
-  score += criticalMissingControls * 4;
-
-  return {
-    actualGp,
-    wastePercent,
-    totalPortionLoss,
-    portionRisk,
-    score: Math.min(100, Math.round(score)),
-    gpGap: state.targetGp - actualGp,
-    operationsAverage,
-    estimatedWeeklySales,
-    controlScore,
-    missingControls,
-    criticalMissingControls,
-    gpOpportunityValue,
-    totalNamedActions
-  };
+  return calculateKitchenProfitMetrics(state);
 }
 
 function listHtml(items: string[], emptyText: string) {
@@ -410,88 +331,13 @@ function buildSuggestedNarrative(
   state: AuditFormState,
   calc: ReturnType<typeof calculateAudit>
 ) {
-  const summaryLines = [
-    safe(state.businessName)
-      ? `${safe(state.businessName)} was reviewed on ${safe(state.visitDate) || 'the recorded visit date'} as a ${safe(state.auditType) || 'kitchen performance audit'}.`
-      : '',
-    state.weeklySales > 0
-      ? `Weekly food sales are running at ${fmtCurrency(state.weeklySales)} with actual GP at ${fmtPercent(calc.actualGp)} versus a target of ${fmtPercent(state.targetGp)}.`
-      : calc.estimatedWeeklySales > 0
-        ? `Estimated weekly food sales from covers and average spend sit around ${fmtCurrency(calc.estimatedWeeklySales)}.`
-        : '',
-    calc.gpOpportunityValue > 0
-      ? `The current GP gap represents roughly ${fmtCurrency(calc.gpOpportunityValue)} of weekly gross profit opportunity.`
-      : '',
-    calc.wastePercent > 0
-      ? `Waste is currently reading at ${fmtPercent(calc.wastePercent)} of weekly sales.`
-      : '',
-    calc.operationsAverage > 0
-      ? `The operational scorecard averages ${calc.operationsAverage.toFixed(1)}/10, with control compliance at ${Math.round(calc.controlScore)}%.`
-      : '',
-    calc.criticalMissingControls > 0
-      ? `${calc.criticalMissingControls} critical controls need immediate attention before the next service cycle.`
-      : ''
-  ].filter(Boolean);
-
-  const quickWins = [
-    calc.estimatedWeeklySales > 0 && state.weeklySales <= 0
-      ? `Use ${fmtCurrency(calc.estimatedWeeklySales)} as the working weekly sales baseline until a live sales figure is confirmed.`
-      : '',
-    state.actualWasteValue > 0 ? 'Restart or tighten daily waste logging with named ownership.' : '',
-    state.portionItems.some((item) => safe(item.dish))
-      ? 'Introduce measured portion tools and station checks on the dishes with the highest leakage.'
-      : '',
-    calc.missingControls > 0
-      ? 'Close the missing controls first, especially the food safety, hygiene, and compliance items.'
-      : '',
-    state.orderingItems.some((item) => safe(item.category))
-      ? 'Reset ordering pars and review order quantities before the next delivery window.'
-      : ''
-  ].filter(Boolean);
-
-  const priorityActions = [
-    calc.gpOpportunityValue > 0
-      ? `Recover the ${fmtCurrency(calc.gpOpportunityValue)} weekly GP opportunity through menu controls, portions, and purchasing discipline.`
-      : '',
-    calc.operationsAverage < 7
-      ? 'Run a short operational reset focused on standards, leadership, and line discipline.'
-      : '',
-    calc.missingControls > 0
-      ? `Create a simple control tracker to close ${calc.missingControls} missing or incomplete controls.`
-      : '',
-    safe(state.layoutIssues)
-      ? 'Remove the biggest kitchen flow bottlenecks that are slowing service or inflating labour.'
-      : '',
-    'Review progress weekly against the action register and re-score the site on the next visit.'
-  ].filter(Boolean);
-
-  const longTermStrategy = [
-    'Build the site onto a repeatable operating rhythm with clearer ownership and weekly accountability.',
-    'Link recipe discipline, stock accuracy, and training into one kitchen control system.',
-    safe(state.layoutIssues)
-      ? 'Phase layout or equipment improvements based on the biggest operational bottlenecks.'
-      : '',
-    calc.controlScore < 85
-      ? 'Move the control register from partial compliance to a fully embedded management routine.'
-      : ''
-  ].filter(Boolean);
-
-  const nextVisit = [
-    'Recommended next visit:',
-    calc.criticalMissingControls > 0
-      ? 'return within 7 to 14 days to verify critical controls and food safety follow-through.'
-      : 'return within 2 to 4 weeks to review progress against actions and confirm standards are holding.',
-    calc.totalNamedActions > 0
-      ? `The next review should check ownership on the ${calc.totalNamedActions} live action items.`
-      : 'Use the next review to convert the main findings into named actions with owners and dates.'
-  ].join(' ');
-
+  const narrative = buildKitchenProfitNarrative(state, calc);
   return {
-    summary: summaryLines.join(' '),
-    quickWins: quickWins.join('\n'),
-    priorityActions: priorityActions.join('\n'),
-    longTermStrategy: longTermStrategy.join('\n'),
-    nextVisit
+    summary: narrative.executiveSummary,
+    quickWins: narrative.quickWins.join('\n'),
+    priorityActions: narrative.actionPlan30To90Days.join('\n'),
+    longTermStrategy: narrative.keyIssues.join('\n'),
+    nextVisit: narrative.followUpRecommendation
   };
 }
 
@@ -673,66 +519,37 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     </div>
   `;
 
-  // Calculate total financial opportunity
-  const totalWeeklyOpportunity = calc.gpOpportunityValue + state.actualWasteValue + calc.totalPortionLoss;
-  const totalAnnualOpportunity = totalWeeklyOpportunity * 52;
-  
+  const narrative = buildKitchenProfitNarrative(state, calc);
+
   const coverPageHtml = `
     <div class="report-cover-page">
       <div class="report-cover-block">
-        <div class="report-cover-heading">💰 Financial Opportunity Summary</div>
+        <div class="report-label">The Final Check</div>
+        <div class="report-cover-heading">Kitchen Profit Audit</div>
         <div class="report-cover-divider"></div>
-        <div style="text-align: center; padding: 20px 0;">
-          <h2 style="font-size: 32px; font-weight: 800; color: var(--accent-strong); margin-bottom: 8px;">
-            ${fmtCurrency(totalWeeklyOpportunity)} / WEEK
-          </h2>
-          <p style="font-size: 16px; color: var(--muted); margin: 0;">
-            Identified gross profit opportunity • ${fmtCurrency(totalAnnualOpportunity)} per year
-          </p>
+        <p class="report-muted" style="max-width: 126mm; margin-bottom: 18px;">
+          We identify £2k–£10k per week in hidden profit by exposing waste, margin drift, over-portioning, labour leakage, and weak kitchen controls.
+        </p>
+        <div class="report-cover-stat-grid">
+          ${coverStatCard('Weekly opportunity', fmtCurrency(calc.totalWeeklyOpportunity))}
+          ${coverStatCard('Annual opportunity', fmtCurrency(calc.totalAnnualOpportunity))}
+          ${coverStatCard('Site', safe(state.businessName) || 'Not recorded')}
+          ${coverStatCard('Visit date', formatShortDate(state.visitDate))}
         </div>
-        <div class="report-cover-stat-grid" style="margin-top: 16px;">
-          ${coverStatCard('GP gap recovery', fmtCurrency(calc.gpOpportunityValue) + '/wk')}
-          ${coverStatCard('Waste reduction', fmtCurrency(state.actualWasteValue) + '/wk')}
-          ${coverStatCard('Portion control', fmtCurrency(calc.totalPortionLoss) + '/wk')}
-          ${coverStatCard('Total opportunity', fmtCurrency(totalWeeklyOpportunity) + '/wk')}
-        </div>
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Kitchen Performance Report</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-cover-top">
-          <div class="report-cover-mini-grid">
-            ${coverMiniCard('Site', safe(state.businessName) || 'Not recorded')}
-            ${coverMiniCard('Visit date', formatShortDate(state.visitDate))}
-            ${coverMiniCard('Consultant', safe(state.consultantName) || 'Not recorded')}
-            ${coverMiniCard('Site contact', safe(state.contactName) || 'Not recorded')}
+        <div class="report-cover-commercial">
+          <div>
+            <span class="report-cover-commercial-label">Consultant</span>
+            <strong class="report-cover-commercial-value">${safe(state.consultantName) || 'Not recorded'}</strong>
           </div>
-          <div class="report-cover-commercial">
-            <span class="report-cover-commercial-label">Current GP</span>
-            <strong class="report-cover-commercial-value">${fmtPercent(calc.actualGp)}</strong>
-            <p class="report-cover-commercial-detail">Target ${fmtPercent(state.targetGp)} • ${calc.gpGap > 0 ? `${calc.gpGap.toFixed(1)} point gap` : 'Target achieved'}</p>
+          <div>
+            <span class="report-cover-commercial-label">Executive summary</span>
+            <p class="report-cover-commercial-detail">${safe(narrative.executiveSummary) || 'No executive summary generated yet.'}</p>
           </div>
         </div>
         <div class="report-cover-pill-row">
-          <div class="report-cover-pill">${safe(state.auditType) || 'Operational audit'}</div>
+          <div class="report-cover-pill">${safe(state.auditType) || 'Kitchen Profit Audit'}</div>
           <div class="report-cover-pill">${scoreLabel(calc.score)}</div>
           <div class="report-cover-pill">${calc.totalNamedActions} action${calc.totalNamedActions === 1 ? '' : 's'} logged</div>
-        </div>
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Site and trading profile</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-cover-stat-grid">
-          ${coverStatCard('Service style', safe(state.serviceStyle) || 'Not recorded')}
-          ${coverStatCard('Trading days', safe(state.tradingDays) || 'Not recorded')}
-          ${coverStatCard('Covers per week', state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded')}
-          ${coverStatCard('Average spend', state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded')}
-          ${coverStatCard('Kitchen team size', state.kitchenTeamSize > 0 ? String(state.kitchenTeamSize) : 'Not recorded')}
-          ${coverStatCard('Main supplier', safe(state.mainSupplier) || 'Not recorded')}
-          ${coverStatCard('Allergen confidence', safe(state.allergenConfidence) || 'Not recorded')}
-          ${coverStatCard('Equipment condition', safe(state.equipmentCondition) || 'Not recorded')}
         </div>
       </div>
 
@@ -741,13 +558,28 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         <div class="report-cover-divider"></div>
         <div class="report-cover-stat-grid">
           ${coverStatCard('Weekly food sales', fmtCurrency(state.weeklySales))}
-          ${coverStatCard('Weekly food cost', fmtCurrency(state.weeklyFoodCost))}
-          ${coverStatCard('Target GP', fmtPercent(state.targetGp))}
-          ${coverStatCard('Waste % of sales', fmtPercent(calc.wastePercent))}
-          ${coverStatCard('Estimated sales from covers', calc.estimatedWeeklySales > 0 ? fmtCurrency(calc.estimatedWeeklySales) : 'Not available')}
           ${coverStatCard('Actual GP', fmtPercent(calc.actualGp))}
-          ${coverStatCard('Waste value', fmtCurrency(state.actualWasteValue))}
-          ${coverStatCard('Kitchen labour %', fmtPercent(state.labourPercent))}
+          ${coverStatCard('Target GP', fmtPercent(state.targetGp))}
+          ${coverStatCard('GP opportunity', fmtCurrency(calc.gpOpportunityValue))}
+          ${coverStatCard('Weekly waste loss', fmtCurrency(calc.weeklyWasteLoss))}
+          ${coverStatCard('Annual waste loss', fmtCurrency(calc.annualWasteLoss))}
+          ${coverStatCard('Labour opportunity', fmtCurrency(calc.labourOpportunityValue))}
+          ${coverStatCard('Portion opportunity', fmtCurrency(calc.totalPortionLoss))}
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Trading profile</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-cover-stat-grid">
+          ${coverStatCard('Service style', safe(state.serviceStyle) || 'Not recorded')}
+          ${coverStatCard('Trading days', safe(state.tradingDays) || 'Not recorded')}
+          ${coverStatCard('Covers per week', state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded')}
+          ${coverStatCard('Average spend', state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded')}
+          ${coverStatCard('Kitchen team size', state.kitchenTeamSize > 0 ? String(state.kitchenTeamSize) : 'Not recorded')}
+          ${coverStatCard('Target labour %', fmtPercent(state.targetLabourPercent))}
+          ${coverStatCard('Current labour %', fmtPercent(state.labourPercent))}
+          ${coverStatCard('Control compliance', `${Math.round(calc.controlScore)}%`)}
         </div>
       </div>
     </div>
@@ -756,63 +588,34 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const scorecardPageHtml = `
     <div class="report-page-block">
       <div class="report-cover-block">
-        <div class="report-cover-heading">Operational scorecard</div>
+        <div class="report-cover-heading">Commercial snapshot and key issues</div>
         <div class="report-cover-divider"></div>
         <div class="report-cover-stat-grid">
-          ${scoreEntries
-            .map(([label, value]) => coverStatCard(String(label), `${num(value).toFixed(1)}/10`))
-            .join('')}
-          ${coverStatCard('Average operating score', `${calc.operationsAverage.toFixed(1)}/10`)}
-          ${coverStatCard('Actual GP', fmtPercent(calc.actualGp))}
-          ${coverStatCard('Control compliance', `${Math.round(calc.controlScore)}%`)}
-          ${coverStatCard('Hygiene risk', state.hygieneRisk)}
+          ${coverStatCard('GP gap', calc.gpGap > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'On target')}
+          ${coverStatCard('Waste % of sales', fmtPercent(calc.wastePercent))}
+          ${coverStatCard('Operations score', `${calc.operationsAverage.toFixed(1)}/10`)}
+          ${coverStatCard('Critical control gaps', String(calc.criticalMissingControls))}
         </div>
+        ${listHtml(narrative.keyIssues, 'No key issues generated yet.')}
       </div>
 
       <div class="report-cover-block">
-        <div class="report-cover-heading">Detailed findings</div>
+        <div class="report-cover-heading">Immediate quick wins and 30–90 day action plan</div>
         <div class="report-cover-divider"></div>
         <div class="report-story-grid">
-          ${storyCard('Detailed findings', listHtml(detailedFindings, 'No detailed findings recorded.'))}
+          ${storyCard('Immediate quick wins', listHtml(narrative.quickWins, 'No quick wins generated yet.'))}
+          ${storyCard('30–90 day action plan', listHtml(narrative.actionPlan30To90Days, 'No action plan generated yet.'))}
+          ${storyCard('Cost control', listHtml(detailedFindings, 'No detailed findings recorded.'))}
           ${storyCard(
-            'Waste findings',
-            state.wasteItems.some((item) => hasContent(item))
-              ? repeatSection(
-                  'Waste findings',
-                  state.wasteItems,
-                  (item) =>
-                    `<li><strong>${safe(item.item) || 'Unspecified item'}</strong>${
-                      num(item.cost) > 0 ? ` • Estimated impact: ${fmtCurrency(num(item.cost))}` : ''
-                    }<br />Cause: ${safe(item.cause) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-                  'No waste findings recorded.'
-                ).replace('<h3>Waste findings</h3>', '')
-              : '<p class="muted-copy">No waste findings recorded.</p>'
-          )}
-          ${storyCard(
-            'Over-portioning findings',
-            state.portionItems.some((item) => hasContent(item))
-              ? repeatSection(
-                  'Over-portioning findings',
-                  state.portionItems,
-                  (item) =>
-                    `<li><strong>${safe(item.dish) || 'Unspecified dish'}</strong>${
-                      num(item.loss) > 0 ? ` • Estimated weekly loss: ${fmtCurrency(num(item.loss))}` : ''
-                    }<br />Issue: ${safe(item.issue) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-                  'No over-portioning findings recorded.'
-                ).replace('<h3>Over-portioning findings</h3>', '')
-              : '<p class="muted-copy">No over-portioning findings recorded.</p>'
-          )}
-          ${storyCard(
-            'Ordering and stock-control findings',
-            state.orderingItems.some((item) => hasContent(item))
-              ? repeatSection(
-                  'Ordering and stock-control findings',
-                  state.orderingItems,
-                  (item) =>
-                    `<li><strong>${safe(item.category) || 'Unspecified category'}</strong><br />Problem: ${safe(item.problem) || 'Not recorded'}<br />Commercial impact: ${safe(item.impact) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-                  'No ordering issues recorded.'
-                ).replace('<h3>Ordering and stock-control findings</h3>', '')
-              : '<p class="muted-copy">No ordering issues recorded.</p>'
+            'Operations, people, and accountability',
+            listHtml(
+              [
+                safe(state.systems) ? `Systems: ${safe(state.systems)}` : '',
+                safe(state.cultureLeadership) ? `People: ${safe(state.cultureLeadership)}` : '',
+                safe(state.foodQuality) ? `Food and offer: ${safe(state.foodQuality)}` : ''
+              ].filter(Boolean),
+              'No additional observations recorded.'
+            )
           )}
         </div>
       </div>
@@ -838,7 +641,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
                 <th>Category</th>
                 <th>Control</th>
                 <th>Status</th>
-                <th>Audit note</th>
+                <th>What is happening and why?</th>
               </tr>
             </thead>
             <tbody>
@@ -865,30 +668,48 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     <div class="report-page-block report-page-block-final">
       ${controlsPageHtml}
       <div class="report-cover-block">
-        <div class="report-cover-heading">Kitchen layout review</div>
+        <div class="report-cover-heading">Detailed findings</div>
         <div class="report-cover-divider"></div>
         <div class="report-story-grid">
           ${storyCard(
-            'Strengths',
-            `<p>${safe(state.layoutStrengths) || '<span class="muted-copy">No strengths recorded.</span>'}</p>`
+            'Cost control',
+            state.wasteItems.some((item) => hasContent(item))
+              ? repeatSection(
+                  'Cost control',
+                  state.wasteItems,
+                  (item) =>
+                    `<li><strong>${safe(item.item) || 'Unspecified item'}</strong>${
+                      num(item.cost) > 0 ? ` • ${fmtCurrency(num(item.cost))} per week` : ''
+                    }<br />What is happening and why? ${safe(item.cause) || 'Not recorded'}<br />What needs to change immediately? ${safe(item.fix) || 'Not recorded'}</li>`,
+                  'No cost-control findings recorded.'
+                ).replace('<h3>Cost control</h3>', '')
+              : '<p class="muted-copy">No cost-control findings recorded.</p>'
           )}
           ${storyCard(
-            'Issues',
-            `<p>${safe(state.layoutIssues) || '<span class="muted-copy">No issues recorded.</span>'}</p>`
+            'Operations',
+            state.orderingItems.some((item) => hasContent(item))
+              ? repeatSection(
+                  'Operations',
+                  state.orderingItems,
+                  (item) =>
+                    `<li><strong>${safe(item.category) || 'Unspecified category'}</strong><br />What is happening and why? ${safe(item.problem) || 'Not recorded'}<br />Commercial impact: ${safe(item.impact) || 'Not recorded'}<br />What needs to change immediately? ${safe(item.fix) || 'Not recorded'}</li>`,
+                  'No operations findings recorded.'
+                ).replace('<h3>Operations</h3>', '')
+              : `<p>${safe(state.layoutIssues) || '<span class="muted-copy">No operations findings recorded.</span>'}</p>`
           )}
           ${storyCard(
-            'Kitchen and specs requirements',
-            `<p>${safe(state.equipmentNeeds) || '<span class="muted-copy">No equipment recommendations recorded.</span>'}</p>`
+            'People',
+            `<p>${safe(state.cultureLeadership) || '<span class="muted-copy">No people findings recorded.</span>'}</p>`
           )}
           ${storyCard(
-            'Commercial impact',
-            `<p>${safe(state.layoutImpact) || '<span class="muted-copy">No commercial impact recorded.</span>'}</p>`
+            'Compliance',
+            `<p>${safe(state.equipmentNeeds) || '<span class="muted-copy">No compliance findings recorded.</span>'}</p>`
           )}
         </div>
       </div>
 
       <div class="report-cover-block">
-        <div class="report-cover-heading">Prioritised action plan</div>
+        <div class="report-cover-heading">Action plan</div>
         <div class="report-cover-divider"></div>
         ${listHtml(priorityActions, 'No action plan recorded.')}
       </div>
@@ -932,23 +753,12 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       </div>
 
       <div class="report-cover-block">
-        <div class="report-cover-heading">Immediate quick wins</div>
-        <div class="report-cover-divider"></div>
-        ${listHtml(quickWins, 'No quick wins recorded.')}
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Long-term improvement strategy</div>
-        <div class="report-cover-divider"></div>
-        ${listHtml(longTerm, 'No long-term strategy recorded.')}
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Recommended follow-up</div>
+        <div class="report-cover-heading">Follow-up recommendation</div>
         <div class="report-cover-divider"></div>
         <p>${
           safe(state.nextVisit) ||
-          'Suggested next step: schedule a follow-up visit within 2 to 4 weeks to review progress and reset priorities.'
+          safe(narrative.followUpRecommendation) ||
+          'Suggested next step: schedule a follow-up visit within 30 days to review delivery against the action plan.'
         }</p>
       </div>
     </div>
@@ -1078,17 +888,17 @@ function buildAuditInsights(
     });
   }
 
-  if (form.labourPercent >= 30) {
+  if (calc.labourOpportunityValue > 0 && form.labourPercent >= form.targetLabourPercent + 6) {
     insights.push({
       tone: 'danger',
-      title: `Labour pressure at ${fmtPercent(form.labourPercent)}`,
-      detail: 'Review layout, prep flow, staffing patterns, and kitchen discipline.'
+      title: `Labour is above target by ${fmtPercent(form.labourPercent - form.targetLabourPercent)}`,
+      detail: 'Labour deployment appears inefficient and is now a direct commercial opportunity.'
     });
-  } else if (form.labourPercent > 0 && form.labourPercent >= 24) {
+  } else if (calc.labourOpportunityValue > 0) {
     insights.push({
       tone: 'warning',
-      title: 'Labour is worth watching',
-      detail: 'Use the audit to test whether layout and systems are making labour heavier than it should be.'
+      title: 'Labour is above target',
+      detail: 'Use the audit to isolate where flow, prep, or staffing discipline is inflating wage spend.'
     });
   }
 
@@ -1691,9 +1501,9 @@ export function KitchenAuditPage() {
   return (
     <div className="page-stack">
       <PageIntro
-        eyebrow="Audit tool"
-        title="Kitchen performance audit"
-        description="Capture findings quickly, keep the visit structured, and build the report as you work instead of rewriting everything afterwards."
+        eyebrow="Kitchen Profit Audit"
+        title="We identify £2k–£10k per week in hidden profit"
+        description="Capture the commercial leaks, quantify the weekly opportunity, and generate a premium consultancy report while you are still onsite."
         actions={
           <>
             <button className="button button-secondary" onClick={newAudit}>
@@ -1745,36 +1555,36 @@ export function KitchenAuditPage() {
 
       <section className="stats-grid">
         <StatCard
-          label="Actual GP"
-          value={fmtPercent(calc.actualGp)}
-          hint="Calculated from sales and food cost"
+          label="Total weekly opportunity"
+          value={fmtCurrency(calc.totalWeeklyOpportunity)}
+          hint="Combined GP, waste, labour, and portion opportunity"
         />
         <StatCard
-          label="Waste %"
-          value={fmtPercent(calc.wastePercent)}
-          hint="Waste value as % of weekly sales"
+          label="Annual opportunity"
+          value={fmtCurrency(calc.totalAnnualOpportunity)}
+          hint="Projected annualised recovery value"
         />
         <StatCard
-          label="Ops score"
-          value={`${calc.operationsAverage.toFixed(1)}/10`}
-          hint="Average across the structured scorecard"
+          label="GP opportunity"
+          value={fmtCurrency(calc.gpOpportunityValue)}
+          hint="Weekly opportunity from the GP gap"
         />
         <StatCard
-          label="Controls"
+          label="Labour opportunity"
+          value={fmtCurrency(calc.labourOpportunityValue)}
+          hint={
+            form.labourPercent > form.targetLabourPercent
+              ? `${fmtPercent(form.labourPercent)} vs ${fmtPercent(form.targetLabourPercent)} target`
+              : 'No labour variance currently showing'
+          }
+        />
+        <StatCard
+          label="Control compliance"
           value={`${Math.round(calc.controlScore)}%`}
           hint={
             calc.criticalMissingControls > 0
               ? `${calc.criticalMissingControls} critical controls missing`
-              : 'Compliance across the control register'
-          }
-        />
-        <StatCard
-          label="Action plan"
-          value={String(calc.totalNamedActions)}
-          hint={
-            calc.gpOpportunityValue > 0
-              ? `${fmtCurrency(calc.gpOpportunityValue)} weekly GP opportunity`
-              : 'Structured actions captured from the visit'
+              : `${calc.totalNamedActions} structured actions recorded`
           }
         />
       </section>
@@ -1784,9 +1594,9 @@ export function KitchenAuditPage() {
           <div className="panel">
             <div className="panel-header">
               <div>
-                <h3>Audit input</h3>
+                <h3>Profit audit input</h3>
                 <p className="muted-copy">
-                  Work section by section and keep the most important parts of the visit structured.
+                  Work section by section and turn kitchen observations into a quantified commercial case.
                 </p>
               </div>
             </div>
@@ -1899,15 +1709,15 @@ export function KitchenAuditPage() {
                   ) : null}
 
                   <label className="field">
-                    <span>Audit type</span>
+                    <span>Review type</span>
                     <select
                       className="input"
                       value={form.auditType}
                       onChange={(e) => updateField('auditType', e.target.value)}
                     >
-                      <option>Operational Audit</option>
-                      <option>Menu & GP Review</option>
-                      <option>Kitchen Layout Review</option>
+                      <option>Kitchen Profit Audit</option>
+                      <option>Menu & GP Recovery Review</option>
+                      <option>Kitchen Efficiency Review</option>
                       <option>New Opening Support</option>
                       <option>Chef Mentoring Visit</option>
                     </select>
@@ -2041,7 +1851,7 @@ export function KitchenAuditPage() {
 
               <section className="sub-panel" id="audit-commercial">
                 <div className="sub-panel-header">
-                  <h4>Commercial snapshot</h4>
+                  <h4>Commercial opportunity snapshot</h4>
                   <span className="soft-pill">Profit and control</span>
                 </div>
 
@@ -2074,7 +1884,7 @@ export function KitchenAuditPage() {
                     />
                   </label>
                   <label className="field">
-                    <span>Weekly waste (£)</span>
+                    <span>Weekly waste loss (£)</span>
                     <input
                       className="input"
                       type="number"
@@ -2083,12 +1893,21 @@ export function KitchenAuditPage() {
                     />
                   </label>
                   <label className="field">
-                    <span>Kitchen labour %</span>
+                    <span>Current labour %</span>
                     <input
                       className="input"
                       type="number"
                       value={form.labourPercent}
                       onChange={(e) => updateField('labourPercent', num(e.target.value))}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Target labour %</span>
+                    <input
+                      className="input"
+                      type="number"
+                      value={form.targetLabourPercent}
+                      onChange={(e) => updateField('targetLabourPercent', num(e.target.value))}
                     />
                   </label>
                   <label className="field">
@@ -2116,7 +1935,7 @@ export function KitchenAuditPage() {
                     <span>
                       {form.weeklySales > 0
                         ? calc.gpGap > 0
-                          ? `${calc.gpGap.toFixed(1)} points below target`
+                          ? `${fmtCurrency(calc.gpOpportunityValue)} per week below target`
                           : 'On or above target'
                         : 'Awaiting numbers'}
                     </span>
@@ -2125,7 +1944,7 @@ export function KitchenAuditPage() {
                     <strong>Waste reading</strong>
                     <span>
                       {form.actualWasteValue > 0
-                        ? `${fmtCurrency(form.actualWasteValue)} per week`
+                        ? `${fmtCurrency(form.actualWasteValue)} per week • ${fmtCurrency(calc.annualWasteLoss)} per year`
                         : 'No waste value logged'}
                     </span>
                   </div>
@@ -2133,16 +1952,16 @@ export function KitchenAuditPage() {
                     <strong>Labour reading</strong>
                     <span>
                       {form.labourPercent > 0
-                        ? `${fmtPercent(form.labourPercent)} kitchen labour`
+                        ? `${fmtPercent(form.labourPercent)} vs ${fmtPercent(form.targetLabourPercent)} target`
                         : 'No labour data logged'}
                     </span>
                   </div>
                   <div className="audit-chip">
-                    <strong>Sales estimate</strong>
+                    <strong>Total identified</strong>
                     <span>
-                      {calc.estimatedWeeklySales > 0
-                        ? fmtCurrency(calc.estimatedWeeklySales)
-                        : 'Add covers and spend'}
+                      {calc.totalWeeklyOpportunity > 0
+                        ? `${fmtCurrency(calc.totalWeeklyOpportunity)} per week`
+                        : 'Add commercial inputs'}
                     </span>
                   </div>
                 </div>
@@ -2243,7 +2062,7 @@ export function KitchenAuditPage() {
                       </label>
 
                       <label className="field">
-                        <span>Audit note</span>
+                        <span>What is happening and why?</span>
                         <textarea
                           className="input textarea"
                           value={item.note}
@@ -2257,7 +2076,7 @@ export function KitchenAuditPage() {
 
               <section className="sub-panel" id="audit-observations">
                 <div className="sub-panel-header">
-                  <h4>Operational observations</h4>
+                  <h4>Consultancy narrative</h4>
                   <span className="soft-pill">Quality and systems</span>
                 </div>
                 <div className="form-grid two-columns">
@@ -2276,7 +2095,7 @@ export function KitchenAuditPage() {
 
               <section className="sub-panel" id="audit-waste">
                 <div className="sub-panel-header">
-                  <h4>Waste findings</h4>
+                  <h4>Where is money being lost?</h4>
                   <button
                     className="button button-secondary"
                     onClick={() => addRepeatItem('wasteItems')}
@@ -2288,7 +2107,7 @@ export function KitchenAuditPage() {
                   {form.wasteItems.map((item) => (
                     <div className="repeat-card" key={item.id}>
                       <div className="repeat-header">
-                        <strong>{safe(item.item) || 'Waste record'}</strong>
+                        <strong>{safe(item.item) || 'Waste loss area'}</strong>
                         <button
                           className="button button-ghost"
                           onClick={() => removeRepeatItem('wasteItems', item.id)}
@@ -2298,7 +2117,7 @@ export function KitchenAuditPage() {
                       </div>
                       <div className="form-grid">
                         <label className="field">
-                          <span>Item or area</span>
+                          <span>Where is money being lost?</span>
                           <input
                             className="input"
                             value={item.item}
@@ -2313,7 +2132,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Estimated impact (£)</span>
+                          <span>Weekly loss (£)</span>
                           <input
                             className="input"
                             type="number"
@@ -2329,7 +2148,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Cause</span>
+                          <span>What is happening and why?</span>
                           <input
                             className="input"
                             value={item.cause}
@@ -2344,7 +2163,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Recommended fix</span>
+                          <span>What needs to change immediately?</span>
                           <input
                             className="input"
                             value={item.fix}
@@ -2366,7 +2185,7 @@ export function KitchenAuditPage() {
 
               <section className="sub-panel" id="audit-portion">
                 <div className="sub-panel-header">
-                  <h4>Over-portioning findings</h4>
+                  <h4>Which dishes are over-portioning and costing profit?</h4>
                   <button
                     className="button button-secondary"
                     onClick={() => addRepeatItem('portionItems')}
@@ -2378,7 +2197,7 @@ export function KitchenAuditPage() {
                   {form.portionItems.map((item) => (
                     <div className="repeat-card" key={item.id}>
                       <div className="repeat-header">
-                        <strong>{safe(item.dish) || 'Portioning record'}</strong>
+                        <strong>{safe(item.dish) || 'Dish margin leak'}</strong>
                         <button
                           className="button button-ghost"
                           onClick={() => removeRepeatItem('portionItems', item.id)}
@@ -2419,7 +2238,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Issue</span>
+                          <span>What is happening and why?</span>
                           <input
                             className="input"
                             value={item.issue}
@@ -2434,7 +2253,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Recommended fix</span>
+                          <span>What needs to change immediately?</span>
                           <input
                             className="input"
                             value={item.fix}
@@ -2456,7 +2275,7 @@ export function KitchenAuditPage() {
 
               <section className="sub-panel" id="audit-ordering">
                 <div className="sub-panel-header">
-                  <h4>Ordering and stock-control findings</h4>
+                  <h4>Where is ordering creating waste or inefficiency?</h4>
                   <button
                     className="button button-secondary"
                     onClick={() => addRepeatItem('orderingItems')}
@@ -2468,7 +2287,7 @@ export function KitchenAuditPage() {
                   {form.orderingItems.map((item) => (
                     <div className="repeat-card" key={item.id}>
                       <div className="repeat-header">
-                        <strong>{safe(item.category) || 'Ordering record'}</strong>
+                        <strong>{safe(item.category) || 'Ordering issue'}</strong>
                         <button
                           className="button button-ghost"
                           onClick={() => removeRepeatItem('orderingItems', item.id)}
@@ -2493,7 +2312,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Problem</span>
+                          <span>What is happening and why?</span>
                           <input
                             className="input"
                             value={item.problem}
@@ -2523,7 +2342,7 @@ export function KitchenAuditPage() {
                           />
                         </label>
                         <label className="field">
-                          <span>Recommended fix</span>
+                          <span>What needs to change immediately?</span>
                           <input
                             className="input"
                             value={item.fix}
@@ -2685,7 +2504,7 @@ export function KitchenAuditPage() {
           <div className="drawer-panel" onClick={e => e.stopPropagation()}>
             <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
-                <h2 style={{fontSize: '24px', fontWeight: 700}}>Audit Control Panel</h2>
+                <h2 style={{fontSize: '24px', fontWeight: 700}}>Profit Audit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
                   Close ✕
                 </button>
@@ -2727,7 +2546,7 @@ export function KitchenAuditPage() {
 
               <div className="audit-side-block" style={{marginTop: '24px'}}>
                 <div className="audit-side-title-row">
-                  <h4>Consultancy snapshot</h4>
+                  <h4>Profit snapshot</h4>
                 </div>
                 <div className="audit-chip-row audit-chip-row-vertical">
                   <div className="audit-chip">
@@ -2752,11 +2571,11 @@ export function KitchenAuditPage() {
                     </span>
                   </div>
                   <div className="audit-chip">
-                    <strong>Potential GP gain</strong>
+                    <strong>Total opportunity identified</strong>
                     <span>
-                      {calc.gpOpportunityValue > 0
-                        ? `${fmtCurrency(calc.gpOpportunityValue)} weekly opportunity`
-                        : 'No GP gap currently showing'}
+                      {calc.totalWeeklyOpportunity > 0
+                        ? `${fmtCurrency(calc.totalWeeklyOpportunity)} per week`
+                        : 'No commercial opportunity currently showing'}
                     </span>
                   </div>
                 </div>
@@ -2774,7 +2593,7 @@ export function KitchenAuditPage() {
           padding: '0 24px',
           boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
         }} onClick={() => setControlModalOpen(true)}>
-          📊 Audit Controls
+          Profit Controls
         </button>
       </div>
 
