@@ -12,15 +12,16 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
       display: 'grid',
       placeItems: 'center',
       gap: '10px',
-      padding: '28px 12px',
+      padding: '0px 12px',
       textAlign: 'center',
-      minHeight: '112px',
+      height: '116px',
       width: '100%',
       background: 'var(--surface-card)',
       border: '1px solid var(--line)',
       borderRadius: '26px',
       boxShadow: 'var(--shadow-soft)',
-      transition: 'all 0.22s ease'
+      transition: 'all 0.22s ease',
+      boxSizing: 'border-box'
     }}>
       <div style={{
         width: '52px',
