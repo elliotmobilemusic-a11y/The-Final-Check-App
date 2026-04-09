@@ -433,342 +433,364 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     detailedFindings.push(`<strong>Systems and controls:</strong> ${safe(state.systems)}`);
   }
 
-  const priorityActions = lines(state.priorityActions).length
-    ? lines(state.priorityActions)
-    : [
-        state.targetGp > calc.actualGp
-          ? 'Close the GP gap by standardising recipe specs, checking menu pricing, and tightening portion control.'
-          : '',
-        state.actualWasteValue > 0
-          ? 'Implement a daily waste-recording routine and review the top categories every week.'
-          : '',
-        state.portionItems.some((item) => safe(item.dish))
-          ? 'Introduce measured portion tools, recipe cards, and line training on dishes where over-portioning was observed.'
-          : '',
-        state.orderingItems.some((item) => safe(item.category))
-          ? 'Reset ordering control with par levels, delivery-day discipline, and clear ownership.'
-          : '',
-        safe(state.layoutIssues)
-          ? 'Address kitchen layout bottlenecks that slow service, increase motion, or reduce consistency.'
-          : '',
-        'Build a 30-day action plan with owners and weekly review points.'
-      ].filter(Boolean);
+  const narrative = buildKitchenProfitNarrative(state, calc);
 
-  const quickWins = lines(state.quickWins).length
-    ? lines(state.quickWins)
-    : [
-        state.actualWasteValue > 0 ? 'Start a daily waste sheet immediately.' : '',
-        state.portionItems.some((item) => safe(item.dish))
-          ? 'Add scales, scoops, or ladles to stations with inconsistent portions.'
-          : '',
-        state.orderingItems.some((item) => safe(item.category))
-          ? 'Reduce order quantities to realistic par levels for the next delivery cycle.'
-          : '',
-        'Brief the kitchen team on the top three profit leaks found during the visit.'
-      ].filter(Boolean);
-
-  const longTerm = lines(state.longTermStrategy).length
-    ? lines(state.longTermStrategy)
-    : [
-        'Complete a menu-engineering review to align offer, pricing, and margin performance.',
-        'Develop recipe packs and costed build sheets for the full menu.',
-        'Create a chef development plan focused on leadership, control, and consistency.',
-        safe(state.layoutIssues)
-          ? 'Plan a phased kitchen layout improvement project to improve flow and efficiency.'
-          : ''
-      ].filter(Boolean);
-
-  const repeatSection = <T extends object>(
-    title: string,
-    items: T[],
-    formatter: (item: T) => string,
-    emptyText: string
-  ) => {
-    const filtered = items.filter((item) =>
-      Object.values(item).some((value) => safe(value == null ? '' : String(value)).length)
-    );
-
-    if (!filtered.length) {
-      return `<h3>${title}</h3><p class="muted-copy">${emptyText}</p>`;
-    }
-
-    return `<h3>${title}</h3><ul>${filtered.map(formatter).join('')}</ul>`;
+  const hasMeaningfulText = (value: unknown) => {
+    const text = safe(value);
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    return ![
+      'not recorded',
+      'not set',
+      'no note recorded',
+      'no impact note',
+      'untitled action',
+      'unnamed control',
+      'general',
+      'unspecified item',
+      'unspecified category'
+    ].includes(lower);
   };
 
-  const hasContent = (item: object) =>
-    Object.values(item).some((value) => safe(value == null ? '' : String(value)).length);
+  const cleanLines = (items: string[]) => items.filter((item) => hasMeaningfulText(item));
 
-  const coverMiniCard = (label: string, value: string) => `
-    <div class="report-cover-mini-card">
-      <span class="report-cover-mini-label">${label}</span>
-      <strong class="report-cover-mini-value">${value}</strong>
+  const reportList = (items: string[]) =>
+    cleanLines(items).length
+      ? `<ul>${cleanLines(items).map((item) => `<li>${item}</li>`).join('')}</ul>`
+      : '';
+
+  const storyCard = (title: string, content: string) =>
+    content
+      ? `
+    <div class="report-story-card">
+      <h3>${title}</h3>
+      ${content}
     </div>
-  `;
+  `
+      : '';
 
-  const coverStatCard = (label: string, value: string) => `
-    <div class="report-cover-stat-card">
+  const metricCard = (label: string, value: string, tone: 'default' | 'primary' = 'default') => `
+    <div class="report-metric-card report-metric-card-${tone}">
       <span>${label}</span>
       <strong>${value}</strong>
     </div>
   `;
 
-  const storyCard = (title: string, content: string) => `
-    <div class="report-story-card">
-      <h3>${title}</h3>
-      ${content}
-    </div>
-  `;
+  const pageSection = (title: string, body: string) =>
+    body
+      ? `
+    <section class="report-editorial-section">
+      <h2 class="report-section-heading">${title}</h2>
+      ${body}
+    </section>
+  `
+      : '';
 
-  const narrative = buildKitchenProfitNarrative(state, calc);
+  const repeatRows = <T extends object>(items: T[], formatter: (item: T) => string) =>
+    items
+      .filter((item) => Object.values(item).some((value) => hasMeaningfulText(value)))
+      .map(formatter)
+      .join('');
+
+  const supportMetrics = [
+    calc.gpOpportunityValue > 0 ? metricCard('GP opportunity', fmtCurrency(calc.gpOpportunityValue)) : '',
+    calc.weeklyWasteLoss > 0 ? metricCard('Waste loss', fmtCurrency(calc.weeklyWasteLoss)) : '',
+    calc.labourOpportunityValue > 0 ? metricCard('Labour opportunity', fmtCurrency(calc.labourOpportunityValue)) : '',
+    calc.totalPortionLoss > 0 ? metricCard('Portion opportunity', fmtCurrency(calc.totalPortionLoss)) : '',
+    calc.controlScore > 0 ? metricCard('Control compliance', `${Math.round(calc.controlScore)}%`) : ''
+  ]
+    .filter(Boolean)
+    .slice(0, 3)
+    .join('');
+
+  const keyIssueList = reportList(narrative.keyIssues);
+  const quickWinList = reportList(lines(state.quickWins).length ? lines(state.quickWins) : narrative.quickWins);
+  const priorityActionList = reportList(
+    lines(state.priorityActions).length
+      ? lines(state.priorityActions)
+      : narrative.actionPlan30To90Days
+  );
+  const longTermList = reportList(lines(state.longTermStrategy));
+
+  const costControlRows = repeatRows(
+    state.wasteItems,
+    (item) => `<tr>
+      <td>${safe(item.item)}</td>
+      <td>${num(item.cost) > 0 ? fmtCurrency(num(item.cost)) : ''}</td>
+      <td>${hasMeaningfulText(item.cause) ? safe(item.cause) : ''}</td>
+      <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+    </tr>`
+  );
+
+  const portionRows = repeatRows(
+    state.portionItems,
+    (item) => `<tr>
+      <td>${safe(item.dish)}</td>
+      <td>${num(item.loss) > 0 ? fmtCurrency(num(item.loss)) : ''}</td>
+      <td>${hasMeaningfulText(item.issue) ? safe(item.issue) : ''}</td>
+      <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+    </tr>`
+  );
+
+  const operationsRows = repeatRows(
+    state.orderingItems,
+    (item) => `<tr>
+      <td>${safe(item.category)}</td>
+      <td>${hasMeaningfulText(item.problem) ? safe(item.problem) : ''}</td>
+      <td>${hasMeaningfulText(item.impact) ? safe(item.impact) : ''}</td>
+      <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+    </tr>`
+  );
+
+  const controlTableRows = controlRows
+    .filter((item) => hasMeaningfulText(item.label) || hasMeaningfulText(item.note))
+    .map(
+      (item) => `<tr>
+        <td>${hasMeaningfulText(item.category) ? safe(item.category) : ''}</td>
+        <td>${hasMeaningfulText(item.label) ? safe(item.label) : ''}</td>
+        <td>${item.status === 'N/A' ? '' : item.status}</td>
+        <td>${hasMeaningfulText(item.note) ? safe(item.note) : ''}</td>
+      </tr>`
+    )
+    .join('');
+
+  const actionTableRows = actionRows
+    .filter((item) => hasMeaningfulText(item.title))
+    .map(
+      (item) => `<tr>
+        <td>${safe(item.title)}</td>
+        <td>${hasMeaningfulText(item.area) ? safe(item.area) : ''}</td>
+        <td>${item.priority}</td>
+        <td>${hasMeaningfulText(item.owner) ? safe(item.owner) : ''}</td>
+        <td>${hasMeaningfulText(item.dueDate) ? safe(item.dueDate) : ''}</td>
+        <td>${item.status === 'Open' ? 'Open' : item.status}</td>
+      </tr>`
+    )
+    .join('');
 
   const coverPageHtml = `
-    <div class="report-cover-page">
-      <div class="report-cover-block">
+    <div class="report-cover-page report-cover-page-minimal">
+      <div class="report-cover-hero">
         <div class="report-label">The Final Check</div>
-        <div class="report-cover-heading">Kitchen Profit Audit</div>
-        <div class="report-cover-divider"></div>
-        <p class="report-muted" style="max-width: 126mm; margin-bottom: 18px;">
-          We identify £2k–£10k per week in hidden profit by exposing waste, margin drift, over-portioning, labour leakage, and weak kitchen controls.
-        </p>
-        <div class="report-cover-stat-grid">
-          ${coverStatCard('Weekly opportunity', fmtCurrency(calc.totalWeeklyOpportunity))}
-          ${coverStatCard('Annual opportunity', fmtCurrency(calc.totalAnnualOpportunity))}
-          ${coverStatCard('Site', safe(state.businessName) || 'Not recorded')}
-          ${coverStatCard('Visit date', formatShortDate(state.visitDate))}
+        <h1 class="report-cover-title">Kitchen Profit Audit</h1>
+        <div class="report-cover-meta">
+          ${hasMeaningfulText(state.businessName) ? `<span>${safe(state.businessName)}</span>` : ''}
+          ${hasMeaningfulText(state.visitDate) ? `<span>${formatShortDate(state.visitDate)}</span>` : ''}
+          ${hasMeaningfulText(state.consultantName) ? `<span>${safe(state.consultantName)}</span>` : ''}
         </div>
-        <div class="report-cover-commercial">
-          <div>
-            <span class="report-cover-commercial-label">Consultant</span>
-            <strong class="report-cover-commercial-value">${safe(state.consultantName) || 'Not recorded'}</strong>
+        <div class="report-kpi-pair">
+          <div class="report-kpi-primary">
+            <span>Weekly opportunity</span>
+            <strong>${fmtCurrency(calc.totalWeeklyOpportunity)}</strong>
           </div>
-          <div>
-            <span class="report-cover-commercial-label">Executive summary</span>
-            <p class="report-cover-commercial-detail">${safe(narrative.executiveSummary) || 'No executive summary generated yet.'}</p>
+          <div class="report-kpi-secondary">
+            <span>Annual opportunity</span>
+            <strong>${fmtCurrency(calc.totalAnnualOpportunity)}</strong>
           </div>
         </div>
-        <div class="report-cover-pill-row">
-          <div class="report-cover-pill">${safe(state.auditType) || 'Kitchen Profit Audit'}</div>
-          <div class="report-cover-pill">${scoreLabel(calc.score)}</div>
-          <div class="report-cover-pill">${calc.totalNamedActions} action${calc.totalNamedActions === 1 ? '' : 's'} logged</div>
-        </div>
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Commercial snapshot</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-cover-stat-grid">
-          ${coverStatCard('Weekly food sales', fmtCurrency(state.weeklySales))}
-          ${coverStatCard('Actual GP', fmtPercent(calc.actualGp))}
-          ${coverStatCard('Target GP', fmtPercent(state.targetGp))}
-          ${coverStatCard('GP opportunity', fmtCurrency(calc.gpOpportunityValue))}
-          ${coverStatCard('Weekly waste loss', fmtCurrency(calc.weeklyWasteLoss))}
-          ${coverStatCard('Annual waste loss', fmtCurrency(calc.annualWasteLoss))}
-          ${coverStatCard('Labour opportunity', fmtCurrency(calc.labourOpportunityValue))}
-          ${coverStatCard('Portion opportunity', fmtCurrency(calc.totalPortionLoss))}
-        </div>
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Trading profile</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-cover-stat-grid">
-          ${coverStatCard('Service style', safe(state.serviceStyle) || 'Not recorded')}
-          ${coverStatCard('Trading days', safe(state.tradingDays) || 'Not recorded')}
-          ${coverStatCard('Covers per week', state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded')}
-          ${coverStatCard('Average spend', state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded')}
-          ${coverStatCard('Kitchen team size', state.kitchenTeamSize > 0 ? String(state.kitchenTeamSize) : 'Not recorded')}
-          ${coverStatCard('Target labour %', fmtPercent(state.targetLabourPercent))}
-          ${coverStatCard('Current labour %', fmtPercent(state.labourPercent))}
-          ${coverStatCard('Control compliance', `${Math.round(calc.controlScore)}%`)}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const scorecardPageHtml = `
-    <div class="report-page-block">
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Commercial snapshot and key issues</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-cover-stat-grid">
-          ${coverStatCard('GP gap', calc.gpGap > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'On target')}
-          ${coverStatCard('Waste % of sales', fmtPercent(calc.wastePercent))}
-          ${coverStatCard('Operations score', `${calc.operationsAverage.toFixed(1)}/10`)}
-          ${coverStatCard('Critical control gaps', String(calc.criticalMissingControls))}
-        </div>
-        ${listHtml(narrative.keyIssues, 'No key issues generated yet.')}
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Immediate quick wins and 30–90 day action plan</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-story-grid">
-          ${storyCard('Immediate quick wins', listHtml(narrative.quickWins, 'No quick wins generated yet.'))}
-          ${storyCard('30–90 day action plan', listHtml(narrative.actionPlan30To90Days, 'No action plan generated yet.'))}
-          ${storyCard('Cost control', listHtml(detailedFindings, 'No detailed findings recorded.'))}
-          ${storyCard(
-            'Operations, people, and accountability',
-            listHtml(
-              [
-                safe(state.systems) ? `Systems: ${safe(state.systems)}` : '',
-                safe(state.cultureLeadership) ? `People: ${safe(state.cultureLeadership)}` : '',
-                safe(state.foodQuality) ? `Food and offer: ${safe(state.foodQuality)}` : ''
-              ].filter(Boolean),
-              'No additional observations recorded.'
-            )
-          )}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const controlsPageHtml = `
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Controls and evidence register</div>
-        <div class="report-cover-divider"></div>
         ${
-          controlRows.length
-            ? `
-          <table class="report-table report-table-compact">
-            <colgroup>
-              <col style="width: 15%" />
-              <col style="width: 40%" />
-              <col style="width: 12%" />
-              <col style="width: 33%" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Control</th>
-                <th>Status</th>
-                <th>What is happening and why?</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${controlRows
-                .map(
-                  (item) => `
-                <tr>
-                  <td>${safe(item.category) || 'General'}</td>
-                  <td><strong>${safe(item.label) || 'Unnamed control'}</strong></td>
-                  <td>${item.status}</td>
-                  <td>${safe(item.note) || 'No note recorded'}</td>
-                </tr>
-              `
-                )
-                .join('')}
-            </tbody>
-          </table>`
-            : '<p class="muted-copy">No control checks recorded.</p>'
+          hasMeaningfulText(narrative.executiveSummary)
+            ? `<p class="report-executive-summary">${safe(narrative.executiveSummary)}</p>`
+            : ''
         }
+        ${supportMetrics ? `<div class="report-support-grid">${supportMetrics}</div>` : ''}
       </div>
+    </div>
+  `;
+
+  const commercialSnapshotHtml = `
+    <div class="report-page-block">
+      ${pageSection(
+        'Commercial Snapshot',
+        `
+          <div class="report-metric-grid report-metric-grid-4">
+            ${metricCard('Weekly food sales', fmtCurrency(state.weeklySales))}
+            ${metricCard('Actual GP', fmtPercent(calc.actualGp))}
+            ${metricCard('Target GP', fmtPercent(state.targetGp))}
+            ${metricCard('GP gap', calc.gpGap > 0 ? `${calc.gpGap.toFixed(1)} pts` : 'On target')}
+            ${calc.weeklyWasteLoss > 0 ? metricCard('Weekly waste loss', fmtCurrency(calc.weeklyWasteLoss)) : ''}
+            ${calc.labourOpportunityValue > 0 ? metricCard('Labour opportunity', fmtCurrency(calc.labourOpportunityValue)) : ''}
+            ${calc.totalPortionLoss > 0 ? metricCard('Portion opportunity', fmtCurrency(calc.totalPortionLoss)) : ''}
+            ${metricCard('Control compliance', `${Math.round(calc.controlScore)}%`)}
+          </div>
+        `
+      )}
+      ${pageSection('Key Issues', keyIssueList)}
+    </div>
   `;
 
   const actionPageHtml = `
-    <div class="report-page-block report-page-block-final">
-      ${controlsPageHtml}
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Detailed findings</div>
-        <div class="report-cover-divider"></div>
-        <div class="report-story-grid">
-          ${storyCard(
-            'Cost control',
-            state.wasteItems.some((item) => hasContent(item))
-              ? repeatSection(
-                  'Cost control',
-                  state.wasteItems,
-                  (item) =>
-                    `<li><strong>${safe(item.item) || 'Unspecified item'}</strong>${
-                      num(item.cost) > 0 ? ` • ${fmtCurrency(num(item.cost))} per week` : ''
-                    }<br />What is happening and why? ${safe(item.cause) || 'Not recorded'}<br />What needs to change immediately? ${safe(item.fix) || 'Not recorded'}</li>`,
-                  'No cost-control findings recorded.'
-                ).replace('<h3>Cost control</h3>', '')
-              : '<p class="muted-copy">No cost-control findings recorded.</p>'
-          )}
-          ${storyCard(
-            'Operations',
-            state.orderingItems.some((item) => hasContent(item))
-              ? repeatSection(
-                  'Operations',
-                  state.orderingItems,
-                  (item) =>
-                    `<li><strong>${safe(item.category) || 'Unspecified category'}</strong><br />What is happening and why? ${safe(item.problem) || 'Not recorded'}<br />Commercial impact: ${safe(item.impact) || 'Not recorded'}<br />What needs to change immediately? ${safe(item.fix) || 'Not recorded'}</li>`,
-                  'No operations findings recorded.'
-                ).replace('<h3>Operations</h3>', '')
-              : `<p>${safe(state.layoutIssues) || '<span class="muted-copy">No operations findings recorded.</span>'}</p>`
-          )}
-          ${storyCard(
-            'People',
-            `<p>${safe(state.cultureLeadership) || '<span class="muted-copy">No people findings recorded.</span>'}</p>`
-          )}
-          ${storyCard(
-            'Compliance',
-            `<p>${safe(state.equipmentNeeds) || '<span class="muted-copy">No compliance findings recorded.</span>'}</p>`
-          )}
-        </div>
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Action plan</div>
-        <div class="report-cover-divider"></div>
-        ${listHtml(priorityActions, 'No action plan recorded.')}
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Structured action register</div>
-        <div class="report-cover-divider"></div>
-        ${
-          actionRows.length
-            ? `
-          <table class="report-table">
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Area</th>
-                <th>Priority</th>
-                <th>Owner</th>
-                <th>Due</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${actionRows
-                .map(
-                  (item) => `
-                <tr>
-                  <td><strong>${safe(item.title) || 'Untitled action'}</strong><br /><span class="muted-copy">${safe(item.impact) || 'No impact note'}</span></td>
-                  <td>${safe(item.area) || 'General'}</td>
-                  <td>${item.priority}</td>
-                  <td>${safe(item.owner) || 'Not assigned'}</td>
-                  <td>${safe(item.dueDate) || 'Not set'}</td>
-                  <td>${item.status}</td>
-                </tr>
-              `
-                )
-                .join('')}
-            </tbody>
-          </table>`
-            : '<p class="muted-copy">No structured actions recorded.</p>'
-        }
-      </div>
-
-      <div class="report-cover-block">
-        <div class="report-cover-heading">Follow-up recommendation</div>
-        <div class="report-cover-divider"></div>
-        <p>${
-          safe(state.nextVisit) ||
-          safe(narrative.followUpRecommendation) ||
-          'Suggested next step: schedule a follow-up visit within 30 days to review delivery against the action plan.'
-        }</p>
-      </div>
+    <div class="report-page-block report-page-block-action">
+      ${pageSection(
+        'Immediate Quick Wins',
+        quickWinList
+      )}
+      ${pageSection(
+        '30–90 Day Action Plan',
+        priorityActionList
+      )}
+      ${pageSection(
+        'Follow-Up Recommendation',
+        hasMeaningfulText(state.nextVisit) || hasMeaningfulText(narrative.followUpRecommendation)
+          ? `<p>${safe(state.nextVisit) || safe(narrative.followUpRecommendation)}</p>`
+          : ''
+      )}
+      ${pageSection('Longer-Term Recommendations', longTermList)}
     </div>
   `;
 
-  return `
-    ${coverPageHtml}
-    ${scorecardPageHtml}
-    ${actionPageHtml}
-  `;
+  const detailedPages: string[] = [];
+
+  if (costControlRows || portionRows) {
+    detailedPages.push(`
+      <div class="report-page-block">
+        ${pageSection(
+          'Cost Control',
+          `
+            ${costControlRows ? `
+              <table class="report-table report-table-tight">
+                <colgroup>
+                  <col style="width: 24%" />
+                  <col style="width: 14%" />
+                  <col style="width: 31%" />
+                  <col style="width: 31%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Loss Area</th>
+                    <th>Weekly Loss</th>
+                    <th>What Is Happening and Why?</th>
+                    <th>What Needs to Change Immediately?</th>
+                  </tr>
+                </thead>
+                <tbody>${costControlRows}</tbody>
+              </table>
+            ` : ''}
+            ${portionRows ? `
+              <table class="report-table report-table-tight">
+                <colgroup>
+                  <col style="width: 24%" />
+                  <col style="width: 14%" />
+                  <col style="width: 31%" />
+                  <col style="width: 31%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Dish</th>
+                    <th>Weekly Loss</th>
+                    <th>What Is Happening and Why?</th>
+                    <th>What Needs to Change Immediately?</th>
+                  </tr>
+                </thead>
+                <tbody>${portionRows}</tbody>
+              </table>
+            ` : ''}
+          `
+        )}
+      </div>
+    `);
+  }
+
+  if (operationsRows || hasMeaningfulText(state.systems) || hasMeaningfulText(state.layoutIssues) || hasMeaningfulText(state.cultureLeadership) || hasMeaningfulText(state.equipmentNeeds)) {
+    detailedPages.push(`
+      <div class="report-page-block">
+        ${pageSection(
+          'Operations, People, and Compliance',
+          `
+            ${operationsRows ? `
+              <table class="report-table report-table-tight">
+                <colgroup>
+                  <col style="width: 18%" />
+                  <col style="width: 30%" />
+                  <col style="width: 26%" />
+                  <col style="width: 26%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Area</th>
+                    <th>What Is Happening and Why?</th>
+                    <th>Commercial Impact</th>
+                    <th>Immediate Change</th>
+                  </tr>
+                </thead>
+                <tbody>${operationsRows}</tbody>
+              </table>
+            ` : ''}
+            <div class="report-story-grid report-story-grid-editorial">
+              ${storyCard('Systems', hasMeaningfulText(state.systems) ? `<p>${safe(state.systems)}</p>` : '')}
+              ${storyCard('People', hasMeaningfulText(state.cultureLeadership) ? `<p>${safe(state.cultureLeadership)}</p>` : '')}
+              ${storyCard('Operations', hasMeaningfulText(state.layoutIssues) ? `<p>${safe(state.layoutIssues)}</p>` : '')}
+              ${storyCard('Compliance', hasMeaningfulText(state.equipmentNeeds) ? `<p>${safe(state.equipmentNeeds)}</p>` : '')}
+            </div>
+          `
+        )}
+      </div>
+    `);
+  }
+
+  if (controlTableRows) {
+    detailedPages.push(`
+      <div class="report-page-block">
+        ${pageSection(
+          'Controls and Evidence Register',
+          `
+            <table class="report-table report-table-compact report-table-tight">
+              <colgroup>
+                <col style="width: 16%" />
+                <col style="width: 32%" />
+                <col style="width: 12%" />
+                <col style="width: 40%" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Control</th>
+                  <th>Status</th>
+                  <th>What Is Happening and Why?</th>
+                </tr>
+              </thead>
+              <tbody>${controlTableRows}</tbody>
+            </table>
+          `
+        )}
+      </div>
+    `);
+  }
+
+  if (actionTableRows) {
+    detailedPages.push(`
+      <div class="report-page-block report-page-block-final">
+        ${pageSection(
+          'Structured Action Register',
+          `
+            <table class="report-table report-table-compact report-table-tight">
+              <colgroup>
+                <col style="width: 34%" />
+                <col style="width: 16%" />
+                <col style="width: 12%" />
+                <col style="width: 16%" />
+                <col style="width: 12%" />
+                <col style="width: 10%" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Area</th>
+                  <th>Priority</th>
+                  <th>Owner</th>
+                  <th>Due</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>${actionTableRows}</tbody>
+            </table>
+          `
+        )}
+      </div>
+    `);
+  }
+
+  return [coverPageHtml, commercialSnapshotHtml, actionPageHtml, ...detailedPages].join('');
 }
 
 function formatShortDate(value?: string | null) {
