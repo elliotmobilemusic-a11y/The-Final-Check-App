@@ -13,13 +13,26 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
       flexDirection: 'column',
       alignItems: 'center', 
       justifyContent: 'center', 
-      padding: '20px 16px', 
-      gap: '8px',
+      padding: '22px 16px 26px', 
+      gap: '6px',
       textAlign: 'center',
-      minHeight: '92px'
+      minHeight: '104px',
+      background: 'var(--surface-card-strong)',
+      border: '1px solid var(--surface-shadow-line)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-soft)',
+      transition: 'all 0.18s ease'
     }}>
-      <div className="stat-value" style={{ fontSize: '24px', fontWeight: 700 }}>{value}</div>
-      <div className="stat-label" style={{ fontSize: '12px', opacity: 0.8 }}>{label}</div>
+      <div style={{ 
+        width: '44px',
+        height: '3px',
+        borderRadius: '999px',
+        background: 'linear-gradient(90deg, rgba(198, 161, 97, 0), rgba(198, 161, 97, 0.9), rgba(198, 161, 97, 0))',
+        marginBottom: '8px',
+        opacity: 0.8
+      }}/>
+      <div className="stat-value" style={{ fontSize: '28px', fontWeight: 800, lineHeight: '1', letterSpacing: '-0.02em' }}>{value}</div>
+      <div className="stat-label" style={{ fontSize: '12px', opacity: 0.75, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
       {children}
     </div>
   );

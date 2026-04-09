@@ -2750,13 +2750,9 @@ form.login-success {
   box-shadow: var(--shadow-strong);
 }
 
-.stat-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 22px;
-  gap: 16px;
-  min-height: 0;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
 }
 
 .stat-card::before,
