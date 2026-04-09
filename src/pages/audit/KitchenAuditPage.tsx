@@ -1209,6 +1209,7 @@ export function KitchenAuditPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Audit draft ready.');
+  const [shareUrl, setShareUrl] = useState('');
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [controlModalOpen, setControlModalOpen] = useState(false);
 
@@ -1607,8 +1608,10 @@ export function KitchenAuditPage() {
   async function shareHtmlReport() {
     try {
       setIsSharing(true);
+      setShareUrl('');
       const share = await createKitchenAuditShare(form);
       const shareUrl = `${window.location.origin}${window.location.pathname}#/share/kitchen-audit/${share.token}`;
+      setShareUrl(shareUrl);
 
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -1616,8 +1619,6 @@ export function KitchenAuditPage() {
       } catch {
         setMessage(`HTML report link created: ${shareUrl}`);
       }
-
-      window.open(shareUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not create the share link.');
     } finally {
@@ -1664,8 +1665,40 @@ export function KitchenAuditPage() {
           </>
         }
       />
-
-
+      <section className="panel share-link-panel">
+        <div className="panel-body stack gap-12">
+          <div className="record-header-message">
+            <span className="soft-pill">{message}</span>
+            {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+          </div>
+          {shareUrl ? (
+            <div className="share-link-row">
+              <input
+                className="input"
+                readOnly
+                value={shareUrl}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <button
+                className="button button-secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setMessage('HTML report link copied to clipboard.');
+                  } catch {
+                    setMessage('Copy failed. You can still copy the link manually.');
+                  }
+                }}
+              >
+                Copy link
+              </button>
+              <a className="button button-primary" href={shareUrl} target="_blank" rel="noreferrer">
+                Open link
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
 
       <section className="stats-grid">
         <StatCard

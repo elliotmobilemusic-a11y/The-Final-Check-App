@@ -6602,6 +6602,17 @@ body {
   gap: 10px;
 }
 
+.share-link-panel {
+  margin-top: -6px;
+}
+
+.share-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+}
+
 .client-inline-summary-compact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 0;
@@ -6689,6 +6700,10 @@ body[data-theme="midnight"] .crm-inline-stat {
   .record-header-message {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .share-link-row {
+    grid-template-columns: 1fr;
   }
 
   .client-section-nav {
