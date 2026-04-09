@@ -690,6 +690,7 @@ body.reduced-motion *::after {
   }
   
   .stats-grid {
+    grid-auto-flow: row;
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -2826,13 +2827,14 @@ form.login-success {
   font-size: 11px;
   letter-spacing: 0.08em;
   font-weight: 900;
+  text-align: center;
 }
 
 .stat-value {
   font-size: 19px;
   font-weight: 700;
   min-width: 70px;
-  text-align: right;
+  text-align: center;
   color: var(--text);
   letter-spacing: -0.01em;
 }
