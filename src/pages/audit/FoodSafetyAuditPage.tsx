@@ -637,6 +637,12 @@ export function FoodSafetyAuditPage() {
     }));
   }
 
+  function newAudit() {
+    clearDraft(FOOD_SAFETY_DRAFT_KEY);
+    setForm(createDefaultFoodSafetyAudit());
+    setMessage('Food safety audit ready.');
+  }
+
   return (
     <div className="page-stack">
       <PageIntro
