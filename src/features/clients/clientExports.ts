@@ -153,7 +153,25 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
       <style>
         @page {
           size: ${pageSize};
-          margin: 12mm;
+          margin: 10mm 12mm 12mm 12mm;
+          
+          @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            font-size: 9px;
+            color: #8e8a85;
+            font-weight: 600;
+          }
+          
+          @top-left {
+            content: "The Final Check";
+            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+            font-size: 9px;
+            color: #8e8a85;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+          }
         }
         :root {
           color-scheme: light;
@@ -439,8 +457,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           margin-top: 16px;
           padding-top: 14px;
           border-top: 1px solid rgba(86, 81, 91, 0.08);
-          page-break-inside: avoid;
-          break-inside: avoid-page;
+          page-break-inside: auto;
+          break-inside: auto;
         }
         section > h2,
         section > h3 {
@@ -481,9 +499,9 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           margin: 0;
           padding-left: 18px;
           color: var(--ink);
-          line-height: 1.65;
-          page-break-inside: avoid;
-          break-inside: avoid-page;
+          line-height: 1.55;
+          page-break-inside: auto;
+          break-inside: auto;
         }
         p,
         li {
@@ -532,11 +550,13 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         .report-table tr:last-child td {
           border-bottom: none;
         }
-        tr,
-        td,
-        th {
+        tr {
           page-break-inside: avoid;
           break-inside: avoid-page;
+        }
+        td, th {
+          page-break-inside: auto;
+          break-inside: auto;
         }
         .totals {
           display: flex;
