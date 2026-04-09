@@ -1055,8 +1055,8 @@ export function MenuBuilderPage() {
         />
       </section>
 
-      <section className="workspace-grid">
-        <div className="workspace-main">
+      <section>
+        <div>
           <div className="panel">
             <div className="panel-header">
               <div>
@@ -1442,139 +1442,6 @@ export function MenuBuilderPage() {
             </div>
           </div>
         </div>
-
-        <aside className="workspace-side stack gap-20">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Menu control</h3>
-                <p className="muted-copy">
-                  The live control view for commercial strength, completeness, and next focus.
-                </p>
-              </div>
-            </div>
-
-            <div className="panel-body stack gap-20">
-              <section className="menu-side-block">
-                <div className="menu-side-title-row">
-                  <h4>Readiness</h4>
-                  <span className="soft-pill">{completion.percent}% complete</span>
-                </div>
-
-                <div className="menu-progress-track">
-                  <div className="menu-progress-fill" style={{ width: `${completion.percent}%` }} />
-                </div>
-
-                <div className="menu-side-meta">
-                  {completion.complete} of {completion.total} core checkpoints completed
-                </div>
-              </section>
-
-              <section className="menu-side-block">
-                <div className="menu-side-title-row">
-                  <h4>System checks</h4>
-                  <span className="soft-pill">{insights.length}</span>
-                </div>
-
-                <div className="menu-insight-list">
-                  {insights.map((insight, index) => (
-                    <div className="menu-insight-card" key={`${insight.title}-${index}`}>
-                      <div className="menu-insight-top">
-                        <strong>{insight.title}</strong>
-                        <span className={toneClass(insight.tone)}>{insight.tone}</span>
-                      </div>
-                      <p>{insight.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="menu-side-block">
-                <div className="menu-side-title-row">
-                  <h4>Consultancy snapshot</h4>
-                </div>
-
-                <div className="menu-chip-row menu-chip-row-vertical">
-                  <div className="menu-chip">
-                    <strong>Current menu</strong>
-                    <span>{safe(project.menuName) || 'Untitled menu'}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Linked client</strong>
-                    <span>{activeClient?.company_name || 'No client linked'}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Site / location</strong>
-                    <span>{safe(project.siteName) || 'Unnamed site'}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Main output</strong>
-                    <span>Live report preview and section-level costing control</span>
-                  </div>
-                </div>
-              </section>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Live menu report</h3>
-                <p className="muted-copy">
-                  Preview the current menu structure and commercial view.
-                </p>
-              </div>
-              <button className="button button-secondary" onClick={exportPdf}>
-                PDF / Print
-              </button>
-            </div>
-            <div className="panel-body">
-              <div className="report-preview" dangerouslySetInnerHTML={{ __html: reportHtml }} />
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Saved menu projects</h3>
-                <p className="muted-copy">
-                  {project.clientId
-                    ? 'Saved menu projects for the selected client.'
-                    : 'Each signed-in user only sees their own saved projects.'}
-                </p>
-              </div>
-            </div>
-            <div className="panel-body stack gap-12">
-              {loadingSaved ? <div className="muted-copy">Loading saved menu projects...</div> : null}
-              {!loadingSaved && savedProjects.length === 0 ? (
-                <div className="muted-copy">No menu projects saved yet.</div>
-              ) : null}
-
-              {savedProjects.map((record) => (
-                <div className="saved-item" key={record.id}>
-                  <div>
-                    <strong>{record.title}</strong>
-                    <div className="saved-meta">
-                      {record.site_name || 'Unnamed site'} •{' '}
-                      {formatShortDate(record.review_date || record.updated_at)}
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    <button className="button button-ghost" onClick={() => handleLoad(record)}>
-                      Load
-                    </button>
-                    <button
-                      className="button button-ghost danger-text"
-                      onClick={() => handleDeleteSaved(record.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </section>
 
       {dishDraft ? (
