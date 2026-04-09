@@ -477,6 +477,7 @@ export function MenuBuilderPage() {
   const [message, setMessage] = useState('Menu draft ready.');
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const selectedSection = useMemo(
     () => project.sections.find((section) => section.id === project.selectedSectionId) ?? null,
@@ -1655,6 +1656,108 @@ export function MenuBuilderPage() {
           </div>
         </div>
       ) : null}
+
+      {controlModalOpen && (
+        <div className="drawer-backdrop" style={{ zIndex: 1000 }} onClick={() => setControlModalOpen(false)}>
+          <div className="drawer-panel" onClick={e => e.stopPropagation()}>
+            <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
+                <h2 style={{fontSize: '24px', fontWeight: 700}}>Menu Engineering Controls</h2>
+                <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
+                  Close ✕
+                </button>
+              </div>
+
+              <div className="audit-side-block">
+                <div className="audit-side-title-row">
+                  <h4>Completion</h4>
+                  <span className="soft-pill">{completion.percent}% complete</span>
+                </div>
+                <div className="audit-progress-track">
+                  <div
+                    className="audit-progress-fill"
+                    style={{ width: `${completion.percent}%` }}
+                  />
+                </div>
+                <div className="audit-side-meta">
+                  {completion.complete} of {completion.total} key checkpoints completed
+                </div>
+              </div>
+
+              <div className="audit-side-block" style={{marginTop: '24px'}}>
+                <div className="audit-side-title-row">
+                  <h4>Menu insights</h4>
+                  <span className="soft-pill">{insights.length}</span>
+                </div>
+                <div className="audit-insight-list">
+                  {insights.map((insight, index) => (
+                    <div className="audit-insight-card" key={`${insight.title}-${index}`}>
+                      <div className="audit-insight-top">
+                        <strong>{insight.title}</strong>
+                        <span className={toneClass(insight.tone)}>{insight.tone}</span>
+                      </div>
+                      <p>{insight.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="audit-side-block" style={{marginTop: '24px'}}>
+                <div className="audit-side-title-row">
+                  <h4>Menu snapshot</h4>
+                </div>
+                <div className="audit-chip-row audit-chip-row-vertical">
+                  <div className="audit-chip">
+                    <strong>Weighted GP</strong>
+                    <span>{fmtPercent(weightedGp)}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Total dishes</strong>
+                    <span>{allDishes.length}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Strong dishes</strong>
+                    <span>{strongDishCount}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Watch dishes</strong>
+                    <span>{watchDishCount}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>At risk dishes</strong>
+                    <span>{riskDishCount}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Total revenue</strong>
+                    <span>{fmtCurrency(totalRevenue)}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Total profit</strong>
+                    <span>{fmtCurrency(totalProfit)}</span>
+                  </div>
+                  <div className="audit-chip">
+                    <strong>Total sections</strong>
+                    <span>{project.sections.length}</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{position: 'fixed', bottom: '24px', left: '24px', zIndex: 900}}>
+        <button className="button button-primary" style={{
+          minWidth: '180px',
+          minHeight: '54px',
+          padding: '0 24px',
+          boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
+        }} onClick={() => setControlModalOpen(true)}>
+          📊 Menu Controls
+        </button>
+      </div>
+
     </div>
   );
 }
