@@ -24,6 +24,16 @@ function createShareToken() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
 }
 
+function normalizeShareError(error: unknown): Error {
+  if (error instanceof Error && /failed to fetch/i.test(error.message)) {
+    return new Error(
+      'Supabase could not reach the report share service. Run the latest schema.sql in your active Supabase project, then redeploy or refresh the app.'
+    );
+  }
+
+  return error instanceof Error ? error : new Error('Could not reach the report share service.');
+}
+
 export async function createKitchenAuditShare(
   audit: AuditFormState
 ): Promise<ReportShareRecord<AuditFormState>> {
@@ -41,7 +51,7 @@ export async function createKitchenAuditShare(
   };
 
   const { data, error } = await supabase.from(TABLE).insert(payload).select('*').single();
-  if (error) throw error;
+  if (error) throw normalizeShareError(error);
 
   return data as ReportShareRecord<AuditFormState>;
 }
@@ -58,6 +68,6 @@ export async function getKitchenAuditShareByToken(
     .eq('token', token)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) throw normalizeShareError(error);
   return (data as ReportShareRecord<AuditFormState> | null) ?? null;
 }

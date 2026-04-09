@@ -4,6 +4,7 @@ import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
+  buildReportDocumentHtml,
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
@@ -20,6 +21,7 @@ import type {
   SupabaseRecord
 } from '../../types';
 import {
+  downloadText,
   fmtCurrency,
   fmtPercent,
   lines,
@@ -1224,6 +1226,15 @@ export function KitchenAuditPage() {
   );
   const [isSharing, setIsSharing] = useState(false);
   const reportHtml = useMemo(() => buildKitchenAuditReportHtml(form), [form]);
+  const standaloneReportHtml = useMemo(
+    () =>
+      buildReportDocumentHtml(`${safe(form.businessName || 'Kitchen Profit Audit')} report`, reportHtml, {
+        autoPrint: false,
+        showCloseButton: false,
+        formatLabel: 'Standalone HTML report'
+      }),
+    [form.businessName, reportHtml]
+  );
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
   const readinessItems = useMemo(
@@ -1605,6 +1616,18 @@ export function KitchenAuditPage() {
     );
   }
 
+  function downloadHtmlReport() {
+    downloadText(
+      `${safe(form.businessName || 'kitchen-audit-report')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'kitchen-audit-report'}.html`,
+      standaloneReportHtml,
+      'text/html'
+    );
+    setMessage('Standalone HTML report downloaded.');
+  }
+
   async function shareHtmlReport() {
     try {
       setIsSharing(true);
@@ -1658,6 +1681,9 @@ export function KitchenAuditPage() {
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
+            </button>
+            <button className="button button-secondary" onClick={downloadHtmlReport}>
+              Download HTML
             </button>
             <button className="button button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
               {isSharing ? 'Creating link...' : 'Share HTML page'}
