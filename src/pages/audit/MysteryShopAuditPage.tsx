@@ -548,27 +548,6 @@ export function MysteryShopAuditPage() {
             </button>
           </>
         }
-        side={
-          <div className="page-intro-summary">
-            <span className="status-pill status-success">{calc.grade}</span>
-            <strong>Guest experience score</strong>
-            <p>{message}</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Overall</span>
-                <strong>{calc.overallScore}/10</strong>
-              </div>
-              <div>
-                <span>Low moments</span>
-                <strong>{calc.lowMoments}</strong>
-              </div>
-              <div>
-                <span>Actions</span>
-                <strong>{calc.namedActions}</strong>
-              </div>
-            </div>
-          </div>
-        }
       />
 
       <section className="stats-grid compact">
@@ -577,8 +556,8 @@ export function MysteryShopAuditPage() {
         <StatCard label="Low moments" value={String(calc.lowMoments)} hint="Touchpoints scoring 5 or below" />
       </section>
 
-      <section className="workspace-grid">
-        <div className="workspace-main">
+      <section>
+        <div>
           <article className="panel">
             <div className="panel-header">
               <div>
@@ -875,69 +854,6 @@ export function MysteryShopAuditPage() {
           </article>
         </div>
 
-        <aside className="workspace-side">
-          <article className="feature-card">
-            <div className="feature-top">
-              <div>
-                <h3>Experience snapshot</h3>
-                <p>Keep the live guest-experience score visible while you work.</p>
-              </div>
-              <span className="soft-pill">{calc.grade}</span>
-            </div>
-            <div className="mini-grid">
-              <div className="mini-box">
-                <span>Overall</span>
-                <strong>{calc.overallScore}/10</strong>
-              </div>
-              <div className="mini-box">
-                <span>Standout</span>
-                <strong>{calc.standoutMoments}</strong>
-              </div>
-              <div className="mini-box">
-                <span>Low</span>
-                <strong>{calc.lowMoments}</strong>
-              </div>
-            </div>
-            {form.clientId ? (
-              <Link className="button button-ghost" to={`/clients/${form.clientId}`}>
-                Back to clients
-              </Link>
-            ) : null}
-          </article>
-
-          <article className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Saved mystery shops</h3>
-                <p className="muted-copy">Reopen or delete past guest-experience reviews.</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              {savedRecords.length === 0 ? (
-                <div className="muted-copy">No mystery shop audits saved yet.</div>
-              ) : null}
-
-              {savedRecords.map((record) => (
-                <div className="saved-item" key={record.id}>
-                  <div>
-                    <strong>{record.title}</strong>
-                    <div className="saved-meta">
-                      {record.siteName} • {formatShortDate(record.reviewDate)} • {record.location || 'Location not set'}
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    <Link className="button button-ghost" to={`/mystery-shop?load=${record.id}`}>
-                      Open
-                    </Link>
-                    <button className="button button-secondary" onClick={() => handleDelete(record.id)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </article>
-        </aside>
       </section>
     </div>
   );
