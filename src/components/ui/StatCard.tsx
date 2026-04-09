@@ -9,40 +9,40 @@ interface StatCardProps extends PropsWithChildren {
 export function StatCard({ label, value, hint, children }: StatCardProps) {
   return (
     <div className="stat-card" style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '20px 16px 24px', 
-      gap: '6px',
+      display: 'grid',
+      placeItems: 'center',
+      gap: '10px',
+      padding: '28px 12px',
       textAlign: 'center',
-      minHeight: '96px',
+      minHeight: '112px',
       width: '100%',
-      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 247, 242, 0.98))',
-      border: '1px solid rgba(91, 86, 81, 0.06)',
-      borderRadius: '22px',
-      boxShadow: '0 10px 24px rgba(22, 18, 15, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-      transition: 'all 0.2s ease'
+      background: 'var(--surface-card)',
+      border: '1px solid var(--line)',
+      borderRadius: '26px',
+      boxShadow: 'var(--shadow-soft)',
+      transition: 'all 0.22s ease'
     }}>
+      <div style={{
+        width: '52px',
+        height: '3px',
+        borderRadius: '999px',
+        background: 'var(--accent)',
+        opacity: 0.8
+      }}/>
       <div className="stat-value" style={{ 
-        fontSize: '32px', 
-        fontWeight: 700, 
+        fontSize: '38px', 
+        fontWeight: 800, 
         lineHeight: '1', 
-        letterSpacing: '-0.03em',
-        color: 'var(--text)',
-        margin: 0,
-        padding: 0,
-        fontVariationSettings: "'wght' 700"
+        letterSpacing: '-0.04em',
+        color: 'var(--text)'
       }}>{value}</div>
       <div className="stat-label" style={{ 
-        fontSize: '11px', 
-        opacity: 0.7, 
-        fontWeight: 600, 
+        fontSize: '12px', 
+        opacity: 0.78, 
+        fontWeight: 700, 
         textTransform: 'uppercase', 
-        letterSpacing: '0.12em',
-        color: 'var(--text)',
-        margin: 0,
-        padding: 0
+        letterSpacing: '0.1em',
+        color: 'var(--text)'
       }}>{label}</div>
       {children}
     </div>
