@@ -163,48 +163,43 @@ export function buildReportDocumentHtml(
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <title>${safeTitle}</title>
       <style>
-        @page {
-          size: ${pageSize};
-          margin: 10mm 12mm 12mm 12mm;
-          
-          @bottom-right {
-            content: "Page " counter(page) " of " counter(pages);
-            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-            font-size: 9px;
-            color: #8e8a85;
-            font-weight: 600;
-          }
-          
-          @top-left {
-            content: "The Final Check";
-            font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-            font-size: 9px;
-            color: #8e8a85;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-          }
-        }
-        :root {
-          color-scheme: light;
-          --ink: #2d2b31;
-          --muted: #6d6863;
-          --accent: #c6a161;
-          --accent-strong: #8e6b2c;
-          --panel: #ffffff;
-          --line: rgba(86, 81, 91, 0.12);
-          --paper: #e7ddd1;
-          --paper-strong: #f7f1e8;
-          --paper-line: rgba(178, 158, 125, 0.56);
-          --sheet-line: rgba(190, 171, 142, 0.62);
-          --card-line: rgba(190, 171, 142, 0.52);
-          --shadow: 0 22px 48px rgba(36, 31, 38, 0.08);
-          --radius-xl: 18px;
-          --radius-lg: 12px;
-          --radius-md: 10px;
-          --document-width: ${documentWidth};
-          font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-        }
+@page {
+  size: ${pageSize};
+  margin: 17mm 15mm 18mm 15mm;
+  marks: none;
+
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 8pt;
+    color: #86828b;
+    font-weight: 500;
+  }
+
+  @top-left {
+    content: "The Final Check";
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 8pt;
+    color: #86828b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+:root {
+  color-scheme: light;
+  --ink: #2c2a30;
+  --muted: #6b6773;
+  --accent: #c6a161;
+  --accent-strong: #9d7a3d;
+  --line-soft: #ebeaed;
+  --line-medium: #d9d7dd;
+  --background-soft: #faf9fc;
+  --background-subtle: #f6f5f8;
+  --document-width: ${documentWidth};
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
         html {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
