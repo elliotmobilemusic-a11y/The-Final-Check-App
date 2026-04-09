@@ -25,12 +25,13 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
       transition: 'all 0.18s ease'
     }}>
       <div style={{ 
-        width: '44px',
+        width: '48px',
         height: '3px',
         borderRadius: '999px',
         background: 'linear-gradient(90deg, rgba(198, 161, 97, 0), rgba(198, 161, 97, 0.9), rgba(198, 161, 97, 0))',
-        marginBottom: '8px',
-        opacity: 0.8
+        margin: '0 auto 8px auto',
+        opacity: 0.8,
+        alignSelf: 'center'
       }}/>
       <div className="stat-value" style={{ fontSize: '28px', fontWeight: 800, lineHeight: '1', letterSpacing: '-0.02em' }}>{value}</div>
       <div className="stat-label" style={{ fontSize: '12px', opacity: 0.75, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
