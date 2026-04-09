@@ -605,16 +605,29 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           line-height: 1.3;
         }
         section {
-          margin-top: 16px;
-          padding-top: 14px;
-          border-top: 1px solid rgba(86, 81, 91, 0.08);
-          page-break-inside: auto;
-          break-inside: auto;
+          margin-top: 12px;
+          padding: 12px 14px 14px;
+          border-radius: 18px;
+          border: 1px solid var(--card-line);
+          background: linear-gradient(180deg, #fffefd 0%, #fbf7f0 100%);
+          page-break-inside: avoid;
+          break-inside: avoid-page;
         }
         section > h2,
         section > h3 {
           page-break-after: avoid;
           break-after: avoid-page;
+        }
+        section > h2 {
+          color: var(--accent-strong);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        section > h2 + *,
+        section > h3 + * {
+          margin-top: 12px;
         }
         .report-meta,
         .report-columns,
@@ -673,9 +686,13 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-radius: 14px;
           background: #ffffff;
           page-break-inside: auto;
+          break-inside: auto;
         }
         thead {
           display: table-header-group;
+        }
+        tbody {
+          break-inside: auto;
         }
         tfoot {
           display: table-footer-group;
@@ -685,6 +702,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           border-bottom: 1px solid rgba(86, 81, 91, 0.08);
           text-align: left;
           vertical-align: top;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
         th {
           color: var(--accent-strong);
@@ -708,6 +727,13 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
         td, th {
           page-break-inside: auto;
           break-inside: auto;
+        }
+        .report-table-compact {
+          font-size: 12px;
+        }
+        .report-table-compact th,
+        .report-table-compact td {
+          padding: 8px 9px;
         }
         .totals {
           display: flex;
@@ -766,8 +792,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             margin: 14px 0 16px;
           }
           section {
-            margin-top: 16px;
-            padding-top: 14px;
+            margin-top: 10px;
+            padding: 12px 14px 14px;
           }
           table,
           .report-table {

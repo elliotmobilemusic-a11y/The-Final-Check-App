@@ -798,7 +798,13 @@ function makeAuditReport(state: AuditFormState) {
         ${
           controlRows.length
             ? `
-          <table class="report-table">
+          <table class="report-table report-table-compact">
+            <colgroup>
+              <col style="width: 15%" />
+              <col style="width: 40%" />
+              <col style="width: 12%" />
+              <col style="width: 33%" />
+            </colgroup>
             <thead>
               <tr>
                 <th>Category</th>
