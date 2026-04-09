@@ -673,22 +673,45 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     </div>
   `;
 
+  // Calculate total financial opportunity
+  const totalWeeklyOpportunity = calc.gpOpportunityValue + state.actualWasteValue + calc.totalPortionLoss;
+  const totalAnnualOpportunity = totalWeeklyOpportunity * 52;
+  
   const coverPageHtml = `
     <div class="report-cover-page">
       <div class="report-cover-block">
-        <div class="report-cover-heading">Kitchen audit export</div>
+        <div class="report-cover-heading">💰 Financial Opportunity Summary</div>
+        <div class="report-cover-divider"></div>
+        <div style="text-align: center; padding: 20px 0;">
+          <h2 style="font-size: 32px; font-weight: 800; color: var(--accent-strong); margin-bottom: 8px;">
+            ${fmtCurrency(totalWeeklyOpportunity)} / WEEK
+          </h2>
+          <p style="font-size: 16px; color: var(--muted); margin: 0;">
+            Identified gross profit opportunity • ${fmtCurrency(totalAnnualOpportunity)} per year
+          </p>
+        </div>
+        <div class="report-cover-stat-grid" style="margin-top: 16px;">
+          ${coverStatCard('GP gap recovery', fmtCurrency(calc.gpOpportunityValue) + '/wk')}
+          ${coverStatCard('Waste reduction', fmtCurrency(state.actualWasteValue) + '/wk')}
+          ${coverStatCard('Portion control', fmtCurrency(calc.totalPortionLoss) + '/wk')}
+          ${coverStatCard('Total opportunity', fmtCurrency(totalWeeklyOpportunity) + '/wk')}
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Kitchen Performance Report</div>
         <div class="report-cover-divider"></div>
         <div class="report-cover-top">
           <div class="report-cover-mini-grid">
+            ${coverMiniCard('Site', safe(state.businessName) || 'Not recorded')}
             ${coverMiniCard('Visit date', formatShortDate(state.visitDate))}
             ${coverMiniCard('Consultant', safe(state.consultantName) || 'Not recorded')}
             ${coverMiniCard('Site contact', safe(state.contactName) || 'Not recorded')}
-            ${coverMiniCard('Site contact', safe(state.contactName) || 'Not recorded')}
           </div>
           <div class="report-cover-commercial">
-            <span class="report-cover-commercial-label">Commercial position</span>
+            <span class="report-cover-commercial-label">Current GP</span>
             <strong class="report-cover-commercial-value">${fmtPercent(calc.actualGp)}</strong>
-            <p class="report-cover-commercial-detail">Target ${fmtPercent(state.targetGp)} • Waste ${fmtCurrency(state.actualWasteValue)}</p>
+            <p class="report-cover-commercial-detail">Target ${fmtPercent(state.targetGp)} • ${calc.gpGap > 0 ? `${calc.gpGap.toFixed(1)} point gap` : 'Target achieved'}</p>
           </div>
         </div>
         <div class="report-cover-pill-row">
