@@ -970,7 +970,7 @@ export function FoodSafetyAuditPage() {
       </section>
 
       {controlModalOpen && (
-        <div className="drawer-backdrop" onClick={() => setControlModalOpen(false)}>
+        <div className="drawer-backdrop" style={{ zIndex: 1000 }} onClick={() => setControlModalOpen(false)}>
           <div className="drawer-panel" onClick={e => e.stopPropagation()}>
             <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
@@ -985,7 +985,7 @@ export function FoodSafetyAuditPage() {
         </div>
       )}
 
-      <div style={{position: 'fixed', bottom: '24px', right: '24px', zIndex: 900}}>
+      <div style={{position: 'fixed', bottom: '24px', left: '24px', zIndex: 900}}>
         <button className="button button-primary" style={{
           minWidth: '180px',
           minHeight: '54px',
