@@ -13,10 +13,10 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
       flexDirection: 'column',
       alignItems: 'center', 
       justifyContent: 'center', 
-      padding: '22px 16px 26px', 
-      gap: '6px',
+      padding: '18px 16px 22px', 
+      gap: '4px',
       textAlign: 'center',
-      minHeight: '104px',
+      minHeight: '100px',
       width: '100%',
       background: 'var(--surface-card-strong)',
       border: '1px solid var(--surface-shadow-line)',
@@ -29,12 +29,26 @@ export function StatCard({ label, value, hint, children }: StatCardProps) {
         height: '3px',
         borderRadius: '999px',
         background: 'linear-gradient(90deg, rgba(198, 161, 97, 0), rgba(198, 161, 97, 0.9), rgba(198, 161, 97, 0))',
-        margin: '0 auto 8px auto',
-        opacity: 0.8,
-        alignSelf: 'center'
+        margin: '0 auto 10px auto',
+        opacity: 0.8
       }}/>
-      <div className="stat-value" style={{ fontSize: '28px', fontWeight: 800, lineHeight: '1', letterSpacing: '-0.02em' }}>{value}</div>
-      <div className="stat-label" style={{ fontSize: '12px', opacity: 0.75, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      <div className="stat-value" style={{ 
+        fontSize: '30px', 
+        fontWeight: 800, 
+        lineHeight: '1', 
+        letterSpacing: '-0.02em',
+        margin: 0,
+        padding: 0
+      }}>{value}</div>
+      <div className="stat-label" style={{ 
+        fontSize: '12px', 
+        opacity: 0.75, 
+        fontWeight: 700, 
+        textTransform: 'uppercase', 
+        letterSpacing: '0.06em',
+        margin: 0,
+        padding: 0
+      }}>{label}</div>
       {children}
     </div>
   );
