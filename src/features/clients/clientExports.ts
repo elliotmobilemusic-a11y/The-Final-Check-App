@@ -408,6 +408,16 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           page-break-after: always;
           break-after: page;
         }
+        .report-page-block {
+          display: grid;
+          gap: 10px;
+          page-break-after: always;
+          break-after: page;
+        }
+        .report-page-block.report-page-block-final {
+          page-break-after: auto;
+          break-after: auto;
+        }
         .report-cover-block {
           padding: 12px 14px 14px;
           border-radius: 18px;
@@ -520,6 +530,28 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           text-align: center;
           align-content: center;
           justify-items: center;
+        }
+        .report-story-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        .report-story-card {
+          padding: 12px 14px;
+          border-radius: 16px;
+          border: 1px solid var(--card-line);
+          background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
+        }
+        .report-story-card h3 {
+          margin-bottom: 8px;
+        }
+        .report-story-card p,
+        .report-story-card li {
+          font-size: 12px;
+          line-height: 1.6;
+        }
+        .report-story-card ul {
+          margin-top: 0;
         }
         h1, h2, h3, p { margin: 0; }
         h1 { font-size: 32px; line-height: 1.02; letter-spacing: -0.035em; }
@@ -768,7 +800,8 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           .report-cover-top,
           .report-cover-pill-row,
           .report-cover-stat-grid,
-          .report-cover-mini-grid {
+          .report-cover-mini-grid,
+          .report-story-grid {
             grid-template-columns: 1fr;
           }
           .meta-grid,

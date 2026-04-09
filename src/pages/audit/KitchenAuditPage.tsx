@@ -633,7 +633,7 @@ function makeAuditReport(state: AuditFormState) {
     emptyText: string
   ) => {
     const filtered = items.filter((item) =>
-      Object.values(item as Record<string, unknown>).some((value) => safe(value).length)
+      Object.values(item).some((value) => safe(value == null ? '' : String(value)).length)
     );
 
     if (!filtered.length) {
@@ -642,6 +642,9 @@ function makeAuditReport(state: AuditFormState) {
 
     return `<h3>${title}</h3><ul>${filtered.map(formatter).join('')}</ul>`;
   };
+
+  const hasContent = (item: object) =>
+    Object.values(item).some((value) => safe(value == null ? '' : String(value)).length);
 
   const coverMiniCard = (label: string, value: string) => `
     <div class="report-cover-mini-card">
@@ -654,6 +657,13 @@ function makeAuditReport(state: AuditFormState) {
     <div class="report-cover-stat-card">
       <span>${label}</span>
       <strong>${value}</strong>
+    </div>
+  `;
+
+  const storyCard = (title: string, content: string) => `
+    <div class="report-story-card">
+      <h3>${title}</h3>
+      ${content}
     </div>
   `;
 
@@ -714,160 +724,207 @@ function makeAuditReport(state: AuditFormState) {
     </div>
   `;
 
+  const scorecardPageHtml = `
+    <div class="report-page-block">
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Operational scorecard</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-cover-stat-grid">
+          ${scoreEntries
+            .map(([label, value]) => coverStatCard(String(label), `${num(value).toFixed(1)}/10`))
+            .join('')}
+          ${coverStatCard('Average operating score', `${calc.operationsAverage.toFixed(1)}/10`)}
+          ${coverStatCard('Actual GP', fmtPercent(calc.actualGp))}
+          ${coverStatCard('Control compliance', `${Math.round(calc.controlScore)}%`)}
+          ${coverStatCard('Hygiene risk', state.hygieneRisk)}
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Detailed findings</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-story-grid">
+          ${storyCard('Detailed findings', listHtml(detailedFindings, 'No detailed findings recorded.'))}
+          ${storyCard(
+            'Waste findings',
+            state.wasteItems.some((item) => hasContent(item))
+              ? repeatSection(
+                  'Waste findings',
+                  state.wasteItems,
+                  (item) =>
+                    `<li><strong>${safe(item.item) || 'Unspecified item'}</strong>${
+                      num(item.cost) > 0 ? ` • Estimated impact: ${fmtCurrency(num(item.cost))}` : ''
+                    }<br />Cause: ${safe(item.cause) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
+                  'No waste findings recorded.'
+                ).replace('<h3>Waste findings</h3>', '')
+              : '<p class="muted-copy">No waste findings recorded.</p>'
+          )}
+          ${storyCard(
+            'Over-portioning findings',
+            state.portionItems.some((item) => hasContent(item))
+              ? repeatSection(
+                  'Over-portioning findings',
+                  state.portionItems,
+                  (item) =>
+                    `<li><strong>${safe(item.dish) || 'Unspecified dish'}</strong>${
+                      num(item.loss) > 0 ? ` • Estimated weekly loss: ${fmtCurrency(num(item.loss))}` : ''
+                    }<br />Issue: ${safe(item.issue) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
+                  'No over-portioning findings recorded.'
+                ).replace('<h3>Over-portioning findings</h3>', '')
+              : '<p class="muted-copy">No over-portioning findings recorded.</p>'
+          )}
+          ${storyCard(
+            'Ordering and stock-control findings',
+            state.orderingItems.some((item) => hasContent(item))
+              ? repeatSection(
+                  'Ordering and stock-control findings',
+                  state.orderingItems,
+                  (item) =>
+                    `<li><strong>${safe(item.category) || 'Unspecified category'}</strong><br />Problem: ${safe(item.problem) || 'Not recorded'}<br />Commercial impact: ${safe(item.impact) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
+                  'No ordering issues recorded.'
+                ).replace('<h3>Ordering and stock-control findings</h3>', '')
+              : '<p class="muted-copy">No ordering issues recorded.</p>'
+          )}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const controlsPageHtml = `
+    <div class="report-page-block">
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Controls and evidence register</div>
+        <div class="report-cover-divider"></div>
+        ${
+          controlRows.length
+            ? `
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Control</th>
+                <th>Status</th>
+                <th>Audit note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${controlRows
+                .map(
+                  (item) => `
+                <tr>
+                  <td>${safe(item.category) || 'General'}</td>
+                  <td><strong>${safe(item.label) || 'Unnamed control'}</strong></td>
+                  <td>${item.status}</td>
+                  <td>${safe(item.note) || 'No note recorded'}</td>
+                </tr>
+              `
+                )
+                .join('')}
+            </tbody>
+          </table>`
+            : '<p class="muted-copy">No control checks recorded.</p>'
+        }
+      </div>
+    </div>
+  `;
+
+  const actionPageHtml = `
+    <div class="report-page-block report-page-block-final">
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Kitchen layout review</div>
+        <div class="report-cover-divider"></div>
+        <div class="report-story-grid">
+          ${storyCard(
+            'Strengths',
+            `<p>${safe(state.layoutStrengths) || '<span class="muted-copy">No strengths recorded.</span>'}</p>`
+          )}
+          ${storyCard(
+            'Issues',
+            `<p>${safe(state.layoutIssues) || '<span class="muted-copy">No issues recorded.</span>'}</p>`
+          )}
+          ${storyCard(
+            'Kitchen and specs requirements',
+            `<p>${safe(state.equipmentNeeds) || '<span class="muted-copy">No equipment recommendations recorded.</span>'}</p>`
+          )}
+          ${storyCard(
+            'Commercial impact',
+            `<p>${safe(state.layoutImpact) || '<span class="muted-copy">No commercial impact recorded.</span>'}</p>`
+          )}
+        </div>
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Prioritised action plan</div>
+        <div class="report-cover-divider"></div>
+        ${listHtml(priorityActions, 'No action plan recorded.')}
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Structured action register</div>
+        <div class="report-cover-divider"></div>
+        ${
+          actionRows.length
+            ? `
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Area</th>
+                <th>Priority</th>
+                <th>Owner</th>
+                <th>Due</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${actionRows
+                .map(
+                  (item) => `
+                <tr>
+                  <td><strong>${safe(item.title) || 'Untitled action'}</strong><br /><span class="muted-copy">${safe(item.impact) || 'No impact note'}</span></td>
+                  <td>${safe(item.area) || 'General'}</td>
+                  <td>${item.priority}</td>
+                  <td>${safe(item.owner) || 'Not assigned'}</td>
+                  <td>${safe(item.dueDate) || 'Not set'}</td>
+                  <td>${item.status}</td>
+                </tr>
+              `
+                )
+                .join('')}
+            </tbody>
+          </table>`
+            : '<p class="muted-copy">No structured actions recorded.</p>'
+        }
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Immediate quick wins</div>
+        <div class="report-cover-divider"></div>
+        ${listHtml(quickWins, 'No quick wins recorded.')}
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Long-term improvement strategy</div>
+        <div class="report-cover-divider"></div>
+        ${listHtml(longTerm, 'No long-term strategy recorded.')}
+      </div>
+
+      <div class="report-cover-block">
+        <div class="report-cover-heading">Recommended follow-up</div>
+        <div class="report-cover-divider"></div>
+        <p>${
+          safe(state.nextVisit) ||
+          'Suggested next step: schedule a follow-up visit within 2 to 4 weeks to review progress and reset priorities.'
+        }</p>
+      </div>
+    </div>
+  `;
+
   return `
     ${coverPageHtml}
-
-    <section>
-      <h2>Operational scorecard</h2>
-      <div class="report-grid columns-4">
-        ${scoreEntries
-          .map(
-            ([label, value]) =>
-              `<div><strong>${label}</strong><br />${num(value).toFixed(1)}/10</div>`
-          )
-          .join('')}
-        <div><strong>Average operating score</strong><br />${calc.operationsAverage.toFixed(1)}/10</div>
-        <div><strong>Control compliance</strong><br />${Math.round(calc.controlScore)}%</div>
-        <div><strong>Hygiene risk</strong><br />${state.hygieneRisk}</div>
-        <div><strong>Ordering control</strong><br />${state.orderingScore}</div>
-        <div><strong>Structured actions</strong><br />${calc.totalNamedActions}</div>
-      </div>
-    </section>
-
-    <h2>Controls and evidence register</h2>
-    ${
-      controlRows.length
-        ? `
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Control</th>
-            <th>Status</th>
-            <th>Audit note</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${controlRows
-            .map(
-              (item) => `
-            <tr>
-              <td>${safe(item.category) || 'General'}</td>
-              <td><strong>${safe(item.label) || 'Unnamed control'}</strong></td>
-              <td>${item.status}</td>
-              <td>${safe(item.note) || 'No note recorded'}</td>
-            </tr>
-          `
-            )
-            .join('')}
-        </tbody>
-      </table>`
-        : '<p class="muted-copy">No control checks recorded.</p>'
-    }
-
-    <h2>Detailed findings</h2>
-    ${listHtml(detailedFindings, 'No detailed findings recorded.')}
-
-    ${repeatSection(
-      'Waste findings',
-      state.wasteItems,
-      (item) =>
-        `<li><strong>${safe(item.item) || 'Unspecified item'}</strong>${
-          num(item.cost) > 0 ? ` • Estimated impact: ${fmtCurrency(num(item.cost))}` : ''
-        }<br />Cause: ${safe(item.cause) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-      'No waste findings recorded.'
-    )}
-
-    ${repeatSection(
-      'Over-portioning findings',
-      state.portionItems,
-      (item) =>
-        `<li><strong>${safe(item.dish) || 'Unspecified dish'}</strong>${
-          num(item.loss) > 0 ? ` • Estimated weekly loss: ${fmtCurrency(num(item.loss))}` : ''
-        }<br />Issue: ${safe(item.issue) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-      'No over-portioning findings recorded.'
-    )}
-
-    ${repeatSection(
-      'Ordering and stock-control findings',
-      state.orderingItems,
-      (item) =>
-        `<li><strong>${safe(item.category) || 'Unspecified category'}</strong><br />Problem: ${safe(item.problem) || 'Not recorded'}<br />Commercial impact: ${safe(item.impact) || 'Not recorded'}<br />Recommended fix: ${safe(item.fix) || 'Not recorded'}</li>`,
-      'No ordering issues recorded.'
-    )}
-
-    <h2>Kitchen layout review</h2>
-    <div class="report-columns">
-      <div>
-        <h3>Strengths</h3>
-        <p>${safe(state.layoutStrengths) || '<span class="muted-copy">No strengths recorded.</span>'}</p>
-      </div>
-      <div>
-        <h3>Issues</h3>
-        <p>${safe(state.layoutIssues) || '<span class="muted-copy">No issues recorded.</span>'}</p>
-      </div>
-    </div>
-
-    <div class="report-columns">
-      <div>
-        <h3>Equipment and space requirements</h3>
-        <p>${safe(state.equipmentNeeds) || '<span class="muted-copy">No equipment recommendations recorded.</span>'}</p>
-      </div>
-      <div>
-        <h3>Commercial impact</h3>
-        <p>${safe(state.layoutImpact) || '<span class="muted-copy">No commercial impact recorded.</span>'}</p>
-      </div>
-    </div>
-
-    <h2>Prioritised action plan</h2>
-    ${listHtml(priorityActions, 'No action plan recorded.')}
-
-    <h2>Structured action register</h2>
-    ${
-      actionRows.length
-        ? `
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Action</th>
-            <th>Area</th>
-            <th>Priority</th>
-            <th>Owner</th>
-            <th>Due</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${actionRows
-            .map(
-              (item) => `
-            <tr>
-              <td><strong>${safe(item.title) || 'Untitled action'}</strong><br /><span class="muted-copy">${safe(item.impact) || 'No impact note'}</span></td>
-              <td>${safe(item.area) || 'General'}</td>
-              <td>${item.priority}</td>
-              <td>${safe(item.owner) || 'Not assigned'}</td>
-              <td>${safe(item.dueDate) || 'Not set'}</td>
-              <td>${item.status}</td>
-            </tr>
-          `
-            )
-            .join('')}
-        </tbody>
-      </table>`
-        : '<p class="muted-copy">No structured actions recorded.</p>'
-    }
-
-    <h2>Immediate quick wins</h2>
-    ${listHtml(quickWins, 'No quick wins recorded.')}
-
-    <h2>Long-term improvement strategy</h2>
-    ${listHtml(longTerm, 'No long-term strategy recorded.')}
-
-    <h2>Recommended follow-up</h2>
-    <p>${
-      safe(state.nextVisit) ||
-      'Suggested next step: schedule a follow-up visit within 2 to 4 weeks to review progress and reset priorities.'
-    }</p>
+    ${scorecardPageHtml}
+    ${controlsPageHtml}
+    ${actionPageHtml}
   `;
 }
 
@@ -1523,8 +1580,7 @@ export function KitchenAuditPage() {
   function exportPdf() {
     openPrintableHtmlDocument(
       `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
-      reportHtml,
-      { landscape: true }
+      reportHtml
     );
   }
 

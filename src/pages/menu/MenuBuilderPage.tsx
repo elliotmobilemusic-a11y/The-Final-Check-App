@@ -909,8 +909,7 @@ export function MenuBuilderPage() {
   function exportPdf() {
     openPrintableHtmlDocument(
       `${safe(project.menuName || 'Menu Builder Report')} report`,
-      reportHtml,
-      { landscape: true }
+      reportHtml
     );
   }
 
