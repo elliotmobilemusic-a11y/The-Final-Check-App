@@ -962,35 +962,6 @@ export function FoodSafetyAuditPage() {
         </div>
 
         <aside className="workspace-side">
-          <article className="feature-card">
-            <div className="feature-top">
-              <div>
-                <h3>Audit snapshot</h3>
-                <p>Use this side panel to keep the risk picture visible while you work.</p>
-              </div>
-              <span className="soft-pill">{calc.riskLabel}</span>
-            </div>
-            <div className="mini-grid">
-              <div className="mini-box">
-                <span>Pass rate</span>
-                <strong>{calc.completion}%</strong>
-              </div>
-              <div className="mini-box">
-                <span>Fails</span>
-                <strong>{calc.failCount}</strong>
-              </div>
-              <div className="mini-box">
-                <span>Done</span>
-                <strong>{calc.completedActions}/{Math.max(calc.totalActions, 1)}</strong>
-              </div>
-            </div>
-            {form.clientId ? (
-              <Link className="button button-ghost" to={`/clients/${form.clientId}`}>
-                Back to clients
-              </Link>
-            ) : null}
-          </article>
-
           <article className="panel">
             <div className="panel-header">
               <div>
