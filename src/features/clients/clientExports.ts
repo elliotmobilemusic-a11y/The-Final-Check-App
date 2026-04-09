@@ -137,13 +137,25 @@ export function buildReportHeroHtml(options: {
 
 type PrintLayoutOptions = {
   landscape?: boolean;
+  autoPrint?: boolean;
+  showCloseButton?: boolean;
+  formatLabel?: string;
 };
 
-function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions = {}) {
+export function buildReportDocumentHtml(
+  title: string,
+  bodyHtml: string,
+  options: PrintLayoutOptions = {}
+) {
   const generatedOn = formatDate(new Date().toISOString());
   const safeTitle = escapeHtml(title);
   const pageSize = options.landscape ? 'A4 landscape' : 'A4';
   const documentWidth = options.landscape ? '1240px' : '960px';
+  const showCloseButton = options.showCloseButton ?? true;
+  const autoPrint = options.autoPrint ?? false;
+  const formatLabel =
+    options.formatLabel ??
+    (options.landscape ? 'Landscape client-ready PDF' : 'Client-ready PDF');
   return `<!doctype html>
   <html lang="en">
     <head>
@@ -845,7 +857,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
     <body>
       <div class="print-toolbar">
         <button type="button" onclick="window.print()">Print / Save PDF</button>
-        <button type="button" onclick="window.close()">Close</button>
+        ${showCloseButton ? '<button type="button" onclick="window.close()">Close</button>' : ''}
       </div>
       <main>
         <article class="report-document">
@@ -863,7 +875,7 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
                 <span>Prepared</span>
                 <strong>${escapeHtml(generatedOn)}</strong>
                 <span>Format</span>
-                <strong>${options.landscape ? 'Landscape client-ready PDF' : 'Client-ready PDF'}</strong>
+                <strong>${escapeHtml(formatLabel)}</strong>
               </div>
             </div>
 
@@ -875,7 +887,9 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
           </div>
         </article>
       </main>
-      <script>
+      ${
+        autoPrint
+          ? `<script>
         window.addEventListener('load', () => {
           setTimeout(() => {
             try {
@@ -886,7 +900,9 @@ function shellHtml(title: string, bodyHtml: string, options: PrintLayoutOptions 
             }
           }, 350);
         });
-      </script>
+      </script>`
+          : ''
+      }
     </body>
   </html>`;
 }
@@ -908,7 +924,7 @@ export function openPrintableHtmlDocument(
   }
 
   popup.document.open();
-  popup.document.write(shellHtml(title, bodyHtml, options));
+  popup.document.write(buildReportDocumentHtml(title, bodyHtml, { ...options, autoPrint: true }));
   popup.document.close();
   popup.focus();
 }

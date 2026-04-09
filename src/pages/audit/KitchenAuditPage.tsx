@@ -29,6 +29,7 @@ import {
   uid
 } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { createKitchenAuditShare } from '../../services/reportShares';
 
 const KITCHEN_AUDIT_DRAFT_KEY = 'kitchen-audit-draft-v1';
 
@@ -533,7 +534,7 @@ function applyAuditPreset(kind: 'margin' | 'operations' | 'opening', state: Audi
   };
 }
 
-function makeAuditReport(state: AuditFormState) {
+export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const calc = calculateAudit(state);
   const actionRows = state.actionItems.filter((item) => safe(item.title));
   const controlRows = state.controlChecks.filter(
@@ -1220,7 +1221,8 @@ export function KitchenAuditPage() {
     () => selectableSitesForClient(activeClient),
     [activeClient]
   );
-  const reportHtml = useMemo(() => makeAuditReport(form), [form]);
+  const [isSharing, setIsSharing] = useState(false);
+  const reportHtml = useMemo(() => buildKitchenAuditReportHtml(form), [form]);
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
   const readinessItems = useMemo(
@@ -1602,6 +1604,27 @@ export function KitchenAuditPage() {
     );
   }
 
+  async function shareHtmlReport() {
+    try {
+      setIsSharing(true);
+      const share = await createKitchenAuditShare(form);
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/share/kitchen-audit/${share.token}`;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setMessage('HTML report link created and copied to clipboard.');
+      } catch {
+        setMessage(`HTML report link created: ${shareUrl}`);
+      }
+
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the share link.');
+    } finally {
+      setIsSharing(false);
+    }
+  }
+
   function loadFromJson(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1634,6 +1657,9 @@ export function KitchenAuditPage() {
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
+            </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
+              {isSharing ? 'Creating link...' : 'Share HTML page'}
             </button>
           </>
         }

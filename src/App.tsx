@@ -14,6 +14,7 @@ import { ClientsPage } from './pages/clients/ClientsPage';
 import { ClientProfilePage } from './pages/clients/ClientProfilePage';
 import { NewClientPage } from './pages/clients/NewClientPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { SharedKitchenAuditPage } from './pages/share/SharedKitchenAuditPage';
 
 function HomeRedirect() {
   const { preferences } = usePreferences();
@@ -25,6 +26,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />
         <Route
           path="/"
           element={

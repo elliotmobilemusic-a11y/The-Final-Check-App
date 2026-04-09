@@ -267,6 +267,20 @@ export interface SupabaseRecord<T> {
   updated_at: string;
 }
 
+export interface ReportShareRecord<T = Record<string, unknown>> {
+  id: string;
+  user_id: string;
+  report_type: string;
+  title: string;
+  token: string;
+  source_record_id: string | null;
+  payload: T;
+  is_public: boolean;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DashboardStats {
   auditCount: number;
   menuCount: number;
