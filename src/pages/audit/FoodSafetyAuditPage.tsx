@@ -645,34 +645,16 @@ export function FoodSafetyAuditPage() {
         description="Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report."
         actions={
           <>
-            <button className="button button-primary" onClick={handleSave}>
-              Save audit
+            <button className="button button-secondary" onClick={newAudit}>
+              New audit
+            </button>
+            <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+              {isSaving ? 'Saving...' : 'Save audit'}
             </button>
             <button className="button button-secondary" onClick={handleExportPrint}>
               Export PDF
             </button>
           </>
-        }
-        side={
-          <div className="page-intro-summary">
-            <span className="status-pill status-warning">{calc.riskLabel}</span>
-            <strong>Food safety status</strong>
-            <p>{message}</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Pass rate</span>
-                <strong>{calc.completion}%</strong>
-              </div>
-              <div>
-                <span>Fails</span>
-                <strong>{calc.failCount}</strong>
-              </div>
-              <div>
-                <span>Actions</span>
-                <strong>{calc.totalActions}</strong>
-              </div>
-            </div>
-          </div>
         }
       />
 
