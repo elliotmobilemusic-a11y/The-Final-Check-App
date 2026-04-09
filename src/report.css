@@ -1,41 +1,33 @@
 /* ==========================================================================
    PREMIUM CLIENT REPORT CSS - PRINT FIRST
    Optimised for A4 PDF export from browser
+   Targets actual report HTML classes
    ========================================================================== */
 
 /* ==============================================
-   1. PRINT PAGE SETUP & FOUNDATION
+   1. PRINT PAGE SETUP
    ============================================== */
 
 @page {
   size: A4 portrait;
-  margin: 18mm 16mm 20mm 16mm;
+  margin: 17mm 15mm 18mm 15mm;
   marks: none;
 }
 
 @media print {
-  /* Reset all web UI backgrounds and effects */
-  * {
-    background: transparent !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    backdrop-filter: none !important;
-    filter: none !important;
-  }
-
   html {
     font-size: 14px;
   }
 
   body {
     background: white !important;
-    color: #2b2a30 !important;
+    color: #2c2a30;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    line-height: 1.55;
+    line-height: 1.52;
   }
 
-  /* Hide all app chrome */
+  /* Hide app chrome only - no destructive global resets */
   .app-shell::before,
   .app-shell::after,
   .shell-topbar,
@@ -60,313 +52,325 @@
 }
 
 /* ==============================================
-   2. TYPOGRAPHY HIERARCHY (PRINT OPTIMISED)
+   2. BASE TYPOGRAPHY
    ============================================== */
 
-/* Page Title */
-.report-title {
-  font-size: 22pt;
+/* Report Title */
+.report-cover-heading {
+  font-size: 26pt;
   font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: #1a191e;
   margin: 0 0 12px 0;
-  color: #1a191d;
 }
 
 /* Section Headings */
-h1 {
-  font-size: 18pt;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0 0 16px 0;
-  page-break-after: avoid;
-  color: #1a191d;
-}
-
-h2 {
-  font-size: 14pt;
+.report-section-heading {
+  font-size: 16pt;
   font-weight: 600;
-  letter-spacing: 0;
-  margin: 24px 0 12px 0;
+  letter-spacing: -0.005em;
+  margin: 0 0 14px 0;
+  color: #232127;
   page-break-after: avoid;
-  color: #2b2a30;
 }
 
-h3 {
+.report-subheading {
   font-size: 12pt;
   font-weight: 600;
   letter-spacing: 0;
-  margin: 16px 0 8px 0;
+  margin: 0 0 10px 0;
+  color: #36333b;
   page-break-after: avoid;
-  color: #2b2a30;
-}
-
-h4 {
-  font-size: 11pt;
-  font-weight: 600;
-  letter-spacing: 0;
-  margin: 12px 0 6px 0;
-  color: #35333a;
 }
 
 /* Body text */
 p {
   font-size: 10pt;
-  line-height: 1.55;
+  line-height: 1.52;
   margin: 0 0 10px 0;
   orphans: 3;
   widows: 3;
+  color: #36333b;
 }
 
-/* Labels */
-.label,
-.shell-section-label,
-th {
-  letter-spacing: 0.03em !important; /* Reduced from excessive 0.14em */
-  font-weight: 600;
-  text-transform: uppercase;
+/* Labels - Restrained tracking */
+.report-label {
   font-size: 8.5pt;
-  color: #66626c;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6773;
+  line-height: 1.3;
 }
 
 /* Muted text */
-.muted,
-.muted-copy {
+.report-muted {
   font-size: 9pt;
-  color: #66626c;
-  line-height: 1.5;
-}
-
-/* Remove all excessive letter spacing */
-* {
-  letter-spacing: normal !important;
-}
-
-/* ==============================================
-   3. LAYOUT & SPACING SYSTEM
-   ============================================== */
-
-.report-container {
-  max-width: 100%;
-  margin: 0;
-}
-
-.report-section {
-  margin: 0 0 20px 0;
-  page-break-inside: avoid;
-}
-
-/* Tighten all spacing */
-.gap-8  { gap: 6px !important; }
-.gap-12 { gap: 8px !important; }
-.gap-16 { gap: 10px !important; }
-.gap-20 { gap: 12px !important; }
-.gap-24 { gap: 14px !important; }
-.gap-28 { gap: 16px !important; }
-
-.section-stack { gap: 16px !important; }
-.surface-stack { gap: 12px !important; }
-.page-stack { gap: 16px !important; }
-
-/* ==============================================
-   4. CLEAN SECTION STYLING
-   ============================================== */
-
-/* Remove heavy dashboard styling */
-.panel,
-.card,
-.surface-card,
-.bg-panel,
-.profile-header {
-  border: none !important;
-  border-radius: 0 !important;
-  background: white !important;
-  padding: 0 !important;
-  margin: 0 0 16px 0 !important;
-}
-
-/* Soft subtle dividers only */
-.panel-header,
-.section-header {
-  border-bottom: 1px solid #e8e6eb;
-  padding: 0 0 8px 0;
-  margin: 0 0 12px 0;
-}
-
-/* Remove all rounded corners and shadows */
-* {
-  border-radius: 0 !important;
-}
-
-/* ==============================================
-   5. STAT CARDS & SUMMARY MODULES
-   ============================================== */
-
-.stats-grid {
-  gap: 0 !important;
-  margin: 12px 0 !important;
-  page-break-inside: avoid;
-}
-
-.stat-card {
-  background: white !important;
-  border: none !important;
-  border-left: 2px solid #e0dce6;
-  padding: 10px 14px !important;
-  margin: 0 !important;
-}
-
-.stat-card-value {
-  font-size: 16pt;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: #1a191d;
-}
-
-.stat-card-label {
-  font-size: 8.5pt;
-  color: #66626c;
-  margin: 3px 0 0 0;
-}
-
-/* ==============================================
-   6. PRINT OPTIMISED TABLES
-   ============================================== */
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  page-break-inside: avoid;
-  margin: 12px 0 16px 0;
-  font-size: 9.5pt;
-}
-
-thead {
-  display: table-header-group;
-}
-
-th {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1.5px solid #d8d5dd;
-  background: #f8f7fa !important;
-  font-weight: 600;
-  color: #46434d;
-}
-
-td {
-  padding: 7px 10px;
-  border-bottom: 1px solid #f0eef3;
-  vertical-align: top;
+  color: #6b6773;
   line-height: 1.45;
 }
 
-/* Subtle alternating rows */
-tbody tr:nth-child(even) td {
-  background: #fbfafc !important;
+/* ==============================================
+   3. COVER PAGE
+   ============================================== */
+
+.report-cover-page {
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  page-break-after: always;
 }
 
-/* Tighten table spacing */
-table .small {
+.report-cover-top {
+  padding: 12mm 0 0 0;
+}
+
+.report-cover-divider {
+  height: 2px;
+  width: 70mm;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin: 16px 0 20px 0;
+}
+
+.report-cover-block {
+  margin: 0 0 24px 0;
+}
+
+/* Mini stat grid */
+.report-cover-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.report-cover-mini-card {
+  padding: 10px 0;
+  border-top: 1px solid #ebeaed;
+}
+
+.report-cover-mini-label {
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #777280;
+  margin: 0 0 4px 0;
+}
+
+.report-cover-mini-value {
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1a191e;
+  line-height: 1.1;
+}
+
+/* Commercial block */
+.report-cover-commercial {
+  border-top: 1px solid #ebeaed;
+  border-bottom: 1px solid #ebeaed;
+  padding: 14px 0;
+  margin: 24px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.report-cover-commercial-label {
   font-size: 8.5pt;
-  line-height: 1.4;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #777280;
+  margin: 0 0 3px 0;
+}
+
+.report-cover-commercial-value {
+  font-size: 11pt;
+  font-weight: 600;
+  color: #232127;
+}
+
+.report-cover-commercial-detail {
+  font-size: 9pt;
+  color: #6b6773;
+}
+
+/* Cover pills */
+.report-cover-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0 0;
+}
+
+.report-cover-pill {
+  font-size: 8.5pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: #f5f4f7;
+  color: #54505c;
+}
+
+/* Cover stat grid */
+.report-cover-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid #ebeaed;
+  border-bottom: 1px solid #ebeaed;
+}
+
+.report-cover-stat-card {
+  padding: 14px 12px;
+  text-align: center;
+  border-right: 1px solid #ebeaed;
+}
+
+.report-cover-stat-card:last-child {
+  border-right: none;
 }
 
 /* ==============================================
-   7. PAGE BREAK BEHAVIOUR
+   4. STORY CARDS & CONTENT BLOCKS
    ============================================== */
 
-/* Prevent breaking inside important elements */
-.report-section,
-.stat-card,
-.card,
-.panel,
-table,
-figure,
-blockquote,
-ul,
-ol,
+.report-story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0 24px 0;
+  page-break-inside: avoid;
+}
+
+.report-story-card {
+  padding: 14px 16px;
+  background: #faf9fc;
+  border-radius: 6px;
+  page-break-inside: avoid;
+}
+
+.report-page-block {
+  margin: 0 0 22px 0;
+  page-break-inside: avoid;
+}
+
+.report-page-block-final {
+  page-break-before: always;
+}
+
+/* ==============================================
+   5. REPORT TABLES
+   ============================================== */
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  page-break-inside: avoid;
+  margin: 14px 0 18px 0;
+  font-size: 9.5pt;
+}
+
+.report-table thead {
+  display: table-header-group;
+}
+
+.report-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1.5px solid #d9d7dd;
+  background: #f6f5f8 !important;
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #54505c;
+}
+
+.report-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #efedf2;
+  vertical-align: top;
+  line-height: 1.45;
+  color: #36333b;
+}
+
+.report-table tbody tr:nth-child(even) td {
+  background: #fbfafc !important;
+}
+
+/* Compact table variant */
+.report-table-compact th,
+.report-table-compact td {
+  padding: 5px 8px;
+  font-size: 9pt;
+}
+
+/* ==============================================
+   6. PAGE BREAK CONTROL
+   ============================================== */
+
+/* Force page breaks between report sections */
+.report-cover-page {
+  page-break-after: always;
+}
+
+.report-page-block + .report-page-block-final {
+  page-break-before: always;
+}
+
+/* Prevent breaking inside critical elements */
+.report-story-card,
+.report-table,
+.report-cover-stat-grid,
+.report-cover-mini-grid,
+.report-cover-commercial,
 h1, h2, h3, h4 {
   page-break-inside: avoid;
 }
 
-/* Force page breaks between major sections */
-.report-section-major {
-  page-break-before: always;
-}
-
-/* Always keep heading with following content */
-h1 + *, h2 + *, h3 + *, h4 + * {
+/* Keep headings with their content */
+.report-section-heading + *,
+.report-subheading + * {
   page-break-before: avoid;
 }
 
-/* Control widows and orphans */
+/* Text flow control */
 p, li {
   orphans: 3;
   widows: 3;
 }
 
 /* ==============================================
-   8. PREMIUM FINISHING TOUCHES
+   7. PRINT OVERRIDES
    ============================================== */
 
-/* Report header */
-.report-header {
-  border-bottom: 1px solid #e0dce6;
-  padding: 0 0 16px 0;
-  margin: 0 0 24px 0;
-}
+@media print {
+  /* Remove shadows and effects only on print */
+  .report-story-card,
+  .report-cover-pill {
+    box-shadow: none !important;
+  }
 
-.report-footer {
-  border-top: 1px solid #e0dce6;
-  padding: 12px 0 0 0;
-  margin: 32px 0 0 0;
-  font-size: 8pt;
-  color: #888391;
+  /* Ensure perfect alignment */
+  .report-cover-page {
+    page-break-after: always;
+  }
 }
-
-/* Branding area */
-.report-brand {
-  text-align: right;
-  margin: 0 0 20px 0;
-}
-
-.report-brand img {
-  max-height: 28px;
-  opacity: 0.85;
-}
-
-/* Subtle accent line */
-.accent-line {
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  width: 80px;
-  margin: 10px 0 16px 0;
-}
-
-/* Highlight boxes for important notes */
-.highlight-box {
-  border-left: 3px solid var(--accent);
-  background: #faf8f3 !important;
-  padding: 12px 16px;
-  margin: 12px 0;
-  page-break-inside: avoid;
-}
-
-/* Status indicators */
-.status-good { color: #437a59; }
-.status-warning { color: #9d7a3d; }
-.status-danger { color: #9b4d4d; }
 
 /* ==============================================
-   9. SCREEN PREVIEW MODE
-   For previewing report before export
+   8. SCREEN PREVIEW MODE
    ============================================== */
 
 @media screen {
   body.report-preview {
-    background: #e2e0e5;
+    background: #e5e3e8;
     padding: 20px;
   }
 
@@ -374,8 +378,8 @@ p, li {
     background: white;
     width: 210mm;
     min-height: 297mm;
-    padding: 18mm 16mm;
+    padding: 17mm 15mm;
     margin: 0 auto;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
   }
 }
