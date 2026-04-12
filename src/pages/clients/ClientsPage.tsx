@@ -8,6 +8,7 @@ import {
 } from '../../features/clients/clientExports';
 import { clientRecordToProfile, createEmptyClientData } from '../../features/clients/clientData';
 import { fmtCurrency } from '../../lib/utils';
+import { createClientIntakeShare } from '../../services/clientIntakeShares';
 import { deleteClient, listClients } from '../../services/clients';
 import type { ClientRecord } from '../../types';
 
@@ -109,6 +110,21 @@ export function ClientsPage() {
     openPrintableHtmlDocument(`${profile.companyName} CRM export`, buildClientPdfHtml(profile));
   }
 
+  async function handleCreateIntakeLink() {
+    try {
+      const share = await createClientIntakeShare({
+        presetLeadSource: 'Client intake form',
+        message:
+          'Please complete this short form so we can set up your business correctly before the next conversation.'
+      });
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/intake/client/${share.token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      setMessage(`Client intake link copied: ${shareUrl}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the intake link.');
+    }
+  }
+
   const activeClients = useMemo(
     () => clients.filter((client) => (client.status ?? 'Active').toLowerCase() === 'active'),
     [clients]
@@ -186,6 +202,7 @@ export function ClientsPage() {
       >
         <div className="page-inline-note">{activeClients.length} active accounts</div>
         <div className="page-inline-note">{filteredClients.length} visible</div>
+        <div className="page-inline-note">{message}</div>
       </PageIntro>
 
       <section className="panel">
@@ -196,6 +213,9 @@ export function ClientsPage() {
               <p>Open the account you need and move straight into the record.</p>
             </div>
             <div className="crm-list-top-meta">
+              <button className="button button-ghost" onClick={handleCreateIntakeLink} type="button">
+                Intake link
+              </button>
               <Link
                 aria-label="Add client"
                 className="crm-add-button"

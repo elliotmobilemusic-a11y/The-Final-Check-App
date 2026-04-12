@@ -284,6 +284,30 @@ export interface ReportShareRecord<T = Record<string, unknown>> {
   updated_at: string;
 }
 
+export type ClientIntakeSharePayload = {
+  message?: string;
+  presetAccountOwner?: string;
+  presetLeadSource?: string;
+  presetTier?: string;
+};
+
+export type ClientIntakeFormData = {
+  businessName: string;
+  tradingName: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  address: string;
+  postcode: string;
+  businessType: string;
+  siteCount: number;
+  weeklySalesBand: string;
+  challenges: string;
+  supportNeeded: string;
+  extraNotes: string;
+};
+
 export interface DashboardStats {
   auditCount: number;
   menuCount: number;
