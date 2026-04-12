@@ -75,6 +75,7 @@ function relationshipTone(health?: string | null) {
 export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [message, setMessage] = useState('Client list ready.');
+  const [intakeUrl, setIntakeUrl] = useState('');
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState('All');
@@ -118,9 +119,16 @@ export function ClientsPage() {
           'Please complete this short form so we can set up your business correctly before the next conversation.'
       });
       const shareUrl = `${window.location.origin}${window.location.pathname}#/intake/client/${share.token}`;
-      await navigator.clipboard.writeText(shareUrl);
-      setMessage(`Client intake link copied: ${shareUrl}`);
+      setIntakeUrl(shareUrl);
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setMessage('Client intake link created and copied.');
+      } catch {
+        setMessage('Client intake link created. Copy it from the field below.');
+      }
     } catch (error) {
+      setIntakeUrl('');
       setMessage(error instanceof Error ? error.message : 'Could not create the intake link.');
     }
   }
@@ -269,6 +277,36 @@ export function ClientsPage() {
               </select>
             </label>
           </div>
+
+          {intakeUrl ? (
+            <div className="share-link-row">
+              <input
+                className="input"
+                readOnly
+                value={intakeUrl}
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <button
+                className="button button-secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(intakeUrl);
+                    setMessage('Client intake link copied.');
+                  } catch (error) {
+                    setMessage(
+                      error instanceof Error ? error.message : 'Could not copy the intake link.'
+                    );
+                  }
+                }}
+                type="button"
+              >
+                Copy link
+              </button>
+              <a className="button button-ghost" href={intakeUrl} rel="noreferrer" target="_blank">
+                Open
+              </a>
+            </div>
+          ) : null}
 
           <div className="clients-long-list">
             {filteredClients.length === 0 ? (
