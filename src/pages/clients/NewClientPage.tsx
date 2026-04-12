@@ -92,7 +92,7 @@ export function NewClientPage() {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [lookupMessage, setLookupMessage] = useState(
-    'Search Companies House by registered company name or trading name before saving the client.'
+    'Search by trading name, venue name, or registered company before saving the client.'
   );
   const setupChecklist = useMemo(
     () => [
@@ -152,8 +152,8 @@ export function NewClientPage() {
       setLookupResults(results);
       setLookupMessage(
         results.length
-          ? `Found ${results.length} registered compan${results.length === 1 ? 'y' : 'ies'}. Review the best match and apply it before saving.`
-          : 'No registered company matches found. Try the legal entity name, trading name, or company number.'
+          ? `Found ${results.length} possible business match${results.length === 1 ? '' : 'es'}. Review the best match and apply it before saving.`
+          : 'No business matches found. Try the trading name, venue name, legal entity name, or company number.'
       );
     } catch (error) {
       setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
@@ -293,18 +293,18 @@ export function NewClientPage() {
               <div>
                 <h4>Business finder</h4>
                 <p className="muted-copy">
-                  Search Companies House for the registered company behind the client and pull the best match into the account draft.
+                  Search by trading name, venue, or registered company and pull the best match into the account draft.
                 </p>
               </div>
-              <span className="soft-pill">Companies House</span>
+              <span className="soft-pill">Brand + legal lookup</span>
             </div>
 
             <div className="crm-lookup-bar">
               <label className="field">
-                <span>Registered company search</span>
+                <span>Business search</span>
                 <input
                   className="input"
-                  placeholder="Search by company name, trading name, or company number"
+                  placeholder="Search by trading name, venue, company name, or company number"
                   value={lookupQuery}
                   onChange={(event) => setLookupQuery(event.target.value)}
                 />

@@ -1191,22 +1191,22 @@ function removeInvoice(invoiceId: string) {
                     <section className="crm-lookup-shell">
                       <div className="crm-lookup-top">
                         <div>
-                          <h4>Companies House finder</h4>
+                          <h4>Business finder</h4>
                           <p className="muted-copy">
-                            Search Companies House for the registered company behind this client,
-                            then refresh the account with the strongest legal entity match.
+                            Search by trading name, venue, or registered company, then refresh
+                            the account with the strongest matched record.
                           </p>
                         </div>
-                        <span className="soft-pill">Companies House</span>
+                        <span className="soft-pill">Brand + legal lookup</span>
                       </div>
 
                       <div className="crm-lookup-bar">
                         <label className="field">
-                          <span>Registered company search</span>
+                          <span>Business search</span>
                           <input
                             className="input"
                             disabled={!editing}
-                            placeholder="Search by company name, trading name, or company number"
+                            placeholder="Search by trading name, venue, company name, or company number"
                             value={lookupQuery}
                             onChange={(e) => setLookupQuery(e.target.value)}
                           />

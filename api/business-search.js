@@ -1,6 +1,7 @@
 const COMPANIES_HOUSE_API = 'https://api.company-information.service.gov.uk';
 const COMPANIES_HOUSE_PUBLIC_COMPANY_URL =
   'https://find-and-update.company-information.service.gov.uk/company';
+const NOMINATIM_SEARCH_API = 'https://nominatim.openstreetmap.org/search';
 const GENERIC_QUERY_TOKENS = new Set([
   'uk',
   'the',
@@ -17,6 +18,27 @@ const GENERIC_QUERY_TOKENS = new Set([
   'ltd',
   'plc',
   'llp'
+]);
+const HOSPITALITY_HINTS = new Set([
+  'restaurant',
+  'restaurants',
+  'pub',
+  'pubs',
+  'bar',
+  'bars',
+  'hotel',
+  'hotels',
+  'cafe',
+  'cafes',
+  'coffee',
+  'kitchen',
+  'kitchens',
+  'grill',
+  'club',
+  'inn',
+  'tavern',
+  'dining',
+  'food'
 ]);
 
 function normalizeName(value) {
@@ -91,6 +113,60 @@ function summarizeLocation(address) {
   return [address.locality, address.region, address.postal_code].filter(Boolean).join(', ');
 }
 
+function locationFromPlace(place) {
+  return [
+    place?.address?.city,
+    place?.address?.town,
+    place?.address?.village,
+    place?.address?.county,
+    place?.address?.state,
+    place?.address?.postcode
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
+function addressLineFromPlace(place) {
+  return [
+    place?.address?.house_number,
+    place?.address?.road,
+    place?.address?.suburb,
+    place?.address?.city,
+    place?.address?.town,
+    place?.address?.postcode
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
+function normalizeWebsite(value) {
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
+function websiteHostname(value) {
+  if (!value) return '';
+
+  try {
+    return new URL(normalizeWebsite(value)).hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function faviconUrl(website) {
+  const hostname = websiteHostname(website);
+  return hostname
+    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=256`
+    : '';
+}
+
+function hospitalityWeight(value) {
+  const tokens = tokenizeName(value);
+  return tokens.reduce((score, token) => score + (HOSPITALITY_HINTS.has(token) ? 8 : 0), 0);
+}
+
 function describeCompany(profile, fallbackStatus) {
   const parts = [
     profile?.company_status || fallbackStatus ? titleCase(profile?.company_status || fallbackStatus) : '',
@@ -155,6 +231,8 @@ function scoreMatch(query, companyName, companyNumber) {
 
   if (companyNumber && String(query).toUpperCase().includes(String(companyNumber).toUpperCase())) score += 18;
 
+  score += hospitalityWeight(companyName);
+
   return Math.max(1, Math.min(100, score));
 }
 
@@ -176,6 +254,22 @@ async function fetchCompaniesHouseJson(path, apiKey) {
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Companies House request failed (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
+}
+
+async function fetchJson(url, headers = {}) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      ...headers
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Request failed (${response.status}): ${errorText}`);
   }
 
   return response.json();
@@ -253,6 +347,100 @@ function buildProfileSummary(match, profile) {
   return parts.join('. ');
 }
 
+function scoreVenueMatch(query, placeName, website = '', category = '', type = '') {
+  const normalizedQuery = normalizeName(query);
+  const normalizedName = normalizeName(placeName);
+  const strongQueryTokens = significantTokens(query);
+  const nameTokens = tokenizeName(placeName);
+  const strongSharedTokens = strongQueryTokens.filter((token) => nameTokens.includes(token)).length;
+  const primaryToken = strongQueryTokens[0] ?? '';
+
+  let score = 0;
+
+  if (normalizedName === normalizedQuery) score += 90;
+  else if (normalizedName.startsWith(normalizedQuery)) score += 72;
+  else if (normalizedName.includes(normalizedQuery)) score += 52;
+
+  if (primaryToken) {
+    if (nameTokens.includes(primaryToken)) score += 28;
+    else score -= 34;
+  }
+
+  if (strongQueryTokens.length) {
+    score += Math.min(strongSharedTokens * 18, 40);
+    if (strongSharedTokens === strongQueryTokens.length) score += 20;
+  }
+
+  if (website) score += 8;
+  if (HOSPITALITY_HINTS.has(String(type).toLowerCase())) score += 10;
+  if (HOSPITALITY_HINTS.has(String(category).toLowerCase())) score += 6;
+  score += hospitalityWeight(placeName);
+
+  return Math.max(1, Math.min(100, score));
+}
+
+function buildVenueMatch(query, place) {
+  const website = normalizeWebsite(
+    place?.extratags?.website || place?.extratags?.['contact:website'] || ''
+  );
+  const phone = place?.extratags?.phone || place?.extratags?.['contact:phone'] || '';
+  const name =
+    place?.namedetails?.name ||
+    place?.namedetails?.brand ||
+    place?.name ||
+    '';
+  const addressLine = addressLineFromPlace(place) || String(place?.display_name ?? '').trim();
+  const location = locationFromPlace(place) || addressLine;
+  const type = String(place?.type ?? '').replace(/_/g, ' ');
+  const category = String(place?.category ?? '').replace(/_/g, ' ');
+  const confidenceScore = scoreVenueMatch(query, name, website, category, type);
+
+  return {
+    id: `osm:${place.place_id}`,
+    name,
+    officialName: name,
+    description: [titleCase(type), place?.extratags?.cuisine].filter(Boolean).join(' • ') || 'Recognised venue',
+    resultType: 'site',
+    accountScope: 'Single site',
+    website,
+    industry: place?.extratags?.cuisine || titleCase(type || category) || 'Hospitality venue',
+    location,
+    country: 'United Kingdom',
+    logoUrl: faviconUrl(website),
+    sourceUrl: place?.osm_type && place?.osm_id
+      ? `https://www.openstreetmap.org/${place.osm_type}/${place.osm_id}`
+      : '',
+    sourceLabel: 'OpenStreetMap',
+    email: place?.extratags?.email || place?.extratags?.['contact:email'] || '',
+    phone,
+    addressLine,
+    registeredAddress: '',
+    companyNumber: '',
+    vatNumber: '',
+    siteCountEstimate: 1,
+    sites: [],
+    wikidataId: '',
+    confidenceScore,
+    confidenceLabel: confidenceLabel(confidenceScore),
+    signals: [
+      titleCase(type || category),
+      website ? 'Website captured' : '',
+      phone ? 'Phone captured' : '',
+      addressLine ? 'Venue address captured' : ''
+    ].filter(Boolean)
+  };
+}
+
+async function searchNominatimPlaces(query) {
+  const url = `${NOMINATIM_SEARCH_API}?format=jsonv2&limit=8&countrycodes=gb&addressdetails=1&namedetails=1&extratags=1&q=${encodeURIComponent(query)}`;
+  const places = await fetchJson(url, {
+    'User-Agent': 'TheFinalCheck/1.0 (hospitality client finder)',
+    Referer: 'https://portal.thefinalcheck.uk'
+  });
+
+  return Array.isArray(places) ? places : [];
+}
+
 async function searchCompanies(query, apiKey) {
   if (queryLooksLikeCompanyNumber(query)) {
     try {
@@ -312,6 +500,16 @@ async function searchCompanies(query, apiKey) {
     .slice(0, 8);
 }
 
+async function searchTradingBusinesses(query) {
+  const places = await searchNominatimPlaces(query);
+
+  return places
+    .map((place) => buildVenueMatch(query, place))
+    .filter((match) => match.name)
+    .sort((a, b) => b.confidenceScore - a.confidenceScore)
+    .slice(0, 6);
+}
+
 async function fetchCompanyProfile(companyNumber, apiKey) {
   const profile = await fetchCompaniesHouseJson(`/company/${encodeURIComponent(companyNumber)}`, apiKey);
   const match = buildMatch(companyNumber, null, profile);
@@ -350,7 +548,13 @@ export default async function handler(request, response) {
       return;
     }
 
-    const matches = await searchCompanies(query, apiKey);
+    const [companyMatches, venueMatches] = await Promise.all([
+      searchCompanies(query, apiKey),
+      searchTradingBusinesses(query).catch(() => [])
+    ]);
+    const matches = [...venueMatches, ...companyMatches]
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .slice(0, 8);
     response.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     response.status(200).json({ matches, provider: 'companies-house' });
   } catch (error) {
