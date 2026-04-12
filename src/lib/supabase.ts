@@ -57,6 +57,22 @@ if (!configValid) {
   throw new Error('Supabase configuration is invalid. Check browser console for details.');
 }
 
+// Helper function to safely sanitize headers and remove empty Bearer tokens
+function sanitizeHeaders(headers: Headers): Headers {
+  const cleanedHeaders = new Headers(headers);
+  const authHeader = cleanedHeaders.get('Authorization');
+
+  if (authHeader) {
+    // Detect empty/invalid Bearer headers in all forms
+    const trimmedAuth = authHeader.trim();
+    if (trimmedAuth === 'Bearer' || trimmedAuth === 'Bearer ' || trimmedAuth.length <= 7) {
+      cleanedHeaders.delete('Authorization');
+    }
+  }
+
+  return cleanedHeaders;
+}
+
 export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     persistSession: true,
@@ -85,16 +101,21 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
       
       try {
         // Always sanitize headers even on first request to prevent empty Bearer bug
-        if (init?.headers) {
-          const headers = new Headers(init.headers);
-          const authHeader = headers.get('Authorization');
-          if (authHeader && (authHeader === 'Bearer' || authHeader === 'Bearer ' || authHeader.trim() === 'Bearer')) {
-            headers.delete('Authorization');
-            init.headers = headers;
-          }
+        let finalInput = input;
+        let finalInit = init;
+
+        // Handle Request objects directly when Supabase passes them (most common case)
+        if (input instanceof Request) {
+          const cleanedHeaders = sanitizeHeaders(input.headers);
+          finalInput = new Request(input, { headers: cleanedHeaders });
         }
 
-        const response = await fetch(input, init);
+        // Sanitize init headers if they exist
+        if (finalInit?.headers) {
+          finalInit.headers = sanitizeHeaders(new Headers(finalInit.headers));
+        }
+
+        const response = await fetch(finalInput, finalInit);
         
         // Log every request for diagnostics
         console.debug(`🌐 Supabase ${init?.method || 'GET'} ${response.status} ${Date.now() - startTime}ms`, requestUrl);
@@ -115,19 +136,9 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
 
         // Strip large headers that can cause 520 origin errors
         if (fixedInit.headers) {
-          const headers = new Headers(fixedInit.headers);
+          let headers = sanitizeHeaders(new Headers(fixedInit.headers));
           headers.delete('x-client-info');
           headers.delete('user-agent');
-
-          // FIX: Remove empty/invalid Authorization headers that cause 520 errors
-          const authHeader = headers.get('Authorization');
-          if (authHeader) {
-            // If token is empty, null, undefined or just "Bearer " with nothing after
-            if (authHeader === 'Bearer' || authHeader === 'Bearer ' || authHeader.trim() === 'Bearer') {
-              headers.delete('Authorization');
-            }
-          }
-
           fixedInit.headers = headers;
         }
 
