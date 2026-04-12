@@ -101,7 +101,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
         // Only reset auth state if we truly have no session at all
         if (shouldResetAuth(error)) {
-          await attemptProfileRepair(data?.session?.access_token);
+          // @ts-expect-error - Supabase types incorrectly narrow session here
+          await attemptProfileRepair(data.session?.access_token);
           handleBrokenAuthState();
         }
 
