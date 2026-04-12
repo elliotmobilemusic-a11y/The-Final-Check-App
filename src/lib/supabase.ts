@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { supabaseAuthStorage } from './authStorage';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -57,27 +56,12 @@ if (!configValid) {
   throw new Error('Supabase configuration is invalid. Check browser console for details.');
 }
 
-// Helper function to safely sanitize headers and remove empty Bearer tokens
-function sanitizeHeaders(headers: Headers): Headers {
-  const cleanedHeaders = new Headers(headers);
-  const authHeader = cleanedHeaders.get('Authorization');
 
-  if (authHeader) {
-    // Detect empty/invalid Bearer headers in all forms
-    const trimmedAuth = authHeader.trim();
-    if (trimmedAuth === 'Bearer' || trimmedAuth === 'Bearer ' || trimmedAuth.length <= 7) {
-      cleanedHeaders.delete('Authorization');
-    }
-  }
-
-  return cleanedHeaders;
-}
 
 export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    storage: supabaseAuthStorage,
     detectSessionInUrl: false,
     flowType: 'implicit'
   },
