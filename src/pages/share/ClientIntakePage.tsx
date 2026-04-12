@@ -165,86 +165,299 @@ export function ClientIntakePage() {
         </h1>
         <p style={{ margin: 0, color: '#5c5752', lineHeight: 1.7, maxWidth: '68ch' }}>{helperText}</p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '18px', marginTop: '26px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Business name</span>
-              <input value={form.businessName} onChange={(event) => setForm({ ...form, businessName: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Trading name</span>
-              <input value={form.tradingName} onChange={(event) => setForm({ ...form, tradingName: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Main contact name</span>
-              <input value={form.contactName} onChange={(event) => setForm({ ...form, contactName: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Main contact email</span>
-              <input type="email" value={form.contactEmail} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Main contact phone</span>
-              <input value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Website</span>
-              <input value={form.website} onChange={(event) => setForm({ ...form, website: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px', gridColumn: '1 / -1' }}>
-              <span>Business address</span>
-              <input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Postcode</span>
-              <input value={form.postcode} onChange={(event) => setForm({ ...form, postcode: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Business type</span>
-              <input placeholder="Restaurant, pub, hotel, cafe..." value={form.businessType} onChange={(event) => setForm({ ...form, businessType: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Number of sites</span>
-              <input type="number" min={1} value={form.siteCount} onChange={(event) => setForm({ ...form, siteCount: Number(event.target.value) || 1 })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px' }}>
-              <span>Weekly sales band</span>
-              <input placeholder="e.g. £10k-£20k" value={form.weeklySalesBand} onChange={(event) => setForm({ ...form, weeklySalesBand: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px', gridColumn: '1 / -1' }}>
-              <span>What are the biggest current challenges?</span>
-              <textarea rows={4} value={form.challenges} onChange={(event) => setForm({ ...form, challenges: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px', gridColumn: '1 / -1' }}>
-              <span>What support are you looking for?</span>
-              <textarea rows={4} value={form.supportNeeded} onChange={(event) => setForm({ ...form, supportNeeded: event.target.value })} />
-            </label>
-            <label style={{ display: 'grid', gap: '8px', gridColumn: '1 / -1' }}>
-              <span>Anything else we should know?</span>
-              <textarea rows={4} value={form.extraNotes} onChange={(event) => setForm({ ...form, extraNotes: event.target.value })} />
-            </label>
-          </div>
+         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '28px', marginTop: '36px' }}>
+           
+           <div style={{
+             padding: '24px',
+             borderRadius: '20px',
+             background: 'linear-gradient(135deg, rgba(198, 161, 97, 0.06), transparent)',
+             border: '1px solid rgba(198, 161, 97, 0.15)'
+           }}>
+             <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', fontWeight: 700, color: '#5c4f3a', letterSpacing: '0.02em' }}>Business details</h3>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Business name *</span>
+                 <input 
+                   value={form.businessName} 
+                   onChange={(event) => setForm({ ...form, businessName: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Trading name</span>
+                 <input 
+                   value={form.tradingName} 
+                   onChange={(event) => setForm({ ...form, tradingName: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Business type</span>
+                 <input 
+                   placeholder="Restaurant, pub, hotel, cafe..." 
+                   value={form.businessType} 
+                   onChange={(event) => setForm({ ...form, businessType: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Number of sites</span>
+                 <input 
+                   type="number" 
+                   min={1} 
+                   value={form.siteCount} 
+                   onChange={(event) => setForm({ ...form, siteCount: Number(event.target.value) || 1 })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px', gridColumn: '1 / -1' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Business address</span>
+                 <input 
+                   value={form.address} 
+                   onChange={(event) => setForm({ ...form, address: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Postcode</span>
+                 <input 
+                   value={form.postcode} 
+                   onChange={(event) => setForm({ ...form, postcode: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Weekly sales band</span>
+                 <input 
+                   placeholder="e.g. £10k-£20k" 
+                   value={form.weeklySalesBand} 
+                   onChange={(event) => setForm({ ...form, weeklySalesBand: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Website</span>
+                 <input 
+                   value={form.website} 
+                   onChange={(event) => setForm({ ...form, website: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+             </div>
+           </div>
 
-          {message ? <p style={{ margin: 0, color: '#7b5033' }}>{message}</p> : null}
+           <div style={{
+             padding: '24px',
+             borderRadius: '20px',
+             background: 'linear-gradient(135deg, rgba(79, 142, 103, 0.06), transparent)',
+             border: '1px solid rgba(79, 142, 103, 0.15)'
+           }}>
+             <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', fontWeight: 700, color: '#3d5446', letterSpacing: '0.02em' }}>Contact details</h3>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Main contact name</span>
+                 <input 
+                   value={form.contactName} 
+                   onChange={(event) => setForm({ ...form, contactName: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Main contact email *</span>
+                 <input 
+                   type="email" 
+                   value={form.contactEmail} 
+                   onChange={(event) => setForm({ ...form, contactEmail: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px', gridColumn: '1 / -1' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Main contact phone</span>
+                 <input 
+                   value={form.contactPhone} 
+                   onChange={(event) => setForm({ ...form, contactPhone: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+             </div>
+           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                border: 0,
-                borderRadius: '999px',
-                padding: '14px 22px',
-                background: '#445c7a',
-                color: '#fff',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              {submitting ? 'Sending...' : 'Submit details'}
-            </button>
-          </div>
-        </form>
+           <div style={{
+             padding: '24px',
+             borderRadius: '20px',
+             background: 'linear-gradient(135deg, rgba(68, 92, 122, 0.06), transparent)',
+             border: '1px solid rgba(68, 92, 122, 0.15)'
+           }}>
+             <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', fontWeight: 700, color: '#3a495c', letterSpacing: '0.02em' }}>About your business</h3>
+             <div style={{ display: 'grid', gap: '20px' }}>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>What are the biggest current challenges?</span>
+                 <textarea 
+                   rows={4} 
+                   value={form.challenges} 
+                   onChange={(event) => setForm({ ...form, challenges: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     minHeight: '100px',
+                     resize: 'vertical',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>What support are you looking for?</span>
+                 <textarea 
+                   rows={4} 
+                   value={form.supportNeeded} 
+                   onChange={(event) => setForm({ ...form, supportNeeded: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     minHeight: '100px',
+                     resize: 'vertical',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+               <label style={{ display: 'grid', gap: '6px' }}>
+                 <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Anything else we should know?</span>
+                 <textarea 
+                   rows={4} 
+                   value={form.extraNotes} 
+                   onChange={(event) => setForm({ ...form, extraNotes: event.target.value })}
+                   style={{
+                     padding: '12px 16px',
+                     borderRadius: '12px',
+                     border: '1px solid rgba(86, 81, 91, 0.14)',
+                     background: 'rgba(255,255,255,0.95)',
+                     fontSize: '15px',
+                     minHeight: '100px',
+                     resize: 'vertical',
+                     transition: 'all 0.18s ease'
+                   }}
+                 />
+               </label>
+             </div>
+           </div>
+
+           {message ? (
+             <p style={{ 
+               margin: '8px 0 0 0', 
+               padding: '14px 18px',
+               borderRadius: '12px',
+               background: 'rgba(198, 161, 97, 0.12)',
+               border: '1px solid rgba(198, 161, 97, 0.25)',
+               color: '#6b5530',
+               fontWeight: 500
+             }}>{message}</p>
+           ) : null}
+
+           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+             <button
+               type="submit"
+               disabled={submitting}
+               style={{
+                 border: 0,
+                 borderRadius: '999px',
+                 padding: '16px 32px',
+                 background: 'linear-gradient(135deg, #4f4a53 0%, #69646f 100%)',
+                 color: '#fff',
+                 fontWeight: 700,
+                 fontSize: '15px',
+                 cursor: 'pointer',
+                 boxShadow: '0 12px 32px rgba(36, 31, 38, 0.16)',
+                 transition: 'all 0.2s ease',
+                 minWidth: '180px'
+               }}
+             >
+               {submitting ? 'Sending...' : 'Submit details'}
+             </button>
+           </div>
+         </form>
       </div>
     </main>
   );
