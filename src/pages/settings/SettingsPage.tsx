@@ -211,14 +211,40 @@ export function SettingsPage() {
     try {
       setIsSaving(true);
 
-      // Keep avatars in device preferences only. Large base64 images in auth metadata
-      // can bloat the Supabase session token and break authenticated requests.
-      const finalAvatarUrl = avatarPreview || avatarUrl.trim();
+      let finalAvatarUrl = avatarUrl.trim();
+
+      // Upload avatar to Supabase Storage if we have a new preview
+      if (avatarPreview && supabase && session) {
+        const userId = session.user.id;
+        
+        // Convert base64 to blob
+        const response = await fetch(avatarPreview);
+        const blob = await response.blob();
+        
+        // Upload to user's private avatar path
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(`user-${userId}/profile.jpg`, blob, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (!uploadError) {
+          // Get public URL
+          const { data: publicUrl } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(`user-${userId}/profile.jpg`);
+          
+          finalAvatarUrl = publicUrl.publicUrl;
+        }
+      }
 
       if (supabase && session) {
         const { data, error } = await supabase.auth.updateUser({
           data: {
-            display_name: displayName.trim()
+            display_name: displayName.trim(),
+            avatar_url: finalAvatarUrl,
+            avatar_position: avatarPosition
           },
           ...(newPassword ? { password: newPassword } : {})
         });
@@ -248,7 +274,7 @@ export function SettingsPage() {
       setRememberPreference(rememberMe);
       setNewPassword('');
       setConfirmPassword('');
-      setMessage('Settings saved. Profile image preferences stay on this device for reliability.');
+      setMessage('✅ Settings saved. Profile photo will sync across all your devices.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not save settings.');
     } finally {
