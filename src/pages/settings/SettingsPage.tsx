@@ -215,27 +215,36 @@ export function SettingsPage() {
 
       // Upload avatar to Supabase Storage if we have a new preview
       if (avatarPreview && supabase && session) {
-        const userId = session.user.id;
-        
-        // Convert base64 to blob
-        const response = await fetch(avatarPreview);
-        const blob = await response.blob();
-        
-        // Upload to user's private avatar path
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(`user-${userId}/profile.jpg`, blob, {
-            cacheControl: '3600',
-            upsert: true
-          });
-
-        if (!uploadError) {
-          // Get public URL
-          const { data: publicUrl } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(`user-${userId}/profile.jpg`);
+        try {
+          const userId = session.user.id;
           
-          finalAvatarUrl = publicUrl.publicUrl;
+          // Convert base64 to blob
+          const response = await fetch(avatarPreview);
+          const blob = await response.blob();
+          
+          // Upload to user's private avatar path
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(`user-${userId}/profile.jpg`, blob, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (!uploadError) {
+            // Get public URL
+            const { data: publicUrl } = supabase.storage
+              .from('avatars')
+              .getPublicUrl(`user-${userId}/profile.jpg`);
+            
+            finalAvatarUrl = publicUrl.publicUrl;
+          } else {
+            console.log('Avatar upload skipped (bucket may not exist yet)', uploadError);
+            // Fall back to local storage only for this device
+            finalAvatarUrl = avatarPreview;
+          }
+        } catch (uploadErr) {
+          // Graceful fallback: keep as base64 local only if storage not setup
+          finalAvatarUrl = avatarPreview;
         }
       }
 
