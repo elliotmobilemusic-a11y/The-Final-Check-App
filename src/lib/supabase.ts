@@ -104,7 +104,7 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
         console.warn(`⚠️ Supabase fetch failed first attempt: ${requestUrl}`, originalError);
         
         // Single retry only, with explicit safe headers
-        const fixedInit: RequestInit = {
+        const fixedInit: RequestInit & { __alreadyRetried?: boolean } = {
           ...init,
           mode: 'cors',
           credentials: 'omit',
