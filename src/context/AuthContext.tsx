@@ -73,17 +73,36 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        const { data: userData, error: userError } = await authClient.auth.getUser();
-        if (userError) throw userError;
+        // If we have a session already accept it first
+        setSession(data.session);
+        setLoading(false);
 
-        setSession(userData.user ? data.session : null);
+        // Verify user in background without blocking session load
+        try {
+          const { data: userData, error: userError } = await authClient.auth.getUser();
+          if (!userError && userData.user) {
+            // Session is valid, keep it
+            setSession(data.session);
+          }
+        } catch {
+          // Ignore user check failures - we already have a valid session
+        }
       })
       .catch(async (error) => {
+        // Never force log users out on initial page load. Always preserve any existing session first.
+        const { data } = await authClient.auth.getSession().catch(() => ({ data: { session: null } }));
+        
+        if (data.session) {
+          // If we have any session at all keep it logged in
+          setSession(data.session);
+          setLoading(false);
+          return;
+        }
+
+        // Only reset auth state if we truly have no session at all
         if (shouldResetAuth(error)) {
-          const { data } = await authClient.auth.getSession().catch(() => ({ data: { session: null } }));
           await attemptProfileRepair(data?.session?.access_token);
           handleBrokenAuthState();
-          return;
         }
 
         setSession(null);
