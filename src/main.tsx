@@ -8,9 +8,31 @@ import './styles.css';
 
 if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Keep the app usable even if service worker registration fails.
-    });
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) =>
+        Promise.all(
+          registrations.map((registration) => registration.unregister().catch(() => false))
+        )
+      )
+      .catch(() => {
+        // Ignore cleanup failures so the app still boots normally.
+      });
+
+    if ('caches' in window) {
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => key.startsWith('the-final-check-shell'))
+              .map((key) => caches.delete(key))
+          )
+        )
+        .catch(() => {
+          // Ignore cache cleanup failures so the app still boots normally.
+        });
+    }
   });
 }
 
