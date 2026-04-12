@@ -19,7 +19,10 @@ function createAdminClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase admin credentials are not configured.');
+    const error = new Error('Supabase admin credentials are not configured.');
+    error.statusCode = 503;
+    error.code = 'MISSING_ENVIRONMENT_VARIABLES';
+    throw error;
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -69,8 +72,17 @@ export default async function handler(request, response) {
 
     response.status(200).json({ ok: true });
   } catch (error) {
-    response.status(500).json({
-      error: error instanceof Error ? error.message : 'Could not repair auth profile.'
+    const statusCode = error.statusCode || 500;
+    const isEnvironmentError = error.code === 'MISSING_ENVIRONMENT_VARIABLES';
+    
+    console.error(`[repair-auth-profile] ${statusCode} error:`, error.message);
+    
+    response.status(statusCode).json({
+      error: error instanceof Error ? error.message : 'Could not repair auth profile.',
+      code: error.code || 'UNKNOWN_ERROR',
+      fixHint: isEnvironmentError 
+        ? 'Set SUPABASE_SERVICE_ROLE_KEY environment variable in your deployment settings'
+        : null
     });
   }
 }
