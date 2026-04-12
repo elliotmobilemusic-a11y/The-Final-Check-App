@@ -1,6 +1,23 @@
 const COMPANIES_HOUSE_API = 'https://api.company-information.service.gov.uk';
 const COMPANIES_HOUSE_PUBLIC_COMPANY_URL =
   'https://find-and-update.company-information.service.gov.uk/company';
+const GENERIC_QUERY_TOKENS = new Set([
+  'uk',
+  'the',
+  'and',
+  'co',
+  'company',
+  'companies',
+  'group',
+  'holdings',
+  'holding',
+  'services',
+  'service',
+  'limited',
+  'ltd',
+  'plc',
+  'llp'
+]);
 
 function normalizeName(value) {
   return String(value ?? '')
@@ -10,6 +27,26 @@ function normalizeName(value) {
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function tokenizeName(value) {
+  return normalizeName(value).split(' ').filter(Boolean);
+}
+
+function significantTokens(value) {
+  return tokenizeName(value).filter((token) => token.length > 1 && !GENERIC_QUERY_TOKENS.has(token));
+}
+
+function queryVariants(query) {
+  const trimmed = String(query ?? '').trim();
+  const tokens = significantTokens(trimmed);
+
+  return [...new Set([
+    trimmed,
+    tokens.join(' '),
+    tokens.slice(0, 2).join(' '),
+    tokens[0] ?? ''
+  ].filter((value) => value && value.length >= 2))];
 }
 
 function queryLooksLikeCompanyNumber(value) {
@@ -79,16 +116,42 @@ function statusWeight(status) {
 function scoreMatch(query, companyName, companyNumber) {
   const normalizedQuery = normalizeName(query);
   const normalizedName = normalizeName(companyName);
-  const queryTokens = normalizedQuery.split(' ').filter(Boolean);
-  const nameTokens = normalizedName.split(' ').filter(Boolean);
+  const queryTokens = tokenizeName(query);
+  const nameTokens = tokenizeName(companyName);
+  const strongQueryTokens = significantTokens(query);
   const sharedTokens = queryTokens.filter((token) => nameTokens.includes(token)).length;
+  const strongSharedTokens = strongQueryTokens.filter((token) => nameTokens.includes(token)).length;
+  const primaryToken = strongQueryTokens[0] ?? queryTokens[0] ?? '';
+  const normalizedStrongQuery = strongQueryTokens.join(' ');
+  const normalizedStrongName = nameTokens.filter((token) => !GENERIC_QUERY_TOKENS.has(token)).join(' ');
 
   let score = 0;
 
-  if (normalizedName === normalizedQuery) score += 70;
-  else if (normalizedName.startsWith(normalizedQuery) || normalizedQuery.startsWith(normalizedName)) score += 52;
-  else if (normalizedName.includes(normalizedQuery)) score += 40;
+  if (normalizedStrongQuery && normalizedStrongName === normalizedStrongQuery) score += 84;
+  else if (normalizedName === normalizedQuery) score += 70;
+  else if (
+    (normalizedStrongQuery && normalizedStrongName.startsWith(normalizedStrongQuery)) ||
+    normalizedName.startsWith(normalizedQuery)
+  ) {
+    score += 58;
+  } else if (
+    (normalizedStrongQuery && normalizedStrongName.includes(normalizedStrongQuery)) ||
+    normalizedName.includes(normalizedQuery)
+  ) {
+    score += 42;
+  }
   else score += Math.min(sharedTokens * 14, 34);
+
+  if (primaryToken) {
+    if (nameTokens.includes(primaryToken)) score += 22;
+    else score -= 36;
+  }
+
+  if (strongQueryTokens.length) {
+    score += Math.min(strongSharedTokens * 16, 40);
+    if (strongSharedTokens === strongQueryTokens.length) score += 16;
+    else score -= (strongQueryTokens.length - strongSharedTokens) * 14;
+  }
 
   if (companyNumber && String(query).toUpperCase().includes(String(companyNumber).toUpperCase())) score += 18;
 
@@ -200,11 +263,26 @@ async function searchCompanies(query, apiKey) {
     }
   }
 
-  const searchResponse = await fetchCompaniesHouseJson(
-    `/search/companies?q=${encodeURIComponent(query)}&items_per_page=20`,
-    apiKey
+  const searches = await Promise.all(
+    queryVariants(query).map(async (variant) => {
+      const response = await fetchCompaniesHouseJson(
+        `/search/companies?q=${encodeURIComponent(variant)}&items_per_page=20`,
+        apiKey
+      );
+      return Array.isArray(response.items) ? response.items : [];
+    })
   );
-  const items = Array.isArray(searchResponse.items) ? searchResponse.items : [];
+  const dedupedItems = new Map();
+
+  searches.flat().forEach((item) => {
+    const companyNumber = String(item?.company_number ?? '').trim();
+    const key = companyNumber || normalizeName(item?.title);
+    if (key && !dedupedItems.has(key)) {
+      dedupedItems.set(key, item);
+    }
+  });
+
+  const items = [...dedupedItems.values()];
   const companyNumbers = items
     .map((item) => String(item.company_number ?? '').trim())
     .filter(Boolean);
