@@ -116,7 +116,7 @@ p {
    ============================================== */
 
 .report-cover-page {
-  min-height: 257mm;
+  min-height: 0;
   display: block;
   page-break-after: always;
 }
@@ -254,13 +254,16 @@ p {
   page-break-inside: avoid;
 }
 
+.report-page,
 .report-page-block {
   margin: 0 0 22px 0;
   page-break-inside: avoid;
+  page-break-after: always;
 }
 
+.report-page.report-page-last,
 .report-page-block-final {
-  page-break-before: always;
+  page-break-after: auto;
 }
 
 /* ==============================================
@@ -313,15 +316,16 @@ p {
 }
 
 .report-cover-page-minimal {
-  min-height: 257mm;
+  min-height: 0;
   page-break-after: always;
 }
 
 .report-cover-hero {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   align-content: start;
-  padding-top: 8mm;
+  min-height: 0;
+  padding-top: 3mm;
 }
 
 .report-cover-title {
@@ -330,6 +334,10 @@ p {
   line-height: 1;
   letter-spacing: -0.02em;
   color: #1a191e;
+}
+
+.report-cover-title span {
+  display: block;
 }
 
 .report-cover-meta {
@@ -344,7 +352,7 @@ p {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 14px;
-  padding: 8mm 0 5mm;
+  padding: 7mm 0 4mm;
   border-top: 1px solid #e6e2db;
   border-bottom: 1px solid #e6e2db;
 }

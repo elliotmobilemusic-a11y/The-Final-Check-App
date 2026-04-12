@@ -113,74 +113,6 @@ export function ClientsPage() {
     () => clients.filter((client) => (client.status ?? 'Active').toLowerCase() === 'active'),
     [clients]
   );
-  const upcomingReviews = useMemo(
-    () =>
-      clients.filter((client) => {
-        const days = daysUntil(client.next_review_date);
-        return days !== null && days >= 0 && days <= 21;
-      }),
-    [clients]
-  );
-  const openInvoiceCount = useMemo(
-    () =>
-      clients.reduce(
-        (sum, client) =>
-          sum +
-          (client.data ?? createEmptyClientData()).invoices.filter(
-            (invoice) => invoice.status !== 'Paid'
-          ).length,
-        0
-      ),
-    [clients]
-  );
-  const openInvoiceValue = useMemo(
-    () =>
-      clients.reduce(
-        (sum, client) =>
-          sum +
-          (client.data ?? createEmptyClientData()).invoices
-            .filter((invoice) => invoice.status !== 'Paid')
-            .reduce((invoiceSum, invoice) => invoiceSum + invoiceTotal(invoice), 0),
-        0
-      ),
-    [clients]
-  );
-  const pipelineValue = useMemo(
-    () =>
-      clients.reduce(
-        (sum, client) =>
-          sum +
-          (client.data ?? createEmptyClientData()).deals
-            .filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost')
-            .reduce((dealSum, deal) => dealSum + Number(deal.value || 0), 0),
-        0
-      ),
-    [clients]
-  );
-  const overdueReviewCount = useMemo(
-    () =>
-      clients.filter((client) => {
-        const days = daysUntil(client.next_review_date);
-        return days !== null && days < 0;
-      }).length,
-    [clients]
-  );
-  const atRiskCount = useMemo(
-    () =>
-      clients.filter((client) => {
-        const relationshipHealth = (client.data ?? createEmptyClientData()).relationshipHealth;
-        return relationshipHealth === 'At Risk' || relationshipHealth === 'Watch';
-      }).length,
-    [clients]
-  );
-  const incompleteProfilesCount = useMemo(
-    () =>
-      clients.filter((client) => {
-        const data = client.data ?? createEmptyClientData();
-        return !client.contact_name || !data.accountOwner || !data.profileSummary.trim();
-      }).length,
-    [clients]
-  );
 
   const filteredClients = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
@@ -249,74 +181,33 @@ export function ClientsPage() {
     <div className="page-stack">
       <PageIntro
         eyebrow="Clients"
-        title="Client list"
-        description="Run the client book as an operating list. Keep search, review pressure, commercial value, and account hygiene visible so you can open the right record and act quickly."
-        actions={
-          <>
-            <Link className="button button-primary" to="/clients/new">
-              Add client
-            </Link>
-          </>
-        }
-        side={
-          <div className="page-intro-summary client-add-summary">
-            <span className="soft-pill">Portfolio</span>
-            <strong>Client book snapshot</strong>
-            <p>Keep account coverage, invoice exposure, and review pressure in one place before dropping into a record.</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Accounts</span>
-                <strong>{clients.length}</strong>
-              </div>
-              <div>
-                <span>Visible</span>
-                <strong>{filteredClients.length}</strong>
-              </div>
-              <div>
-                <span>Open invoices</span>
-                <strong>{openInvoiceCount}</strong>
-              </div>
-            </div>
-            <Link className="button button-primary" to="/clients/new">
-              Add client
-            </Link>
-          </div>
-        }
+        title="Client book"
+        description="Keep this page as a clean operating list so you can find the right account and open it quickly."
       >
-        <div className="page-inline-note">Review queue: {upcomingReviews.length} due soon</div>
-        <div className="page-inline-note">Pipeline: {fmtCurrency(pipelineValue)}</div>
-        <div className="page-inline-note">At-risk accounts: {atRiskCount}</div>
+        <div className="page-inline-note">{activeClients.length} active accounts</div>
+        <div className="page-inline-note">{filteredClients.length} visible</div>
       </PageIntro>
 
-      <section className="crm-priority-grid">
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Accounts needing attention</span>
-          <strong>{atRiskCount}</strong>
-          <p>Relationship-health flags currently marked as watch or at risk.</p>
-        </article>
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Overdue reviews</span>
-          <strong>{overdueReviewCount}</strong>
-          <p>Accounts that have passed their planned review date and need follow-up.</p>
-        </article>
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Incomplete setup</span>
-          <strong>{incompleteProfilesCount}</strong>
-          <p>Profiles missing a contact, account owner, or written CRM summary.</p>
-        </article>
-      </section>
-
-      <section className="panel crm-controls-panel">
-        <div className="panel-body">
-          <div className="crm-controls-top">
+      <section className="panel">
+        <div className="panel-body stack gap-20">
+          <div className="crm-list-top crm-list-top-compact">
             <div>
-              <h3>CRM list controls</h3>
-              <p>Keep the working list clean, searchable, and easy to act from.</p>
+              <h3>Clients</h3>
+              <p>Open the account you need and move straight into the record.</p>
             </div>
-            <span className="soft-pill">{filteredClients.length} visible</span>
+            <div className="crm-list-top-meta">
+              <Link
+                aria-label="Add client"
+                className="crm-add-button"
+                title="Add client"
+                to="/clients/new"
+              >
+                +
+              </Link>
+            </div>
           </div>
 
-          <div className="crm-controls-grid">
+          <div className="crm-controls-grid crm-controls-grid-inline">
             <label className="field">
               <span>Search clients</span>
               <input
@@ -328,7 +219,7 @@ export function ClientsPage() {
             </label>
 
             <label className="field">
-              <span>Status filter</span>
+              <span>Status</span>
               <select
                 className="input"
                 value={statusFilter}
@@ -344,7 +235,7 @@ export function ClientsPage() {
             </label>
 
             <label className="field">
-              <span>Sort by</span>
+              <span>Sort</span>
               <select
                 className="input"
                 value={sortMode}
@@ -357,40 +248,6 @@ export function ClientsPage() {
                 <option value="company">Company name</option>
               </select>
             </label>
-          </div>
-
-          <div className="crm-inline-stats">
-            <div className="crm-inline-stat">
-              <span>Active clients</span>
-              <strong>{activeClients.length}</strong>
-            </div>
-            <div className="crm-inline-stat">
-              <span>Review queue</span>
-              <strong>{upcomingReviews.length}</strong>
-            </div>
-            <div className="crm-inline-stat">
-              <span>Open invoices</span>
-              <strong>{openInvoiceCount}</strong>
-            </div>
-            <div className="crm-inline-stat">
-              <span>Outstanding value</span>
-              <strong>{fmtCurrency(openInvoiceValue)}</strong>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-body stack gap-20">
-          <div className="crm-list-top">
-            <div>
-              <h3>Client book</h3>
-              <p>Open the account you need and move straight into contacts, sites, billing, audit, menu, or follow-up work.</p>
-            </div>
-            <div className="crm-list-top-meta">
-              <span className="soft-pill">Operational list</span>
-              <span className="page-inline-note">{filteredClients.length} visible after filters</span>
-            </div>
           </div>
 
           <div className="clients-long-list">

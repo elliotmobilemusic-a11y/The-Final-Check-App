@@ -409,18 +409,17 @@ export function buildReportDocumentHtml(
           font-size: 12px;
           line-height: 1.55;
         }
-        .report-cover-page {
-          display: grid;
-          gap: 10px;
-          page-break-after: always;
-          break-after: page;
-        }
+        .report-cover-page,
+        .report-page,
         .report-page-block {
-          display: grid;
+          display: flex;
+          flex-direction: column;
           gap: 10px;
+          min-height: 0;
           page-break-after: always;
           break-after: page;
         }
+        .report-page.report-page-last,
         .report-page-block.report-page-block-final {
           page-break-after: auto;
           break-after: auto;
@@ -743,22 +742,25 @@ export function buildReportDocumentHtml(
         }
         .report-cover-page-minimal {
           display: block;
-          min-height: 257mm;
+          min-height: 0;
           page-break-after: always;
           break-after: page;
         }
         .report-cover-hero {
           display: grid;
           align-content: start;
-          gap: 14px;
-          min-height: 240mm;
-          padding: 8mm 2mm 2mm;
+          gap: 12px;
+          min-height: 0;
+          padding: 3mm 0 0;
         }
         .report-cover-title {
           font-size: 30px;
           line-height: 1;
           letter-spacing: -0.03em;
           margin: 0;
+        }
+        .report-cover-title span {
+          display: block;
         }
         .report-cover-meta {
           display: flex;
@@ -775,7 +777,7 @@ export function buildReportDocumentHtml(
           grid-template-columns: 1.5fr 1fr;
           gap: 14px;
           align-items: end;
-          padding: 10mm 0 5mm;
+          padding: 7mm 0 4mm;
           border-top: 1px solid rgba(86, 81, 91, 0.12);
           border-bottom: 1px solid rgba(86, 81, 91, 0.12);
         }
@@ -856,6 +858,14 @@ export function buildReportDocumentHtml(
           font-size: 12px;
           line-height: 1.35;
         }
+        .report-page-block table,
+        .report-page-block .report-story-grid {
+          margin-top: 10px;
+        }
+        .report-page-block > *:last-child,
+        .report-page > *:last-child {
+          margin-bottom: 0;
+        }
         .totals {
           display: flex;
           justify-content: flex-end;
@@ -895,26 +905,27 @@ export function buildReportDocumentHtml(
             width: 100%;
           }
           .report-document {
-            padding: 10px;
-            border-radius: 20px;
-            border: 2px solid var(--paper-line);
+            padding: 0;
+            border: 0;
+            border-radius: 0;
             box-shadow: none;
-            background: linear-gradient(180deg, rgba(248, 242, 234, 0.98), rgba(240, 232, 222, 0.94));
+            background: transparent;
           }
           .report-sheet {
             min-height: auto;
-            padding: 18px 18px 16px;
-            border-radius: 16px;
-            border: 2px solid var(--sheet-line);
+            padding: 0;
+            border-radius: 0;
+            border: 0;
             box-shadow: none;
             overflow: visible;
+            background: transparent;
           }
-          .report-hero {
-            margin: 14px 0 16px;
+          .report-masthead {
+            margin-bottom: 10px;
           }
           section {
             margin-top: 10px;
-            padding: 12px 14px 14px;
+            padding: 10px 12px 12px;
           }
           table,
           .report-table {
@@ -925,7 +936,7 @@ export function buildReportDocumentHtml(
             padding: 9px 10px;
           }
           .report-footer {
-            margin-top: 12px;
+            display: none;
           }
         }
         @media screen and (max-width: 760px) {
@@ -994,10 +1005,6 @@ export function buildReportDocumentHtml(
             </div>
 
             ${bodyHtml}
-            <div class="report-footer">
-              <span>The Final Check</span>
-              <span>Prepared ${escapeHtml(generatedOn)}</span>
-            </div>
           </div>
         </article>
       </main>
