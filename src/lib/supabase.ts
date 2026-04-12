@@ -74,26 +74,81 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
     }
   },
   global: {
-    // ✅ Fixed correct fetch wrapper for Supabase CORS handling
     fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+      // Prevent retry storms and infinite loops
+      if (init && (init as any).__alreadyRetried) {
+        return fetch(input, init);
+      }
+
+      const startTime = Date.now();
+      const requestUrl = input instanceof Request ? input.url : input;
+      
       try {
-        return await fetch(input, init);
+        // Always sanitize headers even on first request to prevent empty Bearer bug
+        if (init?.headers) {
+          const headers = new Headers(init.headers);
+          const authHeader = headers.get('Authorization');
+          if (authHeader && (authHeader === 'Bearer' || authHeader === 'Bearer ' || authHeader.trim() === 'Bearer')) {
+            headers.delete('Authorization');
+            init.headers = headers;
+          }
+        }
+
+        const response = await fetch(input, init);
+        
+        // Log every request for diagnostics
+        console.debug(`🌐 Supabase ${init?.method || 'GET'} ${response.status} ${Date.now() - startTime}ms`, requestUrl);
+        
+        return response;
       } catch (originalError) {
-        // Workaround for Supabase edge CORS failures: enforce explicit CORS mode
+        console.warn(`⚠️ Supabase fetch failed first attempt: ${requestUrl}`, originalError);
+        
+        // Single retry only, with explicit safe headers
         const fixedInit: RequestInit = {
           ...init,
           mode: 'cors',
           credentials: 'omit',
-          cache: 'no-store'
+          cache: 'no-store',
+          redirect: 'error',
+          __alreadyRetried: true
         };
-        
-        // Properly handle both URL string and Request objects
-        const requestUrl = input instanceof Request ? input.url : input;
-        
+
+        // Strip large headers that can cause 520 origin errors
+        if (fixedInit.headers) {
+          const headers = new Headers(fixedInit.headers);
+          headers.delete('x-client-info');
+          headers.delete('user-agent');
+
+          // FIX: Remove empty/invalid Authorization headers that cause 520 errors
+          const authHeader = headers.get('Authorization');
+          if (authHeader) {
+            // If token is empty, null, undefined or just "Bearer " with nothing after
+            if (authHeader === 'Bearer' || authHeader === 'Bearer ' || authHeader.trim() === 'Bearer') {
+              headers.delete('Authorization');
+            }
+          }
+
+          fixedInit.headers = headers;
+        }
+
         try {
-          return await fetch(requestUrl, fixedInit);
+          const response = await fetch(requestUrl, fixedInit);
+          console.debug(`✅ Supabase retry succeeded ${response.status} ${Date.now() - startTime}ms`, requestUrl);
+          return response;
         } catch (retryError) {
-          console.error('❌ Supabase fetch failed permanently:', requestUrl);
+          // Capture full diagnostics on permanent failure
+          const cookieSize = document.cookie.length;
+          const localStorageSize = JSON.stringify(localStorage).length;
+          
+          console.groupCollapsed('❌ Supabase fetch failed permanently');
+          console.error('URL:', requestUrl);
+          console.error('Error:', retryError);
+          console.error('Cookie size:', cookieSize, 'bytes');
+          console.error('LocalStorage size:', localStorageSize, 'bytes');
+          console.error('Headers present:', init?.headers ? Object.keys(new Headers(init.headers)) : 'none');
+          console.error('Timestamp:', new Date().toISOString());
+          console.groupEnd();
+          
           throw retryError;
         }
       }
