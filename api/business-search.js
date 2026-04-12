@@ -2,6 +2,8 @@ const COMPANIES_HOUSE_API = 'https://api.company-information.service.gov.uk';
 const COMPANIES_HOUSE_PUBLIC_COMPANY_URL =
   'https://find-and-update.company-information.service.gov.uk/company';
 const NOMINATIM_SEARCH_API = 'https://nominatim.openstreetmap.org/search';
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 const GENERIC_QUERY_TOKENS = new Set([
   'uk',
   'the',
@@ -243,6 +245,30 @@ function confidenceLabel(score) {
   return 'Needs review';
 }
 
+function stripCodeFence(text) {
+  return String(text ?? '')
+    .replace(/^```(?:json)?/i, '')
+    .replace(/```$/i, '')
+    .trim();
+}
+
+function parseJsonPayload(text) {
+  const clean = stripCodeFence(text);
+
+  try {
+    return JSON.parse(clean);
+  } catch {
+    const firstBrace = clean.indexOf('{');
+    const lastBrace = clean.lastIndexOf('}');
+
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      return JSON.parse(clean.slice(firstBrace, lastBrace + 1));
+    }
+
+    throw new Error('Could not parse Gemini business search payload.');
+  }
+}
+
 async function fetchCompaniesHouseJson(path, apiKey) {
   const response = await fetch(`${COMPANIES_HOUSE_API}${path}`, {
     headers: {
@@ -273,6 +299,101 @@ async function fetchJson(url, headers = {}) {
   }
 
   return response.json();
+}
+
+function normalizeGeminiMatch(rawMatch, query) {
+  const name = String(rawMatch?.name ?? '').trim();
+  if (!name) return null;
+
+  const resultType = rawMatch?.resultType === 'site' ? 'site' : 'group';
+  const website = normalizeWebsite(rawMatch?.website);
+  const companyNumber = String(rawMatch?.companyNumber ?? '').trim();
+  const location = String(rawMatch?.location ?? '').trim();
+  const sourceLabel = String(rawMatch?.sourceLabel ?? 'Gemini Google Search').trim();
+  const baseScore =
+    resultType === 'site'
+      ? scoreVenueMatch(
+          query,
+          name,
+          website,
+          String(rawMatch?.industry ?? ''),
+          String(rawMatch?.resultType ?? '')
+        )
+      : scoreMatch(query, name, companyNumber);
+  const confidenceScore = Math.max(
+    1,
+    Math.min(100, Math.max(baseScore, Number(rawMatch?.confidenceScore ?? 0)))
+  );
+
+  return {
+    id: String(rawMatch?.id ?? `gm:${companyNumber || normalizeName(name)}`),
+    name,
+    officialName: String(rawMatch?.officialName ?? name).trim() || name,
+    description: String(rawMatch?.description ?? '').trim() || 'Matched from web search',
+    resultType,
+    accountScope:
+      rawMatch?.accountScope === 'Single site'
+        ? 'Single site'
+        : rawMatch?.accountScope === 'Multi-site group'
+          ? 'Multi-site group'
+          : resultType === 'site'
+            ? 'Single site'
+            : 'Group / head office',
+    website,
+    industry: String(rawMatch?.industry ?? '').trim(),
+    location,
+    country: String(rawMatch?.country ?? 'United Kingdom').trim() || 'United Kingdom',
+    logoUrl: faviconUrl(website),
+    sourceUrl: String(rawMatch?.sourceUrl ?? '').trim(),
+    sourceLabel,
+    email: String(rawMatch?.email ?? '').trim(),
+    phone: String(rawMatch?.phone ?? '').trim(),
+    addressLine: String(rawMatch?.addressLine ?? '').trim(),
+    registeredAddress: String(rawMatch?.registeredAddress ?? '').trim(),
+    companyNumber,
+    vatNumber: String(rawMatch?.vatNumber ?? '').trim(),
+    siteCountEstimate: Math.max(0, Number(rawMatch?.siteCountEstimate ?? 0) || 0),
+    sites: [],
+    wikidataId: '',
+    confidenceScore,
+    confidenceLabel: confidenceLabel(confidenceScore),
+    signals: Array.isArray(rawMatch?.signals)
+      ? rawMatch.signals.map((item) => String(item).trim()).filter(Boolean)
+      : []
+  };
+}
+
+function matchKey(match) {
+  return match.companyNumber || `${match.resultType}:${normalizeName(match.name)}`;
+}
+
+function mergeMatchSets(primaryMatches, secondaryMatches) {
+  const merged = new Map();
+
+  [...primaryMatches, ...secondaryMatches].forEach((match) => {
+    const key = matchKey(match);
+    const existing = merged.get(key);
+
+    if (!existing || match.confidenceScore > existing.confidenceScore) {
+      merged.set(key, existing ? { ...existing, ...match } : match);
+      return;
+    }
+
+    merged.set(key, {
+      ...existing,
+      website: existing.website || match.website,
+      email: existing.email || match.email,
+      phone: existing.phone || match.phone,
+      sourceUrl: existing.sourceUrl || match.sourceUrl,
+      sourceLabel:
+        existing.sourceLabel === match.sourceLabel
+          ? existing.sourceLabel
+          : `${existing.sourceLabel} + ${match.sourceLabel}`,
+      signals: [...new Set([...(existing.signals ?? []), ...(match.signals ?? [])])]
+    });
+  });
+
+  return [...merged.values()];
 }
 
 function buildMatch(query, searchItem, profile) {
@@ -510,6 +631,49 @@ async function searchTradingBusinesses(query) {
     .slice(0, 6);
 }
 
+async function searchGeminiBusinesses(query, apiKey) {
+  const prompt = [
+    'Find the most likely UK hospitality business matches for this search.',
+    'The user may be searching for a trading brand, venue, hospitality group, or legal company.',
+    'Prefer hospitality-related businesses only.',
+    'Return only JSON with shape {"matches":[...]} and no markdown.',
+    'Each match must include:',
+    'name, officialName, description, resultType ("group" or "site"), accountScope, website, industry, location, country, email, phone, addressLine, registeredAddress, companyNumber, vatNumber, siteCountEstimate, sourceUrl, sourceLabel, confidenceScore, signals.',
+    'If the search appears to be a trading brand, return the trading brand or venue first.',
+    'If the legal company is clearly known, include it too.',
+    `Query: ${query}`
+  ].join('\n');
+
+  const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini business search failed (${response.status}): ${errorText}`);
+  }
+
+  const responseJson = await response.json();
+  const text =
+    responseJson?.candidates?.[0]?.content?.parts
+      ?.map((part) => part?.text || '')
+      .join('\n')
+      .trim() || '';
+  const parsed = parseJsonPayload(text);
+
+  return (Array.isArray(parsed?.matches) ? parsed.matches : [])
+    .map((match) => normalizeGeminiMatch(match, query))
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
 async function fetchCompanyProfile(companyNumber, apiKey) {
   const profile = await fetchCompaniesHouseJson(`/company/${encodeURIComponent(companyNumber)}`, apiKey);
   const match = buildMatch(companyNumber, null, profile);
@@ -552,11 +716,24 @@ export default async function handler(request, response) {
       searchCompanies(query, apiKey),
       searchTradingBusinesses(query).catch(() => [])
     ]);
-    const matches = [...venueMatches, ...companyMatches]
+    const initialMatches = [...venueMatches, ...companyMatches]
+      .sort((a, b) => b.confidenceScore - a.confidenceScore)
+      .slice(0, 8);
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const needsGeminiSupport =
+      Boolean(geminiApiKey) &&
+      (initialMatches.length < 3 || (initialMatches[0]?.confidenceScore ?? 0) < 74);
+    const geminiMatches = needsGeminiSupport
+      ? await searchGeminiBusinesses(query, geminiApiKey).catch(() => [])
+      : [];
+    const matches = mergeMatchSets(initialMatches, geminiMatches)
       .sort((a, b) => b.confidenceScore - a.confidenceScore)
       .slice(0, 8);
     response.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
-    response.status(200).json({ matches, provider: 'companies-house' });
+    response.status(200).json({
+      matches,
+      provider: geminiMatches.length ? 'hybrid-with-gemini' : 'hybrid'
+    });
   } catch (error) {
     response.status(500).json({
       error: error instanceof Error ? error.message : 'Business search failed.'
