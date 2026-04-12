@@ -111,7 +111,7 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
     const metadataDisplayName =
       typeof metadata.display_name === 'string' ? metadata.display_name.trim() : '';
     const metadataAvatarUrl =
-      typeof metadata.avatar_url === 'string' && !metadata.avatar_url.trim().startsWith('data:')
+      typeof metadata.avatar_url === 'string'
         ? metadata.avatar_url.trim()
         : '';
 
