@@ -210,7 +210,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
         address: site.address,
         website: site.website,
         status: site.status || 'Active',
-        notes: site.notes || 'Imported from AI business search.'
+        notes: site.notes || 'Imported from Companies House lookup.'
       }));
 
   return {
@@ -242,7 +242,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
       billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
       companyNumber: current.data.companyNumber || lookup.companyNumber,
       vatNumber: current.data.vatNumber || lookup.vatNumber,
-      leadSource: current.data.leadSource || 'AI business search'
+      leadSource: current.data.leadSource || lookup.sourceLabel || 'Companies House lookup'
     }
   };
 }
@@ -1191,23 +1191,22 @@ function removeInvoice(invoiceId: string) {
                     <section className="crm-lookup-shell">
                       <div className="crm-lookup-top">
                         <div>
-                          <h4>AI-assisted business finder</h4>
+                          <h4>Companies House finder</h4>
                           <p className="muted-copy">
-                            Search for UK hospitality groups, pub companies, restaurant brands,
-                            hotels, or individual venues, then refresh this account with the
-                            strongest matched operating record.
+                            Search Companies House for the registered company behind this client,
+                            then refresh the account with the strongest legal entity match.
                           </p>
                         </div>
-                        <span className="soft-pill">Smart enrichment</span>
+                        <span className="soft-pill">Companies House</span>
                       </div>
 
                       <div className="crm-lookup-bar">
                         <label className="field">
-                          <span>Business name search</span>
+                          <span>Registered company search</span>
                           <input
                             className="input"
                             disabled={!editing}
-                            placeholder="Search by venue, group, brand, or website"
+                            placeholder="Search by company name, trading name, or company number"
                             value={lookupQuery}
                             onChange={(e) => setLookupQuery(e.target.value)}
                           />

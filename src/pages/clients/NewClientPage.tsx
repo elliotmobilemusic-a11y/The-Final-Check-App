@@ -12,8 +12,6 @@ import { createClient } from '../../services/clients';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type { ClientProfile } from '../../types';
 
-type LookupScopeFilter = 'group' | 'site' | 'all';
-
 const blankClient: ClientProfile = {
   companyName: '',
   contactName: '',
@@ -40,7 +38,7 @@ function clientSitesFromLookup(lookup: BusinessLookupProfile) {
     address: site.address,
     website: site.website,
     status: site.status || 'Active',
-    notes: site.notes || 'Imported from AI business search.'
+    notes: site.notes || 'Imported from Companies House lookup.'
   }));
 }
 
@@ -77,7 +75,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
       billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
       companyNumber: current.data.companyNumber || lookup.companyNumber,
       vatNumber: current.data.vatNumber || lookup.vatNumber,
-      leadSource: current.data.leadSource || 'AI business search'
+      leadSource: current.data.leadSource || lookup.sourceLabel || 'Companies House lookup'
     }
   };
 }
@@ -92,26 +90,10 @@ export function NewClientPage() {
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupScope, setLookupScope] = useState<LookupScopeFilter>('group');
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [lookupMessage, setLookupMessage] = useState(
-    'Search for UK hospitality groups, pub companies, restaurant brands, or individual sites before saving the client.'
+    'Search Companies House by registered company name or trading name before saving the client.'
   );
-
-  const scopedLookupResults = useMemo(() => {
-    if (lookupScope === 'all') return lookupResults;
-    return lookupResults.filter((result) =>
-      lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
-    );
-  }, [lookupResults, lookupScope]);
-
-  const visibleLookupResults = useMemo(() => {
-    if (lookupScope === 'all') return lookupResults;
-    return scopedLookupResults.length ? scopedLookupResults : lookupResults;
-  }, [lookupResults, lookupScope, scopedLookupResults]);
-
-  const isLookupFallbackVisible =
-    lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
   const setupChecklist = useMemo(
     () => [
       Boolean(form.companyName.trim()),
@@ -166,12 +148,12 @@ export function NewClientPage() {
     try {
       setLookupLoading(true);
       setLookupSelectionId('');
-      const results = await searchBusinessProfiles(query, lookupScope);
+      const results = await searchBusinessProfiles(query);
       setLookupResults(results);
       setLookupMessage(
         results.length
-          ? `Found ${results.length} business match${results.length === 1 ? '' : 'es'}. Review the strongest result and apply it before saving.`
-          : 'No recognised business matches found. Try the trading name, website, or head-office brand.'
+          ? `Found ${results.length} registered compan${results.length === 1 ? 'y' : 'ies'}. Review the best match and apply it before saving.`
+          : 'No registered company matches found. Try the legal entity name, trading name, or company number.'
       );
     } catch (error) {
       setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
@@ -274,7 +256,7 @@ export function NewClientPage() {
           </div>
         }
       >
-        <div className="page-inline-note">Lookup matches: {visibleLookupResults.length}</div>
+        <div className="page-inline-note">Lookup matches: {lookupResults.length}</div>
         <div className="page-inline-note">Lead source: {form.data.leadSource || 'Not set'}</div>
         <div className="page-inline-note">Account scope: {form.data.accountScope}</div>
       </PageIntro>
@@ -311,33 +293,21 @@ export function NewClientPage() {
               <div>
                 <h4>Business finder</h4>
                 <p className="muted-copy">
-                  Search for the head office, hospitality group, brand, or site and pull the strongest UK business record into the account draft.
+                  Search Companies House for the registered company behind the client and pull the best match into the account draft.
                 </p>
               </div>
-              <span className="soft-pill">UK-only workflow</span>
+              <span className="soft-pill">Companies House</span>
             </div>
 
             <div className="crm-lookup-bar">
               <label className="field">
-                <span>Business name search</span>
+                <span>Registered company search</span>
                 <input
                   className="input"
-                  placeholder="Search by venue, group, brand, or website"
+                  placeholder="Search by company name, trading name, or company number"
                   value={lookupQuery}
                   onChange={(event) => setLookupQuery(event.target.value)}
                 />
-              </label>
-              <label className="field">
-                <span>Show results for</span>
-                <select
-                  className="input"
-                  value={lookupScope}
-                  onChange={(event) => setLookupScope(event.target.value as LookupScopeFilter)}
-                >
-                  <option value="group">Groups and head office</option>
-                  <option value="site">Single sites</option>
-                  <option value="all">All UK matches</option>
-                </select>
               </label>
               <button
                 className="button button-secondary self-end"
@@ -351,9 +321,9 @@ export function NewClientPage() {
 
             <p className="muted-copy">{lookupMessage}</p>
 
-            {visibleLookupResults.length ? (
+            {lookupResults.length ? (
               <div className="crm-lookup-results">
-                {visibleLookupResults.map((result) => (
+                {lookupResults.map((result) => (
                   <article className="crm-lookup-card" key={result.id}>
                     <div className="crm-lookup-card-top">
                       <div className="crm-lookup-logo-shell">
@@ -376,9 +346,6 @@ export function NewClientPage() {
 
                         <div className="crm-lookup-meta-row">
                           <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
-                          <span className="crm-alert-chip">
-                            {result.resultType === 'group' ? 'Group match' : 'Site match'}
-                          </span>
                           <span className="crm-alert-chip">{result.accountScope}</span>
                           <span className="crm-alert-chip">UK</span>
                           <span className="crm-alert-chip">{result.sourceLabel}</span>
@@ -426,12 +393,6 @@ export function NewClientPage() {
                   </article>
                 ))}
               </div>
-            ) : null}
-
-            {isLookupFallbackVisible ? (
-              <p className="muted-copy">
-                No exact {lookupScope === 'group' ? 'group' : 'site'} matches were returned, so the closest UK hospitality results are being shown instead.
-              </p>
             ) : null}
           </section>
 
