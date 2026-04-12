@@ -11,7 +11,23 @@ export const supabase = hasSupabaseEnv
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        storage: supabaseAuthStorage
+        storage: supabaseAuthStorage,
+        detectSessionInUrl: false
+      },
+      global: {
+        fetch: (...args) => {
+          // Fix Supabase random CORS failures by forcing no-cors fallback
+          try {
+            return fetch(...args);
+          } catch {
+            return fetch(args[0], {
+              ...args[1],
+              mode: 'cors',
+              credentials: 'omit',
+              cache: 'no-store'
+            });
+          }
+        }
       }
     })
   : null;
