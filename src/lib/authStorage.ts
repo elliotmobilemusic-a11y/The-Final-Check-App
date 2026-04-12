@@ -68,8 +68,17 @@ export function consumeAuthResetNotice() {
 
 export const supabaseAuthStorage = {
   getItem(key: string) {
-    const primary = getStorage(getRememberPreference());
-    return primary.getItem(key);
+    // Always check both storage locations first
+    const localStorage = getStorage(true);
+    const sessionStorage = getStorage(false);
+    
+    const localValue = localStorage.getItem(key);
+    if (localValue) return localValue;
+    
+    const sessionValue = sessionStorage.getItem(key);
+    if (sessionValue) return sessionValue;
+    
+    return null;
   },
   setItem(key: string, value: string) {
     const remember = getRememberPreference();

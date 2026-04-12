@@ -129,7 +129,10 @@ export function ClientsPage() {
       }
     } catch (error) {
       setIntakeUrl('');
-      setMessage(error instanceof Error ? error.message : 'Could not create the intake link.');
+      // DO NOT logout user on API failure
+      const errorText = error instanceof Error ? error.message : 'Could not create the intake link.';
+      setMessage(errorText);
+      console.warn('Intake link creation failed:', error);
     }
   }
 
