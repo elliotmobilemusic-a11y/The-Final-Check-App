@@ -9,6 +9,19 @@
     <link rel="apple-touch-icon" href="/the-final-check-favicon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>The Final Check</title>
+    <script>
+      // Catch browser extension errors BEFORE any other code runs
+      window.addEventListener('unhandledrejection', function(event) {
+        try {
+          const msg = (event.reason?.message || event.reason || '').toString();
+          if (msg.includes('No Listener: tabs:outgoing.message.ready')) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+            return false;
+          }
+        } catch (e) {}
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
