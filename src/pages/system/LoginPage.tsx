@@ -2,7 +2,11 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
-import { getRememberPreference, setRememberPreference } from '../../lib/authStorage';
+import {
+  consumeAuthResetNotice,
+  getRememberPreference,
+  setRememberPreference
+} from '../../lib/authStorage';
 import { hasSupabaseEnv, supabase } from '../../lib/supabase';
 
 export function LoginPage() {
@@ -21,6 +25,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [sessionNotice] = useState(() => consumeAuthResetNotice());
 
   if (session) {
     return <Navigate to={redirectTo} replace />;
@@ -113,6 +118,8 @@ export function LoginPage() {
               your environment before testing sign-in.
             </div>
           ) : null}
+
+          {sessionNotice ? <div className="notice notice-warning">{sessionNotice}</div> : null}
 
           <form className={`stack gap-20 ${loginSuccess ? 'login-success' : ''}`} onSubmit={handleSubmit}>
             <label className="field">

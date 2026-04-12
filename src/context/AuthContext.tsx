@@ -1,5 +1,6 @@
 import { Session } from '@supabase/supabase-js';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { resetSupabaseAuthState } from '../lib/authStorage';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextValue {
@@ -22,16 +23,62 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    supabase.auth
+    const authClient = supabase;
+
+    const handleBrokenAuthState = () => {
+      resetSupabaseAuthState(
+        'Your previous browser session could not be restored cleanly. Please sign in again.'
+      );
+      setSession(null);
+    };
+
+    const shouldResetAuth = (error: unknown) => {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      return (
+        message.includes('failed to fetch') ||
+        message.includes('auth session missing') ||
+        message.includes('invalid refresh token') ||
+        message.includes('invalid claim') ||
+        message.includes('jwt') ||
+        message.includes('session') ||
+        message.includes('refresh token')
+      );
+    };
+
+    authClient.auth
       .getSession()
-      .then(({ data }) => {
-        setSession(data.session ?? null);
+      .then(async ({ data, error }) => {
+        if (error) throw error;
+
+        if (!data.session) {
+          setSession(null);
+          return;
+        }
+
+        const { data: userData, error: userError } = await authClient.auth.getUser();
+        if (userError) throw userError;
+
+        setSession(userData.user ? data.session : null);
+      })
+      .catch((error) => {
+        if (shouldResetAuth(error)) {
+          handleBrokenAuthState();
+          return;
+        }
+
+        setSession(null);
       })
       .finally(() => setLoading(false));
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = authClient.auth.onAuthStateChange((_event, nextSession) => {
+      if (!nextSession) {
+        setSession(null);
+        setLoading(false);
+        return;
+      }
+
       setSession(nextSession);
       setLoading(false);
     });

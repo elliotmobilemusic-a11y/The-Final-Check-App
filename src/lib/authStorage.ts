@@ -1,4 +1,5 @@
 const REMEMBER_ME_KEY = 'kitchen-platform-remember-me';
+const AUTH_RESET_NOTICE_KEY = 'the-final-check-auth-reset-notice';
 
 function hasWindow() {
   return typeof window !== 'undefined';
@@ -24,6 +25,45 @@ export function getRememberPreference() {
 export function setRememberPreference(remember: boolean) {
   if (!hasWindow()) return;
   window.localStorage.setItem(REMEMBER_ME_KEY, String(remember));
+}
+
+function eachBrowserStorage(callback: (storage: Storage) => void) {
+  if (!hasWindow()) return;
+  callback(window.localStorage);
+  callback(window.sessionStorage);
+}
+
+function isSupabaseAuthKey(key: string) {
+  return /^sb-[a-z0-9_-]+-auth-token$/i.test(key) || key.includes('supabase.auth.token');
+}
+
+export function resetSupabaseAuthState(message?: string) {
+  if (!hasWindow()) return;
+
+  eachBrowserStorage((storage) => {
+    const keysToRemove: string[] = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (key && isSupabaseAuthKey(key)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => storage.removeItem(key));
+  });
+
+  if (message) {
+    window.sessionStorage.setItem(AUTH_RESET_NOTICE_KEY, message);
+  }
+}
+
+export function consumeAuthResetNotice() {
+  if (!hasWindow()) return '';
+  const message = window.sessionStorage.getItem(AUTH_RESET_NOTICE_KEY) ?? '';
+  if (message) {
+    window.sessionStorage.removeItem(AUTH_RESET_NOTICE_KEY);
+  }
+  return message;
 }
 
 export const supabaseAuthStorage = {
