@@ -6,6 +6,16 @@ import { AuthProvider } from './context/AuthContext';
 import { PreferencesProvider } from './context/PreferencesContext';
 import './styles.css';
 
+// Suppress known browser extension errors that leak into unhandled rejections
+window.addEventListener('unhandledrejection', (event) => {
+  const errorMessage = event.reason?.message || event.reason || '';
+  if (typeof errorMessage === 'string' && errorMessage.includes('No Listener: tabs:outgoing.message.ready')) {
+    // This is a benign browser extension error, prevent it from showing as uncaught
+    event.preventDefault();
+    return;
+  }
+});
+
 if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
