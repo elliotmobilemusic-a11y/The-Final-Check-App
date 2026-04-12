@@ -24,12 +24,30 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     const authClient = supabase;
+    let attemptedMetadataRepair = false;
 
     const handleBrokenAuthState = () => {
       resetSupabaseAuthState(
         'Your previous browser session could not be restored cleanly. Please sign in again.'
       );
       setSession(null);
+    };
+
+    const attemptProfileRepair = async (accessToken?: string | null) => {
+      if (!accessToken || attemptedMetadataRepair) return;
+      attemptedMetadataRepair = true;
+
+      try {
+        await fetch('/api/repair-auth-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ accessToken })
+        });
+      } catch {
+        // Ignore repair failures and continue with the normal auth reset.
+      }
     };
 
     const shouldResetAuth = (error: unknown) => {
@@ -60,8 +78,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
         setSession(userData.user ? data.session : null);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         if (shouldResetAuth(error)) {
+          const { data } = await authClient.auth.getSession().catch(() => ({ data: { session: null } }));
+          await attemptProfileRepair(data?.session?.access_token);
           handleBrokenAuthState();
           return;
         }

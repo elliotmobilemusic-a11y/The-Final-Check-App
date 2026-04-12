@@ -211,15 +211,14 @@ export function SettingsPage() {
     try {
       setIsSaving(true);
 
-      // Save preview image if uploaded, otherwise use manual URL
+      // Keep avatars in device preferences only. Large base64 images in auth metadata
+      // can bloat the Supabase session token and break authenticated requests.
       const finalAvatarUrl = avatarPreview || avatarUrl.trim();
 
       if (supabase && session) {
         const { data, error } = await supabase.auth.updateUser({
           data: {
-            display_name: displayName.trim(),
-            avatar_url: finalAvatarUrl,
-            avatar_position: avatarPosition
+            display_name: displayName.trim()
           },
           ...(newPassword ? { password: newPassword } : {})
         });
@@ -249,7 +248,7 @@ export function SettingsPage() {
       setRememberPreference(rememberMe);
       setNewPassword('');
       setConfirmPassword('');
-      setMessage('Settings saved and remembered on this device.');
+      setMessage('Settings saved. Profile image preferences stay on this device for reliability.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not save settings.');
     } finally {
