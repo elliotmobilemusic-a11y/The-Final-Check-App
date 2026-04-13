@@ -62,8 +62,7 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
-    flowType: 'implicit'
+    detectSessionInUrl: false
   },
   db: {
     schema: 'public'
@@ -72,6 +71,5 @@ export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
     params: {
       eventsPerSecond: 1
     }
-  },
-
+  }
 });
