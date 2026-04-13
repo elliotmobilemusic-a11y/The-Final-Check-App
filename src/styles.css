@@ -387,6 +387,248 @@ body.reduced-motion *::after {
   scroll-behavior: auto !important;
 }
 
+/* ========== ANIMATIONS & EFFECTS ========== */
+
+/* Base transitions for all interactive elements */
+.button,
+a,
+input,
+select,
+textarea,
+.client-stat-card,
+.status-badge,
+.client-tag,
+.shell-topbar,
+.profile-avatar,
+.client-avatar-image,
+.client-avatar-fallback,
+.nav-item {
+  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Fade in entrance animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Staggered entrance animations for page content */
+.page-stack > * {
+  animation: fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.page-stack > *:nth-child(1) { animation-delay: 0.05s; }
+.page-stack > *:nth-child(2) { animation-delay: 0.1s; }
+.page-stack > *:nth-child(3) { animation-delay: 0.15s; }
+.page-stack > *:nth-child(4) { animation-delay: 0.2s; }
+.page-stack > *:nth-child(5) { animation-delay: 0.25s; }
+.page-stack > *:nth-child(6) { animation-delay: 0.3s; }
+.page-stack > *:nth-child(7) { animation-delay: 0.35s; }
+.page-stack > *:nth-child(8) { animation-delay: 0.4s; }
+
+/* Card hover lift effect */
+.client-stat-card:hover,
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-strong);
+}
+
+/* Button press effect */
+.button:active {
+  transform: scale(0.97);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(36, 31, 38, 0.12);
+}
+
+/* Subtle glow effect on focus */
+.button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  transform: translateY(-1px);
+}
+
+/* Input focus animation */
+input:focus,
+select:focus,
+textarea:focus {
+  transform: scale(1.01);
+}
+
+/* Badge hover effect */
+.status-badge:hover,
+.client-tag:hover {
+  transform: scale(1.05);
+}
+
+/* Avatar hover animation */
+.profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 36px rgba(36, 31, 38, 0.15);
+}
+
+/* Loading shimmer effect */
+.is-loading {
+  background: linear-gradient(90deg, 
+    var(--bg-soft) 25%, 
+    var(--surface-soft) 50%, 
+    var(--bg-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Success/Status indicator pulse */
+.status-success {
+  animation: subtlePulse 2s infinite ease-in-out;
+}
+
+/* Floating effect for floating elements */
+.float-gentle {
+  animation: gentleFloat 3s infinite ease-in-out;
+}
+
+/* Smooth scroll behaviour */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection highlight */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--line-strong) 70%, var(--accent) 30%);
+}
+
+/* Background subtle movement */
+body::before {
+  animation: gentleFloat 18s infinite ease-in-out;
+}
+
+.app-shell::before {
+  animation: gentleFloat 22s infinite ease-in-out;
+  animation-delay: 2s;
+}
+
+.app-shell::after {
+  animation: gentleFloat 26s infinite ease-in-out;
+  animation-delay: 4s;
+}
+
+/* Tooltip appear animation */
+@keyframes tooltipAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Checkbox / Radio animation */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  animation: fadeInScale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Nav item active indicator */
+.nav-item.active {
+  position: relative;
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 60%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 3px;
+  transform: translateX(-50%);
+  animation: fadeInScale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Form field validation shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.field-error {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+
 /* ---------- App shell ---------- */
 
 .app-shell {
