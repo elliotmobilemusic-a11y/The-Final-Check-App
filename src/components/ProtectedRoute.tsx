@@ -9,12 +9,9 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
   const [validated, setValidated] = useState(false);
 
   useEffect(() => {
-    // ✅ Only allow children to mount after session is fully validated and settled
+    // Only allow children to mount after session is fully validated and settled
     // Prevents Supabase SDK from sending requests with partial/stale auth state
     if (session?.access_token?.trim() && !loading) {
-      // Debug log - confirm token presence only
-      console.log(`✅ Valid session ready, token length: ${session.access_token.length}`);
-      
       // Force SDK to attach valid token to all subsequent requests
       supabase.auth.setSession(session);
       setValidated(true);
