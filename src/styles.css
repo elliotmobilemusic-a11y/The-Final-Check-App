@@ -644,6 +644,244 @@ body.reduced-motion *::after {
   margin-top: 8px;
 }
 
+/* Client Profile Banner */
+.client-profile-banner {
+  background: var(--surface-card);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  padding: 28px 28px 24px;
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
+.client-banner-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.client-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1 1 400px;
+}
+
+.client-avatar-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.client-avatar-label {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.client-avatar-image {
+  width: 110px;
+  height: 110px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  border: 3px solid var(--line-strong);
+  background: var(--bg-soft);
+  transition: all 0.25s ease;
+}
+
+.client-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 110px;
+  height: 110px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  color: var(--white);
+  font-size: 40px;
+  font-weight: 900;
+  border: 3px solid var(--line-strong);
+  transition: all 0.25s ease;
+}
+
+.client-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: rgba(0,0,0,0.55);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.client-avatar-overlay span {
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.client-avatar-label:hover .client-avatar-overlay {
+  opacity: 1;
+}
+
+.client-avatar-label:hover .client-avatar-image,
+.client-avatar-label:hover .client-avatar-fallback {
+  transform: scale(1.03);
+  box-shadow: var(--shadow);
+}
+
+.client-banner-info {
+  display: grid;
+  gap: 8px;
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.client-banner-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.status-badge.status-primary {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.status-badge.status-secondary {
+  background: var(--bg-soft);
+  color: var(--muted);
+}
+
+.status-badge.status-muted {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.client-banner-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.client-banner-subtitle {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.client-banner-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.client-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-soft);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.client-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.client-banner-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.client-stat-card {
+  background: var(--surface-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  transition: all 0.2s ease;
+}
+
+.client-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+
+.client-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.client-stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.client-stat-detail {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .client-profile-banner {
+    padding: 20px 16px 16px;
+  }
+  
+  .client-banner-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .client-banner-left {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .client-banner-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .client-banner-actions .button {
+    flex: 1 1 auto;
+  }
+  
+  .client-banner-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-auto-flow: column;

@@ -930,121 +930,97 @@ function removeInvoice(invoiceId: string) {
     }
   ];
 
+  function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      updateField('logoUrl', dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="page-stack">
-      <section className="record-header">
-        <div className="record-header-main">
-          <div className="record-header-brand">
-            <div className="client-logo-shell">
-              {form.logoUrl ? (
-                <img src={form.logoUrl} alt={form.companyName} className="client-logo-lg" />
-              ) : (
-                <div className="client-logo-fallback">
-                  {safe(form.companyName).slice(0, 2).toUpperCase() || 'CL'}
-                </div>
-              )}
-            </div>
-
-            <div className="record-header-copy">
-              <div className="record-header-topline">
-                <span className="brand-badge">{form.status}</span>
-                <span className="soft-pill">{form.data.accountScope}</span>
-                <span className="soft-pill">{sectionSummaryLabel}</span>
-              </div>
-              <h2>{form.companyName}</h2>
-              <p>
-                {form.industry || 'Industry not set'} • {form.location || 'Location not set'} •{' '}
-                {form.tier || 'Standard'}
-              </p>
-              <div className="client-inline-summary client-inline-summary-compact">
-                {prioritySummary.map((item) => (
-                  <div className="client-inline-summary-item" key={item.label}>
-                    <span>{item.label}</span>
-                    <strong>{item.value}</strong>
-                    <small>{item.detail}</small>
+      <section className="client-profile-banner">
+        <div className="client-banner-inner">
+          <div className="client-banner-left">
+            <div className="client-avatar-container">
+              <label className="client-avatar-label" htmlFor="client-avatar-upload">
+                {form.logoUrl ? (
+                  <img src={form.logoUrl} alt={form.companyName} className="client-avatar-image" />
+                ) : (
+                  <div className="client-avatar-fallback">
+                    {safe(form.companyName).slice(0, 2).toUpperCase() || 'CL'}
                   </div>
-                ))}
+                )}
+                <div className="client-avatar-overlay">
+                  <span>📷 Change photo</span>
+                </div>
+              </label>
+              <input
+                id="client-avatar-upload"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleAvatarUpload}
+              />
+            </div>
+            
+            <div className="client-banner-info">
+              <div className="client-banner-badges">
+                <span className="status-badge status-primary">{form.status}</span>
+                <span className="status-badge status-secondary">{form.data.accountScope}</span>
+                <span className="status-badge status-muted">{sectionSummaryLabel}</span>
               </div>
+              
+              <h1 className="client-banner-title">{form.companyName}</h1>
+              <p className="client-banner-subtitle">
+                {form.industry || 'Industry not set'} • {form.location || 'Location not set'} • {form.tier || 'Standard'}
+              </p>
+              
               {form.tags.length ? (
-                <div className="client-tag-row">
+                <div className="client-banner-tags">
                   {form.tags.map((tag) => (
-                    <span className="soft-pill" key={tag}>
-                      {tag}
-                    </span>
+                    <span className="client-tag" key={tag}>{tag}</span>
                   ))}
                 </div>
               ) : null}
             </div>
           </div>
-
-          <div className="record-header-actions">
-            <Link className="button button-secondary" to="/clients">
-              Back to client list
-            </Link>
-            {activeSection ? (
-              <Link className="button button-secondary" to={`/clients/${client.id}`}>
-                Back to CRM hub
-              </Link>
-            ) : null}
-            <button
-              className="button button-secondary"
-              onClick={() => setEditing((value) => !value)}
+          
+          <div className="client-banner-actions">
+            <Link className="button button-secondary" to="/clients">← Client list</Link>
+            {activeSection && (
+              <Link className="button button-secondary" to={`/clients/${client.id}`}>← CRM hub</Link>
+            )}
+            <button 
+              className={editing ? 'button button-warning' : 'button button-secondary'} 
+              onClick={() => setEditing(v => !v)}
             >
-              {editing ? 'Close edit mode' : 'Edit client'}
+              {editing ? '✕ Cancel edit' : '✏️ Edit client'}
             </button>
-            <button
-              className="button button-primary"
-              disabled={!editing || saving}
+            <button 
+              className="button button-primary" 
+              disabled={!editing || saving} 
               onClick={handleSave}
             >
-              {saving ? 'Saving...' : 'Save changes'}
+              {saving ? '⏳ Saving...' : '💾 Save changes'}
             </button>
-            <Link className="button button-secondary" to={`/audit?client=${client.id}`}>
-              New audit
-            </Link>
-            <Link className="button button-secondary" to={`/menu?client=${client.id}`}>
-              New menu
-            </Link>
-            <button className="button button-secondary" onClick={exportClientPdf}>
-              Export CRM PDF
-            </button>
-            {form.website ? (
-              <a className="button button-ghost" href={form.website} rel="noreferrer" target="_blank">
-                Open website
-              </a>
-            ) : null}
           </div>
         </div>
-
-        <aside className="record-header-side">
-          <div className="record-header-summary">
-            <span className="soft-pill">Account snapshot</span>
-            <strong>{sectionSummaryLabel}</strong>
-            <p>{activeSectionCard?.description || 'Use the hub to move between profile, commercial, strategy, and linked delivery work.'}</p>
-            <div className="record-header-grid">
-              <div>
-                <span>Workstreams</span>
-                <strong>{linkedWorkstreams}</strong>
-                <small>{audits.length} audits and {menus.length} menu projects</small>
-              </div>
-              <div>
-                <span>Review cadence</span>
-                <strong>{reviewLabel(form.nextReviewDate)}</strong>
-                <small>{formatShortDate(form.nextReviewDate)}</small>
-              </div>
-              <div>
-                <span>Pipeline</span>
-                <strong>{fmtCurrency(pipelineValue)}</strong>
-                <small>{stats.deals} open opportunit{stats.deals === 1 ? 'y' : 'ies'}</small>
-              </div>
-              <div>
-                <span>Outstanding</span>
-                <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
-                <small>{stats.invoicesOpen} invoice{stats.invoicesOpen === 1 ? '' : 's'} not paid</small>
-              </div>
+        
+        <div className="client-banner-stats">
+          {prioritySummary.map((stat, i) => (
+            <div className="client-stat-card" key={i}>
+              <span className="client-stat-label">{stat.label}</span>
+              <strong className="client-stat-value">{stat.value}</strong>
+              <span className="client-stat-detail">{stat.detail}</span>
             </div>
-          </div>
-        </aside>
+          ))}
+        </div>
       </section>
 
       <div className="record-header-message">
