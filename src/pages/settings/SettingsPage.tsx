@@ -1,7 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import {
   type LandingPage,
@@ -195,26 +193,6 @@ export function SettingsPage() {
   const currentTheme = themeOptions.find((option) => option.value === theme) ?? themeOptions[0];
   const activeSectionMeta =
     settingsSections.find((item) => item.value === activeSection) ?? settingsSections[0];
-  const profileCompleteness = [
-    displayName.trim(),
-    avatarUrl.trim() || avatarPreview,
-    jobTitle.trim(),
-    organisation.trim()
-  ].filter(Boolean).length;
-  const activeChanges = [
-    theme !== preferences.theme,
-    defaultLandingPage !== preferences.defaultLandingPage,
-    compactMode !== preferences.compactMode,
-    reducedMotion !== preferences.reducedMotion,
-    autoShowNav !== preferences.autoShowNav,
-    rememberMe !== getRememberPreference(),
-    displayName.trim() !== preferences.displayName,
-    avatarUrl.trim() !== preferences.avatarUrl,
-    jobTitle.trim() !== preferences.jobTitle,
-    organisation.trim() !== preferences.organisation,
-    Boolean(newPassword)
-  ].filter(Boolean).length;
-
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -313,37 +291,6 @@ export function SettingsPage() {
 
   return (
     <div className="page-stack settings-page">
-      <PageIntro
-        eyebrow="System settings"
-        title="Control how the workspace looks, signs in, and travels with you."
-        description="These settings combine profile identity, device defaults, and account security so the app feels stable whether you are on web or desktop."
-        side={
-          <div className="settings-profile-meta">
-            <div>
-              <span>Signed in as</span>
-              <strong>{session?.user.email ?? 'No active session'}</strong>
-            </div>
-            <div>
-              <span>Current theme</span>
-              <strong>{currentTheme.label}</strong>
-            </div>
-          </div>
-        }
-      >
-        <StatCard label="Profile fields" value={`${profileCompleteness}/4`} hint="Core profile details completed." />
-        <StatCard label="Unsaved changes" value={String(activeChanges)} hint="Changes on this screen not yet saved." />
-        <StatCard
-          label="Default landing"
-          value={landingPages.find((item) => item.value === defaultLandingPage)?.label ?? 'Dashboard'}
-          hint="The first workspace you open after sign-in."
-        />
-        <StatCard
-          label="Platform"
-          value={desktopInfo.isDesktop ? 'Desktop' : 'Web'}
-          hint="Current runtime environment."
-        />
-      </PageIntro>
-
       <nav className="settings-section-nav" aria-label="Settings sections">
         {settingsSections.map((item) => (
           <NavLink
@@ -640,6 +587,44 @@ export function SettingsPage() {
                       </label>
                     </div>
                   </section>
+
+                  <section className="sub-panel">
+                    <div className="sub-panel-header">
+                      <h4>Desktop app</h4>
+                      <span className="soft-pill">{desktopInfo.isDesktop ? 'Installed app' : 'Web session'}</span>
+                    </div>
+
+                    <div className="form-grid two-columns">
+                      <label className="field">
+                        <span>Runtime</span>
+                        <input className="input" disabled value={desktopInfo.isDesktop ? desktopInfo.platform : 'Web'} />
+                      </label>
+
+                      <label className="field">
+                        <span>Version</span>
+                        <input className="input" disabled value={desktopInfo.version} />
+                      </label>
+                    </div>
+
+                    <p className="muted-copy">{desktopStatus.message}</p>
+
+                    <div className="button-row">
+                      <button
+                        className="button button-secondary"
+                        disabled={isCheckingUpdates || !desktopInfo.canCheckForUpdates}
+                        onClick={handleDesktopUpdateCheck}
+                        type="button"
+                      >
+                        {isCheckingUpdates ? 'Checking...' : 'Check for updates'}
+                      </button>
+
+                      {desktopStatus.state === 'downloaded' ? (
+                        <button className="button" onClick={handleInstallDesktopUpdate} type="button">
+                          Install update
+                        </button>
+                      ) : null}
+                    </div>
+                  </section>
                 </>
               ) : null}
             </div>
@@ -657,68 +642,6 @@ export function SettingsPage() {
             </div>
           </form>
         </div>
-
-        <aside className="workspace-sidebar section-stack">
-          <section className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Desktop app</h3>
-                <p className="muted-copy">Update checks and install status for the packaged desktop build.</p>
-              </div>
-            </div>
-
-            <div className="panel-body stack gap-16">
-              <StatCard label="Runtime" value={desktopInfo.isDesktop ? desktopInfo.platform : 'Web'} />
-              <StatCard label="Version" value={desktopInfo.version} />
-              <StatCard label="Update status" value={desktopStatus.state} hint={desktopStatus.message} />
-
-              <p className="muted-copy">{desktopStatus.message}</p>
-
-              <div className="button-row">
-                <button
-                  className="button button-secondary"
-                  disabled={isCheckingUpdates || !desktopInfo.canCheckForUpdates}
-                  onClick={handleDesktopUpdateCheck}
-                  type="button"
-                >
-                  {isCheckingUpdates ? 'Checking...' : 'Check for updates'}
-                </button>
-
-                {desktopStatus.state === 'downloaded' ? (
-                  <button className="button" onClick={handleInstallDesktopUpdate} type="button">
-                    Install update
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </section>
-
-          <section className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Readiness</h3>
-                <p className="muted-copy">A quick pulse-check before you put the workspace in front of clients.</p>
-              </div>
-            </div>
-
-            <div className="panel-body stack gap-16">
-              <div className="settings-profile-meta">
-                <div>
-                  <span>Identity</span>
-                  <strong>{profileCompleteness >= 3 ? 'Ready' : 'Needs attention'}</strong>
-                </div>
-                <div>
-                  <span>Persistence</span>
-                  <strong>{rememberMe ? 'Remembered' : 'Session only'}</strong>
-                </div>
-                <div>
-                  <span>Theme</span>
-                  <strong>{currentTheme.label}</strong>
-                </div>
-              </div>
-            </div>
-          </section>
-        </aside>
       </section>
     </div>
   );
