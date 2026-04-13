@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase-public';
+import { supabase } from '../lib/supabase';
 
 export async function createReportShare(clientId: string, reportData: any) {
   const token = crypto.randomUUID();
@@ -35,14 +35,14 @@ export async function getReportShareByToken(token: string) {
   return data.report_data;
 }
 
-export async function createKitchenAuditShare(clientId: string, auditData: any) {
+export async function createKitchenAuditShare(auditData: any) {
   const token = crypto.randomUUID();
   
   const { data, error } = await supabase
     .from('report_shares')
     .insert({
       token,
-      client_id: clientId,
+      client_id: null,
       report_data: auditData,
       expires_at: null,
       created_at: new Date().toISOString()
