@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildReportHeroHtml,
@@ -417,6 +418,7 @@ function buildMenuInsights(
 }
 
 export function MenuBuilderPage() {
+  const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
   const queryClientId = searchParams.get('client') || null;
   const queryLoadId = searchParams.get('load');
@@ -844,16 +846,25 @@ export function MenuBuilderPage() {
   async function handleSaveProject() {
     try {
       setSaving(true);
-      const saved = await saveMenuProject(project);
-      setProject({
-        ...normalizeMenuProject(saved.data),
-        id: saved.id,
-        clientId: saved.client_id ?? saved.data.clientId ?? null,
-        createdAt: saved.created_at,
-        updatedAt: saved.updated_at
-      });
-      setMessage('Menu saved.');
-      await refreshProjects();
+      await runWithActivity(
+        {
+          kicker: 'Refining menu',
+          title: 'Saving profit engine',
+          detail: 'Storing the latest menu margins and refreshing the saved project list.'
+        },
+        async () => {
+          const saved = await saveMenuProject(project);
+          setProject({
+            ...normalizeMenuProject(saved.data),
+            id: saved.id,
+            clientId: saved.client_id ?? saved.data.clientId ?? null,
+            createdAt: saved.created_at,
+            updatedAt: saved.updated_at
+          });
+          setMessage('Menu saved.');
+          await refreshProjects();
+        }
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not save project.');
     } finally {

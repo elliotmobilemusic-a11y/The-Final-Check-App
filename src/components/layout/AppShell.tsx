@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { supabase } from '../../lib/supabase';
+import { CookingLoader } from './CookingLoader';
 
 const navItems = [
   { to: '/dashboard', label: 'Command Centre' },
@@ -76,6 +78,7 @@ export function AppShell() {
   const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
+  const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
   const [routeTransitionVisible, setRouteTransitionVisible] = useState(false);
   const navRef = useRef<HTMLElement>(null);
@@ -136,6 +139,11 @@ export function AppShell() {
   const activeWorkspace =
     workspaceDetails.find((item) => location.pathname.startsWith(item.match)) ??
     workspaceDetails[0];
+  const overlayContent = activity ?? {
+    kicker: 'Preparing station',
+    title: activeWorkspace.label,
+    detail: activeWorkspace.detail
+  };
 
   async function handleSignOut() {
     // Clear everything first immediately
@@ -177,7 +185,7 @@ export function AppShell() {
     routeTransitionTimeout.current = setTimeout(() => {
       setRouteTransitionVisible(false);
       routeTransitionTimeout.current = null;
-    }, preferences.reducedMotion ? 220 : 820);
+    }, preferences.reducedMotion ? 260 : 1250);
 
     return () => {
       if (routeTransitionTimeout.current) {
@@ -260,36 +268,13 @@ export function AppShell() {
               : 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
         >
-          <div
-            aria-hidden="true"
-            className={`route-transition ${routeTransitionVisible ? 'visible' : ''} ${preferences.reducedMotion ? 'reduced-motion' : ''}`}
-          >
-            <div className="route-transition-card">
-              <div className="route-transition-kicker">Preparing station</div>
-              <div className="route-transition-line">
-                <div className="route-transition-pan">
-                  <span className="route-transition-pan-body" />
-                  <span className="route-transition-pan-handle" />
-                  <span className="route-transition-pan-rim" />
-                  <span className="route-transition-garnish garnish-one" />
-                  <span className="route-transition-garnish garnish-two" />
-                  <span className="route-transition-garnish garnish-three" />
-                </div>
-                <div className="route-transition-steam">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className="route-transition-burners">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </div>
-              <strong>{activeWorkspace.label}</strong>
-              <p>{activeWorkspace.detail}</p>
-            </div>
-          </div>
+          <CookingLoader
+            detail={overlayContent.detail}
+            kicker={overlayContent.kicker}
+            reducedMotion={preferences.reducedMotion}
+            title={overlayContent.title}
+            visible={routeTransitionVisible || Boolean(activity)}
+          />
           <Outlet />
         </main>
       </div>

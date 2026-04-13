@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildReportHeroHtml,
@@ -411,6 +412,7 @@ function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 }
 
 export function FoodSafetyAuditPage() {
+  const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<FoodSafetyAuditState>(() =>
@@ -565,26 +567,36 @@ export function FoodSafetyAuditPage() {
     setSavedRecords(listLocalToolRecords<FoodSafetyAuditState>(STORAGE_KEY));
   }
 
-  function handleSave() {
-    const record = saveLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, {
-      id: form.id || uid('food-safety'),
-      title: form.title || 'Food Safety Audit',
-      siteName: form.siteName || 'Unnamed site',
-      location: form.location || '',
-      reviewDate: form.auditDate || '',
-      data: form,
-      createdAt: form.createdAt,
-      updatedAt: form.updatedAt
-    });
+  async function handleSave() {
+    await runWithActivity(
+      {
+        kicker: 'Final safety check',
+        title: 'Saving food safety audit',
+        detail: 'Updating the latest compliance record and keeping the saved version ready to reopen.'
+      },
+      async () => {
+        const record = saveLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, {
+          id: form.id || uid('food-safety'),
+          title: form.title || 'Food Safety Audit',
+          siteName: form.siteName || 'Unnamed site',
+          location: form.location || '',
+          reviewDate: form.auditDate || '',
+          data: form,
+          createdAt: form.createdAt,
+          updatedAt: form.updatedAt
+        });
 
-    setForm((current) => ({
-      ...current,
-      id: record.id,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt
-    }));
-    refreshSaved();
-    setMessage('Food safety audit saved.');
+        setForm((current) => ({
+          ...current,
+          id: record.id,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt
+        }));
+        refreshSaved();
+        setMessage('Food safety audit saved.');
+      },
+      980
+    );
   }
 
   function handleDelete(id: string) {

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { createEmptyClientData } from '../../features/clients/clientData';
 import {
   getBusinessProfile,
@@ -81,6 +82,7 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
 }
 
 export function NewClientPage() {
+  const { runWithActivity } = useActivityOverlay();
   const navigate = useNavigate();
   const [form, setForm] = useState<ClientProfile>(
     () => readDraft<ClientProfile>(NEW_CLIENT_DRAFT_KEY) ?? blankClient
@@ -126,10 +128,19 @@ export function NewClientPage() {
 
     try {
       setSaving(true);
-      const created = await createClient(form);
-      clearDraft(NEW_CLIENT_DRAFT_KEY);
-      setMessage('Client created.');
-      navigate(`/clients/${created.id}`);
+      await runWithActivity(
+        {
+          kicker: 'Opening account',
+          title: 'Saving new client',
+          detail: 'Creating the client record and moving you into the live account workspace.'
+        },
+        async () => {
+          const created = await createClient(form);
+          clearDraft(NEW_CLIENT_DRAFT_KEY);
+          setMessage('Client created.');
+          navigate(`/clients/${created.id}`);
+        }
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not create client.');
     } finally {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildReportHeroHtml,
@@ -322,6 +323,7 @@ function buildMysteryShopReport(state: MysteryShopAuditState) {
 }
 
 export function MysteryShopAuditPage() {
+  const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<MysteryShopAuditState>(() =>
@@ -493,26 +495,36 @@ export function MysteryShopAuditPage() {
     }));
   }
 
-  function handleSave() {
-    const record = saveLocalToolRecord<MysteryShopAuditState>(STORAGE_KEY, {
-      id: form.id || uid('mystery-shop'),
-      title: form.title || 'Mystery Shop Audit',
-      siteName: form.siteName || 'Unnamed site',
-      location: form.location || '',
-      reviewDate: form.visitDate || '',
-      data: form,
-      createdAt: form.createdAt,
-      updatedAt: form.updatedAt
-    });
+  async function handleSave() {
+    await runWithActivity(
+      {
+        kicker: 'Service pass',
+        title: 'Saving mystery shop audit',
+        detail: 'Packing away the service review so it is ready for follow-up and reporting.'
+      },
+      async () => {
+        const record = saveLocalToolRecord<MysteryShopAuditState>(STORAGE_KEY, {
+          id: form.id || uid('mystery-shop'),
+          title: form.title || 'Mystery Shop Audit',
+          siteName: form.siteName || 'Unnamed site',
+          location: form.location || '',
+          reviewDate: form.visitDate || '',
+          data: form,
+          createdAt: form.createdAt,
+          updatedAt: form.updatedAt
+        });
 
-    setForm((current) => ({
-      ...current,
-      id: record.id,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt
-    }));
-    refreshSaved();
-    setMessage('Mystery shop audit saved.');
+        setForm((current) => ({
+          ...current,
+          id: record.id,
+          createdAt: record.createdAt,
+          updatedAt: record.updatedAt
+        }));
+        refreshSaved();
+        setMessage('Mystery shop audit saved.');
+      },
+      980
+    );
   }
 
   function handleDelete(id: string) {

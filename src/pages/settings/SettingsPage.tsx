@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   type LandingPage,
@@ -91,6 +92,7 @@ function prettyThemeName(value: ThemeMode) {
 export function SettingsPage() {
   const { section } = useParams();
   const { session } = useAuth();
+  const { runWithActivity } = useActivityOverlay();
   const { preferences, updatePreferences, resetDevicePreferences } = usePreferences();
   const activeSection = isSettingsSection(section) ? section : 'profile';
 
@@ -213,50 +215,58 @@ export function SettingsPage() {
 
     try {
       setIsSaving(true);
+      await runWithActivity(
+        {
+          kicker: 'Finishing dish',
+          title: 'Saving settings',
+          detail: 'Updating your profile, preferences, and sign-in options so everything stays in sync.'
+        },
+        async () => {
+          let finalAvatarUrl = avatarUrl.trim();
 
-      let finalAvatarUrl = avatarUrl.trim();
+          if (avatarPreview && supabase) {
+            const response = await fetch(avatarPreview);
+            const blob = await response.blob();
+            const extension = blob.type.split('/')[1] || 'jpg';
+            const file = new File([blob], `avatar.${extension}`, { type: blob.type });
 
-      if (avatarPreview && supabase) {
-        const response = await fetch(avatarPreview);
-        const blob = await response.blob();
-        const extension = blob.type.split('/')[1] || 'jpg';
-        const file = new File([blob], `avatar.${extension}`, { type: blob.type });
+            finalAvatarUrl = await uploadAvatar(file, session.user.id);
+            await saveAvatarUrl(session.user.id, finalAvatarUrl);
+          }
 
-        finalAvatarUrl = await uploadAvatar(file, session.user.id);
-        await saveAvatarUrl(session.user.id, finalAvatarUrl);
-      }
+          await updateProfile(session.user.id, {
+            display_name: displayName.trim(),
+            avatar_position: avatarPosition,
+            avatar_url: finalAvatarUrl,
+            job_title: jobTitle.trim(),
+            organisation: organisation.trim()
+          });
 
-      await updateProfile(session.user.id, {
-        display_name: displayName.trim(),
-        avatar_position: avatarPosition,
-        avatar_url: finalAvatarUrl,
-        job_title: jobTitle.trim(),
-        organisation: organisation.trim()
-      });
+          if (newPassword) {
+            await supabase.auth.updateUser({ password: newPassword });
+          }
 
-      if (newPassword) {
-        await supabase.auth.updateUser({ password: newPassword });
-      }
+          updatePreferences({
+            displayName: displayName.trim(),
+            avatarUrl: finalAvatarUrl,
+            avatarPosition,
+            jobTitle: jobTitle.trim(),
+            organisation: organisation.trim(),
+            theme,
+            defaultLandingPage,
+            compactMode,
+            reducedMotion,
+            autoShowNav
+          });
 
-      updatePreferences({
-        displayName: displayName.trim(),
-        avatarUrl: finalAvatarUrl,
-        avatarPosition,
-        jobTitle: jobTitle.trim(),
-        organisation: organisation.trim(),
-        theme,
-        defaultLandingPage,
-        compactMode,
-        reducedMotion,
-        autoShowNav
-      });
-
-      setRememberPreference(rememberMe);
-      setAvatarUrl(finalAvatarUrl);
-      setAvatarPreview('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setMessage('Settings saved successfully. Your profile and device preferences are in sync.');
+          setRememberPreference(rememberMe);
+          setAvatarUrl(finalAvatarUrl);
+          setAvatarPreview('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setMessage('Settings saved successfully. Your profile and device preferences are in sync.');
+        }
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not save settings.');
     } finally {

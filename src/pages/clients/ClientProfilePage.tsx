@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { StatCard } from '../../components/ui/StatCard';
 import { buildClientPdfHtml, buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
@@ -253,6 +254,7 @@ function clientDraftKey(clientId: string) {
 
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
+  const { runWithActivity } = useActivityOverlay();
 
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [editing, setEditing] = useState(false);
@@ -609,16 +611,26 @@ function removeInvoice(invoiceId: string) {
 
   async function handleSave() {
   if (!client?.id || !form) return;
+  const activeClientId = client.id;
 
   try {
     setSaving(true);
-    const updated = await updateClient(client.id, form);
-    const next = clientRecordToProfile(updated);
-    clearDraft(clientDraftKey(client.id));
-    setClient(next);
-    setForm(next);
-    setEditing(false);
-    setMessage('Client profile updated.');
+    await runWithActivity(
+      {
+        kicker: 'Updating account',
+        title: 'Saving client profile',
+        detail: 'Writing the latest client details back to the CRM and tidying the working draft.'
+      },
+      async () => {
+        const updated = await updateClient(activeClientId, form);
+        const next = clientRecordToProfile(updated);
+        clearDraft(clientDraftKey(activeClientId));
+        setClient(next);
+        setForm(next);
+        setEditing(false);
+        setMessage('Client profile updated.');
+      }
+    );
   } catch (error) {
     setMessage(error instanceof Error ? error.message : 'Could not save client.');
   } finally {

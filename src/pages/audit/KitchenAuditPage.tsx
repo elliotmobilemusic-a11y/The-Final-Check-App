@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildReportDocumentHtml,
@@ -1003,6 +1004,7 @@ const textareaFields: Array<{ key: TextareaFieldKey; label: string }> = [
 ];
 
 export function KitchenAuditPage() {
+  const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState<AuditFormState>(() =>
     searchParams.get('load')
@@ -1319,16 +1321,25 @@ export function KitchenAuditPage() {
   async function handleSave() {
     try {
       setIsSaving(true);
-      const saved = await saveAudit(form);
-      setForm({
-        ...normalizeAuditState(saved.data, saved.client_id ?? saved.data.clientId ?? null),
-        id: saved.id,
-        clientId: saved.client_id ?? saved.data.clientId ?? null,
-        createdAt: saved.created_at,
-        updatedAt: saved.updated_at
-      });
-      setMessage('Audit saved.');
-      await refreshAudits();
+      await runWithActivity(
+        {
+          kicker: 'Plating results',
+          title: 'Saving audit',
+          detail: 'Locking in the latest kitchen findings and refreshing the saved audit list.'
+        },
+        async () => {
+          const saved = await saveAudit(form);
+          setForm({
+            ...normalizeAuditState(saved.data, saved.client_id ?? saved.data.clientId ?? null),
+            id: saved.id,
+            clientId: saved.client_id ?? saved.data.clientId ?? null,
+            createdAt: saved.created_at,
+            updatedAt: saved.updated_at
+          });
+          setMessage('Audit saved.');
+          await refreshAudits();
+        }
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Save failed.');
     } finally {
