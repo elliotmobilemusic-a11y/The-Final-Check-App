@@ -103,7 +103,7 @@ export function ClientIntakePage() {
           minHeight: '100vh',
           display: 'grid',
           placeItems: 'center',
-          padding: '32px',
+          padding: '16px 12px',
           background:
             'radial-gradient(circle at top, rgba(214, 188, 140, 0.24), transparent 40%), #f6f1ea'
         }}
@@ -114,14 +114,14 @@ export function ClientIntakePage() {
             background: 'rgba(255,255,255,0.9)',
             border: '1px solid rgba(115, 95, 64, 0.12)',
             borderRadius: '24px',
-            padding: '28px',
+            padding: 'clamp(20px, 6vw, 28px)',
             boxShadow: '0 30px 80px rgba(52, 41, 24, 0.12)'
           }}
         >
           <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '12px', color: '#7b6b54', fontWeight: 700 }}>
             The Final Check
           </p>
-          <h1 style={{ margin: '12px 0 10px', fontSize: '32px', color: '#2d2b31' }}>
+          <h1 style={{ margin: '12px 0 10px', fontSize: 'clamp(24px, 6vw, 32px)', color: '#2d2b31' }}>
             {status === 'submitted' ? 'Submission received' : 'Client intake'}
           </h1>
           <p style={{ margin: 0, color: '#5c5752', lineHeight: 1.6 }}>{message}</p>
@@ -141,7 +141,7 @@ export function ClientIntakePage() {
     <main
       style={{
         minHeight: '100vh',
-        padding: '32px 18px',
+        padding: '16px 12px 32px',
         background:
           'radial-gradient(circle at top, rgba(214, 188, 140, 0.24), transparent 42%), #f6f1ea'
       }}
@@ -153,40 +153,43 @@ export function ClientIntakePage() {
           background: 'rgba(255,255,255,0.92)',
           border: '1px solid rgba(115, 95, 64, 0.12)',
           borderRadius: '28px',
-          padding: '32px',
+          padding: 'clamp(20px, 4vw, 32px)',
           boxShadow: '0 30px 80px rgba(52, 41, 24, 0.12)'
         }}
       >
         <p style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '12px', color: '#7b6b54', fontWeight: 700 }}>
           The Final Check
         </p>
-        <h1 style={{ margin: '12px 0 10px', fontSize: '40px', lineHeight: 1.05, color: '#2d2b31' }}>
+        <h1 style={{ margin: '12px 0 10px', fontSize: 'clamp(28px, 5vw, 40px)', lineHeight: 1.05, color: '#2d2b31' }}>
           Client intake form
         </h1>
         <p style={{ margin: 0, color: '#5c5752', lineHeight: 1.7, maxWidth: '68ch' }}>{helperText}</p>
 
-         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '28px', marginTop: '36px' }}>
+         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px', marginTop: '28px' }}>
            
            <div style={{
-             padding: '24px',
+             padding: 'clamp(16px, 4vw, 24px)',
              borderRadius: '20px',
              background: 'linear-gradient(135deg, rgba(198, 161, 97, 0.06), transparent)',
              border: '1px solid rgba(198, 161, 97, 0.15)'
            }}>
              <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', fontWeight: 700, color: '#5c4f3a', letterSpacing: '0.02em' }}>Business details</h3>
-             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                <label style={{ display: 'grid', gap: '6px' }}>
                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Business name *</span>
                  <input 
                    value={form.businessName} 
                    onChange={(event) => setForm({ ...form, businessName: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -196,12 +199,15 @@ export function ClientIntakePage() {
                    value={form.tradingName} 
                    onChange={(event) => setForm({ ...form, tradingName: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -212,12 +218,15 @@ export function ClientIntakePage() {
                    value={form.businessType} 
                    onChange={(event) => setForm({ ...form, businessType: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -229,12 +238,15 @@ export function ClientIntakePage() {
                    value={form.siteCount} 
                    onChange={(event) => setForm({ ...form, siteCount: Number(event.target.value) || 1 })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -244,12 +256,15 @@ export function ClientIntakePage() {
                    value={form.address} 
                    onChange={(event) => setForm({ ...form, address: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -259,12 +274,15 @@ export function ClientIntakePage() {
                    value={form.postcode} 
                    onChange={(event) => setForm({ ...form, postcode: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -275,12 +293,15 @@ export function ClientIntakePage() {
                    value={form.weeklySalesBand} 
                    onChange={(event) => setForm({ ...form, weeklySalesBand: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -290,12 +311,15 @@ export function ClientIntakePage() {
                    value={form.website} 
                    onChange={(event) => setForm({ ...form, website: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -303,25 +327,28 @@ export function ClientIntakePage() {
            </div>
 
            <div style={{
-             padding: '24px',
+             padding: 'clamp(16px, 4vw, 24px)',
              borderRadius: '20px',
              background: 'linear-gradient(135deg, rgba(79, 142, 103, 0.06), transparent)',
              border: '1px solid rgba(79, 142, 103, 0.15)'
            }}>
              <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', fontWeight: 700, color: '#3d5446', letterSpacing: '0.02em' }}>Contact details</h3>
-             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '16px' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                <label style={{ display: 'grid', gap: '6px' }}>
                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>Main contact name</span>
                  <input 
                    value={form.contactName} 
                    onChange={(event) => setForm({ ...form, contactName: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -332,12 +359,15 @@ export function ClientIntakePage() {
                    value={form.contactEmail} 
                    onChange={(event) => setForm({ ...form, contactEmail: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -347,12 +377,15 @@ export function ClientIntakePage() {
                    value={form.contactPhone} 
                    onChange={(event) => setForm({ ...form, contactPhone: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     minHeight: '54px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     transition: 'all 0.18s ease'
+                     fontSize: '16px',
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -360,7 +393,7 @@ export function ClientIntakePage() {
            </div>
 
            <div style={{
-             padding: '24px',
+             padding: 'clamp(16px, 4vw, 24px)',
              borderRadius: '20px',
              background: 'linear-gradient(135deg, rgba(68, 92, 122, 0.06), transparent)',
              border: '1px solid rgba(68, 92, 122, 0.15)'
@@ -374,14 +407,16 @@ export function ClientIntakePage() {
                    value={form.challenges} 
                    onChange={(event) => setForm({ ...form, challenges: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     minHeight: '100px',
+                     fontSize: '16px',
+                     minHeight: '120px',
                      resize: 'vertical',
-                     transition: 'all 0.18s ease'
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -392,14 +427,16 @@ export function ClientIntakePage() {
                    value={form.supportNeeded} 
                    onChange={(event) => setForm({ ...form, supportNeeded: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     minHeight: '100px',
+                     fontSize: '16px',
+                     minHeight: '120px',
                      resize: 'vertical',
-                     transition: 'all 0.18s ease'
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -410,14 +447,16 @@ export function ClientIntakePage() {
                    value={form.extraNotes} 
                    onChange={(event) => setForm({ ...form, extraNotes: event.target.value })}
                    style={{
-                     padding: '12px 16px',
-                     borderRadius: '12px',
+                     padding: '16px 18px',
+                     borderRadius: '16px',
                      border: '1px solid rgba(86, 81, 91, 0.14)',
                      background: 'rgba(255,255,255,0.95)',
-                     fontSize: '15px',
-                     minHeight: '100px',
+                     fontSize: '16px',
+                     minHeight: '120px',
                      resize: 'vertical',
-                     transition: 'all 0.18s ease'
+                     transition: 'all 0.18s ease',
+                     WebkitAppearance: 'none',
+                     appearance: 'none'
                    }}
                  />
                </label>
@@ -436,22 +475,23 @@ export function ClientIntakePage() {
              }}>{message}</p>
            ) : null}
 
-           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+           <div style={{ display: 'flex', justifyContent: 'stretch', marginTop: '8px' }}>
              <button
                type="submit"
                disabled={submitting}
                style={{
                  border: 0,
                  borderRadius: '999px',
-                 padding: '16px 32px',
+                 padding: '18px 24px',
+                 minHeight: '58px',
+                 width: '100%',
                  background: 'linear-gradient(135deg, #4f4a53 0%, #69646f 100%)',
                  color: '#fff',
                  fontWeight: 700,
-                 fontSize: '15px',
+                 fontSize: '16px',
                  cursor: 'pointer',
                  boxShadow: '0 12px 32px rgba(36, 31, 38, 0.16)',
-                 transition: 'all 0.2s ease',
-                 minWidth: '180px'
+                 transition: 'all 0.2s ease'
                }}
              >
                {submitting ? 'Sending...' : 'Submit details'}
