@@ -66,6 +66,11 @@ function getInitials(name: string) {
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
 }
 
+function normalizeAvatarUrl(value?: string | null) {
+  const url = String(value ?? '').trim();
+  return /^https?:\/\/.+\/storage\/v1\/object\/public\/avatars\//i.test(url) ? url : '';
+}
+
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -120,9 +125,9 @@ export function AppShell() {
       : '') ||
     deriveDisplayName(session?.user.email);
   const avatarUrl =
-    preferences.avatarUrl ||
+    normalizeAvatarUrl(preferences.avatarUrl) ||
     (typeof session?.user.user_metadata?.avatar_url === 'string'
-      ? session.user.user_metadata.avatar_url
+      ? normalizeAvatarUrl(session.user.user_metadata.avatar_url)
       : '');
   const avatarPosition = preferences.avatarPosition || { x: 50, y: 50, scale: 1 };
   const activeWorkspace =

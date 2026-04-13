@@ -62,6 +62,12 @@ function hasWindow() {
   return typeof window !== 'undefined';
 }
 
+function normalizeAvatarUrl(value?: string | null) {
+  const url = String(value ?? '').trim();
+  if (!url) return '';
+  return /^https?:\/\/.+\/storage\/v1\/object\/public\/avatars\//i.test(url) ? url : '';
+}
+
 function readStoredPreferences(): Partial<AppPreferences> {
   if (!hasWindow()) return {};
 
@@ -113,7 +119,7 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
       typeof metadata.display_name === 'string' ? metadata.display_name.trim() : '';
     const metadataAvatarUrl =
       typeof metadata.avatar_url === 'string'
-        ? metadata.avatar_url.trim()
+        ? normalizeAvatarUrl(metadata.avatar_url)
         : '';
 
     if (!metadataDisplayName && !metadataAvatarUrl) return;
@@ -157,7 +163,7 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
           const next = {
             ...current,
             displayName: profile.display_name?.trim() || current.displayName,
-            avatarUrl: profile.avatar_url?.trim() || current.avatarUrl,
+            avatarUrl: normalizeAvatarUrl(profile.avatar_url) || current.avatarUrl,
             avatarPosition:
               profile.avatar_position &&
               typeof profile.avatar_position.x === 'number' &&

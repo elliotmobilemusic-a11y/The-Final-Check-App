@@ -12,6 +12,15 @@ export interface UserProfile {
 
 const AVATAR_BUCKET = 'avatars';
 
+function isUsableAvatarUrl(value?: string | null) {
+  const url = String(value ?? '').trim();
+  return (
+    url === '' ||
+    url.startsWith('data:image/') ||
+    /^https?:\/\/.+\/storage\/v1\/object\/public\/avatars\//i.test(url)
+  );
+}
+
 function isMissingProfilesTable(error: unknown) {
   if (!error || typeof error !== 'object') return false;
   const maybeError = error as { code?: string; message?: string };
@@ -34,25 +43,38 @@ export async function uploadAvatar(file: File, userId: string): Promise<string> 
     throw new Error('Base64 images are not allowed. Use a File object instead.');
   }
 
-  const extension = file.type.split('/')[1] || 'jpg';
-  const version = Date.now();
-  const path = `${userId}/avatar-${version}.${extension}`;
+  const imageDataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(new Error('Could not read avatar file.'));
+    reader.readAsDataURL(file);
+  });
 
-  const { error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .upload(path, file, {
-      cacheControl: '31536000',
-      upsert: true,
-      contentType: file.type
-    });
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
 
-  if (error) throw error;
+  if (!session?.access_token) {
+    throw new Error('You must be signed in to upload an avatar.');
+  }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from(AVATAR_BUCKET)
-    .getPublicUrl(path);
+  const uploadResponse = await fetch('/api/upload-avatar', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      accessToken: session.access_token,
+      imageDataUrl
+    })
+  });
 
-  return `${publicUrl}?v=${version}`;
+  const payload = await uploadResponse.json().catch(() => ({}));
+  if (!uploadResponse.ok || !payload.publicUrl) {
+    throw new Error(payload.error || 'Could not upload avatar.');
+  }
+
+  return String(payload.publicUrl);
 }
 
 /**
@@ -65,7 +87,7 @@ export async function saveAvatarUrl(userId: string, url: string): Promise<void> 
     throw new Error('Base64 avatar URLs are not permitted. Use storage URL only.');
   }
 
-  if (url.length > 1000) {
+  if (!isUsableAvatarUrl(url) || url.length > 1000) {
     throw new Error('Avatar URL is too long. Invalid value blocked.');
   }
 
@@ -106,7 +128,7 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 export async function updateProfile(userId: string, profile: Partial<Omit<UserProfile, 'user_id' | 'updated_at'>>): Promise<UserProfile> {
   // Extra safety for avatar field
   if (profile.avatar_url) {
-    if (profile.avatar_url.startsWith('data:image/') || profile.avatar_url.length > 1000) {
+    if (!isUsableAvatarUrl(profile.avatar_url) || profile.avatar_url.length > 1000) {
       throw new Error('Invalid avatar value blocked');
     }
   }
