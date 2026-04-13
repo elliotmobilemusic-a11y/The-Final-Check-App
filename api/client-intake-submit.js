@@ -111,11 +111,21 @@ function createSupabaseAdminClient() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase admin credentials are not configured.');
+  // Fallback to anon key for public submissions if service role not configured
+  const fallbackAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl) {
+    throw new Error('Supabase URL is not configured.');
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  // Use service role if available, otherwise use anon key for public operations
+  const apiKey = serviceRoleKey || fallbackAnonKey;
+  
+  if (!apiKey) {
+    throw new Error('Supabase API key is not configured.');
+  }
+
+  return createClient(supabaseUrl, apiKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
