@@ -80,11 +80,8 @@ export function AppShell() {
   const { preferences } = usePreferences();
   const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
-  const [routeTransitionVisible, setRouteTransitionVisible] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
-  const routeTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const previousPathname = useRef(location.pathname);
   const disableAutoHideNav = location.pathname.startsWith('/settings');
 
   // Global scroll handler that lives forever
@@ -171,30 +168,6 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (previousPathname.current === location.pathname) {
-      return;
-    }
-
-    previousPathname.current = location.pathname;
-    setRouteTransitionVisible(true);
-
-    if (routeTransitionTimeout.current) {
-      clearTimeout(routeTransitionTimeout.current);
-    }
-
-    routeTransitionTimeout.current = setTimeout(() => {
-      setRouteTransitionVisible(false);
-      routeTransitionTimeout.current = null;
-    }, preferences.reducedMotion ? 260 : 1250);
-
-    return () => {
-      if (routeTransitionTimeout.current) {
-        clearTimeout(routeTransitionTimeout.current);
-      }
-    };
-  }, [location.pathname, preferences.reducedMotion]);
-
-  useEffect(() => {
     document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
   }, [navExpanded]);
 
@@ -273,7 +246,7 @@ export function AppShell() {
             kicker={overlayContent.kicker}
             reducedMotion={preferences.reducedMotion}
             title={overlayContent.title}
-            visible={routeTransitionVisible || Boolean(activity)}
+            visible={Boolean(activity)}
           />
           <Outlet />
         </main>

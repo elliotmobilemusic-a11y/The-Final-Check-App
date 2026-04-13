@@ -2,7 +2,6 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppShell } from './components/layout/AppShell';
-import { CookingLoader } from './components/layout/CookingLoader';
 import { SupportHub } from './components/support/SupportHub';
 import { ActivityOverlayProvider } from './context/ActivityOverlayContext';
 import { usePreferences } from './context/PreferencesContext';
@@ -79,15 +78,7 @@ function PrivateApp() {
 
 export default function App() {
   return (
-    <Suspense
-      fallback={
-        <CookingLoader
-          detail="Pulling together the next workspace so the app keeps the same polished feel while it loads."
-          kicker="Heating the pass"
-          title="Loading workspace"
-        />
-      }
-    >
+    <Suspense fallback={<div className="page-stack"><div className="panel"><div className="panel-body">Loading workspace...</div></div></div>}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />

@@ -1,6 +1,5 @@
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { CookingLoader } from './layout/CookingLoader';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -10,11 +9,12 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
 
   if (loading) {
     return (
-      <CookingLoader
-        detail="Checking your session and setting up the workspace before we open the app."
-        kicker="Opening station"
-        title="Loading The Final Check"
-      />
+      <div className="screen-center">
+        <div className="loading-card">
+          <div className="spinner" />
+          <p>Loading The Final Check...</p>
+        </div>
+      </div>
     );
   }
 
