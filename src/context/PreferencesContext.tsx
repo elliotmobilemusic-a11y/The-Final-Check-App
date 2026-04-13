@@ -1,4 +1,5 @@
 import { PropsWithChildren, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { getProfile } from '../services/profiles';
 import { useAuth } from './AuthContext';
 
 export type ThemeMode = 'sandstone' | 'coastal' | 'cedar' | 'sunrise' | 'midnight';
@@ -141,6 +142,50 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
       return next;
     });
   }, [session?.user.id, session?.user.user_metadata]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfile() {
+      if (!session?.user.id) return;
+
+      try {
+        const profile = await getProfile(session.user.id);
+        if (!profile || cancelled) return;
+
+        setPreferences((current) => {
+          const next = {
+            ...current,
+            displayName: profile.display_name?.trim() || current.displayName,
+            avatarUrl: profile.avatar_url?.trim() || current.avatarUrl,
+            avatarPosition:
+              profile.avatar_position &&
+              typeof profile.avatar_position.x === 'number' &&
+              typeof profile.avatar_position.y === 'number' &&
+              typeof profile.avatar_position.scale === 'number'
+                ? {
+                    x: profile.avatar_position.x,
+                    y: profile.avatar_position.y,
+                    scale: profile.avatar_position.scale
+                  }
+                : current.avatarPosition,
+            jobTitle: profile.job_title?.trim() || current.jobTitle,
+            organisation: profile.organisation?.trim() || current.organisation
+          };
+
+          return JSON.stringify(next) === JSON.stringify(current) ? current : next;
+        });
+      } catch {
+        // Ignore profile hydration failures and keep the current local preferences.
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id]);
 
   const updatePreferences = useCallback((updates: Partial<AppPreferences>) => {
     setPreferences((current) => ({

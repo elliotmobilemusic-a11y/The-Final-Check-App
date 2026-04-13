@@ -200,6 +200,17 @@ create table public.report_shares (
   updated_at timestamptz not null default now()
 );
 
+create table public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  avatar_url text,
+  avatar_position jsonb not null default '{"x":50,"y":50,"scale":1}'::jsonb,
+  job_title text,
+  organisation text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 
 -- ██╗███╗   ██╗██████╗ ███████╗██╗  ██╗███████╗███████╗
 -- ██║████╗  ██║██╔══██╗██╔════╝╚██╗██╔╝██╔════╝██╔════╝
@@ -249,6 +260,7 @@ create index user_drafts_updated_at_idx on public.user_drafts(user_id, updated_a
 -- Report Shares
 create index report_shares_token_idx on public.report_shares(token);
 create index report_shares_public_idx on public.report_shares(is_public, expires_at);
+create index profiles_updated_at_idx on public.profiles(updated_at desc);
 
 
 -- ████████╗██████╗ ██╗ ██████╗  ██████╗ ███████╗██████╗ ███████╗
@@ -267,6 +279,7 @@ create trigger set_dashboard_task_groups_updated_at before update on public.dash
 create trigger set_dashboard_tasks_updated_at before update on public.dashboard_tasks for each row execute procedure public.set_updated_at();
 create trigger set_user_drafts_updated_at before update on public.user_drafts for each row execute procedure public.set_updated_at();
 create trigger set_report_shares_updated_at before update on public.report_shares for each row execute procedure public.set_updated_at();
+create trigger set_profiles_updated_at before update on public.profiles for each row execute procedure public.set_updated_at();
 
 
 -- ██████╗ ███████╗██████╗ ███╗   ███╗██╗███████╗███████╗██╗ ██████╗ ███╗   ██╗███████╗
@@ -285,6 +298,7 @@ alter table public.dashboard_task_groups enable row level security;
 alter table public.dashboard_tasks enable row level security;
 alter table public.user_drafts enable row level security;
 alter table public.report_shares enable row level security;
+alter table public.profiles enable row level security;
 
 
 -- ✅ Simple clean RLS policies
@@ -345,6 +359,12 @@ create policy "Users can update own report shares" on public.report_shares for u
 create policy "Users can delete own report shares" on public.report_shares for delete using (auth.uid() = user_id);
 create policy "Public can view active report shares" on public.report_shares for select using (is_public = true and (expires_at is null or expires_at > now()));
 
+-- Profiles
+create policy "Users can view own profile" on public.profiles for select using (auth.uid() = user_id);
+create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = user_id);
+create policy "Users can update own profile" on public.profiles for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users can delete own profile" on public.profiles for delete using (auth.uid() = user_id);
+
 
 --  ██████╗ ██████╗  █████╗ ███╗   ██╗████████╗███████╗
 -- ██╔════╝ ██╔══██╗██╔══██╗████╗  ██║╚══██╔══╝██╔════╝
@@ -364,5 +384,58 @@ grant all on table public.dashboard_task_groups to authenticated, service_role;
 grant all on table public.dashboard_tasks to authenticated, service_role;
 grant all on table public.user_drafts to authenticated, service_role;
 grant all on table public.report_shares to authenticated, service_role;
+grant all on table public.profiles to authenticated, service_role;
 
 grant select on table public.report_shares to anon;
+
+
+-- ███████╗████████╗ ██████╗ ██████╗  █████╗  ██████╗ ███████╗
+-- ██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██╔══██╗██╔════╝ ██╔════╝
+-- ███████╗   ██║   ██║   ██║██████╔╝███████║██║  ███╗█████╗
+-- ╚════██║   ██║   ██║   ██║██╔══██╗██╔══██║██║   ██║██╔══╝
+-- ███████║   ██║   ╚██████╔╝██║  ██║██║  ██║╚██████╔╝███████╗
+-- ╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 10485760, array['image/*'])
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+create policy "Public can view avatar files"
+on storage.objects
+for select
+to public
+using (bucket_id = 'avatars');
+
+create policy "Users can upload own avatar files"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1] = (select auth.jwt()->>'sub')
+);
+
+create policy "Users can update own avatar files"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'avatars'
+  and owner_id = (select auth.uid()::text)
+)
+with check (
+  bucket_id = 'avatars'
+  and owner_id = (select auth.uid()::text)
+);
+
+create policy "Users can delete own avatar files"
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'avatars'
+  and owner_id = (select auth.uid()::text)
+);
