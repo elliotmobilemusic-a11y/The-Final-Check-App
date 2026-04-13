@@ -12,6 +12,18 @@ export interface UserProfile {
 
 const AVATAR_BUCKET = 'avatars';
 
+function isMissingProfilesTable(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string };
+  return maybeError.code === 'PGRST205' || /profiles/i.test(maybeError.message ?? '');
+}
+
+function missingProfilesTableError() {
+  return new Error(
+    'The Supabase `profiles` table is missing on this project. Run the latest supabase/schema.sql in Supabase, then refresh the app.'
+  );
+}
+
 /**
  * ✅ Safe avatar upload to Supabase Storage
  * Never stores base64 images anywhere - only public URLs
@@ -64,7 +76,10 @@ export async function saveAvatarUrl(userId: string, url: string): Promise<void> 
       updated_at: new Date().toISOString()
     });
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingProfilesTable(error)) throw missingProfilesTableError();
+    throw error;
+  }
 }
 
 /**
@@ -77,7 +92,10 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingProfilesTable(error)) return null;
+    throw error;
+  }
   return data as UserProfile | null;
 }
 
@@ -102,6 +120,9 @@ export async function updateProfile(userId: string, profile: Partial<Omit<UserPr
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    if (isMissingProfilesTable(error)) throw missingProfilesTableError();
+    throw error;
+  }
   return data as UserProfile;
 }
