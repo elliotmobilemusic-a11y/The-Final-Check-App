@@ -14,6 +14,7 @@ export const supabasePublic = createClient(
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
+      storageKey: 'sb-public-client'
     },
     db: {
       schema: 'public'
