@@ -68,11 +68,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .then(({ data, error }) => {
         if (error) throw error;
 
-        // ✅ Only accept valid sessions with actual access token
-        if (data.session && data.session.access_token?.trim()) {
+        // ✅ Only accept valid sessions with proper JWT access token
+        const hasValidToken = data.session?.access_token?.trim() 
+          && data.session.access_token.length > 100
+          && data.session.access_token.split('.').length === 3;
+
+        if (hasValidToken) {
           setSession(data.session);
         } else {
-          // Reject partial / broken sessions
+          // Reject partial / broken / malformed sessions completely
           setSession(null);
         }
       })
