@@ -76,10 +76,23 @@ function PrivateApp() {
   );
 }
 
+function SmoothPageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="page-transition">
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <Suspense fallback={<div className="page-stack"><div className="panel"><div className="panel-body">Loading workspace...</div></div></div>}>
-      <Routes>
+    <Suspense fallback={
+      <div className="page-suspense-transition">
+        <div className="loading-spinner"></div>
+      </div>
+    }>
+      <SmoothPageTransition>
+        <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />
         <Route path="/intake/client/:token" element={<ClientIntakePage />} />
@@ -99,7 +112,8 @@ export default function App() {
           <Route path="settings/:section" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
-      </Routes>
+        </Routes>
+      </SmoothPageTransition>
     </Suspense>
   );
 }
