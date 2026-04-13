@@ -6630,6 +6630,30 @@ body[data-theme="midnight"] .data-table td {
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c6c1ba transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #c6c1ba;
+  border-radius: 999px;
+}
+
 /* ---------- Menu page layout fix ---------- */
 
 html,
