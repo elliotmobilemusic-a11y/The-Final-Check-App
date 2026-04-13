@@ -15,7 +15,7 @@ const validateSupabaseConfig = () => {
 
   if (!supabaseAnonKey) {
     errors.push('❌ VITE_SUPABASE_ANON_KEY is missing from environment variables');
-  } else if (supabaseAnonKey.length < 50) {
+  } else if (supabaseAnonKey.length < 20 && !supabaseAnonKey.startsWith('sb_')) {
     errors.push('❌ VITE_SUPABASE_ANON_KEY appears to be incomplete or invalid');
   }
 
