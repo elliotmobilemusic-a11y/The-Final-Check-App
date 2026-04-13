@@ -4293,13 +4293,113 @@ body[data-theme="midnight"] .data-table td {
   }
 }
 
-.sub-panel {
-  animation: slideUpFade 0.36s cubic-bezier(0.25, 1, 0.5, 1) both;
+/* Staggered page content animations */
+.panel,
+.feature-card,
+.stat-card,
+.sub-panel,
+.repeat-card,
+.dashboard-record,
+.dashboard-command-card,
+.dashboard-client-item,
+.dashboard-activity-item,
+.dashboard-step,
+.dashboard-check-row,
+.crm-client-row,
+.crm-lookup-card,
+.crm-deal-card,
+.invoice-card,
+.client-stat-card,
+.auth-stat-card,
+.ingredient-card {
+  animation: slideUpFade 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
 }
 
-.sub-panel:nth-child(1) { animation-delay: 0.08s; }
-.sub-panel:nth-child(2) { animation-delay: 0.16s; }
-.sub-panel:nth-child(3) { animation-delay: 0.24s; }
+.panel:nth-child(1) { animation-delay: 0.06s; }
+.panel:nth-child(2) { animation-delay: 0.12s; }
+.panel:nth-child(3) { animation-delay: 0.18s; }
+.panel:nth-child(4) { animation-delay: 0.24s; }
+.panel:nth-child(5) { animation-delay: 0.3s; }
+
+.feature-card:nth-child(1) { animation-delay: 0.08s; }
+.feature-card:nth-child(2) { animation-delay: 0.16s; }
+.feature-card:nth-child(3) { animation-delay: 0.24s; }
+
+.sub-panel:nth-child(1) { animation-delay: 0.1s; }
+.sub-panel:nth-child(2) { animation-delay: 0.18s; }
+.sub-panel:nth-child(3) { animation-delay: 0.26s; }
+.sub-panel:nth-child(4) { animation-delay: 0.34s; }
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.14s; }
+.stat-card:nth-child(3) { animation-delay: 0.18s; }
+.stat-card:nth-child(4) { animation-delay: 0.22s; }
+
+.repeat-card:nth-child(1) { animation-delay: 0.12s; }
+.repeat-card:nth-child(2) { animation-delay: 0.18s; }
+.repeat-card:nth-child(3) { animation-delay: 0.24s; }
+.repeat-card:nth-child(4) { animation-delay: 0.3s; }
+.repeat-card:nth-child(5) { animation-delay: 0.36s; }
+
+.dashboard-record:nth-child(1) { animation-delay: 0.12s; }
+.dashboard-record:nth-child(2) { animation-delay: 0.18s; }
+.dashboard-record:nth-child(3) { animation-delay: 0.24s; }
+.dashboard-record:nth-child(4) { animation-delay: 0.3s; }
+
+.dashboard-command-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-command-card:nth-child(2) { animation-delay: 0.16s; }
+.dashboard-command-card:nth-child(3) { animation-delay: 0.22s; }
+.dashboard-command-card:nth-child(4) { animation-delay: 0.28s; }
+
+.dashboard-client-item:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-client-item:nth-child(2) { animation-delay: 0.16s; }
+.dashboard-client-item:nth-child(3) { animation-delay: 0.22s; }
+.dashboard-client-item:nth-child(4) { animation-delay: 0.28s; }
+
+.dashboard-activity-item:nth-child(1) { animation-delay: 0.12s; }
+.dashboard-activity-item:nth-child(2) { animation-delay: 0.18s; }
+.dashboard-activity-item:nth-child(3) { animation-delay: 0.24s; }
+.dashboard-activity-item:nth-child(4) { animation-delay: 0.3s; }
+
+.dashboard-step:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-step:nth-child(2) { animation-delay: 0.16s; }
+
+.dashboard-check-row:nth-child(1) { animation-delay: 0.12s; }
+.dashboard-check-row:nth-child(2) { animation-delay: 0.18s; }
+.dashboard-check-row:nth-child(3) { animation-delay: 0.24s; }
+.dashboard-check-row:nth-child(4) { animation-delay: 0.3s; }
+
+.client-stat-card:nth-child(1) { animation-delay: 0.12s; }
+.client-stat-card:nth-child(2) { animation-delay: 0.17s; }
+.client-stat-card:nth-child(3) { animation-delay: 0.22s; }
+.client-stat-card:nth-child(4) { animation-delay: 0.27s; }
+
+.crm-client-row:nth-child(1) { animation-delay: 0.1s; }
+.crm-client-row:nth-child(2) { animation-delay: 0.16s; }
+.crm-client-row:nth-child(3) { animation-delay: 0.22s; }
+.crm-client-row:nth-child(4) { animation-delay: 0.28s; }
+
+.crm-lookup-card:nth-child(1) { animation-delay: 0.14s; }
+.crm-lookup-card:nth-child(2) { animation-delay: 0.22s; }
+.crm-lookup-card:nth-child(3) { animation-delay: 0.3s; }
+
+.crm-deal-card:nth-child(1) { animation-delay: 0.12s; }
+.crm-deal-card:nth-child(2) { animation-delay: 0.18s; }
+.crm-deal-card:nth-child(3) { animation-delay: 0.24s; }
+
+.invoice-card:nth-child(1) { animation-delay: 0.12s; }
+.invoice-card:nth-child(2) { animation-delay: 0.18s; }
+.invoice-card:nth-child(3) { animation-delay: 0.24s; }
+
+.auth-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.auth-stat-card:nth-child(2) { animation-delay: 0.14s; }
+.auth-stat-card:nth-child(3) { animation-delay: 0.18s; }
+
+.ingredient-card:nth-child(1) { animation-delay: 0.1s; }
+.ingredient-card:nth-child(2) { animation-delay: 0.16s; }
+.ingredient-card:nth-child(3) { animation-delay: 0.22s; }
+.ingredient-card:nth-child(4) { animation-delay: 0.28s; }
+.ingredient-card:nth-child(5) { animation-delay: 0.34s; }
 
 .settings-theme-card {
   animation: slideUpFade 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
