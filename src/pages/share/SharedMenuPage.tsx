@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SharedReportFrame } from '../../components/share/SharedReportFrame';
-import { buildKitchenAuditReportHtml } from '../audit/KitchenAuditPage';
-import { getKitchenAuditShareByToken } from '../../services/reportShares';
-import type { AuditFormState } from '../../types';
+import { buildMenuReport } from '../menu/MenuBuilderPage';
+import { getMenuShareByToken } from '../../services/reportShares';
+import type { MenuProjectState } from '../../types';
 
-export function SharedKitchenAuditPage() {
+export function SharedMenuPage() {
   const { token = '' } = useParams();
-  const [audit, setAudit] = useState<AuditFormState | null>(null);
-  const [title, setTitle] = useState('Kitchen Profit Audit report');
+  const [project, setProject] = useState<MenuProjectState | null>(null);
+  const [title, setTitle] = useState('Menu Profit Engine report');
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [message, setMessage] = useState('Loading shared report...');
 
@@ -19,7 +19,7 @@ export function SharedKitchenAuditPage() {
       return;
     }
 
-    getKitchenAuditShareByToken(token)
+    getMenuShareByToken(token)
       .then((share) => {
         if (!share) {
           setStatus('missing');
@@ -27,8 +27,8 @@ export function SharedKitchenAuditPage() {
           return;
         }
 
-        setAudit(share.payload);
-        setTitle(share.title || 'Kitchen Profit Audit report');
+        setProject(share.payload);
+        setTitle(share.title || 'Menu Profit Engine report');
         setStatus('ready');
       })
       .catch((error) => {
@@ -39,9 +39,9 @@ export function SharedKitchenAuditPage() {
 
   return (
     <SharedReportFrame
-      bodyHtml={audit ? buildKitchenAuditReportHtml(audit) : ''}
+      bodyHtml={project ? buildMenuReport(project) : ''}
       message={message}
-      ready={status === 'ready' && Boolean(audit)}
+      ready={status === 'ready' && Boolean(project)}
       status={status}
       title={title}
     />

@@ -52,6 +52,19 @@ const SharedKitchenAuditPage = lazy(() =>
     default: module.SharedKitchenAuditPage
   }))
 );
+const SharedFoodSafetyAuditPage = lazy(() =>
+  import('./pages/share/SharedFoodSafetyAuditPage').then((module) => ({
+    default: module.SharedFoodSafetyAuditPage
+  }))
+);
+const SharedMysteryShopAuditPage = lazy(() =>
+  import('./pages/share/SharedMysteryShopAuditPage').then((module) => ({
+    default: module.SharedMysteryShopAuditPage
+  }))
+);
+const SharedMenuPage = lazy(() =>
+  import('./pages/share/SharedMenuPage').then((module) => ({ default: module.SharedMenuPage }))
+);
 const ClientIntakePage = lazy(() =>
   import('./pages/share/ClientIntakePage').then((module) => ({ default: module.ClientIntakePage }))
 );
@@ -76,25 +89,15 @@ function PrivateApp() {
   );
 }
 
-function SmoothPageTransition({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="page-transition">
-      {children}
-    </div>
-  );
-}
-
 export default function App() {
   return (
-    <Suspense fallback={
-      <div className="page-suspense-transition">
-        <div className="loading-spinner"></div>
-      </div>
-    }>
-      <SmoothPageTransition>
+    <Suspense fallback={<div className="page-stack"><div className="panel"><div className="panel-body">Loading workspace...</div></div></div>}>
         <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />
+        <Route path="/share/food-safety/:token" element={<SharedFoodSafetyAuditPage />} />
+        <Route path="/share/mystery-shop/:token" element={<SharedMysteryShopAuditPage />} />
+        <Route path="/share/menu/:token" element={<SharedMenuPage />} />
         <Route path="/intake/client/:token" element={<ClientIntakePage />} />
 
         <Route path="/*" element={<PrivateApp />}>
@@ -113,7 +116,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         </Routes>
-      </SmoothPageTransition>
     </Suspense>
   );
 }

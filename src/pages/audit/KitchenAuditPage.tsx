@@ -1431,30 +1431,58 @@ export function KitchenAuditPage() {
   }
 
   function exportPdf() {
-    openPrintableHtmlDocument(
-      `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
-      reportHtml
+    void runWithActivity(
+      {
+        kicker: 'Preparing export',
+        title: 'Building PDF report',
+        detail: 'Formatting the kitchen audit into a clean client-ready report.'
+      },
+      async () => {
+        openPrintableHtmlDocument(
+          `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
+          reportHtml
+        );
+      },
+      700
     );
   }
 
   function downloadHtmlReport() {
-    downloadText(
-      `${safe(form.businessName || 'kitchen-audit-report')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || 'kitchen-audit-report'}.html`,
-      standaloneReportHtml,
-      'text/html'
+    void runWithActivity(
+      {
+        kicker: 'Packing report',
+        title: 'Downloading HTML report',
+        detail: 'Creating a standalone HTML version you can keep or send on.'
+      },
+      async () => {
+        downloadText(
+          `${safe(form.businessName || 'kitchen-audit-report')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '') || 'kitchen-audit-report'}.html`,
+          standaloneReportHtml,
+          'text/html'
+        );
+        setMessage('Standalone HTML report downloaded.');
+      },
+      700
     );
-    setMessage('Standalone HTML report downloaded.');
   }
 
   async function shareHtmlReport() {
     try {
       setIsSharing(true);
       setShareUrl('');
-      const share = await createKitchenAuditShare(form);
-      const shareUrl = `${window.location.origin}${window.location.pathname}#/share/kitchen-audit/${share.token}`;
+      const share = await runWithActivity(
+        {
+          kicker: 'Opening pass',
+          title: 'Creating share link',
+          detail: 'Publishing a secure public link for this kitchen audit report.'
+        },
+        () => createKitchenAuditShare(form),
+        900
+      );
+      const shareUrl = share.url;
       setShareUrl(shareUrl);
 
       try {
@@ -1502,6 +1530,12 @@ export function KitchenAuditPage() {
             </button>
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
+            </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={downloadHtmlReport}>
+              Download HTML
+            </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
+              {isSharing ? 'Creating link...' : 'Create share link'}
             </button>
           </>
         }

@@ -118,7 +118,7 @@ export function ClientsPage() {
         message:
           'Please complete this short form so we can set up your business correctly before the next conversation.'
       });
-      const shareUrl = `${window.location.origin}${window.location.pathname}#/intake/client/${share.token}`;
+      const shareUrl = `${window.location.origin}/#/intake/client/${share.token}`;
       setIntakeUrl(shareUrl);
 
       try {

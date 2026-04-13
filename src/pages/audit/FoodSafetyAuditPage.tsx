@@ -16,6 +16,7 @@ import {
   saveLocalToolRecord
 } from '../../services/localToolStore';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { createFoodSafetyShare } from '../../services/reportShares';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -222,7 +223,7 @@ function calculateFoodSafety(state: FoodSafetyAuditState) {
   };
 }
 
-function buildFoodSafetyReport(state: FoodSafetyAuditState) {
+export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
   const calc = calculateFoodSafety(state);
   const actions = state.actionItems.filter((item) => safe(item.title));
   const focusAreas = state.focusAreas.filter(
@@ -422,7 +423,9 @@ export function FoodSafetyAuditPage() {
   );
   const [savedRecords, setSavedRecords] = useState<LocalToolRecord<FoodSafetyAuditState>[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [message, setMessage] = useState('Food safety audit ready.');
+  const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const calc = useMemo(() => calculateFoodSafety(form), [form]);
@@ -611,10 +614,48 @@ export function FoodSafetyAuditPage() {
   }
 
   function handleExportPrint() {
-    openPrintableHtmlDocument(
-      `${form.title || 'Food Safety Audit'} printout`,
-      buildFoodSafetyReport(form)
+    void runWithActivity(
+      {
+        kicker: 'Preparing export',
+        title: 'Building food safety PDF',
+        detail: 'Formatting the food safety audit into a printable report.'
+      },
+      async () => {
+        openPrintableHtmlDocument(
+          `${form.title || 'Food Safety Audit'} printout`,
+          buildFoodSafetyReport(form)
+        );
+      },
+      700
     );
+  }
+
+  async function handleShareReport() {
+    try {
+      setIsSharing(true);
+      setShareUrl('');
+      const share = await runWithActivity(
+        {
+          kicker: 'Opening pass',
+          title: 'Creating share link',
+          detail: 'Publishing a public link for this food safety audit report.'
+        },
+        () => createFoodSafetyShare(form),
+        900
+      );
+      setShareUrl(share.url);
+
+      try {
+        await navigator.clipboard.writeText(share.url);
+        setMessage('Food safety share link created and copied to clipboard.');
+      } catch {
+        setMessage(`Food safety share link created: ${share.url}`);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the share link.');
+    } finally {
+      setIsSharing(false);
+    }
   }
 
   function handleClientSelection(nextClientId: string | null) {
@@ -672,9 +713,43 @@ export function FoodSafetyAuditPage() {
             <button className="button button-secondary" onClick={handleExportPrint}>
               Export PDF
             </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+              {isSharing ? 'Creating link...' : 'Create share link'}
+            </button>
           </>
         }
       />
+
+      <section className="panel share-link-panel">
+        <div className="panel-body stack gap-12">
+          <div className="record-header-message">
+            <span className="soft-pill">{message}</span>
+            {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+          </div>
+          {shareUrl ? (
+            <div className="share-link-row">
+              <input className="input" readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} />
+              <button
+                className="button button-secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setMessage('Food safety share link copied to clipboard.');
+                  } catch {
+                    setMessage('Copy failed. You can still copy the link manually.');
+                  }
+                }}
+                type="button"
+              >
+                Copy link
+              </button>
+              <a className="button button-primary" href={shareUrl} rel="noreferrer" target="_blank">
+                Open link
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
 
       <section className="stats-grid compact">
         <StatCard label="Pass" value={String(calc.passCount)} hint="Checks marked as compliant" />

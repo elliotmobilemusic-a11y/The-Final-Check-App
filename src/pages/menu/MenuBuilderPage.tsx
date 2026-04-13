@@ -25,6 +25,7 @@ import type {
 } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { createMenuShare } from '../../services/reportShares';
 import {
   buildMenuProfitSummary,
   dishActualGp,
@@ -146,7 +147,7 @@ function gpClass(dish: MenuDish) {
   return 'status-pill status-danger';
 }
 
-function buildMenuReport(project: MenuProjectState) {
+export function buildMenuReport(project: MenuProjectState) {
   const summary = buildMenuProfitSummary(project);
   const allDishes = summary.dishes;
   const pricingMoveCount = allDishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length;
@@ -438,6 +439,8 @@ export function MenuBuilderPage() {
   const [message, setMessage] = useState('Menu draft ready.');
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const selectedSection = useMemo(
@@ -880,10 +883,48 @@ export function MenuBuilderPage() {
   }
 
   function exportPdf() {
-    openPrintableHtmlDocument(
-      `${safe(project.menuName || 'Menu Builder Report')} report`,
-      reportHtml
+    void runWithActivity(
+      {
+        kicker: 'Preparing export',
+        title: 'Building menu PDF',
+        detail: 'Formatting the menu profit engine into a clean client-ready report.'
+      },
+      async () => {
+        openPrintableHtmlDocument(
+          `${safe(project.menuName || 'Menu Builder Report')} report`,
+          reportHtml
+        );
+      },
+      700
     );
+  }
+
+  async function handleShareReport() {
+    try {
+      setIsSharing(true);
+      setShareUrl('');
+      const share = await runWithActivity(
+        {
+          kicker: 'Opening pass',
+          title: 'Creating share link',
+          detail: 'Publishing a public link for this menu profit engine report.'
+        },
+        () => createMenuShare(project),
+        900
+      );
+      setShareUrl(share.url);
+
+      try {
+        await navigator.clipboard.writeText(share.url);
+        setMessage('Menu share link created and copied to clipboard.');
+      } catch {
+        setMessage(`Menu share link created: ${share.url}`);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the share link.');
+    } finally {
+      setIsSharing(false);
+    }
   }
 
   function loadFromJson(event: ChangeEvent<HTMLInputElement>) {
@@ -954,6 +995,9 @@ export function MenuBuilderPage() {
             <button className="button button-secondary" onClick={exportPdf}>
               Export PDF
             </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+              {isSharing ? 'Creating link...' : 'Create share link'}
+            </button>
             <label className="button button-secondary inline-file-button">
               Load JSON
               <input accept="application/json" hidden type="file" onChange={loadFromJson} />
@@ -961,6 +1005,37 @@ export function MenuBuilderPage() {
           </>
         }
       />
+
+      <section className="panel share-link-panel">
+        <div className="panel-body stack gap-12">
+          <div className="record-header-message">
+            <span className="soft-pill">{message}</span>
+            {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+          </div>
+          {shareUrl ? (
+            <div className="share-link-row">
+              <input className="input" readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} />
+              <button
+                className="button button-secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setMessage('Menu share link copied to clipboard.');
+                  } catch {
+                    setMessage('Copy failed. You can still copy the link manually.');
+                  }
+                }}
+                type="button"
+              >
+                Copy link
+              </button>
+              <a className="button button-primary" href={shareUrl} rel="noreferrer" target="_blank">
+                Open link
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
 
       <section className="stats-grid">
         <StatCard

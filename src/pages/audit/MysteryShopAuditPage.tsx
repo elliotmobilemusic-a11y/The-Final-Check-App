@@ -16,6 +16,7 @@ import {
   saveLocalToolRecord
 } from '../../services/localToolStore';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { createMysteryShopShare } from '../../services/reportShares';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -165,7 +166,7 @@ function calculateMysteryShop(state: MysteryShopAuditState) {
   };
 }
 
-function buildMysteryShopReport(state: MysteryShopAuditState) {
+export function buildMysteryShopReport(state: MysteryShopAuditState) {
   const calc = calculateMysteryShop(state);
   const actions = state.actionItems.filter((item) => safe(item.title));
   const focusAreas = state.focusAreas.filter(
@@ -332,7 +333,9 @@ export function MysteryShopAuditPage() {
       : normalizeMysteryShopAudit(readDraft<MysteryShopAuditState>(MYSTERY_SHOP_DRAFT_KEY))
   );
   const [savedRecords, setSavedRecords] = useState<LocalToolRecord<MysteryShopAuditState>[]>([]);
+  const [isSharing, setIsSharing] = useState(false);
   const [message, setMessage] = useState('Mystery shop audit ready.');
+  const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const calc = useMemo(() => calculateMysteryShop(form), [form]);
@@ -539,10 +542,48 @@ export function MysteryShopAuditPage() {
   }
 
   function handleExportPrint() {
-    openPrintableHtmlDocument(
-      `${form.title || 'Mystery Shop Audit'} printout`,
-      buildMysteryShopReport(form)
+    void runWithActivity(
+      {
+        kicker: 'Preparing export',
+        title: 'Building mystery shop PDF',
+        detail: 'Formatting the guest journey review into a printable report.'
+      },
+      async () => {
+        openPrintableHtmlDocument(
+          `${form.title || 'Mystery Shop Audit'} printout`,
+          buildMysteryShopReport(form)
+        );
+      },
+      700
     );
+  }
+
+  async function handleShareReport() {
+    try {
+      setIsSharing(true);
+      setShareUrl('');
+      const share = await runWithActivity(
+        {
+          kicker: 'Opening pass',
+          title: 'Creating share link',
+          detail: 'Publishing a public link for this mystery shop audit report.'
+        },
+        () => createMysteryShopShare(form),
+        900
+      );
+      setShareUrl(share.url);
+
+      try {
+        await navigator.clipboard.writeText(share.url);
+        setMessage('Mystery shop share link created and copied to clipboard.');
+      } catch {
+        setMessage(`Mystery shop share link created: ${share.url}`);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the share link.');
+    } finally {
+      setIsSharing(false);
+    }
   }
 
   return (
@@ -559,9 +600,43 @@ export function MysteryShopAuditPage() {
             <button className="button button-secondary" onClick={handleExportPrint}>
               Export PDF
             </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+              {isSharing ? 'Creating link...' : 'Create share link'}
+            </button>
           </>
         }
       />
+
+      <section className="panel share-link-panel">
+        <div className="panel-body stack gap-12">
+          <div className="record-header-message">
+            <span className="soft-pill">{message}</span>
+            {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+          </div>
+          {shareUrl ? (
+            <div className="share-link-row">
+              <input className="input" readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} />
+              <button
+                className="button button-secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setMessage('Mystery shop share link copied to clipboard.');
+                  } catch {
+                    setMessage('Copy failed. You can still copy the link manually.');
+                  }
+                }}
+                type="button"
+              >
+                Copy link
+              </button>
+              <a className="button button-primary" href={shareUrl} rel="noreferrer" target="_blank">
+                Open link
+              </a>
+            </div>
+          ) : null}
+        </div>
+      </section>
 
       <section className="stats-grid compact">
         <StatCard label="Overall" value={`${calc.overallScore}/10`} hint="Average across all guest experience categories" />

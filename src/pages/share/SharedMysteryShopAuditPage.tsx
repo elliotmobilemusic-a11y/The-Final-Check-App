@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SharedReportFrame } from '../../components/share/SharedReportFrame';
-import { buildKitchenAuditReportHtml } from '../audit/KitchenAuditPage';
-import { getKitchenAuditShareByToken } from '../../services/reportShares';
-import type { AuditFormState } from '../../types';
+import { buildMysteryShopReport } from '../audit/MysteryShopAuditPage';
+import { getMysteryShopShareByToken } from '../../services/reportShares';
+import type { MysteryShopAuditState } from '../../types';
 
-export function SharedKitchenAuditPage() {
+export function SharedMysteryShopAuditPage() {
   const { token = '' } = useParams();
-  const [audit, setAudit] = useState<AuditFormState | null>(null);
-  const [title, setTitle] = useState('Kitchen Profit Audit report');
+  const [audit, setAudit] = useState<MysteryShopAuditState | null>(null);
+  const [title, setTitle] = useState('Mystery Shop Audit report');
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
   const [message, setMessage] = useState('Loading shared report...');
 
@@ -19,7 +19,7 @@ export function SharedKitchenAuditPage() {
       return;
     }
 
-    getKitchenAuditShareByToken(token)
+    getMysteryShopShareByToken(token)
       .then((share) => {
         if (!share) {
           setStatus('missing');
@@ -28,7 +28,7 @@ export function SharedKitchenAuditPage() {
         }
 
         setAudit(share.payload);
-        setTitle(share.title || 'Kitchen Profit Audit report');
+        setTitle(share.title || 'Mystery Shop Audit report');
         setStatus('ready');
       })
       .catch((error) => {
@@ -39,7 +39,7 @@ export function SharedKitchenAuditPage() {
 
   return (
     <SharedReportFrame
-      bodyHtml={audit ? buildKitchenAuditReportHtml(audit) : ''}
+      bodyHtml={audit ? buildMysteryShopReport(audit) : ''}
       message={message}
       ready={status === 'ready' && Boolean(audit)}
       status={status}
