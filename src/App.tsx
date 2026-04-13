@@ -3,6 +3,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppShell } from './components/layout/AppShell';
 import { SupportHub } from './components/support/SupportHub';
 import { usePreferences } from './context/PreferencesContext';
+import { AuthProvider } from './context/AuthContext';
+import { PreferencesProvider } from './context/PreferencesContext';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FoodSafetyAuditPage } from './pages/audit/FoodSafetyAuditPage';
 import { KitchenAuditPage } from './pages/audit/KitchenAuditPage';
@@ -22,37 +24,43 @@ function HomeRedirect() {
   return <Navigate to={preferences.defaultLandingPage} replace />;
 }
 
+function PrivateApp() {
+  return (
+    <AuthProvider>
+      <PreferencesProvider>
+        <ProtectedRoute>
+          <AppShell />
+        </ProtectedRoute>
+        <SupportHub />
+      </PreferencesProvider>
+    </AuthProvider>
+  );
+}
+
 export default function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />
-        <Route path="/intake/client/:token" element={<ClientIntakePage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppShell />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<HomeRedirect />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="clients" element={<ClientsPage />} />
-          <Route path="clients/new" element={<NewClientPage />} />
-          <Route path="clients/:clientId" element={<ClientProfilePage />} />
-          <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
-          <Route path="audit" element={<KitchenAuditPage />} />
-          <Route path="food-safety" element={<FoodSafetyAuditPage />} />
-          <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
-          <Route path="menu" element={<MenuBuilderPage />} />
-          <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
-          <Route path="settings/:section" element={<SettingsPage />} />
-        </Route>
+    <Routes>
+      {/* ✅ PUBLIC ROUTES - NO PROVIDERS, NO AUTH BOOT */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/share/kitchen-audit/:token" element={<SharedKitchenAuditPage />} />
+      <Route path="/intake/client/:token" element={<ClientIntakePage />} />
+
+      {/* 🔒 PRIVATE ROUTES - PROVIDERS ONLY LOAD HERE */}
+      <Route path="/*" element={<PrivateApp />}>
+        <Route index element={<HomeRedirect />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/new" element={<NewClientPage />} />
+        <Route path="clients/:clientId" element={<ClientProfilePage />} />
+        <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
+        <Route path="audit" element={<KitchenAuditPage />} />
+        <Route path="food-safety" element={<FoodSafetyAuditPage />} />
+        <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
+        <Route path="menu" element={<MenuBuilderPage />} />
+        <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
+        <Route path="settings/:section" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      <SupportHub />
-    </>
+      </Route>
+    </Routes>
   );
 }

@@ -49,11 +49,7 @@ if ('serviceWorker' in navigator && window.location.protocol.startsWith('http'))
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HashRouter>
-      <AuthProvider>
-        <PreferencesProvider>
-          <App />
-        </PreferencesProvider>
-      </AuthProvider>
+      <App />
     </HashRouter>
   </React.StrictMode>
 );
