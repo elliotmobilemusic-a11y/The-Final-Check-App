@@ -5,7 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { PreferencesProvider } from './context/PreferencesContext';
 import './styles.css';
-import './report-new.css';
+import './report-swiss.css';
 
 // Suppress known browser extension errors that leak into unhandled rejections
 window.addEventListener('unhandledrejection', (event) => {
