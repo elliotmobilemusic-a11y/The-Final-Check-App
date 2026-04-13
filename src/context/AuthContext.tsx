@@ -26,6 +26,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const authClient = supabase;
     let attemptedMetadataRepair = false;
 
+    const hasUsableAccessToken = (accessToken?: string | null) =>
+      Boolean(
+        accessToken?.trim() &&
+          accessToken.length > 100 &&
+          accessToken.split('.').length === 3
+      );
+
     const handleBrokenAuthState = () => {
       resetSupabaseAuthState(
         'Your previous browser session could not be restored cleanly. Please sign in again.'
@@ -50,6 +57,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
     };
 
+    const resetAfterRepair = async (accessToken?: string | null) => {
+      await attemptProfileRepair(accessToken);
+      handleBrokenAuthState();
+    };
+
     const shouldResetAuth = (error: unknown) => {
       const message = error instanceof Error ? error.message.toLowerCase() : '';
       return (
@@ -63,27 +75,45 @@ export function AuthProvider({ children }: PropsWithChildren) {
       );
     };
 
+    const validateSession = async (candidate: Session | null) => {
+      if (!candidate || !hasUsableAccessToken(candidate.access_token)) {
+        if (candidate?.access_token) {
+          await resetAfterRepair(candidate.access_token);
+        }
+        return null;
+      }
+
+      const { data, error } = await authClient.auth.getUser(candidate.access_token);
+      if (error) {
+        throw error;
+      }
+
+      if (!data.user) {
+        await resetAfterRepair(candidate.access_token);
+        return null;
+      }
+
+      return {
+        ...candidate,
+        user: data.user
+      };
+    };
+
     authClient.auth
       .getSession()
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (error) throw error;
 
-        // ✅ Only accept valid sessions with proper JWT access token
-        const hasValidToken = data.session?.access_token?.trim() 
-          && data.session.access_token.length > 100
-          && data.session.access_token.split('.').length === 3;
-
-        if (hasValidToken) {
-          setSession(data.session);
-        } else {
-          // Reject partial / broken / malformed sessions completely
-          setSession(null);
-        }
+        const nextSession = await validateSession(data.session);
+        setSession(nextSession);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         // Only reset auth state for clear unrecoverable session errors
         if (shouldResetAuth(error)) {
-          handleBrokenAuthState();
+          const fallbackToken = authClient.auth.getSession
+            ? (await authClient.auth.getSession()).data.session?.access_token
+            : null;
+          await resetAfterRepair(fallbackToken);
         }
 
         setSession(null);
@@ -92,15 +122,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const {
       data: { subscription }
-    } = authClient.auth.onAuthStateChange((_event, nextSession) => {
-      // ✅ Only accept sessions that have valid non-empty access token
-      if (nextSession?.access_token?.trim()) {
-        setSession(nextSession);
-      } else {
+    } = authClient.auth.onAuthStateChange(async (_event, nextSession) => {
+      try {
+        const validatedSession = await validateSession(nextSession);
+        setSession(validatedSession);
+      } catch (error) {
+        if (shouldResetAuth(error)) {
+          await resetAfterRepair(nextSession?.access_token);
+        }
         setSession(null);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     return () => {
