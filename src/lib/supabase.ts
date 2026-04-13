@@ -58,11 +58,14 @@ if (!configValid) {
 
 
 
+import { supabaseAuthStorage } from './authStorage';
+
 export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: false,
+    storage: supabaseAuthStorage
   },
   db: {
     schema: 'public'
