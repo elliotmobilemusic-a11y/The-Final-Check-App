@@ -245,50 +245,9 @@ export function NewClientPage() {
             </Link>
           </>
         }
-        side={
-          <div className="page-intro-summary">
-            <span className="soft-pill">Setup workflow</span>
-            <strong>Draft readiness</strong>
-            <p>{message}</p>
-            <div className="page-intro-summary-list">
-              <div>
-                <span>Checklist</span>
-                <strong>{setupCompletionCount}/5 complete</strong>
-              </div>
-              <div>
-                <span>Imported data</span>
-                <strong>{hasImportedBusinessData ? 'Ready' : 'Pending'}</strong>
-              </div>
-              <div>
-                <span>Expected sites</span>
-                <strong>{Math.max(importedSites, form.data.siteCountEstimate)}</strong>
-              </div>
-            </div>
-          </div>
-        }
       >
-        <div className="page-inline-note">Lookup matches: {lookupResults.length}</div>
-        <div className="page-inline-note">Lead source: {form.data.leadSource || 'Not set'}</div>
-        <div className="page-inline-note">Account scope: {form.data.accountScope}</div>
+        <div className="page-inline-note">{message}</div>
       </PageIntro>
-
-      <section className="crm-priority-grid client-setup-progress-grid">
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Setup completion</span>
-          <strong>{setupCompletionCount}/5</strong>
-          <p>Core account, contact, ownership, CRM summary, and legal or web detail.</p>
-        </article>
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Business finder</span>
-          <strong>{hasImportedBusinessData ? 'Used' : 'Waiting'}</strong>
-          <p>Importing a verified match gives the CRM a cleaner starting point.</p>
-        </article>
-        <article className="crm-priority-card">
-          <span className="crm-priority-label">Draft sites</span>
-          <strong>{importedSites}</strong>
-          <p>Site records already attached to the draft before the client is created.</p>
-        </article>
-      </section>
 
       <form className="panel" id="new-client-form" onSubmit={handleSubmit}>
         <div className="panel-header">
