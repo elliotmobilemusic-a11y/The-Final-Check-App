@@ -53,8 +53,8 @@ export function LoginPage() {
       // Success animation state
       setLoginSuccess(true);
       
-      // Wait for auth state to propagate then force hard navigation
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      // Wait for branded animation sequence then redirect
+      await new Promise(resolve => setTimeout(resolve, 2600));
 
       // Hard reload bypasses all react router state issues
       window.location.href = redirectTo;
@@ -68,6 +68,14 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
+      {loginSuccess && (
+        <div className="login-brand-animation">
+          <div className="login-animation-logo">
+            <strong>The Final Check</strong>
+          </div>
+          <div className="login-animation-knife"></div>
+        </div>
+      )}
       <div className="auth-panel">
         <div className="auth-copy">
           <div className="auth-brand-textlock">

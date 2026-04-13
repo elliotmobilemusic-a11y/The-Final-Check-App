@@ -4157,6 +4157,85 @@ body[data-theme="midnight"] .data-table td {
   }
 }
 
+/* Branded Login Animation */
+.login-brand-animation {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(198, 161, 97, 0.2), transparent 42%),
+    linear-gradient(180deg, #d9d2cb 0%, #e7e2dc 38%, #f4f0eb 100%);
+  overflow: hidden;
+}
+
+.login-animation-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: loginLogoFlow 2400ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.login-animation-logo strong {
+  display: block;
+  font-size: clamp(42px, 7vw, 64px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #35333a;
+}
+
+.login-animation-knife {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 40px);
+  transform: translateX(-50%) rotate(-14deg);
+  width: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #c6a161, #9d7a3d);
+  border-radius: 999px;
+  animation: loginKnifeCut 1800ms cubic-bezier(0.34, 1.56, 0.64, 1) 400ms forwards;
+}
+
+@keyframes loginLogoFlow {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  65% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50vw + 120px), calc(-50vh + 70px)) scale(0.62);
+  }
+}
+
+@keyframes loginKnifeCut {
+  0% {
+    width: 0;
+    transform: translateX(-50%) rotate(-14deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    width: clamp(220px, 44vw, 380px);
+    transform: translateX(-50%) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) rotate(8deg);
+    width: clamp(220px, 44vw, 380px);
+  }
+}
+
 @keyframes slideUpFade {
   from {
     opacity: 0;
