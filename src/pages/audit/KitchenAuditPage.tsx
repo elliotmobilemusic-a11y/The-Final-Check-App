@@ -691,27 +691,32 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
   const pageBodies = [
     `
-      <div class="report-cover-hero">
-        <div class="report-label">The Final Check</div>
-        <h1 class="report-cover-title"><span>Kitchen Profit</span><span>Audit</span></h1>
-        <div class="report-cover-meta">
-          ${hasMeaningfulText(state.businessName) ? `<span>${safe(state.businessName)}</span>` : ''}
-          ${hasMeaningfulText(state.visitDate) ? `<span>${formatShortDate(state.visitDate)}</span>` : ''}
-          ${hasMeaningfulText(state.consultantName) ? `<span>${safe(state.consultantName)}</span>` : ''}
-        </div>
-        <div class="report-kpi-pair">
-          <div class="report-kpi-primary">
-            <span>Weekly opportunity</span>
-            <strong>${fmtCurrency(calc.totalWeeklyOpportunity)}</strong>
-          </div>
-          <div class="report-kpi-secondary">
-            <span>Annual opportunity</span>
-            <strong>${fmtCurrency(calc.totalAnnualOpportunity)}</strong>
-          </div>
-        </div>
-        ${hasMeaningfulText(narrative.executiveSummary) ? `<p class="report-executive-summary">${safe(narrative.executiveSummary)}</p>` : ''}
-        ${supportMetricCards ? `<div class="report-support-grid">${supportMetricCards}</div>` : ''}
+      <div class="report-header-brand">
+        <span>Jason Wardill</span><br>
+        <strong>The Final Check</strong><br>
+        <span>Profit and performance consultancy</span>
       </div>
+
+      <div style="margin-top: 24pt; margin-bottom: 20pt;">
+        <div style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em;">Kitchen Profit Audit</div>
+      </div>
+
+      <div class="report-metrics-grid">
+        <div class="report-metric-cell">
+          <div class="report-label">Weekly opportunity</div>
+          <div class="report-value-large">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
+        </div>
+        <div class="report-metric-cell">
+          <div class="report-label">Annual opportunity</div>
+          <div class="report-value-large">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
+        </div>
+        <div class="report-metric-cell">
+          <div class="report-label">Control compliance</div>
+          <div class="report-value-large">${Math.round(calc.controlScore)}%</div>
+        </div>
+      </div>
+
+      ${hasMeaningfulText(narrative.executiveSummary) ? `<p style="margin-top: 20pt; line-height: 1.6; font-size: 10pt;">${safe(narrative.executiveSummary)}</p>` : ''}
     `,
     [
       renderSection(
