@@ -4737,55 +4737,68 @@ body[data-theme="midnight"] .data-table td {
   }
 }
 
-@media (max-width: 760px) {
+/* ======= COMPLETE MOBILE OVERHAUL ======= */
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+  
+  body {
+    overflow-x: hidden;
+    min-width: 100vw;
+  }
+
   .app-shell {
-    padding: 14px 14px 24px;
+    padding: 12px 12px 32px;
+    overflow-x: hidden;
   }
 
   .app-shell-frame {
-    gap: 16px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   .shell-topbar {
-    padding: 16px;
-    border-radius: 22px;
+    position: static;
+    width: 100%;
+    transform: none;
+    left: 0;
+    margin: 0 0 12px;
+    padding: 14px;
+    border-radius: 24px;
   }
 
-  .brand-link {
-    align-items: flex-start;
-  }
-
-  .brand-copy strong {
-    font-size: 16px;
+  .shell-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .shell-toolbar-actions {
-    align-items: stretch;
-  }
-
-  .shell-toolbar-main {
+    justify-content: center;
     width: 100%;
-  }
-
-  .shell-context-line {
-    justify-content: flex-start;
-    padding: 0;
-  }
-
-  .shell-primary-nav,
-  .shell-profile-link,
-  .shell-signout {
-    width: 100%;
-    max-width: none;
   }
 
   .shell-primary-nav {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    width: 100%;
   }
 
   .shell-primary-link {
     width: 100%;
+    min-height: 46px;
+    font-size: 11px;
+  }
+
+  .page-stack {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    gap: 16px;
   }
 
   .page-intro,
@@ -4793,118 +4806,210 @@ body[data-theme="midnight"] .data-table td {
   .page-heading,
   .hero-panel,
   .feature-card,
-  .panel-header,
-  .panel-body,
+  .panel,
   .sub-panel,
-  .repeat-card,
-  .auth-copy,
-  .auth-card,
-  .loading-card {
-    padding: 20px;
+  .repeat-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px;
+    margin: 0;
+    overflow-x: hidden;
   }
 
-  .stats-grid,
-  .stats-grid.compact,
-  .card-grid.two-columns,
-  .mini-grid,
-  .form-grid,
-  .tool-temp-row,
-  .tool-score-grid,
-  .dish-editor-stat-grid,
-  .unit-input-row,
-  .form-grid.two-columns,
-  .report-meta,
-  .report-columns,
-  .ingredient-card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .feature-top,
-  .panel-header,
-  .sub-panel-header,
-  .repeat-header,
-  .saved-item,
-  .section-button,
-  .record-header-main,
-  .tool-check-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .tool-check-row,
-  .tool-check-controls {
-    grid-template-columns: 1fr;
-  }
-
-  .page-intro-actions,
-  .header-actions,
-  .hero-actions,
-  .saved-actions {
+  .workspace-grid,
+  .page-intro,
+  .record-header,
+  .auth-panel,
+  .dashboard-grid,
+  .dashboard-hero-grid,
+  .audit-hero-grid,
+  .menu-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
     width: 100%;
   }
 
-  .tool-check-row,
-  .tool-temp-row,
-  .tool-score-card {
-    padding: 14px;
+  .workspace-main,
+  .workspace-side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    position: static !important;
   }
 
-  .support-launcher {
-    right: 14px;
-    left: 14px;
-    bottom: 14px;
+  .stats-grid,
+  .card-grid.two-columns,
+  .form-grid,
+  .mini-grid,
+  .dashboard-modules-grid,
+  .audit-score-grid,
+  .audit-readiness-grid,
+  .menu-performance-grid,
+  .crm-priority-grid,
+  .crm-inline-stats,
+  .crm-client-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+  }
+
+  .client-banner-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    min-height: 96px;
+    padding: 14px 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .button {
+    min-height: 52px;
+    width: 100%;
+  }
+
+  .input {
+    min-height: 54px;
+    padding: 14px 16px;
+  }
+
+  .shell-signout,
+  .shell-profile-link {
+    width: 100%;
+  }
+
+  .user-chip {
+    justify-content: center;
+  }
+
+  .table-shell {
+    margin: 0 -4px;
+    border-radius: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table {
+    min-width: 680px;
+  }
+
+  .client-section-nav {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .client-section-link {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .crm-client-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .crm-client-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .support-chat-backdrop {
-    padding: 14px;
+  .dashboard-step,
+  .dashboard-check-row,
+  .dashboard-record,
+  .dashboard-command-card,
+  .dashboard-activity-item,
+  .dashboard-client-item,
+  .dashboard-queue-item {
+    padding: 16px;
+  }
+
+  .support-launcher {
+    right: 12px;
+    bottom: 12px;
+    width: auto;
   }
 
   .drawer-panel {
     width: 100%;
   }
 
-  .ingredient-card-header {
-    flex-direction: column;
-    align-items: stretch;
+  .dish-editor-layout,
+  .dish-editor-stat-grid {
+    grid-template-columns: 1fr;
   }
 
-  .support-chat-shell {
-    width: min(100%, calc(100vw - 28px));
-    max-height: calc(100vh - 96px);
+  .auth-panel {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .support-chat-card {
-    padding: 16px;
-    border-radius: 22px;
+  .auth-copy,
+  .auth-card {
+    padding: 22px;
   }
 
-  .support-drawer-shell {
-    padding: 18px;
+  .auth-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .support-drawer-header,
-  .support-chat-header,
-  .support-guide-heading,
-  .settings-profile-top,
-  .settings-save-bar,
-  .settings-toggle-card,
-  .settings-remember-card,
-  .settings-note-card {
-    flex-direction: column;
-    align-items: stretch;
+  .page-intro-copy h2,
+  .record-header-copy h2 {
+    font-size: 26px;
   }
 
-  .support-drawer-actions,
-  .support-chat-actions {
-    width: 100%;
+  .client-banner-title {
+    font-size: 28px;
   }
 
-  .button {
-    width: 100%;
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 
+  .button:active,
+  .shell-primary-link:active {
+    transform: scale(0.97);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+
+  .app-shell {
+    padding: 10px 10px 36px;
+  }
+
+  .stats-grid,
+  .crm-priority-grid,
+  .crm-inline-stats,
+  .crm-client-metrics,
+  .client-banner-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .shell-primary-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .client-section-nav {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---------- Dashboard upgrade ---------- */
