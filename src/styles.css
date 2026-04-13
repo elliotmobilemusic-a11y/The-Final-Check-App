@@ -2982,6 +2982,24 @@ form.login-success {
   padding: 20px;
 }
 
+.panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 20px 20px;
+  border-top: 1px solid var(--surface-shadow-line);
+}
+
+.button-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .sub-panel,
 .repeat-card {
   display: grid;
@@ -6419,6 +6437,11 @@ body {
   grid-column: 1 / -1 !important;
   max-width: 100% !important;
   width: 100% !important;
+}
+
+.settings-page .panel-footer .muted-copy {
+  margin: 0;
+  flex: 1 1 240px;
 }
 
 .workspace-grid {

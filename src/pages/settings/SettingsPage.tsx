@@ -252,6 +252,7 @@ export function SettingsPage() {
       });
 
       setRememberPreference(rememberMe);
+      setAvatarUrl(finalAvatarUrl);
       setAvatarPreview('');
       setNewPassword('');
       setConfirmPassword('');

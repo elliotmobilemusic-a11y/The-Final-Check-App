@@ -35,7 +35,8 @@ export async function uploadAvatar(file: File, userId: string): Promise<string> 
   }
 
   const extension = file.type.split('/')[1] || 'jpg';
-  const path = `${userId}/avatar.${extension}`;
+  const version = Date.now();
+  const path = `${userId}/avatar-${version}.${extension}`;
 
   const { error } = await supabase.storage
     .from(AVATAR_BUCKET)
@@ -51,7 +52,7 @@ export async function uploadAvatar(file: File, userId: string): Promise<string> 
     .from(AVATAR_BUCKET)
     .getPublicUrl(path);
 
-  return publicUrl;
+  return `${publicUrl}?v=${version}`;
 }
 
 /**

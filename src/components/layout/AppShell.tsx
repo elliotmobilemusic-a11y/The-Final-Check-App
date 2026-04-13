@@ -74,10 +74,11 @@ export function AppShell() {
   const [navExpanded, setNavExpanded] = useState(true);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
+  const disableAutoHideNav = location.pathname.startsWith('/settings');
 
   // Global scroll handler that lives forever
   useEffect(() => {
-    if (!preferences.autoShowNav || preferences.reducedMotion) {
+    if (disableAutoHideNav || !preferences.autoShowNav || preferences.reducedMotion) {
       setNavExpanded(true);
       return;
     }
@@ -111,7 +112,7 @@ export function AppShell() {
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(hideTimeout);
     };
-  }, [preferences.autoShowNav, preferences.reducedMotion]);
+  }, [disableAutoHideNav, preferences.autoShowNav, preferences.reducedMotion]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -162,7 +163,7 @@ export function AppShell() {
       <div className="app-shell-frame">
         <header 
           ref={navRef} 
-          className={`shell-topbar ${!navExpanded && preferences.autoShowNav && !preferences.reducedMotion ? 'nav-collapsed' : ''}`}
+          className={`shell-topbar ${!disableAutoHideNav && !navExpanded && preferences.autoShowNav && !preferences.reducedMotion ? 'nav-collapsed' : ''}`}
         >
            <div className="shell-toolbar">
              <NavLink className="brand-link" to="/dashboard">
@@ -218,7 +219,15 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="app-content" style={{ paddingTop: 'var(--nav-offset)', transition: 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+        <main
+          className="app-content"
+          style={{
+            paddingTop: 'var(--nav-offset)',
+            transition: disableAutoHideNav
+              ? 'none'
+              : 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          }}
+        >
           <Outlet />
         </main>
       </div>
