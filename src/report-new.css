@@ -5,7 +5,7 @@
 
 @page {
   size: A4 portrait;
-  margin: 20mm 22mm 20mm 22mm;
+  margin: 14mm 18mm 14mm 18mm;
   marks: none;
 }
 
@@ -126,9 +126,10 @@
    -------------------------------------------------------------------------- */
 
 .report-page {
-  page-break-after: always;
-  min-height: 257mm;
+  page-break-after: auto;
+  min-height: auto;
   position: relative;
+  margin-bottom: 28pt;
 }
 
 .report-page:last-child {
