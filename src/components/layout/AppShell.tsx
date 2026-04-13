@@ -77,8 +77,11 @@ export function AppShell() {
   const { session } = useAuth();
   const { preferences } = usePreferences();
   const [navExpanded, setNavExpanded] = useState(true);
+  const [routeTransitionVisible, setRouteTransitionVisible] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
+  const routeTransitionTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousPathname = useRef(location.pathname);
   const disableAutoHideNav = location.pathname.startsWith('/settings');
 
   // Global scroll handler that lives forever
@@ -160,6 +163,30 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (previousPathname.current === location.pathname) {
+      return;
+    }
+
+    previousPathname.current = location.pathname;
+    setRouteTransitionVisible(true);
+
+    if (routeTransitionTimeout.current) {
+      clearTimeout(routeTransitionTimeout.current);
+    }
+
+    routeTransitionTimeout.current = setTimeout(() => {
+      setRouteTransitionVisible(false);
+      routeTransitionTimeout.current = null;
+    }, preferences.reducedMotion ? 220 : 820);
+
+    return () => {
+      if (routeTransitionTimeout.current) {
+        clearTimeout(routeTransitionTimeout.current);
+      }
+    };
+  }, [location.pathname, preferences.reducedMotion]);
+
+  useEffect(() => {
     document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
   }, [navExpanded]);
 
@@ -233,6 +260,36 @@ export function AppShell() {
               : 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}
         >
+          <div
+            aria-hidden="true"
+            className={`route-transition ${routeTransitionVisible ? 'visible' : ''} ${preferences.reducedMotion ? 'reduced-motion' : ''}`}
+          >
+            <div className="route-transition-card">
+              <div className="route-transition-kicker">Preparing station</div>
+              <div className="route-transition-line">
+                <div className="route-transition-pan">
+                  <span className="route-transition-pan-body" />
+                  <span className="route-transition-pan-handle" />
+                  <span className="route-transition-pan-rim" />
+                  <span className="route-transition-garnish garnish-one" />
+                  <span className="route-transition-garnish garnish-two" />
+                  <span className="route-transition-garnish garnish-three" />
+                </div>
+                <div className="route-transition-steam">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="route-transition-burners">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </div>
+              <strong>{activeWorkspace.label}</strong>
+              <p>{activeWorkspace.detail}</p>
+            </div>
+          </div>
           <Outlet />
         </main>
       </div>
