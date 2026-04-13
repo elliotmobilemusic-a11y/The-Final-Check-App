@@ -53,8 +53,11 @@ export function LoginPage() {
       // Success animation state
       setLoginSuccess(true);
       
-      // Add delay for animation before navigation
+      // Wait for auth state to propagate then force hard navigation
       await new Promise(resolve => setTimeout(resolve, 1200));
+
+      // Hard reload bypasses all react router state issues
+      window.location.href = redirectTo;
 
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Sign in failed.');
