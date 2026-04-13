@@ -1,0 +1,323 @@
+/* ==========================================================================
+    HIGH END CONSULTANCY REPORT SYSTEM
+    McKinsey / Deloitte style premium document design
+
+    Clean, minimal, premium
+    Perfect for professional client delivery
+    ========================================================================== */
+
+:root {
+  /* Core Palette */
+  --ink: #121014;
+  --muted: #625e69;
+  --muted-light: #86828b;
+  --accent: #b88f4f;
+  --accent-light: #f8f0e1;
+
+  /* Background Layers */
+  --paper: #ffffff;
+  --panel: #fbfafc;
+  --panel-hover: #f7f5fa;
+
+  /* Border System */
+  --border-soft: #ebeaed;
+  --border-medium: #d9d7dd;
+
+  /* Spacing Scale */
+  --space-xs: 4pt;
+  --space-sm: 8pt;
+  --space-md: 12pt;
+  --space-lg: 16pt;
+  --space-xl: 20pt;
+  --space-2xl: 28pt;
+
+  /* Typography Scale */
+  --text-xs: 8pt;
+  --text-sm: 9pt;
+  --text-base: 10pt;
+  --text-lg: 11pt;
+  --text-xl: 12pt;
+  --text-2xl: 16pt;
+  --text-3xl: 22pt;
+  --text-4xl: 28pt;
+
+  /* Radius System */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 20mm 22mm 20mm 22mm;
+  marks: none;
+}
+
+@media print {
+  html {
+    font-size: 12px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: white !important;
+    color: var(--ink);
+    line-height: 1.45;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+  }
+
+  .print-toolbar,
+  .shell-topbar,
+  .support-launcher,
+  nav,
+  .actions {
+    display: none !important;
+  }
+
+  .app-shell {
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .app-shell-frame {
+    max-width: 100% !important;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   BASE TYPOGRAPHY
+   -------------------------------------------------------------------------- */
+
+.report-header-brand {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-weight: 500;
+  font-size: 10pt;
+  color: var(--ink);
+  margin-bottom: 6pt;
+  line-height: 1.6;
+}
+
+.report-header-brand strong {
+  font-weight: 700;
+  letter-spacing: 0.32em;
+}
+
+.report-section-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  font-size: 11pt;
+  color: var(--ink);
+  margin: 0 0 16pt 0;
+  padding-top: 6pt;
+}
+
+.report-label {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-size: 7.5pt;
+  color: var(--muted);
+  margin: 0 0 2pt 0;
+  line-height: 1.4;
+}
+
+.report-value {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 9.5pt;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.report-value-large {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 12pt;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.report-score {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 18pt;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.report-small {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 8pt;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+p {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 10pt;
+}
+
+p + p {
+  margin-top: 8pt;
+}
+
+/* --------------------------------------------------------------------------
+   PAGE STRUCTURE
+   -------------------------------------------------------------------------- */
+
+.report-page {
+  page-break-after: auto;
+  min-height: auto;
+  position: relative;
+  margin-bottom: 28pt;
+}
+
+.report-page:last-child {
+  page-break-after: auto;
+}
+
+.report-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-top: 12pt;
+  border-top: 1px solid var(--border-soft);
+}
+
+/* --------------------------------------------------------------------------
+   METRICS GRID
+   -------------------------------------------------------------------------- */
+
+.report-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  margin: 16pt 0 20pt 0;
+}
+
+.report-metric-cell {
+  padding: 12pt 10pt;
+  text-align: left;
+  border-right: 1px solid var(--border-soft);
+}
+
+.report-metric-cell:last-child {
+  border-right: none;
+}
+
+/* --------------------------------------------------------------------------
+   SCORE CARD GRID
+   -------------------------------------------------------------------------- */
+
+.report-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8pt;
+  margin: 14pt 0;
+}
+
+.report-score-card {
+  padding: 10pt 0;
+}
+
+/* --------------------------------------------------------------------------
+   FINDINGS BLOCKS
+   -------------------------------------------------------------------------- */
+
+.report-finding-block {
+  margin-bottom: 14pt;
+}
+
+.report-finding-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 9.5pt;
+  color: var(--ink);
+  margin: 0 0 6pt 0;
+}
+
+.report-finding-detail {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  font-size: 9pt;
+  color: #44404b;
+  line-height: 1.5;
+  margin: 0 0 4pt 0;
+}
+
+/* --------------------------------------------------------------------------
+   CONTROLS TABLE
+   -------------------------------------------------------------------------- */
+
+.report-controls-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  margin: 10pt 0 16pt 0;
+}
+
+.report-controls-table th {
+  text-align: left;
+  padding: 6pt 6pt;
+  border-bottom: 1px solid var(--border-medium);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-size: 7.5pt;
+}
+
+.report-controls-table td {
+  padding: 6pt 6pt;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.report-controls-table tr:nth-child(even) td {
+  background: var(--panel);
+}
+
+/* --------------------------------------------------------------------------
+   PAGE SEPARATOR
+   -------------------------------------------------------------------------- */
+
+.report-page-divider {
+  height: 1px;
+  border-bottom: 1px solid var(--border-soft);
+  margin: 20pt 0 16pt 0;
+}
+
+/* --------------------------------------------------------------------------
+   SCREEN PREVIEW MODE
+   -------------------------------------------------------------------------- */
+
+@media screen {
+  body.report-preview {
+    background: #e5e3e8;
+    padding: 24px;
+  }
+
+  .report-preview-container {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm 22mm;
+    margin: 0 auto;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.14);
+  }
+}
