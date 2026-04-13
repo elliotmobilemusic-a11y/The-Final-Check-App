@@ -19,6 +19,7 @@ import {
   type DesktopUpdateStatus
 } from '../../lib/desktop';
 import { supabase } from '../../lib/supabase';
+import { uploadAvatar, saveAvatarUrl, updateProfile } from '../../services/profiles';
 
 type ThemePreview = {
   value: ThemeMode;
@@ -213,55 +214,30 @@ export function SettingsPage() {
 
       let finalAvatarUrl = avatarUrl.trim();
 
-      // Upload avatar to Supabase Storage if we have a new preview
+      // ✅ SAFE AVATAR UPLOAD
       if (avatarPreview && supabase && session) {
-        try {
-          const userId = session.user.id;
-          
-          // Convert base64 to blob
-          const response = await fetch(avatarPreview);
-          const blob = await response.blob();
-          
-          // Upload to user's private avatar path
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(`user-${userId}/profile.jpg`, blob, {
-              cacheControl: '3600',
-              upsert: true
-            });
-
-          if (!uploadError) {
-            // Get public URL
-            const { data: publicUrl } = supabase.storage
-              .from('avatars')
-              .getPublicUrl(`user-${userId}/profile.jpg`);
-            
-            finalAvatarUrl = publicUrl.publicUrl;
-          } else {
-            console.log('Avatar upload skipped (bucket may not exist yet)', uploadError);
-            // Fall back to local storage only for this device
-            finalAvatarUrl = avatarPreview;
-          }
-        } catch (uploadErr) {
-          // Graceful fallback: keep as base64 local only if storage not setup
-          finalAvatarUrl = avatarPreview;
-        }
+        // Convert base64 preview to File blob
+        const response = await fetch(avatarPreview);
+        const blob = await response.blob();
+        const file = new File([blob], `avatar.${blob.type.split('/')[1]}`, { type: blob.type });
+        
+        // Use safe storage upload with automatic safety guards
+        finalAvatarUrl = await uploadAvatar(file, session.user.id);
+        
+        // Save avatar URL ONLY to profiles table - NEVER user_metadata
+        await saveAvatarUrl(session.user.id, finalAvatarUrl);
       }
 
-      if (supabase && session) {
-        const { data, error } = await supabase.auth.updateUser({
-          data: {
-            display_name: displayName.trim(),
-            avatar_url: finalAvatarUrl,
-            avatar_position: avatarPosition
-          },
-          ...(newPassword ? { password: newPassword } : {})
-        });
+      // Save profile metadata to profiles table
+      await updateProfile(session!.user.id, {
+        display_name: displayName.trim(),
+        avatar_position: avatarPosition,
+        avatar_url: finalAvatarUrl
+      });
 
-        if (error) throw error;
-
-        // Force refresh session with new metadata so navigation updates immediately
-        await supabase.auth.refreshSession();
+      // Update password only if changed
+      if (newPassword) {
+        await supabase.auth.updateUser({ password: newPassword });
       }
 
       // Clear local preview state after successful save
@@ -511,77 +487,4 @@ export function SettingsPage() {
                    <label className="settings-toggle-card">
                      <div>
                        <strong>Reduced motion</strong>
-                       <p>Calm down transitions and movement for a steadier working experience.</p>
-                     </div>
-                     <input
-                       checked={reducedMotion}
-                       type="checkbox"
-                       onChange={(event) => setReducedMotion(event.target.checked)}
-                     />
-                   </label>
-
-                   <label className="settings-toggle-card">
-                     <div>
-                       <strong>Auto show navigation</strong>
-                       <p>Navigation bar slides down automatically when moving the mouse near the top edge of the screen.</p>
-                     </div>
-                     <input
-                       checked={autoShowNav}
-                       type="checkbox"
-                       onChange={(event) => setAutoShowNav(event.target.checked)}
-                       disabled={reducedMotion}
-                     />
-                   </label>
-                </div>
-
-              </section>
-              ) : null}
-
-
-              {activeSection === 'security' ? (
-              <section className="sub-panel">
-                <div className="sub-panel-header">
-                  <h4>Password update</h4>
-                  <span className="soft-pill">Optional</span>
-                </div>
-
-                <div className="form-grid two-columns">
-                  <label className="field">
-                    <span>New password</span>
-                    <input
-                      className="input"
-                      type="password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Confirm new password</span>
-                    <input
-                      className="input"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                    />
-                  </label>
-                </div>
-              </section>
-              ) : null}
-
-              <div className="settings-save-bar fixed-bottom-right">
-                <span className="soft-pill">{message}</span>
-                <button className="button button-secondary" onClick={handleResetDevicePreferences} type="button">
-                  Reset
-                </button>
-                <button className="button button-primary" disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save changes'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </section>
-    </div>
-  );
-}
+                       <p>Calm down
