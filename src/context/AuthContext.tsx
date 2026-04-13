@@ -68,7 +68,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .then(({ data, error }) => {
         if (error) throw error;
 
-        setSession(data.session);
+        // ✅ Only accept valid sessions with actual access token
+        if (data.session && data.session.access_token?.trim()) {
+          setSession(data.session);
+        } else {
+          // Reject partial / broken sessions
+          setSession(null);
+        }
       })
       .catch((error) => {
         // Only reset auth state for clear unrecoverable session errors
@@ -83,13 +89,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const {
       data: { subscription }
     } = authClient.auth.onAuthStateChange((_event, nextSession) => {
-      if (!nextSession) {
+      // ✅ Only accept sessions that have valid non-empty access token
+      if (nextSession?.access_token?.trim()) {
+        setSession(nextSession);
+      } else {
         setSession(null);
-        setLoading(false);
-        return;
       }
-
-      setSession(nextSession);
+      
       setLoading(false);
     });
 

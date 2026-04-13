@@ -11,14 +11,17 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
   useEffect(() => {
     // ✅ Only allow children to mount after session is fully validated and settled
     // Prevents Supabase SDK from sending requests with partial/stale auth state
-    if (session && !loading) {
+    if (session?.access_token?.trim() && !loading) {
+      // Debug log - confirm token presence only
+      console.log(`✅ Valid session ready, token length: ${session.access_token.length}`);
+      
       // Force SDK to attach valid token to all subsequent requests
       supabase.auth.setSession(session);
       setValidated(true);
     }
   }, [session, loading]);
 
-  if (loading || (session && !validated)) {
+  if (loading || (session?.access_token?.trim() && !validated)) {
     return (
       <div className="screen-center">
         <div className="loading-card">
@@ -29,7 +32,7 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
     );
   }
 
-  if (!session) {
+  if (!session?.access_token?.trim()) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
