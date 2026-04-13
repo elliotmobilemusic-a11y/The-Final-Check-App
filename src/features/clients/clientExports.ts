@@ -165,38 +165,20 @@ export function buildReportDocumentHtml(
       <style>
 @page {
   size: ${pageSize};
-  margin: 17mm 15mm 18mm 15mm;
+  margin: 20mm 22mm 20mm 22mm;
   marks: none;
-
-  @bottom-right {
-    content: "Page " counter(page) " of " counter(pages);
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    font-size: 8pt;
-    color: #86828b;
-    font-weight: 500;
-  }
-
-  @top-left {
-    content: "The Final Check";
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    font-size: 8pt;
-    color: #86828b;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
 }
 
 :root {
   color-scheme: light;
-  --ink: #2c2a30;
-  --muted: #6b6773;
+  --ink: #121014;
+  --muted: #625e69;
   --accent: #c6a161;
   --accent-strong: #9d7a3d;
-  --line-soft: #ebeaed;
+  --line-soft: #e8e6eb;
   --line-medium: #d9d7dd;
-  --background-soft: #faf9fc;
-  --background-subtle: #f6f5f8;
+  --background-soft: #ffffff;
+  --background-subtle: #fbfafc;
   --document-width: ${documentWidth};
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
