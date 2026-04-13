@@ -1,8 +1,28 @@
-import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import type { ClientIntakeSharePayload, ReportShareRecord } from '../types';
 
 const TABLE = 'report_shares';
 const CLIENT_INTAKE_REPORT = 'client_intake';
+
+// ✅ Dedicated anonymous client for public intake links
+// This prevents the main auth client from attempting automatic session refresh
+// which causes cascading CORS failures when unauthenticated users visit share links
+const getPublicSupabaseClient = () => {
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL!,
+    import.meta.env.VITE_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  );
+};
+
+// Main authenticated client for internal use (requires logged in user)
+import { supabase } from '../lib/supabase';
 
 async function requireUserId(): Promise<string> {
   if (!supabase) throw new Error('Supabase is not configured.');
@@ -59,9 +79,9 @@ export async function createClientIntakeShare(
 export async function getClientIntakeShareByToken(
   token: string
 ): Promise<ReportShareRecord<ClientIntakeSharePayload> | null> {
-  if (!supabase) return null;
+  const publicClient = getPublicSupabaseClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await publicClient
     .from(TABLE)
     .select('*')
     .eq('report_type', CLIENT_INTAKE_REPORT)
