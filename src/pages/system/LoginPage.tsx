@@ -54,7 +54,7 @@ export function LoginPage() {
       setLoginSuccess(true);
       
       // Wait for branded animation sequence then redirect
-      await new Promise(resolve => setTimeout(resolve, 2600));
+      await new Promise(resolve => setTimeout(resolve, 3800));
 
       // Hard reload bypasses all react router state issues
       window.location.href = redirectTo;
@@ -73,7 +73,15 @@ export function LoginPage() {
           <div className="login-animation-logo">
             <strong>The Final Check</strong>
           </div>
-          <div className="login-animation-knife"></div>
+          <svg className="login-animation-knife" viewBox="0 0 420 18">
+            <path d="M0 9 L390 9 L420 0 L420 18 L390 9 Z" fill="url(#knifeGradient)"/>
+            <defs>
+              <linearGradient id="knifeGradient" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="#c6a161"/>
+                <stop offset="100%" stop-color="#9d7a3d"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       )}
       <div className="auth-panel">
