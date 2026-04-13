@@ -56,16 +56,12 @@ if (!configValid) {
   throw new Error('Supabase configuration is invalid. Check browser console for details.');
 }
 
-
-
-import { supabaseAuthStorage } from './authStorage';
-
 export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    storage: supabaseAuthStorage
+    storage: window.localStorage
   },
   db: {
     schema: 'public'
