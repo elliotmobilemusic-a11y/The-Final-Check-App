@@ -146,7 +146,7 @@ export function ClientsPage() {
     [clients]
   );
 
-  const filteredClients = useMemo(() => {
+  const categorisedClients = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
 
     const filtered = clients.filter((client) => {
@@ -170,43 +170,60 @@ export function ClientsPage() {
       return matchesSearch && matchesStatus;
     });
 
-    return filtered.sort((a, b) => {
-      if (sortMode === 'company') {
-        return (a.company_name ?? '').localeCompare(b.company_name ?? '');
+    // Split clients into clean categories
+    const attention: ClientRecord[] = [];
+    const active: ClientRecord[] = [];
+    const prospects: ClientRecord[] = [];
+    const archived: ClientRecord[] = [];
+
+    filtered.forEach(client => {
+      const data = client.data ?? createEmptyClientData();
+      const status = (client.status ?? 'Active').toLowerCase();
+      const reviewDays = daysUntil(client.next_review_date);
+      
+      const needsAttention = 
+        data.relationshipHealth === 'At Risk' ||
+        (reviewDays !== null && reviewDays < 0) ||
+        data.invoices.some(i => i.status === 'Overdue');
+
+      if (needsAttention && status === 'active') {
+        attention.push(client);
+      } else if (status === 'active') {
+        active.push(client);
+      } else if (status === 'prospect' || status === 'onboarding') {
+        prospects.push(client);
+      } else {
+        archived.push(client);
       }
-
-      if (sortMode === 'review') {
-        const aDays = daysUntil(a.next_review_date);
-        const bDays = daysUntil(b.next_review_date);
-        return (aDays ?? Number.MAX_SAFE_INTEGER) - (bDays ?? Number.MAX_SAFE_INTEGER);
-      }
-
-      if (sortMode === 'value') {
-        const aValue = Number((a.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
-        const bValue = Number((b.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
-        return bValue - aValue;
-      }
-
-      if (sortMode === 'attention') {
-        const rankClient = (client: ClientRecord) => {
-          const data = client.data ?? createEmptyClientData();
-          const overdueInvoices = data.invoices.filter((invoice) => invoice.status === 'Overdue')
-            .length;
-          const reviewDays = daysUntil(client.next_review_date);
-          const overdueReviewPenalty = reviewDays !== null && reviewDays < 0 ? Math.abs(reviewDays) + 5 : 0;
-          const relationshipPenalty =
-            data.relationshipHealth === 'At Risk' ? 10 : data.relationshipHealth === 'Watch' ? 5 : 0;
-          const setupPenalty =
-            !client.contact_name || !data.accountOwner || !data.profileSummary.trim() ? 3 : 0;
-
-          return overdueInvoices * 20 + overdueReviewPenalty + relationshipPenalty + setupPenalty;
-        };
-
-        return rankClient(b) - rankClient(a);
-      }
-
-      return getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at);
     });
+
+    // Sort each category
+    const sortList = (list: ClientRecord[]) => {
+      return list.sort((a, b) => {
+        if (sortMode === 'company') {
+          return (a.company_name ?? '').localeCompare(b.company_name ?? '');
+        }
+        if (sortMode === 'review') {
+          const aDays = daysUntil(a.next_review_date);
+          const bDays = daysUntil(b.next_review_date);
+          return (aDays ?? Number.MAX_SAFE_INTEGER) - (bDays ?? Number.MAX_SAFE_INTEGER);
+        }
+        if (sortMode === 'value') {
+          const aValue = Number((a.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
+          const bValue = Number((b.data ?? createEmptyClientData()).estimatedMonthlyValue || 0);
+          return bValue - aValue;
+        }
+        return getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at);
+      });
+    };
+
+    return {
+      attention: sortList(attention),
+      active: sortList(active),
+      prospects: sortList(prospects),
+      archived: sortList(archived),
+      total: filtered.length
+    };
   }, [clients, deferredSearch, sortMode, statusFilter]);
 
   return (
@@ -217,7 +234,7 @@ export function ClientsPage() {
         description="Keep this page as a clean operating list so you can find the right account and open it quickly."
       >
         <div className="page-inline-note">{activeClients.length} active accounts</div>
-        <div className="page-inline-note">{filteredClients.length} visible</div>
+        <div className="page-inline-note">{categorisedClients.total} visible</div>
         <div className="page-inline-note">{message}</div>
       </PageIntro>
 
@@ -316,52 +333,211 @@ export function ClientsPage() {
             </div>
           ) : null}
 
-          <div className="clients-long-list">
-            {filteredClients.length === 0 ? (
-              <div className="dashboard-empty">
-                No clients match the current search or filter settings.
-              </div>
-            ) : null}
-
-            {filteredClients.map((client) => {
-              const data = client.data ?? createEmptyClientData();
-
-              return (
-                <article className="crm-client-row crm-client-row-simple" key={client.id}>
-                  <div className="crm-client-simple-main">
-                    <div className="crm-client-heading crm-client-heading-simple">
-                      <div>
-                        <strong>{client.company_name}</strong>
-                        <p>
-                          {client.location || 'Location not set'}
-                          {client.contact_name ? ` • ${client.contact_name}` : ''}
-                        </p>
-                      </div>
-                      <div className="crm-client-badges">
-                        <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
-                        <span className={relationshipTone(data.relationshipHealth)}>
-                          {data.relationshipHealth}
-                        </span>
-                      </div>
-                    </div>
+          {categorisedClients.total === 0 ? (
+            <div className="dashboard-empty" style={{ padding: '48px 20px' }}>
+              No clients match the current search or filter settings.
+            </div>
+          ) : (
+            <>
+              {/* Attention Required Section */}
+              {categorisedClients.attention.length > 0 && (
+                <div className="client-category-section">
+                  <div className="client-category-header">
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                      <span style={{ color: '#a76060', fontSize: '18px' }}>⚠️</span>
+                      Attention Required
+                      <span className="status-pill status-danger">{categorisedClients.attention.length}</span>
+                    </h4>
                   </div>
-
-                  <div className="crm-client-actions crm-client-actions-simple">
-                    <Link className="button button-primary" to={`/clients/${client.id}`}>
-                      Open
-                    </Link>
-                    <button
-                      className="button button-ghost danger-text"
-                      onClick={() => setClientPendingDelete(client)}
-                      type="button"
-                    >
-                      Delete
-                    </button>
+                  <div className="clients-long-list" style={{ gap: '12px', marginTop: '12px' }}>
+                    {categorisedClients.attention.map((client) => {
+                      const data = client.data ?? createEmptyClientData();
+                      return (
+                        <article className="crm-client-row crm-client-row-simple" key={client.id} style={{ borderLeft: '3px solid #a76060' }}>
+                          <div className="crm-client-simple-main">
+                            <div className="crm-client-heading crm-client-heading-simple">
+                              <div>
+                                <strong>{client.company_name}</strong>
+                                <p>
+                                  {client.location || 'Location not set'}
+                                  {client.contact_name ? ` • ${client.contact_name}` : ''}
+                                </p>
+                              </div>
+                              <div className="crm-client-badges">
+                                <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                                <span className={relationshipTone(data.relationshipHealth)}>
+                                  {data.relationshipHealth}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="crm-client-actions crm-client-actions-simple">
+                            <Link className="button button-primary" to={`/clients/${client.id}`}>
+                              Open
+                            </Link>
+                            <button
+                              className="button button-ghost danger-text"
+                              onClick={() => setClientPendingDelete(client)}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
-                </article>
-              );
-            })}
-          </div>
+                </div>
+              )}
+
+              {/* Active Clients Section */}
+              {categorisedClients.active.length > 0 && (
+                <div className="client-category-section" style={{ marginTop: '32px' }}>
+                  <div className="client-category-header">
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                      <span style={{ color: '#4f8e67', fontSize: '18px' }}>✓</span>
+                      Active Clients
+                      <span className="status-pill status-success">{categorisedClients.active.length}</span>
+                    </h4>
+                  </div>
+                  <div className="clients-long-list" style={{ gap: '12px', marginTop: '12px' }}>
+                    {categorisedClients.active.map((client) => {
+                      const data = client.data ?? createEmptyClientData();
+                      return (
+                        <article className="crm-client-row crm-client-row-simple" key={client.id}>
+                          <div className="crm-client-simple-main">
+                            <div className="crm-client-heading crm-client-heading-simple">
+                              <div>
+                                <strong>{client.company_name}</strong>
+                                <p>
+                                  {client.location || 'Location not set'}
+                                  {client.contact_name ? ` • ${client.contact_name}` : ''}
+                                </p>
+                              </div>
+                              <div className="crm-client-badges">
+                                <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                                <span className={relationshipTone(data.relationshipHealth)}>
+                                  {data.relationshipHealth}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="crm-client-actions crm-client-actions-simple">
+                            <Link className="button button-primary" to={`/clients/${client.id}`}>
+                              Open
+                            </Link>
+                            <button
+                              className="button button-ghost danger-text"
+                              onClick={() => setClientPendingDelete(client)}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Prospects & Onboarding Section */}
+              {categorisedClients.prospects.length > 0 && (
+                <div className="client-category-section" style={{ marginTop: '32px' }}>
+                  <div className="client-category-header">
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                      <span style={{ color: '#c6a161', fontSize: '18px' }}>📥</span>
+                      Prospects & Onboarding
+                      <span className="status-pill status-warning">{categorisedClients.prospects.length}</span>
+                    </h4>
+                  </div>
+                  <div className="clients-long-list" style={{ gap: '12px', marginTop: '12px' }}>
+                    {categorisedClients.prospects.map((client) => {
+                      const data = client.data ?? createEmptyClientData();
+                      return (
+                        <article className="crm-client-row crm-client-row-simple" key={client.id} style={{ opacity: 0.88 }}>
+                          <div className="crm-client-simple-main">
+                            <div className="crm-client-heading crm-client-heading-simple">
+                              <div>
+                                <strong>{client.company_name}</strong>
+                                <p>
+                                  {client.location || 'Location not set'}
+                                  {client.contact_name ? ` • ${client.contact_name}` : ''}
+                                </p>
+                              </div>
+                              <div className="crm-client-badges">
+                                <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="crm-client-actions crm-client-actions-simple">
+                            <Link className="button button-primary" to={`/clients/${client.id}`}>
+                              Open
+                            </Link>
+                            <button
+                              className="button button-ghost danger-text"
+                              onClick={() => setClientPendingDelete(client)}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Archived Section */}
+              {categorisedClients.archived.length > 0 && (
+                <div className="client-category-section" style={{ marginTop: '32px' }}>
+                  <div className="client-category-header">
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, color: '#726c67' }}>
+                      <span style={{ fontSize: '18px' }}>⏸️</span>
+                      Paused / Completed
+                      <span className="status-pill" style={{ background: 'var(--line)', color: 'var(--text)' }}>{categorisedClients.archived.length}</span>
+                    </h4>
+                  </div>
+                  <div className="clients-long-list" style={{ gap: '12px', marginTop: '12px', opacity: 0.7 }}>
+                    {categorisedClients.archived.map((client) => {
+                      const data = client.data ?? createEmptyClientData();
+                      return (
+                        <article className="crm-client-row crm-client-row-simple" key={client.id}>
+                          <div className="crm-client-simple-main">
+                            <div className="crm-client-heading crm-client-heading-simple">
+                              <div>
+                                <strong>{client.company_name}</strong>
+                                <p>
+                                  {client.location || 'Location not set'}
+                                  {client.contact_name ? ` • ${client.contact_name}` : ''}
+                                </p>
+                              </div>
+                              <div className="crm-client-badges">
+                                <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="crm-client-actions crm-client-actions-simple">
+                            <Link className="button button-primary" to={`/clients/${client.id}`}>
+                              Open
+                            </Link>
+                            <button
+                              className="button button-ghost danger-text"
+                              onClick={() => setClientPendingDelete(client)}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 
