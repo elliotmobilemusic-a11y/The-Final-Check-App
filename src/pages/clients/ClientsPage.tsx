@@ -446,7 +446,6 @@ export function ClientsPage() {
                 <div className="client-category-section" style={{ marginTop: '32px' }}>
                   <div className="client-category-header">
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-                      <span style={{ color: '#c6a161', fontSize: '18px' }}>📥</span>
                       Prospects & Onboarding
                       <span className="status-pill status-warning">{categorisedClients.prospects.length}</span>
                     </h4>
