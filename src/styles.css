@@ -4980,6 +4980,82 @@ body[data-theme="midnight"] .data-table td {
   padding: 16px;
 }
 
+.crm-client-row-simple {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+}
+
+.crm-client-simple-main {
+  min-width: 0;
+}
+
+.crm-client-heading-simple {
+  margin: 0;
+}
+
+.crm-client-heading-simple p {
+  margin: 8px 0 0;
+  color: #6a635c;
+  line-height: 1.6;
+}
+
+.crm-client-actions-simple {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(31, 24, 18, 0.38);
+  backdrop-filter: blur(8px);
+}
+
+.confirm-modal-card {
+  width: min(520px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(99, 81, 55, 0.14);
+  box-shadow: 0 28px 80px rgba(35, 26, 18, 0.18);
+}
+
+.confirm-modal-kicker {
+  margin: 0;
+  color: #946a37;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.confirm-modal-card h3 {
+  margin: 12px 0 10px;
+  font-size: 32px;
+  line-height: 1.04;
+  color: #2f2a27;
+}
+
+.confirm-modal-body {
+  margin: 0;
+  color: #5f5850;
+  line-height: 1.7;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 1080px) {
   .client-portal-hero,
   .client-portal-main {
@@ -5015,6 +5091,18 @@ body[data-theme="midnight"] .data-table td {
 
   .client-portal-resource-link,
   .client-portal-resource-pill {
+    width: 100%;
+  }
+
+  .crm-client-row-simple {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-client-actions-simple {
+    justify-content: stretch;
+  }
+
+  .crm-client-actions-simple .button {
     width: 100%;
   }
 }

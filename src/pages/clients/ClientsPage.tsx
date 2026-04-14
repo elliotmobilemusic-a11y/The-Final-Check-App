@@ -80,6 +80,8 @@ export function ClientsPage() {
   const deferredSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortMode, setSortMode] = useState<SortMode>('attention');
+  const [clientPendingDelete, setClientPendingDelete] = useState<ClientRecord | null>(null);
+  const [isDeletingClient, setIsDeletingClient] = useState(false);
 
   useEffect(() => {
     refreshClients();
@@ -94,15 +96,18 @@ export function ClientsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!window.confirm('Delete this client profile?')) return;
-
+  async function handleDelete() {
+    if (!clientPendingDelete) return;
     try {
-      await deleteClient(id);
-      setMessage('Client deleted.');
+      setIsDeletingClient(true);
+      await deleteClient(clientPendingDelete.id);
+      setMessage(`Client "${clientPendingDelete.company_name}" deleted.`);
+      setClientPendingDelete(null);
       await refreshClients();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not delete client.');
+    } finally {
+      setIsDeletingClient(false);
     }
   }
 
@@ -319,146 +324,81 @@ export function ClientsPage() {
             ) : null}
 
             {filteredClients.map((client) => {
-            const data = client.data ?? createEmptyClientData();
-            const openTasks = data.tasks.filter((task) => task.status !== 'Done').length;
-            const openDeals = data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost');
-            const pipeline = openDeals.reduce((sum, deal) => sum + Number(deal.value || 0), 0);
-            const openInvoices = data.invoices.filter((invoice) => invoice.status !== 'Paid');
-            const overdueInvoices = data.invoices.filter((invoice) => invoice.status === 'Overdue');
-            const outstanding = openInvoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
-            const reviewDelta = daysUntil(client.next_review_date);
-            const setupIncomplete =
-              !client.contact_name || !data.accountOwner || !data.profileSummary.trim();
-            const alerts = [
-              overdueInvoices.length
-                ? {
-                    label: `${overdueInvoices.length} overdue invoice${overdueInvoices.length === 1 ? '' : 's'}`,
-                    tone: 'is-critical'
-                  }
-                : null,
-              reviewDelta !== null && reviewDelta < 0
-                ? {
-                    label: `Review overdue by ${Math.abs(reviewDelta)} day${Math.abs(reviewDelta) === 1 ? '' : 's'}`,
-                    tone: 'is-critical'
-                  }
-                : null,
-              data.relationshipHealth === 'At Risk'
-                ? { label: 'Relationship at risk', tone: 'is-critical' }
-                : data.relationshipHealth === 'Watch'
-                  ? { label: 'Relationship needs watching', tone: 'is-warning' }
-                  : null,
-              openTasks > 0
-                ? {
-                    label: `${openTasks} open task${openTasks === 1 ? '' : 's'}`,
-                    tone: 'is-warning'
-                  }
-                : null,
-              setupIncomplete ? { label: 'Profile setup incomplete', tone: 'is-warning' } : null
-            ].filter(Boolean) as Array<{ label: string; tone: string }>;
+              const data = client.data ?? createEmptyClientData();
 
-            return (
-              <article className="crm-client-row" key={client.id}>
-                <div className="crm-client-main">
-                  <div className="crm-client-heading">
-                    <div>
-                      <strong>{client.company_name}</strong>
-                      <p>
-                        {data.accountScope || 'Single site'} • {client.location || 'Location not set'} •{' '}
-                        {client.contact_name || 'Main contact not set'}
-                      </p>
-                    </div>
-                    <div className="crm-client-badges">
-                      <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
-                      <span className={relationshipTone(data.relationshipHealth)}>
-                        {data.relationshipHealth}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="crm-client-metrics">
-                    <div className="crm-metric-card">
-                      <span>Account owner</span>
-                      <strong>{data.accountOwner || 'Not set'}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Account scope</span>
-                      <strong>{data.accountScope}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Next review</span>
-                      <strong>{reviewLabel(client.next_review_date)}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Pipeline</span>
-                      <strong>{fmtCurrency(pipeline)}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Outstanding</span>
-                      <strong>{fmtCurrency(outstanding)}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Sites</span>
-                      <strong>{Math.max(data.sites.length, data.siteCountEstimate || 0)}</strong>
-                    </div>
-                    <div className="crm-metric-card">
-                      <span>Last updated</span>
-                      <strong>{formatShortDate(client.updated_at)}</strong>
-                    </div>
-                  </div>
-
-                  <p className="crm-client-summary">
-                    {data.profileSummary || 'No CRM summary written yet. Open the profile to flesh out strategy, billing, tasks, and invoice detail.'}
-                  </p>
-
-                  <div className="crm-alert-row">
-                    {alerts.length > 0 ? (
-                      alerts.map((alert) => (
-                        <span className={`crm-alert-chip ${alert.tone}`} key={alert.label}>
-                          {alert.label}
+              return (
+                <article className="crm-client-row crm-client-row-simple" key={client.id}>
+                  <div className="crm-client-simple-main">
+                    <div className="crm-client-heading crm-client-heading-simple">
+                      <div>
+                        <strong>{client.company_name}</strong>
+                        <p>
+                          {client.location || 'Location not set'}
+                          {client.contact_name ? ` • ${client.contact_name}` : ''}
+                        </p>
+                      </div>
+                      <div className="crm-client-badges">
+                        <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                        <span className={relationshipTone(data.relationshipHealth)}>
+                          {data.relationshipHealth}
                         </span>
-                      ))
-                    ) : (
-                      <span className="crm-alert-chip is-stable">No active alerts on this account</span>
-                    )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="client-tag-row">
-                    <span className="soft-pill">{data.operatingCountry || 'United Kingdom'}</span>
-                    {data.companyNumber ? <span className="soft-pill">Co. {data.companyNumber}</span> : null}
-                    {(client.tags ?? []).slice(0, 5).map((tag) => (
-                      <span className="soft-pill" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
+                  <div className="crm-client-actions crm-client-actions-simple">
+                    <Link className="button button-primary" to={`/clients/${client.id}`}>
+                      Open
+                    </Link>
+                    <button
+                      className="button button-ghost danger-text"
+                      onClick={() => setClientPendingDelete(client)}
+                      type="button"
+                    >
+                      Delete
+                    </button>
                   </div>
-                </div>
-
-                <div className="crm-client-actions">
-                  <Link className="button button-primary" to={`/clients/${client.id}`}>
-                    Open CRM
-                  </Link>
-                  <button className="button button-secondary" onClick={() => handleExportClient(client)}>
-                    Export PDF
-                  </button>
-                  <Link className="button button-ghost" to={`/clients/${client.id}/commercial#client-invoices`}>
-                    Billing
-                  </Link>
-                  <Link className="button button-ghost" to={`/audit?client=${client.id}`}>
-                    New audit
-                  </Link>
-                  <Link className="button button-ghost" to={`/menu?client=${client.id}`}>
-                    New menu
-                  </Link>
-                  <button className="button button-ghost danger-text" onClick={() => handleDelete(client.id)}>
-                    Delete
-                  </button>
-                </div>
-              </article>
-            );
+                </article>
+              );
             })}
           </div>
         </div>
       </section>
+
+      {clientPendingDelete ? (
+        <div className="confirm-modal-overlay" role="presentation">
+          <div
+            aria-labelledby="delete-client-title"
+            aria-modal="true"
+            className="confirm-modal-card"
+            role="dialog"
+          >
+            <p className="confirm-modal-kicker">Delete client</p>
+            <h3 id="delete-client-title">Delete {clientPendingDelete.company_name}?</h3>
+            <p className="confirm-modal-body">
+              This will remove the client profile from your workspace. This action cannot be undone.
+            </p>
+            <div className="confirm-modal-actions">
+              <button
+                className="button button-secondary"
+                disabled={isDeletingClient}
+                onClick={() => setClientPendingDelete(null)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="button button-ghost danger-text"
+                disabled={isDeletingClient}
+                onClick={handleDelete}
+                type="button"
+              >
+                {isDeletingClient ? 'Deleting...' : 'Delete client'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
