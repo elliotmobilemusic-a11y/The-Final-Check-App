@@ -691,13 +691,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
   const pageBodies = [
     `
-      <div class="report-header-brand">
-        <span>Jason Wardill</span><br>
-        <strong>The Final Check</strong><br>
-        <span>Profit and performance consultancy</span>
-      </div>
-
-      <div style="margin-top: 24pt; margin-bottom: 20pt;">
+      <div style="margin-top: 4pt; margin-bottom: 16pt;">
         <div style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em;">Kitchen Profit Audit</div>
       </div>
 
@@ -716,7 +710,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         </div>
       </div>
 
-      ${hasMeaningfulText(narrative.executiveSummary) ? `<p style="margin-top: 20pt; line-height: 1.6; font-size: 10pt;">${safe(narrative.executiveSummary)}</p>` : ''}
+      ${hasMeaningfulText(narrative.executiveSummary) ? `<p style="margin-top: 16pt; line-height: 1.58; font-size: 10pt;">${safe(narrative.executiveSummary)}</p>` : ''}
     `,
     [
       renderSection(

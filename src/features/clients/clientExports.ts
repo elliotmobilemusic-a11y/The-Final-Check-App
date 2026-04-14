@@ -415,6 +415,7 @@ export function buildReportDocumentHtml(
           flex-direction: column;
           gap: 10px;
           min-height: 0;
+          position: relative;
           padding: 12mm 12mm 13mm;
           margin: 0 0 14px;
           border-radius: 0;
@@ -915,21 +916,6 @@ export function buildReportDocumentHtml(
           page-break-inside: avoid;
           break-inside: avoid-page;
         }
-        .report-header-brand {
-          color: var(--accent-deep);
-          font-size: 9px;
-          line-height: 1.5;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-        .report-header-brand strong {
-          display: inline-block;
-          color: var(--ink);
-          font-size: 26px;
-          line-height: 1.05;
-          letter-spacing: -0.04em;
-          text-transform: none;
-        }
         .report-metrics-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -987,17 +973,84 @@ export function buildReportDocumentHtml(
             background: transparent;
           }
           .report-masthead {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
           }
           .report-cover-page,
           .report-page,
           .report-page-block {
             margin: 0;
-            padding: 0;
-            border: 0;
+            padding: 4.5mm 5mm 5mm;
+            border: 1px solid var(--line-medium);
             border-radius: 0;
             box-shadow: none;
-            background: transparent;
+            background: #ffffff;
+          }
+          .report-cover-page::before,
+          .report-page::before,
+          .report-page-block::before {
+            content: "";
+            position: absolute;
+            inset: 2.5mm;
+            border: 0.5pt solid #d7dde3;
+            pointer-events: none;
+          }
+          .report-hero {
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+          .report-hero-main {
+            padding: 13px 13px 11px;
+          }
+          .report-summary-card {
+            padding: 9px 10px 10px;
+          }
+          .meta-grid,
+          .summary-grid {
+            gap: 8px;
+            margin-bottom: 10px;
+          }
+          .meta-card,
+          .report-meta > div,
+          .report-columns > div,
+          .report-grid > div,
+          .report-metric-card,
+          .report-metric-cell,
+          .report-story-card,
+          .report-cover-block,
+          .report-cover-mini-card,
+          .report-cover-stat-card,
+          .report-cover-commercial {
+            padding: 9px 10px 10px;
+          }
+          section {
+            padding-top: 10px;
+            border-top-color: var(--line-medium);
+          }
+          section + section {
+            margin-top: 10px;
+          }
+          .report-grid,
+          .report-columns,
+          .report-meta,
+          .report-metric-grid,
+          .report-support-grid,
+          .report-story-grid,
+          .report-metrics-grid,
+          .report-cover-top,
+          .report-cover-pill-row,
+          .report-cover-stat-grid,
+          .report-cover-mini-grid {
+            gap: 8px;
+          }
+          .report-grid,
+          .report-columns,
+          .report-meta {
+            margin-top: 8px;
+          }
+          .report-page-block table,
+          .report-page-block .report-story-grid {
+            margin-top: 8px;
           }
           table,
           .report-table {
