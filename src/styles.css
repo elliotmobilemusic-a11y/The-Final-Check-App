@@ -4419,74 +4419,233 @@ body[data-theme="midnight"] .data-table td {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 8% 0%, rgba(198, 161, 97, 0.2), transparent 42%),
+    radial-gradient(circle at 20% 18%, rgba(198, 161, 97, 0.18), transparent 28%),
+    radial-gradient(circle at 78% 22%, rgba(112, 148, 180, 0.16), transparent 30%),
     linear-gradient(180deg, #d9d2cb 0%, #e7e2dc 38%, #f4f0eb 100%);
   overflow: hidden;
+  animation: loginStageFade 1650ms ease forwards;
+}
+
+.login-animation-stage {
+  position: relative;
+  width: min(680px, calc(100vw - 48px));
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.login-animation-kicker {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgba(198, 161, 97, 0.16);
+  color: #8a6b33;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: loginKickerRise 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .login-animation-logo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation: loginLogoFlow 3600ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  display: grid;
+  gap: 10px;
+  animation: loginLogoReveal 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .login-animation-logo strong {
   display: block;
-  font-size: clamp(42px, 7vw, 64px);
+  font-size: clamp(44px, 7vw, 70px);
   font-weight: 900;
   letter-spacing: -0.04em;
   color: #35333a;
 }
 
-.login-animation-knife {
+.login-animation-logo span {
+  color: #6b655c;
+  font-size: clamp(15px, 2vw, 19px);
+  line-height: 1.6;
+  animation: loginCopyReveal 920ms ease both;
+  animation-delay: 100ms;
+}
+
+.login-animation-line {
+  position: relative;
+  width: min(420px, 72vw);
+  height: 12px;
+}
+
+.login-animation-line-core,
+.login-animation-line-glow {
   position: absolute;
-  left: 50%;
-  top: calc(50% + 52px);
-  transform: translateX(-50%) rotate(-20deg);
-  width: 0;
-  height: 18px;
+  inset: 0;
   border-radius: 999px;
-  animation: loginKnifeCut 2800ms cubic-bezier(0.34, 1.56, 0.64, 1) 600ms forwards;
-  filter: drop-shadow(0 8px 24px rgba(157, 122, 61, 0.18));
 }
 
-@keyframes loginLogoFlow {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-  22% {
+.login-animation-line-core {
+  background: linear-gradient(90deg, rgba(198, 161, 97, 0.1), #c6a161 38%, #8f6f35 100%);
+  transform-origin: left center;
+  animation: loginLineSweep 1020ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-animation-line-glow {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: translateX(-120%);
+  animation: loginLineGlow 900ms ease both;
+  animation-delay: 180ms;
+}
+
+.login-animation-orbit {
+  position: absolute;
+  inset: auto 0 -48px;
+  height: 120px;
+  pointer-events: none;
+}
+
+.login-animation-orbit span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(164, 132, 73, 0.42);
+  filter: blur(0.4px);
+  animation: loginOrbitFloat 1180ms ease-in-out both;
+}
+
+.login-animation-orbit span:nth-child(1) {
+  left: 20%;
+  animation-delay: 80ms;
+}
+
+.login-animation-orbit span:nth-child(2) {
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  animation-delay: 160ms;
+}
+
+.login-animation-orbit span:nth-child(3) {
+  left: 76%;
+  width: 8px;
+  height: 8px;
+  animation-delay: 240ms;
+}
+
+@keyframes loginStageFade {
+  0%, 78% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  72% {
-    transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50vw + 120px), calc(-50vh + 70px)) scale(0.62);
   }
 }
 
-@keyframes loginKnifeCut {
+@keyframes loginKickerRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes loginLogoReveal {
   0% {
-    width: 0;
-    transform: translateX(-50%) rotate(-20deg);
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes loginCopyReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loginLineSweep {
+  from {
+    transform: scaleX(0.18);
     opacity: 0;
   }
-  25% {
+  to {
+    transform: scaleX(1);
     opacity: 1;
   }
-  75% {
-    width: clamp(280px, 52vw, 440px);
-    transform: translateX(-50%) rotate(0deg);
+}
+
+@keyframes loginLineGlow {
+  from {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 1;
+  }
+}
+
+@keyframes loginOrbitFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+  }
+  30% {
+    opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateX(-50%) rotate(6deg);
-    width: clamp(280px, 52vw, 440px);
+    transform: translateY(-34px) scale(1.08);
+  }
+}
+
+.workspace-transition-shell {
+  min-height: 100%;
+  animation: workspaceEnter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center top;
+}
+
+.workspace-transition-shell.is-exiting {
+  animation: workspaceExit 120ms ease forwards;
+}
+
+.workspace-transition-shell.is-entering {
+  animation: workspaceEnter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes workspaceEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.992);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes workspaceExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scale(1.002);
+    filter: blur(2px);
   }
 }
 
