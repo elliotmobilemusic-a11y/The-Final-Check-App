@@ -151,6 +151,13 @@ export function buildMenuReport(project: MenuProjectState) {
   const summary = buildMenuProfitSummary(project);
   const allDishes = summary.dishes;
   const pricingMoveCount = allDishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length;
+  const topOpportunities = [...allDishes]
+    .sort((left, right) => dishWeeklyOpportunity(right) - dishWeeklyOpportunity(left))
+    .filter((dish) => dishWeeklyOpportunity(dish) > 0)
+    .slice(0, 4);
+  const strongestDishes = [...allDishes]
+    .sort((left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left))
+    .slice(0, 4);
 
   return `
     ${buildReportHeroHtml({
@@ -187,8 +194,18 @@ export function buildMenuReport(project: MenuProjectState) {
       ]
     })}
 
+    <div class="summary-grid">
+      <div class="meta-card"><span>Review date</span><strong>${formatShortDate(project.reviewDate)}</strong></div>
+      <div class="meta-card"><span>Sections</span><strong>${project.sections.length}</strong></div>
+      <div class="meta-card"><span>Total dishes</span><strong>${allDishes.length}</strong></div>
+      <div class="meta-card"><span>Weighted GP</span><strong>${fmtPercent(summary.weightedGp)}</strong></div>
+      <div class="meta-card"><span>Below target</span><strong>${summary.belowTargetCount}</strong></div>
+      <div class="meta-card"><span>Weekly opportunity</span><strong>${fmtCurrency(summary.totalOpportunity)}</strong></div>
+    </div>
+
     <section>
       <h2>Menu profit snapshot</h2>
+      <p class="report-section-lead">Commercial headline numbers for the reviewed menu and its current profit position.</p>
       <div class="report-grid columns-4">
         <div><strong>Review date</strong><br />${formatShortDate(project.reviewDate)}</div>
         <div><strong>Sections</strong><br />${project.sections.length}</div>
@@ -197,15 +214,78 @@ export function buildMenuReport(project: MenuProjectState) {
       </div>
     </section>
 
+    <section>
+      <h2>Menu highlights</h2>
+      <p class="report-section-lead">Priority pricing opportunities and strongest commercial performers at a glance.</p>
+      <div class="report-story-grid">
+        <div class="report-story-card">
+          <h3>Top opportunity dishes</h3>
+          ${
+            topOpportunities.length
+              ? `<ul>${topOpportunities
+                  .map(
+                    (dish) =>
+                      `<li><strong>${safe(dish.name)}</strong> — ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity</li>`
+                  )
+                  .join('')}</ul>`
+              : '<p>No material pricing opportunities recorded.</p>'
+          }
+        </div>
+        <div class="report-story-card">
+          <h3>Strongest contributors</h3>
+          ${
+            strongestDishes.length
+              ? `<ul>${strongestDishes
+                  .map(
+                    (dish) =>
+                      `<li><strong>${safe(dish.name)}</strong> — ${fmtCurrency(dishWeeklyProfit(dish))} weekly profit</li>`
+                  )
+                  .join('')}</ul>`
+              : '<p>No dishes recorded yet.</p>'
+          }
+        </div>
+      </div>
+    </section>
+
     ${project.sections
-      .map(
-        (section) => `
+      .map((section) => {
+        const sectionRevenue = section.dishes.reduce(
+          (sum, dish) => sum + num(dish.sellPrice) * Math.max(num(dish.weeklySalesVolume), 0),
+          0
+        );
+        const sectionProfit = section.dishes.reduce((sum, dish) => sum + dishWeeklyProfit(dish), 0);
+        const sectionGp =
+          section.dishes.length > 0
+            ? section.dishes.reduce((sum, dish) => sum + dishTheoGp(dish), 0) / section.dishes.length
+            : 0;
+        const sectionBelowTarget = section.dishes.filter((dish) => dishTheoGp(dish) < num(dish.targetGp)).length;
+        const topSectionDish = [...section.dishes].sort(
+          (left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left)
+        )[0];
+        const largestGap = section.dishes.length
+          ? Math.max(...section.dishes.map((dish) => dishWeeklyOpportunity(dish)))
+          : 0;
+
+        return `
       <section>
         <h2>${section.name}</h2>
+        <p class="report-section-lead">Section-level performance summary and dish detail for pricing review.</p>
+        <div class="report-grid columns-4">
+          <div><strong>Dishes</strong><br />${section.dishes.length}</div>
+          <div><strong>Section revenue</strong><br />${fmtCurrency(sectionRevenue)}</div>
+          <div><strong>Section profit</strong><br />${fmtCurrency(sectionProfit)}</div>
+          <div><strong>Average actual GP</strong><br />${section.dishes.length ? fmtPercent(sectionGp) : 'No dishes'}</div>
+        </div>
+        <div class="report-grid columns-4">
+          <div><strong>Below target</strong><br />${sectionBelowTarget}</div>
+          <div><strong>Pricing changes needed</strong><br />${section.dishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length}</div>
+          <div><strong>Best performer</strong><br />${topSectionDish ? safe(topSectionDish.name) : 'No dishes'}</div>
+          <div><strong>Largest gap</strong><br />${fmtCurrency(largestGap)}</div>
+        </div>
         ${
           section.dishes.length
             ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Dish</th>
@@ -249,7 +329,7 @@ export function buildMenuReport(project: MenuProjectState) {
         }
       </section>
     `
-      )
+      })
       .join('')}
   `;
 }

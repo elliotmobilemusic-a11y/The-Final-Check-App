@@ -172,6 +172,8 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
   const focusAreas = state.focusAreas.filter(
     (item) => safe(item.area) || safe(item.summary) || safe(item.actionPlan)
   );
+  const standoutObservations = state.observations.filter((item) => item.score >= 8).slice(0, 4);
+  const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 4);
 
   return `
     ${buildReportHeroHtml({
@@ -199,8 +201,18 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
       ]
     })}
 
+    <div class="summary-grid">
+      <div class="meta-card"><span>Overall score</span><strong>${calc.overallScore}/10</strong></div>
+      <div class="meta-card"><span>Grade</span><strong>${calc.grade}</strong></div>
+      <div class="meta-card"><span>Standout moments</span><strong>${calc.standoutMoments}</strong></div>
+      <div class="meta-card"><span>Weak moments</span><strong>${calc.lowMoments}</strong></div>
+      <div class="meta-card"><span>Spend</span><strong>${state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded'}</strong></div>
+      <div class="meta-card"><span>Named actions</span><strong>${calc.namedActions}</strong></div>
+    </div>
+
     <section>
       <h2>Scorecard</h2>
+      <p class="report-section-lead">Category scoring across arrival, service, product, and overall guest value.</p>
       <div class="report-grid columns-4">
         <div><strong>Arrival</strong><br />${state.scorecard.arrival}/10</div>
         <div><strong>Service</strong><br />${state.scorecard.service}/10</div>
@@ -213,22 +225,57 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
 
     <section>
       <h2>Guest journey summary</h2>
-      <div class="report-columns">
-        <div><h3>Overall summary</h3><p>${safe(state.overallSummary) || 'No overall summary recorded.'}</p></div>
-        <div><h3>First impression</h3><p>${safe(state.firstImpression) || 'No first-impression notes recorded.'}</p></div>
-        <div><h3>Service story</h3><p>${safe(state.serviceStory) || 'No service notes recorded.'}</p></div>
-        <div><h3>Food and drink</h3><p>${safe(state.foodAndDrink) || 'No product notes recorded.'}</p></div>
-        <div><h3>Cleanliness and atmosphere</h3><p>${safe(state.cleanlinessNotes) || 'No cleanliness notes recorded.'}</p></div>
-        <div><h3>Recommendations</h3><p>${safe(state.recommendations) || 'No recommendations recorded.'}</p></div>
+      <p class="report-section-lead">Narrative notes from first impression through to recommendation and revisit intent.</p>
+      <div class="report-story-grid">
+        <div class="report-story-card"><h3>Overall summary</h3><p>${safe(state.overallSummary) || 'No overall summary recorded.'}</p></div>
+        <div class="report-story-card"><h3>First impression</h3><p>${safe(state.firstImpression) || 'No first-impression notes recorded.'}</p></div>
+        <div class="report-story-card"><h3>Service story</h3><p>${safe(state.serviceStory) || 'No service notes recorded.'}</p></div>
+        <div class="report-story-card"><h3>Food and drink</h3><p>${safe(state.foodAndDrink) || 'No product notes recorded.'}</p></div>
+        <div class="report-story-card"><h3>Cleanliness and atmosphere</h3><p>${safe(state.cleanlinessNotes) || 'No cleanliness notes recorded.'}</p></div>
+        <div class="report-story-card"><h3>Recommendations</h3><p>${safe(state.recommendations) || 'No recommendations recorded.'}</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Key moments</h2>
+      <p class="report-section-lead">Best and weakest observed touchpoints highlighted for management review.</p>
+      <div class="report-story-grid">
+        <div class="report-story-card">
+          <h3>Standout moments</h3>
+          ${
+            standoutObservations.length
+              ? `<ul>${standoutObservations
+                  .map(
+                    (item) =>
+                      `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
+                  )
+                  .join('')}</ul>`
+              : '<p>No standout moments recorded.</p>'
+          }
+        </div>
+        <div class="report-story-card">
+          <h3>Weak moments</h3>
+          ${
+            weakObservations.length
+              ? `<ul>${weakObservations
+                  .map(
+                    (item) =>
+                      `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
+                  )
+                  .join('')}</ul>`
+              : '<p>No weak moments recorded.</p>'
+          }
+        </div>
       </div>
     </section>
 
     <section>
       <h2>Touchpoint observations</h2>
+      <p class="report-section-lead">Detailed observation log across touchpoints, areas, and scoring.</p>
       ${
         state.observations.length
           ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Area</th>
@@ -257,40 +304,32 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
 
     <section>
       <h2>Area summaries and action plans</h2>
+      <p class="report-section-lead">Management-level reading of each area with the follow-up response required.</p>
       ${
         focusAreas.length
-          ? `
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Area</th>
-              <th>Summary</th>
-              <th>Action plan</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${focusAreas
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${safe(item.summary) || 'No summary recorded'}</td>
-                <td>${safe(item.actionPlan) || 'No action plan recorded'}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
+          ? `<div class="report-story-grid">
+              ${focusAreas
+                .map(
+                  (item) => `
+                <div class="report-story-card">
+                  <h3>${safe(item.area) || 'General'}</h3>
+                  <p>${safe(item.summary) || 'No summary recorded.'}</p>
+                  <p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan) || 'No action plan recorded.'}</p>
+                </div>`
+                )
+                .join('')}
+            </div>`
           : '<p class="muted-copy">No area summaries recorded.</p>'
       }
     </section>
 
     <section>
       <h2>Action register</h2>
+      <p class="report-section-lead">Named follow-up actions, owners, and timing captured during the shop review.</p>
       ${
         actions.length
           ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Action</th>

@@ -1195,6 +1195,7 @@ export function buildClientPdfHtml(
     .reduce((sum, deal) => sum + num(deal.value), 0);
   const outstandingValue = openInvoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
   const siteCount = Math.max(client.data.sites.length, client.data.siteCountEstimate || 0);
+  const openTasks = client.data.tasks.filter((task) => task.status !== 'Done');
 
   return `
     ${buildReportHeroHtml({
@@ -1286,10 +1287,17 @@ export function buildClientPdfHtml(
       </div>
     </section>
 
-    ${listMarkup('Goals', client.data.goals)}
-    ${listMarkup('Risks', client.data.risks)}
-    ${listMarkup('Opportunities', client.data.opportunities)}
-    ${listMarkup('Tags', client.tags)}
+    <section>
+      <h2>Account priorities</h2>
+      <p class="report-section-lead">Current goals, risks, and opportunities shaping the account plan.</p>
+      <div class="report-story-grid">
+        <div class="report-story-card"><h3>Goals</h3>${client.data.goals.length ? `<ul>${client.data.goals.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No entries recorded.</p>'}</div>
+        <div class="report-story-card"><h3>Risks</h3>${client.data.risks.length ? `<ul>${client.data.risks.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No entries recorded.</p>'}</div>
+        <div class="report-story-card"><h3>Opportunities</h3>${client.data.opportunities.length ? `<ul>${client.data.opportunities.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No entries recorded.</p>'}</div>
+        <div class="report-story-card"><h3>Tags and account signals</h3>${client.tags.length ? `<ul>${client.tags.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No tags recorded.</p>'}</div>
+      </div>
+    </section>
+
     ${listMarkup(
       'Sites',
       client.data.sites.map((site) =>
@@ -1304,9 +1312,7 @@ export function buildClientPdfHtml(
     )}
     ${listMarkup(
       'Open tasks',
-      client.data.tasks
-        .filter((task) => task.status !== 'Done')
-        .map((task) => `${task.title || 'Untitled task'} — ${task.status}${task.dueDate ? `, due ${formatDate(task.dueDate)}` : ''}`)
+      openTasks.map((task) => `${task.title || 'Untitled task'} — ${task.status}${task.dueDate ? `, due ${formatDate(task.dueDate)}` : ''}`)
     )}
     ${listMarkup(
       'CRM pipeline',
@@ -1331,6 +1337,9 @@ export function buildClientPdfHtml(
 
 export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoice) {
   const total = invoiceTotal(invoice);
+  const linesHtml = invoice.lines.length
+    ? invoiceTable(invoice).replace('<table>', '<table class="report-table report-table-compact">')
+    : invoiceTable(invoice);
 
   return `
     ${buildReportHeroHtml({
@@ -1392,9 +1401,20 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
     </section>
 
     <section>
+      <h2>Payment snapshot</h2>
+      <p class="report-section-lead">Commercial summary for issue, approval, and accounts follow-up.</p>
+      <div class="report-grid columns-4">
+        <div><strong>Invoice number</strong><br />${escapeHtml(invoice.number || 'Draft')}</div>
+        <div><strong>Total due</strong><br />${escapeHtml(fmtCurrency(total))}</div>
+        <div><strong>Issue date</strong><br />${escapeHtml(formatDate(invoice.issueDate))}</div>
+        <div><strong>Due date</strong><br />${escapeHtml(formatDate(invoice.dueDate))}</div>
+      </div>
+    </section>
+
+    <section>
       <h2>Invoice lines</h2>
       <p class="report-section-lead">Charge breakdown prepared for client issue and PDF handover.</p>
-      ${invoiceTable(invoice)}
+      ${linesHtml}
       <div class="totals">
         <strong>Total due: ${escapeHtml(fmtCurrency(total))}</strong>
       </div>

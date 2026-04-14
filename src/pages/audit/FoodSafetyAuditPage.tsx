@@ -233,6 +233,8 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
   const temperatureRows = state.temperatureLog.filter(
     (item) => safe(item.area) || safe(item.reading) || safe(item.target) || safe(item.note)
   );
+  const completedActions = actions.filter((item) => item.status === 'Done').length;
+  const openActions = Math.max(actions.length - completedActions, 0);
 
   return `
     ${buildReportHeroHtml({
@@ -260,22 +262,61 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
       ]
     })}
 
+    <div class="summary-grid">
+      <div class="meta-card"><span>Risk position</span><strong>${calc.riskLabel}</strong></div>
+      <div class="meta-card"><span>Control pass rate</span><strong>${calc.completion}%</strong></div>
+      <div class="meta-card"><span>Checks reviewed</span><strong>${calc.passCount + calc.watchCount + calc.failCount}</strong></div>
+      <div class="meta-card"><span>Fails / watches</span><strong>${calc.failCount} fail • ${calc.watchCount} watch</strong></div>
+      <div class="meta-card"><span>Action progress</span><strong>${completedActions} closed • ${openActions} open</strong></div>
+      <div class="meta-card"><span>Food hygiene rating</span><strong>${safe(state.hygieneRating) || 'Not recorded'}</strong></div>
+    </div>
+
     <section>
       <h2>Audit overview</h2>
-      <div class="report-grid">
+      <p class="report-section-lead">Site context, summary notes, and positive practice captured during the visit.</p>
+      <div class="report-columns">
+        <div>
+          <h3>Audit summary</h3>
+          <p>${safe(state.summary) || 'No summary recorded.'}</p>
+        </div>
+        <div>
+          <h3>Good practice seen</h3>
+          <p>${safe(state.goodPractice) || 'No good practice recorded.'}</p>
+        </div>
+      </div>
+      <div class="report-grid columns-4">
+        <div><strong>Site</strong><br />${safe(state.siteName) || 'Unnamed site'}</div>
+        <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
+        <div><strong>Audit date</strong><br />${formatShortDate(state.auditDate)}</div>
         <div><strong>Service period</strong><br />${safe(state.servicePeriod) || 'Not recorded'}</div>
-        <div><strong>Food hygiene rating</strong><br />${safe(state.hygieneRating) || 'Not recorded'}</div>
-        <div><strong>Overall summary</strong><br />${safe(state.summary) || 'No summary recorded'}</div>
-        <div><strong>Good practice seen</strong><br />${safe(state.goodPractice) || 'No good practice recorded'}</div>
+        <div><strong>Auditor</strong><br />${safe(state.auditorName) || 'Not recorded'}</div>
+        <div><strong>Site lead</strong><br />${safe(state.managerName) || 'Not recorded'}</div>
+        <div><strong>Active actions</strong><br />${openActions}</div>
+        <div><strong>Closed actions</strong><br />${completedActions}</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Priority safety narrative</h2>
+      <div class="report-story-grid">
+        <div class="report-story-card">
+          <h3>Critical concerns</h3>
+          <p>${safe(state.criticalConcerns) || 'No critical concerns recorded.'}</p>
+        </div>
+        <div class="report-story-card">
+          <h3>Immediate actions</h3>
+          <p>${safe(state.immediateActions) || 'No immediate actions recorded.'}</p>
+        </div>
       </div>
     </section>
 
     <section>
       <h2>Control check register</h2>
+      <p class="report-section-lead">Core compliance checks with status and supporting audit notes.</p>
       ${
         checkRows.length
           ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Area</th>
@@ -304,10 +345,11 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 
     <section>
       <h2>Temperature and holding checks</h2>
+      <p class="report-section-lead">Temperature, hot-hold, cooling, and delivery controls reviewed during the visit.</p>
       ${
         temperatureRows.length
           ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Area</th>
@@ -335,51 +377,33 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
     </section>
 
     <section>
-      <h2>Critical concerns</h2>
-      <p>${safe(state.criticalConcerns) || 'No critical concerns recorded.'}</p>
-    </section>
-
-    <section>
-      <h2>Immediate actions</h2>
-      <p>${safe(state.immediateActions) || 'No immediate actions recorded.'}</p>
-    </section>
-
-    <section>
       <h2>Area summaries and action plans</h2>
+      <p class="report-section-lead">Area-by-area summary notes and corrective actions for follow-up.</p>
       ${
         focusAreas.length
-          ? `
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Area</th>
-              <th>Summary</th>
-              <th>Action plan</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${focusAreas
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${safe(item.summary) || 'No summary recorded'}</td>
-                <td>${safe(item.actionPlan) || 'No action plan recorded'}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
+          ? `<div class="report-story-grid">
+              ${focusAreas
+                .map(
+                  (item) => `
+                <div class="report-story-card">
+                  <h3>${safe(item.area) || 'General'}</h3>
+                  <p>${safe(item.summary) || 'No summary recorded.'}</p>
+                  <p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan) || 'No action plan recorded.'}</p>
+                </div>`
+                )
+                .join('')}
+            </div>`
           : '<p class="muted-copy">No area summaries recorded.</p>'
       }
     </section>
 
     <section>
       <h2>Action register</h2>
+      <p class="report-section-lead">Assigned actions, owners, and target dates for operational follow-up.</p>
       ${
         actions.length
           ? `
-        <table class="report-table">
+        <table class="report-table report-table-compact">
           <thead>
             <tr>
               <th>Action</th>
