@@ -68,6 +68,7 @@ export function ClientIntakePage() {
   );
   const [message, setMessage] = useState('Opening enquiry form...');
   const [submitting, setSubmitting] = useState(false);
+  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -85,8 +86,14 @@ export function ClientIntakePage() {
         }
 
         setSharePayload(share.payload ?? {});
-        setStatus('ready');
+        setShowWelcomeAnimation(true);
         setMessage('');
+        
+        // Hide animation after completion, then show form
+        setTimeout(() => {
+          setShowWelcomeAnimation(false);
+          setStatus('ready');
+        }, 1650);
       })
       .catch((error) => {
         setStatus('error');
@@ -171,6 +178,31 @@ export function ClientIntakePage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (showWelcomeAnimation) {
+    return (
+      <div className="auth-page">
+        <div className="login-brand-animation">
+          <div className="login-animation-stage">
+            <div className="login-animation-kicker">Enquiry form ready</div>
+            <div className="login-animation-logo">
+              <strong>The Final Check</strong>
+              <span>Opening your enquiry form</span>
+            </div>
+            <div className="login-animation-line">
+              <span className="login-animation-line-core" />
+              <span className="login-animation-line-glow" />
+            </div>
+            <div className="login-animation-orbit">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (status !== 'ready') {
