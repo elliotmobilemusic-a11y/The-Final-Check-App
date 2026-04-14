@@ -29,6 +29,15 @@ export function listLocalToolRecords<T>(storageKey: string): LocalToolRecord<T>[
   });
 }
 
+export function listLocalToolRecordsForClient<T extends { clientId?: string | null }>(
+  storageKey: string,
+  clientId: string
+): LocalToolRecord<T>[] {
+  return listLocalToolRecords<T>(storageKey).filter(
+    (record) => record.data?.clientId === clientId
+  );
+}
+
 export function getLocalToolRecord<T>(storageKey: string, id: string) {
   return readRecords<T>(storageKey).find((record) => record.id === id) ?? null;
 }

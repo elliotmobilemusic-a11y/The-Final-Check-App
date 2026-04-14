@@ -105,6 +105,8 @@ export function createEmptyClientData(): ClientProfileData {
       portalNote: '',
       visibilityMode: 'all',
       hiddenAuditIds: [],
+      hiddenFoodSafetyIds: [],
+      hiddenMysteryShopIds: [],
       hiddenMenuIds: [],
       lastPublishedAt: ''
     }
@@ -133,6 +135,8 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
       ...empty.portal,
       ...data?.portal,
       hiddenAuditIds: data?.portal?.hiddenAuditIds ?? [],
+      hiddenFoodSafetyIds: data?.portal?.hiddenFoodSafetyIds ?? [],
+      hiddenMysteryShopIds: data?.portal?.hiddenMysteryShopIds ?? [],
       hiddenMenuIds: data?.portal?.hiddenMenuIds ?? []
     },
     accountScope: data?.accountScope ?? empty.accountScope,

@@ -14,7 +14,14 @@ import {
 import { getClientById, updateClient } from '../../services/clients';
 import { deleteAudit, listAudits } from '../../services/audits';
 import { deleteMenuProject, listMenuProjects } from '../../services/menus';
-import { createClientPortalShare, createKitchenAuditShare, createMenuShare } from '../../services/reportShares';
+import { listLocalToolRecordsForClient } from '../../services/localToolStore';
+import {
+  createClientPortalShare,
+  createFoodSafetyShare,
+  createKitchenAuditShare,
+  createMenuShare,
+  createMysteryShopShare
+} from '../../services/reportShares';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditFormState,
@@ -29,7 +36,10 @@ import type {
   ClientSite,
   ClientTask,
   ClientTimelineItem,
+  FoodSafetyAuditState,
+  LocalToolRecord,
   MenuProjectState,
+  MysteryShopAuditState,
   SupabaseRecord
 } from '../../types';
 import { fmtCurrency, num, safe, todayIso, uid } from '../../lib/utils';
@@ -262,6 +272,9 @@ function clientDraftKey(clientId: string) {
   return `client-profile-draft-${clientId}`;
 }
 
+const FOOD_SAFETY_STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
+const MYSTERY_SHOP_STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
   const { runWithActivity } = useActivityOverlay();
@@ -270,7 +283,13 @@ export function ClientProfilePage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<ClientProfile | null>(null);
   const [audits, setAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
+  const [foodSafetyAudits, setFoodSafetyAudits] = useState<LocalToolRecord<FoodSafetyAuditState>[]>(
+    []
+  );
   const [menus, setMenus] = useState<SupabaseRecord<MenuProjectState>[]>([]);
+  const [mysteryShopAudits, setMysteryShopAudits] = useState<
+    LocalToolRecord<MysteryShopAuditState>[]
+  >([]);
   const [message, setMessage] = useState('Client loaded.');
   const [saving, setSaving] = useState(false);
   const [lookupQuery, setLookupQuery] = useState('');
@@ -304,6 +323,12 @@ export function ClientProfilePage() {
       }
       setAudits(auditRows);
       setMenus(menuRows);
+      setFoodSafetyAudits(
+        listLocalToolRecordsForClient<FoodSafetyAuditState>(FOOD_SAFETY_STORAGE_KEY, clientId)
+      );
+      setMysteryShopAudits(
+        listLocalToolRecordsForClient<MysteryShopAuditState>(MYSTERY_SHOP_STORAGE_KEY, clientId)
+      );
     }
 
     if (clientId) {
@@ -341,7 +366,6 @@ export function ClientProfilePage() {
   }, [client]);
 
   const nextReviewState = useMemo(() => daysUntil(form?.nextReviewDate), [form?.nextReviewDate]);
-  const linkedWorkstreams = audits.length + menus.length;
   const primaryContact =
     form?.data.contacts.find((contact) => contact.isPrimary) ?? form?.data.contacts[0] ?? null;
   const pipelineValue = useMemo(
@@ -371,6 +395,9 @@ export function ClientProfilePage() {
         .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0)
     };
   }, [form?.data.invoices]);
+  const portalResourceCount =
+    audits.length + foodSafetyAudits.length + mysteryShopAudits.length + menus.length;
+  const linkedWorkstreams = portalResourceCount;
   const scopedLookupResults = useMemo(() => {
     if (lookupScope === 'all') return lookupResults;
     return lookupResults.filter((result) =>
@@ -459,6 +486,28 @@ export function ClientProfilePage() {
     }
 
     updatePortal('hiddenMenuIds', [...hiddenIds]);
+  }
+
+  function togglePortalFoodSafety(auditId: string, visible: boolean) {
+    const hiddenIds = new Set(activeForm.data.portal.hiddenFoodSafetyIds);
+    if (visible) {
+      hiddenIds.delete(auditId);
+    } else {
+      hiddenIds.add(auditId);
+    }
+
+    updatePortal('hiddenFoodSafetyIds', [...hiddenIds]);
+  }
+
+  function togglePortalMysteryShop(auditId: string, visible: boolean) {
+    const hiddenIds = new Set(activeForm.data.portal.hiddenMysteryShopIds);
+    if (visible) {
+      hiddenIds.delete(auditId);
+    } else {
+      hiddenIds.add(auditId);
+    }
+
+    updatePortal('hiddenMysteryShopIds', [...hiddenIds]);
   }
 
   function updateContact(id: string, key: keyof ClientContact, value: string | boolean) {
@@ -777,6 +826,12 @@ function removeInvoice(invoiceId: string) {
           const visibleAudits = audits.filter(
             (audit) => !activeForm.data.portal.hiddenAuditIds.includes(audit.id)
           );
+          const visibleFoodSafetyAudits = foodSafetyAudits.filter(
+            (audit) => !activeForm.data.portal.hiddenFoodSafetyIds.includes(audit.id)
+          );
+          const visibleMysteryShopAudits = mysteryShopAudits.filter(
+            (audit) => !activeForm.data.portal.hiddenMysteryShopIds.includes(audit.id)
+          );
           const visibleMenus = menus.filter(
             (menu) => !activeForm.data.portal.hiddenMenuIds.includes(menu.id)
           );
@@ -801,6 +856,56 @@ function removeInvoice(invoiceId: string) {
                 locked,
                 lockReason: locked
                   ? 'This audit will unlock once the related work is marked as paid.'
+                  : ''
+              };
+            })
+          );
+
+          const foodSafetyResources = await Promise.all(
+            visibleFoodSafetyAudits.map(async (audit) => {
+              const locked = paymentLockActive;
+              const share = locked
+                ? null
+                : await createFoodSafetyShare({
+                    ...audit.data,
+                    id: audit.id
+                  });
+
+              return {
+                id: `food-safety:${audit.id}`,
+                title: audit.title,
+                kind: 'food_safety' as const,
+                subtitle: audit.siteName || 'Linked site',
+                reviewDate: audit.reviewDate,
+                url: share?.url ?? null,
+                locked,
+                lockReason: locked
+                  ? 'This food safety audit will unlock once the related work is marked as paid.'
+                  : ''
+              };
+            })
+          );
+
+          const mysteryShopResources = await Promise.all(
+            visibleMysteryShopAudits.map(async (audit) => {
+              const locked = paymentLockActive;
+              const share = locked
+                ? null
+                : await createMysteryShopShare({
+                    ...audit.data,
+                    id: audit.id
+                  });
+
+              return {
+                id: `mystery-shop:${audit.id}`,
+                title: audit.title,
+                kind: 'mystery_shop' as const,
+                subtitle: audit.siteName || 'Linked site',
+                reviewDate: audit.reviewDate,
+                url: share?.url ?? null,
+                locked,
+                lockReason: locked
+                  ? 'This mystery shop audit will unlock once the related work is marked as paid.'
                   : ''
               };
             })
@@ -866,7 +971,12 @@ function removeInvoice(invoiceId: string) {
                 dueDate: task.dueDate,
                 status: task.status
               })),
-            resources: [...auditResources, ...menuResources].sort((left, right) =>
+            resources: [
+              ...auditResources,
+              ...foodSafetyResources,
+              ...mysteryShopResources,
+              ...menuResources
+            ].sort((left, right) =>
               (right.reviewDate || '').localeCompare(left.reviewDate || '')
             ),
             publishedAt: new Date().toISOString()
@@ -1049,6 +1159,10 @@ function removeInvoice(invoiceId: string) {
                   {portalHasOutstandingInvoices ? 'Outstanding balance' : 'Clear to release'}
                 </strong>
               </div>
+              <div className="mini-box">
+                <span>Linked forms</span>
+                <strong>{portalResourceCount}</strong>
+              </div>
             </div>
 
             {portalLink ? (
@@ -1143,6 +1257,128 @@ function removeInvoice(invoiceId: string) {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Linked food safety audits</h3>
+              <p className="muted-copy">
+                Compliance reviews stored against this client and ready for portal release.
+              </p>
+            </div>
+            <div className="saved-actions">
+              <span className="soft-pill">{foodSafetyAudits.length}</span>
+              <Link className="button button-secondary" to={`/food-safety?client=${linkedClientId}`}>
+                New food safety
+              </Link>
+            </div>
+          </div>
+          <div className="panel-body stack gap-12">
+            {foodSafetyAudits.length === 0 ? (
+              <div className="muted-copy">No food safety audits yet.</div>
+            ) : null}
+            {foodSafetyAudits.map((audit) => (
+              <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
+                <div className="workstream-item-main">
+                  <strong>{audit.title}</strong>
+                  <div className="saved-meta">{audit.siteName || 'Linked site'}</div>
+                  <div className="workstream-meta-row">
+                    <span>Review {formatShortDate(audit.reviewDate || audit.updatedAt)}</span>
+                    <span>Last updated {formatShortDate(audit.updatedAt)}</span>
+                  </div>
+                </div>
+                <div className="saved-actions">
+                  {editing ? (
+                    <label className="field" style={{ minWidth: 148 }}>
+                      <span>Portal</span>
+                      <select
+                        className="input"
+                        value={
+                          activeForm.data.portal.hiddenFoodSafetyIds.includes(audit.id)
+                            ? 'hidden'
+                            : 'visible'
+                        }
+                        onChange={(event) =>
+                          togglePortalFoodSafety(audit.id, event.target.value === 'visible')
+                        }
+                      >
+                        <option value="visible">Visible in portal</option>
+                        <option value="hidden">Hidden in portal</option>
+                      </select>
+                    </label>
+                  ) : null}
+                  <Link
+                    className="button button-ghost"
+                    to={`/food-safety?client=${linkedClientId}&load=${audit.id}`}
+                  >
+                    Open
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Linked mystery shop audits</h3>
+              <p className="muted-copy">
+                Guest-experience reviews already attached to this client record.
+              </p>
+            </div>
+            <div className="saved-actions">
+              <span className="soft-pill">{mysteryShopAudits.length}</span>
+              <Link className="button button-secondary" to={`/mystery-shop?client=${linkedClientId}`}>
+                New mystery shop
+              </Link>
+            </div>
+          </div>
+          <div className="panel-body stack gap-12">
+            {mysteryShopAudits.length === 0 ? (
+              <div className="muted-copy">No mystery shop audits yet.</div>
+            ) : null}
+            {mysteryShopAudits.map((audit) => (
+              <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
+                <div className="workstream-item-main">
+                  <strong>{audit.title}</strong>
+                  <div className="saved-meta">{audit.siteName || 'Linked site'}</div>
+                  <div className="workstream-meta-row">
+                    <span>Review {formatShortDate(audit.reviewDate || audit.updatedAt)}</span>
+                    <span>Last updated {formatShortDate(audit.updatedAt)}</span>
+                  </div>
+                </div>
+                <div className="saved-actions">
+                  {editing ? (
+                    <label className="field" style={{ minWidth: 148 }}>
+                      <span>Portal</span>
+                      <select
+                        className="input"
+                        value={
+                          activeForm.data.portal.hiddenMysteryShopIds.includes(audit.id)
+                            ? 'hidden'
+                            : 'visible'
+                        }
+                        onChange={(event) =>
+                          togglePortalMysteryShop(audit.id, event.target.value === 'visible')
+                        }
+                      >
+                        <option value="visible">Visible in portal</option>
+                        <option value="hidden">Hidden in portal</option>
+                      </select>
+                    </label>
+                  ) : null}
+                  <Link
+                    className="button button-ghost"
+                    to={`/mystery-shop?client=${linkedClientId}&load=${audit.id}`}
+                  >
+                    Open
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

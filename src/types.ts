@@ -294,6 +294,8 @@ export type ClientPortalSettings = {
   portalNote: string;
   visibilityMode: ClientPortalVisibilityMode;
   hiddenAuditIds: string[];
+  hiddenFoodSafetyIds: string[];
+  hiddenMysteryShopIds: string[];
   hiddenMenuIds: string[];
   lastPublishedAt: string;
 };
@@ -301,7 +303,7 @@ export type ClientPortalSettings = {
 export type ClientPortalResource = {
   id: string;
   title: string;
-  kind: 'audit' | 'menu';
+  kind: 'audit' | 'food_safety' | 'mystery_shop' | 'menu';
   subtitle: string;
   reviewDate: string | null;
   url: string | null;
