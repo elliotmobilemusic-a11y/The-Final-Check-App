@@ -4615,12 +4615,8 @@ body[data-theme="midnight"] .data-table td {
   transform-origin: center top;
 }
 
-.workspace-transition-shell.is-exiting {
-  animation: workspaceExit 120ms ease forwards;
-}
-
-.workspace-transition-shell.is-entering {
-  animation: workspaceEnter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.workspace-transition-shell.reduced-motion {
+  animation: none;
 }
 
 @keyframes workspaceEnter {
@@ -4633,19 +4629,6 @@ body[data-theme="midnight"] .data-table td {
     opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0);
-  }
-}
-
-@keyframes workspaceExit {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-6px) scale(1.002);
-    filter: blur(2px);
   }
 }
 

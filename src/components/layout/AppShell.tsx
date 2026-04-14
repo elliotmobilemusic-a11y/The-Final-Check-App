@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useLocation, useNavigate, useOutlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -76,16 +76,12 @@ function normalizeAvatarUrl(value?: string | null) {
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const outlet = useOutlet();
   const { session } = useAuth();
   const { preferences } = usePreferences();
   const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
-  const [renderedOutlet, setRenderedOutlet] = useState(outlet);
-  const [pageTransitionStage, setPageTransitionStage] = useState<'idle' | 'exit' | 'enter'>('idle');
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
-  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const disableAutoHideNav = location.pathname.startsWith('/settings');
 
   // Global scroll handler that lives forever
@@ -172,36 +168,6 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (preferences.reducedMotion) {
-      setRenderedOutlet(outlet);
-      setPageTransitionStage('idle');
-      return;
-    }
-
-    setPageTransitionStage('exit');
-
-    if (transitionTimeoutRef.current) {
-      clearTimeout(transitionTimeoutRef.current);
-    }
-
-    transitionTimeoutRef.current = setTimeout(() => {
-      setRenderedOutlet(outlet);
-      setPageTransitionStage('enter');
-
-      transitionTimeoutRef.current = setTimeout(() => {
-        setPageTransitionStage('idle');
-        transitionTimeoutRef.current = null;
-      }, 260);
-    }, 110);
-
-    return () => {
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
-    };
-  }, [location.key, outlet, preferences.reducedMotion]);
-
-  useEffect(() => {
     document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
   }, [navExpanded]);
 
@@ -283,15 +249,10 @@ export function AppShell() {
             visible={Boolean(activity)}
           />
           <div
-            className={`workspace-transition-shell ${
-              pageTransitionStage === 'exit'
-                ? 'is-exiting'
-                : pageTransitionStage === 'enter'
-                  ? 'is-entering'
-                  : ''
-            }`}
+            className={`workspace-transition-shell ${preferences.reducedMotion ? 'reduced-motion' : ''}`}
+            key={location.pathname}
           >
-            {renderedOutlet}
+            <Outlet />
           </div>
         </main>
       </div>
