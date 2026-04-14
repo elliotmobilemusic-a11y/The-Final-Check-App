@@ -14,6 +14,7 @@ import {
 import { getClientById, updateClient } from '../../services/clients';
 import { deleteAudit, listAudits } from '../../services/audits';
 import { deleteMenuProject, listMenuProjects } from '../../services/menus';
+import { createClientPortalShare, createKitchenAuditShare, createMenuShare } from '../../services/reportShares';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditFormState,
@@ -22,6 +23,8 @@ import type {
   ClientInvoice,
   ClientInvoiceLine,
   ClientProfile,
+  ClientPortalSettings,
+  ClientPortalSharePayload,
   ClientProfileData,
   ClientSite,
   ClientTask,
@@ -97,6 +100,12 @@ function reviewLabel(value?: string | null) {
   if (delta < 0) return `${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} overdue`;
   if (delta === 0) return 'Due today';
   return `Due in ${delta} day${delta === 1 ? '' : 's'}`;
+}
+
+function hasOutstandingInvoices(profile: ClientProfile) {
+  return profile.data.invoices.some(
+    (invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled'
+  );
 }
 
 function blankContact(): ClientContact {
@@ -273,6 +282,7 @@ export function ClientProfilePage() {
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
   const [deletingWorkKey, setDeletingWorkKey] = useState<string | null>(null);
+  const [publishingPortal, setPublishingPortal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -391,6 +401,13 @@ export function ClientProfilePage() {
     );
   }
 
+  const activeClient = client;
+  const activeForm = form;
+  const portalLink = activeForm.data.portal.token
+    ? `${window.location.origin}/#/portal/client/${activeForm.data.portal.token}`
+    : '';
+  const portalHasOutstandingInvoices = hasOutstandingInvoices(activeForm);
+
   function updateField<K extends keyof ClientProfile>(key: K, value: ClientProfile[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
   }
@@ -410,6 +427,38 @@ export function ClientProfilePage() {
           }
         : current
     );
+  }
+
+  function updatePortal<K extends keyof ClientPortalSettings>(
+    key: K,
+    value: ClientPortalSettings[K]
+  ) {
+    updateData('portal', {
+      ...activeForm.data.portal,
+      [key]: value
+    });
+  }
+
+  function togglePortalAudit(auditId: string, visible: boolean) {
+    const hiddenIds = new Set(activeForm.data.portal.hiddenAuditIds);
+    if (visible) {
+      hiddenIds.delete(auditId);
+    } else {
+      hiddenIds.add(auditId);
+    }
+
+    updatePortal('hiddenAuditIds', [...hiddenIds]);
+  }
+
+  function togglePortalMenu(menuId: string, visible: boolean) {
+    const hiddenIds = new Set(activeForm.data.portal.hiddenMenuIds);
+    if (visible) {
+      hiddenIds.delete(menuId);
+    } else {
+      hiddenIds.add(menuId);
+    }
+
+    updatePortal('hiddenMenuIds', [...hiddenIds]);
   }
 
   function updateContact(id: string, key: keyof ClientContact, value: string | boolean) {
@@ -709,6 +758,155 @@ function removeInvoice(invoiceId: string) {
     return record.site_name || 'Account level';
   }
 
+  async function handlePublishPortal() {
+    if (!linkedClientId) return;
+
+    try {
+      setPublishingPortal(true);
+      await runWithActivity(
+        {
+          kicker: 'Client portal',
+          title: 'Publishing portal access',
+          detail:
+            'Preparing the client portal, applying visibility rules, and releasing the latest linked work.'
+        },
+        async () => {
+          const paymentLockActive =
+            activeForm.data.portal.visibilityMode === 'paid_only' && hasOutstandingInvoices(activeForm);
+
+          const visibleAudits = audits.filter(
+            (audit) => !activeForm.data.portal.hiddenAuditIds.includes(audit.id)
+          );
+          const visibleMenus = menus.filter(
+            (menu) => !activeForm.data.portal.hiddenMenuIds.includes(menu.id)
+          );
+
+          const auditResources = await Promise.all(
+            visibleAudits.map(async (audit) => {
+              const locked = paymentLockActive;
+              const share = locked
+                ? null
+                : await createKitchenAuditShare({
+                    ...audit.data,
+                    id: audit.id
+                  });
+
+              return {
+                id: `audit:${audit.id}`,
+                title: audit.title,
+                kind: 'audit' as const,
+                subtitle: workstreamSiteLabel(audit),
+                reviewDate: audit.review_date,
+                url: share?.url ?? null,
+                locked,
+                lockReason: locked
+                  ? 'This audit will unlock once the related work is marked as paid.'
+                  : ''
+              };
+            })
+          );
+
+          const menuResources = await Promise.all(
+            visibleMenus.map(async (menu) => {
+              const locked = paymentLockActive;
+              const share = locked
+                ? null
+                : await createMenuShare({
+                    ...menu.data,
+                    id: menu.id
+                  });
+
+              return {
+                id: `menu:${menu.id}`,
+                title: menu.title,
+                kind: 'menu' as const,
+                subtitle: workstreamSiteLabel(menu),
+                reviewDate: menu.review_date,
+                url: share?.url ?? null,
+                locked,
+                lockReason: locked
+                  ? 'This resource will unlock once the related work is marked as paid.'
+                  : ''
+              };
+            })
+          );
+
+          const payload: ClientPortalSharePayload = {
+            clientId: linkedClientId,
+            clientName: activeForm.companyName,
+            status: activeForm.status,
+            industry: activeForm.industry,
+            location: activeForm.location,
+            logoUrl: activeForm.logoUrl,
+            coverUrl: activeForm.coverUrl,
+            nextReviewDate: activeForm.nextReviewDate,
+            welcomeTitle:
+              activeForm.data.portal.welcomeTitle.trim() ||
+              `Welcome to ${activeForm.companyName || 'your'} portal`,
+            welcomeMessage:
+              activeForm.data.portal.welcomeMessage.trim() ||
+              'Your latest reports, reviews, and released action plans will appear here.',
+            portalNote: activeForm.data.portal.portalNote,
+            visibilityMode: activeForm.data.portal.visibilityMode,
+            hasOutstandingInvoices: hasOutstandingInvoices(activeForm),
+            outstandingInvoiceValue: activeForm.data.invoices
+              .filter((invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled')
+              .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0),
+            paidInvoiceValue: activeForm.data.invoices
+              .filter((invoice) => invoice.status === 'Paid')
+              .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0),
+            openTaskCount: activeForm.data.tasks.filter((task) => task.status !== 'Done').length,
+            tasks: activeForm.data.tasks
+              .filter((task) => task.status !== 'Done')
+              .slice(0, 8)
+              .map((task) => ({
+                id: task.id,
+                title: task.title,
+                owner: task.owner,
+                dueDate: task.dueDate,
+                status: task.status
+              })),
+            resources: [...auditResources, ...menuResources].sort((left, right) =>
+              (right.reviewDate || '').localeCompare(left.reviewDate || '')
+            ),
+            publishedAt: new Date().toISOString()
+          };
+
+          const portalShare = await createClientPortalShare(linkedClientId, payload);
+          const nextForm: ClientProfile = {
+            ...activeForm,
+            data: {
+              ...activeForm.data,
+              portal: {
+                ...activeForm.data.portal,
+                token: portalShare.token,
+                lastPublishedAt: payload.publishedAt
+              }
+            }
+          };
+
+          const updated = await updateClient(linkedClientId, nextForm);
+          const nextProfile = clientRecordToProfile(updated);
+          clearDraft(clientDraftKey(linkedClientId));
+          setClient(nextProfile);
+          setForm(nextProfile);
+          setMessage('Client portal updated and ready to share.');
+
+          try {
+            await navigator.clipboard.writeText(portalShare.url);
+            setMessage('Client portal updated and copied to clipboard.');
+          } catch {
+            setMessage(`Client portal updated: ${portalShare.url}`);
+          }
+        }
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not publish the client portal.');
+    } finally {
+      setPublishingPortal(false);
+    }
+  }
+
   async function handleDeleteAuditRecord(audit: SupabaseRecord<AuditFormState>) {
     const confirmed = window.confirm(
       `Delete the audit "${audit.title}" from this client? This cannot be undone.`
@@ -751,6 +949,140 @@ function removeInvoice(invoiceId: string) {
         <div className="panel">
           <div className="panel-header">
             <div>
+              <h3>Client portal</h3>
+              <p className="muted-copy">
+                Create a dedicated client link with released reports, action plans, and payment-based access control.
+              </p>
+            </div>
+            <div className="saved-actions">
+              <span className="soft-pill">
+                {activeForm.data.portal.enabled ? 'Enabled' : 'Hidden'}
+              </span>
+              <button
+                className="button button-primary"
+                disabled={publishingPortal || !activeForm.data.portal.enabled}
+                onClick={handlePublishPortal}
+              >
+                {publishingPortal ? 'Publishing...' : 'Publish portal'}
+              </button>
+            </div>
+          </div>
+          <div className="panel-body stack gap-12">
+            <div className="form-grid two-columns">
+              <label className="field">
+                <span>Portal enabled</span>
+                <select
+                  className="input"
+                  value={activeForm.data.portal.enabled ? 'enabled' : 'disabled'}
+                  onChange={(event) => updatePortal('enabled', event.target.value === 'enabled')}
+                  disabled={!editing}
+                >
+                  <option value="enabled">Enabled</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Release rule</span>
+                <select
+                  className="input"
+                  value={activeForm.data.portal.visibilityMode}
+                  onChange={(event) =>
+                    updatePortal(
+                      'visibilityMode',
+                      event.target.value as ClientPortalSettings['visibilityMode']
+                    )
+                  }
+                  disabled={!editing}
+                >
+                  <option value="all">Show linked work immediately</option>
+                  <option value="paid_only">Hide linked work until invoices are paid</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Portal headline</span>
+              <input
+                className="input"
+                value={activeForm.data.portal.welcomeTitle}
+                onChange={(event) => updatePortal('welcomeTitle', event.target.value)}
+                disabled={!editing}
+              />
+            </label>
+
+            <label className="field">
+              <span>Welcome message</span>
+              <textarea
+                className="input textarea"
+                value={activeForm.data.portal.welcomeMessage}
+                onChange={(event) => updatePortal('welcomeMessage', event.target.value)}
+                disabled={!editing}
+              />
+            </label>
+
+            <label className="field">
+              <span>Portal note</span>
+              <textarea
+                className="input textarea"
+                value={activeForm.data.portal.portalNote}
+                onChange={(event) => updatePortal('portalNote', event.target.value)}
+                disabled={!editing}
+              />
+            </label>
+
+            <div className="mini-grid">
+              <div className="mini-box">
+                <span>Portal link</span>
+                <strong>{portalLink ? 'Ready' : 'Not published yet'}</strong>
+              </div>
+              <div className="mini-box">
+                <span>Release mode</span>
+                <strong>
+                  {activeForm.data.portal.visibilityMode === 'paid_only'
+                    ? 'Paid unlock'
+                    : 'Immediate release'}
+                </strong>
+              </div>
+              <div className="mini-box">
+                <span>Invoice state</span>
+                <strong>
+                  {portalHasOutstandingInvoices ? 'Outstanding balance' : 'Clear to release'}
+                </strong>
+              </div>
+            </div>
+
+            {portalLink ? (
+              <div className="share-link-row">
+                <input
+                  className="input"
+                  readOnly
+                  value={portalLink}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+                <button
+                  className="button button-secondary"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(portalLink);
+                      setMessage('Client portal link copied to clipboard.');
+                    } catch {
+                      setMessage(`Client portal link: ${portalLink}`);
+                    }
+                  }}
+                >
+                  Copy
+                </button>
+                <a className="button button-ghost" href={portalLink} target="_blank" rel="noreferrer">
+                  Open
+                </a>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
               <h3>Linked audits</h3>
               <p className="muted-copy">
                 Operational reviews already connected to this account.
@@ -779,6 +1111,21 @@ function removeInvoice(invoiceId: string) {
                     </div>
                   </div>
                   <div className="saved-actions">
+                    {editing ? (
+                      <label className="field" style={{ minWidth: 148 }}>
+                        <span>Portal</span>
+                        <select
+                          className="input"
+                          value={activeForm.data.portal.hiddenAuditIds.includes(audit.id) ? 'hidden' : 'visible'}
+                          onChange={(event) =>
+                            togglePortalAudit(audit.id, event.target.value === 'visible')
+                          }
+                        >
+                          <option value="visible">Visible in portal</option>
+                          <option value="hidden">Hidden in portal</option>
+                        </select>
+                      </label>
+                    ) : null}
                     <Link
                       className="button button-ghost"
                       to={`/audit?client=${linkedClientId}&load=${audit.id}`}
@@ -830,6 +1177,21 @@ function removeInvoice(invoiceId: string) {
                     </div>
                   </div>
                   <div className="saved-actions">
+                    {editing ? (
+                      <label className="field" style={{ minWidth: 148 }}>
+                        <span>Portal</span>
+                        <select
+                          className="input"
+                          value={activeForm.data.portal.hiddenMenuIds.includes(menu.id) ? 'hidden' : 'visible'}
+                          onChange={(event) =>
+                            togglePortalMenu(menu.id, event.target.value === 'visible')
+                          }
+                        >
+                          <option value="visible">Visible in portal</option>
+                          <option value="hidden">Hidden in portal</option>
+                        </select>
+                      </label>
+                    ) : null}
                     <Link
                       className="button button-ghost"
                       to={`/menu?client=${linkedClientId}&load=${menu.id}`}

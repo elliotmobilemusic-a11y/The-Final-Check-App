@@ -95,7 +95,19 @@ export function createEmptyClientData(): ClientProfileData {
     vatNumber: '',
     companyNumber: '',
     deals: [],
-    invoices: []
+    invoices: [],
+    portal: {
+      enabled: true,
+      token: '',
+      welcomeTitle: 'Welcome back',
+      welcomeMessage:
+        'Your latest reviews, actions, and shared commercial work will appear here as they are released.',
+      portalNote: '',
+      visibilityMode: 'all',
+      hiddenAuditIds: [],
+      hiddenMenuIds: [],
+      lastPublishedAt: ''
+    }
   };
 }
 
@@ -117,6 +129,12 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
     paymentTermsDays: Number(data?.paymentTermsDays ?? empty.paymentTermsDays) || 30,
     deals: normalizeDeals(data?.deals),
     invoices: normalizeInvoices(data?.invoices),
+    portal: {
+      ...empty.portal,
+      ...data?.portal,
+      hiddenAuditIds: data?.portal?.hiddenAuditIds ?? [],
+      hiddenMenuIds: data?.portal?.hiddenMenuIds ?? []
+    },
     accountScope: data?.accountScope ?? empty.accountScope,
     operatingCountry: data?.operatingCountry ?? empty.operatingCountry,
     relationshipHealth: data?.relationshipHealth ?? 'Strong'

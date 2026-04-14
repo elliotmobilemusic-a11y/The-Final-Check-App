@@ -68,6 +68,9 @@ const SharedMenuPage = lazy(() =>
 const ClientIntakePage = lazy(() =>
   import('./pages/share/ClientIntakePage').then((module) => ({ default: module.ClientIntakePage }))
 );
+const ClientPortalPage = lazy(() =>
+  import('./pages/share/ClientPortalPage').then((module) => ({ default: module.ClientPortalPage }))
+);
 
 function HomeRedirect() {
   const { preferences } = usePreferences();
@@ -99,6 +102,7 @@ export default function App() {
         <Route path="/share/mystery-shop/:token" element={<SharedMysteryShopAuditPage />} />
         <Route path="/share/menu/:token" element={<SharedMenuPage />} />
         <Route path="/intake/client/:token" element={<ClientIntakePage />} />
+        <Route path="/portal/client/:token" element={<ClientPortalPage />} />
 
         <Route path="/*" element={<PrivateApp />}>
           <Route index element={<HomeRedirect />} />

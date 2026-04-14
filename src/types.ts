@@ -284,6 +284,59 @@ export interface ReportShareRecord<T = Record<string, unknown>> {
   updated_at: string;
 }
 
+export type ClientPortalVisibilityMode = 'all' | 'paid_only';
+
+export type ClientPortalSettings = {
+  enabled: boolean;
+  token: string;
+  welcomeTitle: string;
+  welcomeMessage: string;
+  portalNote: string;
+  visibilityMode: ClientPortalVisibilityMode;
+  hiddenAuditIds: string[];
+  hiddenMenuIds: string[];
+  lastPublishedAt: string;
+};
+
+export type ClientPortalResource = {
+  id: string;
+  title: string;
+  kind: 'audit' | 'menu';
+  subtitle: string;
+  reviewDate: string | null;
+  url: string | null;
+  locked: boolean;
+  lockReason: string;
+};
+
+export type ClientPortalSharePayload = {
+  clientId: string;
+  clientName: string;
+  status: string;
+  industry: string;
+  location: string;
+  logoUrl: string;
+  coverUrl: string;
+  nextReviewDate: string;
+  welcomeTitle: string;
+  welcomeMessage: string;
+  portalNote: string;
+  visibilityMode: ClientPortalVisibilityMode;
+  hasOutstandingInvoices: boolean;
+  outstandingInvoiceValue: number;
+  paidInvoiceValue: number;
+  openTaskCount: number;
+  tasks: Array<{
+    id: string;
+    title: string;
+    owner: string;
+    dueDate: string;
+    status: string;
+  }>;
+  resources: ClientPortalResource[];
+  publishedAt: string;
+};
+
 export type ClientIntakeSharePayload = {
   message?: string;
   presetAccountOwner?: string;
@@ -405,6 +458,7 @@ export type ClientProfileData = {
   companyNumber: string;
   deals: ClientDeal[];
   invoices: ClientInvoice[];
+  portal: ClientPortalSettings;
 };
 
 export type ClientProfile = {

@@ -1,6 +1,7 @@
 import { supabasePublic } from '../lib/supabase-public';
 import type {
   AuditFormState,
+  ClientPortalSharePayload,
   FoodSafetyAuditState,
   MenuProjectState,
   MysteryShopAuditState,
@@ -9,6 +10,7 @@ import type {
 
 type ReportShareType =
   | 'generic_report'
+  | 'client_portal'
   | 'kitchen_audit'
   | 'food_safety_audit'
   | 'mystery_shop_audit'
@@ -71,12 +73,47 @@ async function createShareRecord<T>({
     is_public: true
   };
 
-  const { data, error } = await supabase.from('report_shares').insert(body).select('*').single();
+  let data: ReportShareRecord<T> | null = null;
 
-  if (error) throw normalizeShareError(error);
+  if (sourceRecordId) {
+    const { data: existing, error: existingError } = await supabase
+      .from('report_shares')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('report_type', reportType)
+      .eq('source_record_id', sourceRecordId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) throw normalizeShareError(existingError);
+
+    if (existing) {
+      const { data: updated, error: updateError } = await supabase
+        .from('report_shares')
+        .update({
+          title,
+          payload,
+          is_public: true,
+          expires_at: null
+        })
+        .eq('id', existing.id)
+        .select('*')
+        .single();
+
+      if (updateError) throw normalizeShareError(updateError);
+      data = updated as ReportShareRecord<T>;
+    }
+  }
+
+  if (!data) {
+    const { data: inserted, error } = await supabase.from('report_shares').insert(body).select('*').single();
+    if (error) throw normalizeShareError(error);
+    data = inserted as ReportShareRecord<T>;
+  }
 
   return {
-    ...(data as ReportShareRecord<T>),
+    ...data,
     url: buildShareUrl(path, data.token)
   };
 }
@@ -109,6 +146,20 @@ export async function createReportShare(clientId: string | null, reportData: Rec
 
 export async function getReportShareByToken(token: string) {
   return getPublicShareByToken<Record<string, unknown>>(token, 'generic_report');
+}
+
+export async function createClientPortalShare(clientId: string, payload: ClientPortalSharePayload) {
+  return createShareRecord<ClientPortalSharePayload>({
+    path: '/portal/client',
+    payload,
+    reportType: 'client_portal',
+    sourceRecordId: clientId,
+    title: `${payload.clientName || 'Client'} portal`
+  });
+}
+
+export async function getClientPortalShareByToken(token: string) {
+  return getPublicShareByToken<ClientPortalSharePayload>(token, 'client_portal');
 }
 
 export async function createKitchenAuditShare(auditData: AuditFormState) {
