@@ -15,11 +15,11 @@ function createShareToken() {
 function normalizeShareError(error: unknown): Error {
   if (error instanceof Error && /failed to fetch/i.test(error.message)) {
     return new Error(
-      'Supabase could not reach the intake link service. Run the latest schema.sql in your active Supabase project, then redeploy or refresh the app.'
+      'Supabase could not reach the enquiry link service. Run the latest schema.sql in your active Supabase project, then redeploy or refresh the app.'
     );
   }
 
-  return error instanceof Error ? error : new Error('Could not reach the intake link service.');
+  return error instanceof Error ? error : new Error('Could not reach the enquiry link service.');
 }
 
 /**
@@ -56,7 +56,7 @@ export async function createClientIntakeShare(
   const body = {
     user_id: user.id,
     report_type: CLIENT_INTAKE_REPORT,
-    title: 'Client intake form',
+    title: 'Client enquiry form',
     token: createShareToken(),
     source_record_id: null,
     payload,

@@ -72,12 +72,11 @@ async function enrichClientWithGemini(form, apiKey) {
     'Keep all output concise and commercially useful.',
     'Infer likely hospitality type, account scope, top opportunities, main risks, and a short professional summary.',
     `Business name: ${form.businessName}`,
-    `Trading name: ${form.tradingName}`,
     `Website: ${form.website}`,
-    `Address: ${form.address}`,
-    `Postcode: ${form.postcode}`,
+    `Head office address: ${form.headOfficeAddress}`,
     `Business type: ${form.businessType}`,
-    `Site count: ${form.siteCount}`,
+    `Site count: ${Array.isArray(form.sites) ? form.sites.length : 0}`,
+    `Sites: ${JSON.stringify(form.sites ?? [])}`,
     `Weekly sales band: ${form.weeklySalesBand}`,
     `Challenges: ${form.challenges}`,
     `Support needed: ${form.supportNeeded}`,
@@ -133,15 +132,26 @@ function createSupabaseAdminClient() {
 function mapSubmissionToClient(form, sharePayload, enrichment) {
   const emptyData = createEmptyClientData();
   const businessName = String(form.businessName ?? '').trim();
-  const tradingName = String(form.tradingName ?? '').trim();
   const website = normalizeWebsite(String(form.website ?? '').trim());
   const contactEmail = String(form.contactEmail ?? '').trim();
   const contactName = String(form.contactName ?? '').trim();
+  const contactRole = String(form.contactRole ?? '').trim();
   const contactPhone = String(form.contactPhone ?? '').trim();
-  const location = [String(form.address ?? '').trim(), String(form.postcode ?? '').trim()]
-    .filter(Boolean)
-    .join(', ');
-  const siteCount = Math.max(1, Number(form.siteCount ?? 1) || 1);
+  const preferredContactMethod = String(form.preferredContactMethod ?? '').trim();
+  const headOfficeAddress = String(form.headOfficeAddress ?? '').trim();
+  const submittedSites = Array.isArray(form.sites) ? form.sites : [];
+  const cleanSites = submittedSites
+    .map((site, index) => ({
+      id: `site-${index + 1}`,
+      name: String(site?.name ?? '').trim(),
+      address: String(site?.address ?? '').trim(),
+      website: normalizeWebsite(String(site?.website ?? '').trim()),
+      status: String(site?.status ?? '').trim() === 'Inactive' ? 'Inactive' : 'Active'
+    }))
+    .filter((site) => site.name || site.address || site.website);
+  const primarySite = cleanSites[0] ?? null;
+  const location = primarySite?.address || headOfficeAddress;
+  const siteCount = Math.max(cleanSites.length, 1);
   const tags = [
     String(form.businessType ?? '').trim(),
     ...(Array.isArray(enrichment?.tags) ? enrichment.tags.map((item) => String(item).trim()) : [])
@@ -171,15 +181,18 @@ function mapSubmissionToClient(form, sharePayload, enrichment) {
         ? enrichment.opportunities.map((item) => String(item))
         : [],
       internalNotes: [
-        `Client intake submitted by ${contactName || 'prospect'}.`,
+        `Client enquiry submitted by ${contactName || 'prospect'}.`,
+        contactRole ? `Contact role: ${contactRole}` : '',
+        preferredContactMethod ? `Preferred contact method: ${preferredContactMethod}` : '',
         form.challenges ? `Current challenges: ${form.challenges}` : '',
         form.supportNeeded ? `Support requested: ${form.supportNeeded}` : '',
-        form.weeklySalesBand ? `Weekly sales band: ${form.weeklySalesBand}` : ''
+        form.weeklySalesBand ? `Weekly sales band: ${form.weeklySalesBand}` : '',
+        headOfficeAddress ? `Head office address: ${headOfficeAddress}` : ''
       ]
         .filter(Boolean)
         .join('\n'),
       accountOwner: String(sharePayload?.presetAccountOwner ?? '').trim(),
-      leadSource: String(sharePayload?.presetLeadSource ?? 'Client intake form').trim(),
+      leadSource: String(sharePayload?.presetLeadSource ?? 'Client enquiry form').trim(),
       accountScope:
         enrichment?.accountScope === 'Group / head office' || siteCount > 5
           ? 'Group / head office'
@@ -189,36 +202,44 @@ function mapSubmissionToClient(form, sharePayload, enrichment) {
       operatingCountry: 'United Kingdom',
       siteCountEstimate: siteCount,
       registeredName: businessName,
-      registeredAddress: String(form.address ?? '').trim(),
+      registeredAddress: headOfficeAddress,
       billingName: businessName,
       billingEmail: contactEmail,
-      billingAddress: String(form.address ?? '').trim(),
+      billingAddress: headOfficeAddress,
       contacts: contactName || contactEmail || contactPhone
         ? [
             {
               id: 'primary-contact',
               name: contactName,
-              role: 'Primary contact',
+              role: contactRole || 'Primary contact',
               email: contactEmail,
               phone: contactPhone,
               isPrimary: true,
-              notes: ''
+              notes: preferredContactMethod
+                ? `Preferred contact method: ${preferredContactMethod}`
+                : ''
             }
           ]
         : [],
-      sites:
-        siteCount > 0
-          ? [
-              {
-                id: 'primary-site',
-                name: tradingName || businessName,
-                address: String(form.address ?? '').trim(),
-                website,
-                status: 'Active',
-                notes: 'Submitted through client intake form.'
-              }
-            ]
-          : []
+      sites: cleanSites.length
+        ? cleanSites.map((site) => ({
+            id: site.id,
+            name: site.name || businessName,
+            address: site.address,
+            website: site.website || website,
+            status: site.status,
+            notes: 'Submitted through client enquiry form.'
+          }))
+        : [
+            {
+              id: 'primary-site',
+              name: businessName,
+              address: headOfficeAddress,
+              website,
+              status: 'Active',
+              notes: 'Submitted through client enquiry form.'
+            }
+          ]
     }
   };
 }
@@ -235,7 +256,7 @@ export default async function handler(request, response) {
     const form = body?.form ?? {};
 
     if (!token) {
-      response.status(400).json({ error: 'Missing intake token.' });
+      response.status(400).json({ error: 'Missing enquiry token.' });
       return;
     }
 
@@ -250,7 +271,7 @@ export default async function handler(request, response) {
 
     if (shareError) throw shareError;
     if (!share) {
-      response.status(404).json({ error: 'This intake link is no longer available.' });
+      response.status(404).json({ error: 'This enquiry link is no longer available.' });
       return;
     }
 
@@ -288,7 +309,7 @@ export default async function handler(request, response) {
     });
   } catch (error) {
     response.status(500).json({
-      error: error instanceof Error ? error.message : 'Could not submit intake form.'
+      error: error instanceof Error ? error.message : 'Could not submit enquiry form.'
     });
   }
 }

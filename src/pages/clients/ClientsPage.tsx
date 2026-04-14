@@ -119,25 +119,25 @@ export function ClientsPage() {
   async function handleCreateIntakeLink() {
     try {
       const share = await createClientIntakeShare({
-        presetLeadSource: 'Client intake form',
+        presetLeadSource: 'Client enquiry form',
         message:
-          'Please complete this short form so we can set up your business correctly before the next conversation.'
+          'Please complete this short enquiry form and we will review your information and come back to you as soon as possible.'
       });
       const shareUrl = `${window.location.origin}/#/intake/client/${share.token}`;
       setIntakeUrl(shareUrl);
 
       try {
         await navigator.clipboard.writeText(shareUrl);
-        setMessage('Client intake link created and copied.');
+        setMessage('Client enquiry link created and copied.');
       } catch {
-        setMessage('Client intake link created. Copy it from the field below.');
+        setMessage('Client enquiry link created. Copy it from the field below.');
       }
     } catch (error) {
       setIntakeUrl('');
       // DO NOT logout user on API failure
-      const errorText = error instanceof Error ? error.message : 'Could not create the intake link.';
+      const errorText = error instanceof Error ? error.message : 'Could not create the enquiry link.';
       setMessage(errorText);
-      console.warn('Intake link creation failed:', error);
+      console.warn('Enquiry link creation failed:', error);
     }
   }
 
@@ -230,7 +230,7 @@ export function ClientsPage() {
             </div>
             <div className="crm-list-top-meta">
               <button className="button button-ghost" onClick={handleCreateIntakeLink} type="button">
-                Intake link
+                Enquiry link
               </button>
               <Link
                 aria-label="Add client"
@@ -299,10 +299,10 @@ export function ClientsPage() {
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(intakeUrl);
-                    setMessage('Client intake link copied.');
+                    setMessage('Client enquiry link copied.');
                   } catch (error) {
                     setMessage(
-                      error instanceof Error ? error.message : 'Could not copy the intake link.'
+                      error instanceof Error ? error.message : 'Could not copy the enquiry link.'
                     );
                   }
                 }}

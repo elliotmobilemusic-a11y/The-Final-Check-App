@@ -346,21 +346,29 @@ export type ClientIntakeSharePayload = {
   presetTier?: string;
 };
 
+export type ClientIntakeSiteInput = {
+  id: string;
+  name: string;
+  address: string;
+  website: string;
+  status: 'Active' | 'Inactive';
+};
+
 export type ClientIntakeFormData = {
   businessName: string;
-  tradingName: string;
   contactName: string;
+  contactRole: string;
   contactEmail: string;
   contactPhone: string;
+  preferredContactMethod: string;
   website: string;
-  address: string;
-  postcode: string;
+  headOfficeAddress: string;
   businessType: string;
-  siteCount: number;
   weeklySalesBand: string;
   challenges: string;
   supportNeeded: string;
   extraNotes: string;
+  sites: ClientIntakeSiteInput[];
 };
 
 export interface DashboardStats {
