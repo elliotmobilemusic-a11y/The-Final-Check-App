@@ -17,6 +17,7 @@ import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createFoodSafetyShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
+import { useVisitMode } from '../../lib/useVisitMode';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -29,6 +30,12 @@ import { safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
 const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
+const foodSafetyVisitSections = [
+  { href: '#food-safety-site', label: 'Site details' },
+  { href: '#food-safety-checks', label: 'Checks' },
+  { href: '#food-safety-temperature', label: 'Temperature log' },
+  { href: '#food-safety-summary', label: 'Summary and actions' }
+];
 
 function blankFoodSafetyCheck(partial?: Partial<FoodSafetyCheckItem>): FoodSafetyCheckItem {
   return {
@@ -438,6 +445,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 export function FoodSafetyAuditPage() {
   const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
+  const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<FoodSafetyAuditState>(() =>
     searchParams.get('load')
@@ -715,13 +723,16 @@ export function FoodSafetyAuditPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
       <PageIntro
         eyebrow="Audit tool"
         title="Food Safety Audit"
         description="Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report."
         actions={
           <>
+            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+              {visitMode ? 'Exit visit mode' : 'Visit mode'}
+            </button>
             <button className="button button-secondary" onClick={newAudit}>
               New audit
             </button>
@@ -737,6 +748,31 @@ export function FoodSafetyAuditPage() {
           </>
         }
       />
+      {visitMode ? (
+        <section className="panel visit-mode-toolbar">
+          <div className="panel-body visit-mode-toolbar-body">
+            <div className="visit-mode-toolbar-copy">
+              <strong>Day of Visit mode</strong>
+              <span>Move quickly through checks and temperature evidence with bigger fields and sticky onsite controls.</span>
+            </div>
+            <div className="visit-mode-toolbar-actions">
+              <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+                {isSaving ? 'Saving...' : 'Save now'}
+              </button>
+              <button className="button button-secondary" onClick={() => setControlModalOpen(true)}>
+                Open controls
+              </button>
+            </div>
+            <div className="visit-mode-toolbar-links">
+              {foodSafetyVisitSections.map((section) => (
+                <a className="audit-section-link" href={section.href} key={section.href}>
+                  {section.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel share-link-panel">
         <div className="panel-body stack gap-12">
@@ -777,7 +813,7 @@ export function FoodSafetyAuditPage() {
 
       <section>
         <div>
-          <article className="panel">
+          <article className="panel" id="food-safety-site">
             <div className="panel-header">
               <div>
                 <h3>Site details</h3>
@@ -871,7 +907,7 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="food-safety-checks">
             <div className="panel-header">
               <div>
                 <h3>Control checks</h3>
@@ -899,7 +935,7 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="food-safety-temperature">
             <div className="panel-header">
               <div>
                 <h3>Temperature log</h3>
@@ -943,7 +979,7 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="food-safety-summary">
             <div className="panel-header">
               <div>
                 <h3>Summary and actions</h3>

@@ -17,6 +17,7 @@ import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
+import { useVisitMode } from '../../lib/useVisitMode';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -29,6 +30,13 @@ import { safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
 const MYSTERY_SHOP_DRAFT_KEY = 'mystery-shop-audit-draft-v1';
+const mysteryShopVisitSections = [
+  { href: '#mystery-visit', label: 'Visit details' },
+  { href: '#mystery-scorecard', label: 'Scorecard' },
+  { href: '#mystery-notes', label: 'Journey notes' },
+  { href: '#mystery-observations', label: 'Observations' },
+  { href: '#mystery-actions', label: 'Action plan' }
+];
 
 function blankObservation(partial?: Partial<MysteryShopObservation>): MysteryShopObservation {
   return {
@@ -364,6 +372,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
 export function MysteryShopAuditPage() {
   const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
+  const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<MysteryShopAuditState>(() =>
     searchParams.get('load')
@@ -615,13 +624,16 @@ export function MysteryShopAuditPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
       <PageIntro
         eyebrow="Audit tool"
         title="Mystery Shop Audit"
         description="Capture the full guest journey, score the experience, and turn weak moments into clear service actions."
         actions={
           <>
+            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+              {visitMode ? 'Exit visit mode' : 'Visit mode'}
+            </button>
             <button className="button button-primary" onClick={handleSave}>
               Save audit
             </button>
@@ -634,6 +646,31 @@ export function MysteryShopAuditPage() {
           </>
         }
       />
+      {visitMode ? (
+        <section className="panel visit-mode-toolbar">
+          <div className="panel-body visit-mode-toolbar-body">
+            <div className="visit-mode-toolbar-copy">
+              <strong>Day of Visit mode</strong>
+              <span>Keep the guest-journey review moving with faster section access and cleaner onsite controls.</span>
+            </div>
+            <div className="visit-mode-toolbar-actions">
+              <button className="button button-primary" onClick={handleSave}>
+                Save now
+              </button>
+              <button className="button button-secondary" onClick={() => setControlModalOpen(true)}>
+                Open controls
+              </button>
+            </div>
+            <div className="visit-mode-toolbar-links">
+              {mysteryShopVisitSections.map((section) => (
+                <a className="audit-section-link" href={section.href} key={section.href}>
+                  {section.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel share-link-panel">
         <div className="panel-body stack gap-12">
@@ -674,7 +711,7 @@ export function MysteryShopAuditPage() {
 
       <section>
         <div>
-          <article className="panel">
+          <article className="panel" id="mystery-visit">
             <div className="panel-header">
               <div>
                 <h3>Visit details</h3>
@@ -764,7 +801,7 @@ export function MysteryShopAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="mystery-scorecard">
             <div className="panel-header">
               <div>
                 <h3>Scorecard</h3>
@@ -790,7 +827,7 @@ export function MysteryShopAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="mystery-notes">
             <div className="panel-header">
               <div>
                 <h3>Guest journey notes</h3>
@@ -827,7 +864,7 @@ export function MysteryShopAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="mystery-observations">
             <div className="panel-header">
               <div>
                 <h3>Touchpoint observations</h3>
@@ -860,7 +897,7 @@ export function MysteryShopAuditPage() {
             </div>
           </article>
 
-          <article className="panel">
+          <article className="panel" id="mystery-actions">
             <div className="panel-header">
               <div>
                 <h3>Service action plan</h3>

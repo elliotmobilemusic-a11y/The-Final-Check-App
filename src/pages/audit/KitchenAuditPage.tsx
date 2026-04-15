@@ -34,6 +34,7 @@ import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
+import { useVisitMode } from '../../lib/useVisitMode';
 import {
   buildKitchenProfitNarrative,
   calculateKitchenProfitMetrics
@@ -927,6 +928,7 @@ export function KitchenAuditPage() {
   const [message, setMessage] = useState('Audit draft ready.');
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
+  const { visitMode, toggleVisitMode } = useVisitMode();
 
   const calc = useMemo(() => calculateAudit(form), [form]);
   const activeClient = useMemo(
@@ -1307,13 +1309,16 @@ export function KitchenAuditPage() {
   }
 
   return (
-    <div className="page-stack">
+    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
       <PageIntro
         eyebrow="Kitchen Profit Audit"
         title="We identify £2k–£10k per week in hidden profit"
         description="Capture the commercial leaks, quantify the weekly opportunity, and generate a premium consultancy report while you are still onsite."
         actions={
           <>
+            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+              {visitMode ? 'Exit visit mode' : 'Visit mode'}
+            </button>
             <button className="button button-secondary" onClick={newAudit}>
               New audit
             </button>
@@ -1332,6 +1337,31 @@ export function KitchenAuditPage() {
           </>
         }
       />
+      {visitMode ? (
+        <section className="panel visit-mode-toolbar">
+          <div className="panel-body visit-mode-toolbar-body">
+            <div className="visit-mode-toolbar-copy">
+              <strong>Day of Visit mode</strong>
+              <span>Large fields, quick jumps, save-first controls, and less onscreen admin while you work onsite.</span>
+            </div>
+            <div className="visit-mode-toolbar-actions">
+              <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+                {isSaving ? 'Saving...' : 'Save now'}
+              </button>
+              <button className="button button-secondary" onClick={() => setControlModalOpen(true)}>
+                Open controls
+              </button>
+            </div>
+            <div className="visit-mode-toolbar-links">
+              {sectionLinks.map((section) => (
+                <a className="audit-section-link" href={section.href} key={section.href}>
+                  {section.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className="panel share-link-panel">
         <div className="panel-body stack gap-12">
           <div className="record-header-message">

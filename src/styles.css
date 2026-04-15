@@ -402,6 +402,16 @@ body.reduced-motion *::after {
   scroll-behavior: auto !important;
 }
 
+body.visit-mode-active {
+  --nav-offset: 26px;
+}
+
+body.visit-mode-active .shell-topbar {
+  transform: translate(-50%, calc(-100% - 32px)) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* ========== ANIMATIONS & EFFECTS ========== */
 
 /* Base transitions for all interactive elements */
@@ -8653,6 +8663,110 @@ body {
     0 24px 52px rgba(11, 18, 27, 0.24),
     0 0 0 1px rgba(255, 255, 255, 0.2) inset;
   filter: saturate(1.03);
+}
+
+.visit-mode .page-intro {
+  padding: 18px 20px;
+}
+
+.visit-mode .page-intro-copy p,
+.visit-mode .panel-header .muted-copy,
+.visit-mode .share-link-panel,
+.visit-mode .stats-grid,
+.visit-mode .sub-panel.audit-nav-panel {
+  display: none;
+}
+
+.visit-mode .page-intro-actions {
+  gap: 10px;
+}
+
+.visit-mode-toolbar {
+  position: sticky;
+  top: calc(var(--nav-offset) + 8px);
+  z-index: 24;
+}
+
+.visit-mode-toolbar-body {
+  display: grid;
+  gap: 14px;
+}
+
+.visit-mode-toolbar-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.visit-mode-toolbar-copy strong {
+  font-size: 18px;
+  color: var(--text);
+}
+
+.visit-mode-toolbar-copy span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.visit-mode-toolbar-actions,
+.visit-mode-toolbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.visit-mode .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.visit-mode .field {
+  gap: 12px;
+}
+
+.visit-mode .field span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.visit-mode .input {
+  min-height: 58px;
+  padding: 15px 16px;
+  font-size: 16px;
+  border-radius: 15px;
+}
+
+.visit-mode textarea.input,
+.visit-mode .textarea {
+  min-height: 168px;
+}
+
+.visit-mode .panel-body,
+.visit-mode .sub-panel {
+  padding-top: 18px;
+}
+
+.visit-mode .tool-check-row {
+  grid-template-columns: 1fr;
+}
+
+.visit-mode .tool-check-controls,
+.visit-mode .tool-score-grid,
+.visit-mode .tool-temp-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.visit-mode .tool-score-card .input {
+  min-height: 64px;
+  font-size: 24px;
+}
+
+@media (max-width: 900px) {
+  .visit-mode .form-grid,
+  .visit-mode .tool-check-controls,
+  .visit-mode .tool-score-grid,
+  .visit-mode .tool-temp-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .client-inline-summary-compact {
