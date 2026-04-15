@@ -319,6 +319,8 @@ export type ClientPortalResource = {
   subtitle: string;
   reviewDate: string | null;
   url: string | null;
+  shareToken?: string | null;
+  sharePath?: string | null;
   locked: boolean;
   lockReason: string;
 };

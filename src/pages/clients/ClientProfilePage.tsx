@@ -843,6 +843,8 @@ function removeInvoice(invoiceId: string) {
                 subtitle: workstreamSiteLabel(audit),
                 reviewDate: audit.review_date,
                 url: share?.url ?? null,
+                shareToken: share?.token ?? null,
+                sharePath: '/share/kitchen-audit',
                 locked,
                 lockReason: locked
                   ? 'This audit will unlock once the related work is marked as paid.'
@@ -868,6 +870,8 @@ function removeInvoice(invoiceId: string) {
                 subtitle: audit.siteName || 'Linked site',
                 reviewDate: audit.reviewDate,
                 url: share?.url ?? null,
+                shareToken: share?.token ?? null,
+                sharePath: '/share/food-safety',
                 locked,
                 lockReason: locked
                   ? 'This food safety audit will unlock once the related work is marked as paid.'
@@ -893,6 +897,8 @@ function removeInvoice(invoiceId: string) {
                 subtitle: audit.siteName || 'Linked site',
                 reviewDate: audit.reviewDate,
                 url: share?.url ?? null,
+                shareToken: share?.token ?? null,
+                sharePath: '/share/mystery-shop',
                 locked,
                 lockReason: locked
                   ? 'This mystery shop audit will unlock once the related work is marked as paid.'
@@ -918,6 +924,8 @@ function removeInvoice(invoiceId: string) {
                 subtitle: workstreamSiteLabel(menu),
                 reviewDate: menu.review_date,
                 url: share?.url ?? null,
+                shareToken: share?.token ?? null,
+                sharePath: '/share/menu',
                 locked,
                 lockReason: locked
                   ? 'This resource will unlock once the related work is marked as paid.'

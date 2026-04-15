@@ -23,6 +23,46 @@ function resourceKindLabel(kind: ClientPortalResource['kind']) {
   return 'Menu review';
 }
 
+function getDefaultSharePath(kind: ClientPortalResource['kind']) {
+  if (kind === 'audit') return '/share/kitchen-audit';
+  if (kind === 'food_safety') return '/share/food-safety';
+  if (kind === 'mystery_shop') return '/share/mystery-shop';
+  return '/share/menu';
+}
+
+function buildCurrentShareUrl(path: string, token: string) {
+  return `${window.location.origin}/#${path}/${token}`;
+}
+
+function resolvePortalResourceUrl(resource: ClientPortalResource) {
+  if (typeof window === 'undefined') {
+    return resource.url ?? null;
+  }
+
+  if (resource.shareToken) {
+    return buildCurrentShareUrl(resource.sharePath || getDefaultSharePath(resource.kind), resource.shareToken);
+  }
+
+  if (!resource.url) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(resource.url, window.location.origin);
+    const hash = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash;
+    const candidate = hash || parsed.pathname;
+    const match = candidate.match(/(\/share\/(?:kitchen-audit|food-safety|mystery-shop|menu))\/([^/?#]+)/);
+
+    if (match) {
+      return buildCurrentShareUrl(match[1], match[2]);
+    }
+
+    return resource.url;
+  } catch {
+    return resource.url;
+  }
+}
+
 function invoiceStatusLabel(portal: ClientPortalSharePayload) {
   if (!portal.hasOutstandingInvoices) return 'Released and up to date';
   if (portal.visibilityMode === 'paid_only') return 'Locked until payment clears';
@@ -192,34 +232,38 @@ export function ClientPortalPage() {
                 </div>
               ) : (
                 <div className="client-portal-resource-list">
-                  {releasedResources.map((resource) => (
-                    <article className="client-portal-resource-card" key={resource.id}>
-                      <div className="client-portal-resource-copy">
-                        <div className="client-portal-resource-header">
-                          <strong>{resource.title}</strong>
-                          <span>{resourceKindLabel(resource.kind)}</span>
-                        </div>
-                        <p>{resource.subtitle || 'Released client document'}</p>
-                        <div className="client-portal-resource-meta">
-                          <span>Review {formatShortDate(resource.reviewDate)}</span>
-                          <span>{resource.url ? 'Available now' : 'Awaiting link'}</span>
-                        </div>
-                      </div>
+                  {releasedResources.map((resource) => {
+                    const resourceUrl = resolvePortalResourceUrl(resource);
 
-                      {resource.url ? (
-                        <a
-                          className="client-portal-resource-link"
-                          href={resource.url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open report
-                        </a>
-                      ) : (
-                        <span className="client-portal-resource-pill">Link pending</span>
-                      )}
-                    </article>
-                  ))}
+                    return (
+                      <article className="client-portal-resource-card" key={resource.id}>
+                        <div className="client-portal-resource-copy">
+                          <div className="client-portal-resource-header">
+                            <strong>{resource.title}</strong>
+                            <span>{resourceKindLabel(resource.kind)}</span>
+                          </div>
+                          <p>{resource.subtitle || 'Released client document'}</p>
+                          <div className="client-portal-resource-meta">
+                            <span>Review {formatShortDate(resource.reviewDate)}</span>
+                            <span>{resourceUrl ? 'Available now' : 'Awaiting link'}</span>
+                          </div>
+                        </div>
+
+                        {resourceUrl ? (
+                          <a
+                            className="client-portal-resource-link"
+                            href={resourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open report
+                          </a>
+                        ) : (
+                          <span className="client-portal-resource-pill">Link pending</span>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </article>
