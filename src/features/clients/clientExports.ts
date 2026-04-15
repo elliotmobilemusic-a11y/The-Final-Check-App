@@ -410,23 +410,22 @@ export function buildReportDocumentHtml(
           font-size: 10px;
           line-height: 1.45;
         }
-        .report-cover-page,
-        .report-page,
-        .report-page-block {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          min-height: 0;
-          position: relative;
-          padding: 12mm 12mm 13mm;
-          margin: 0 0 14px;
-          border-radius: 20px;
-          border: 1px solid var(--line-medium);
-          background: #ffffff;
-          box-shadow: var(--shadow-page);
-          page-break-after: always;
-          break-after: page;
-        }
+         .report-page,
+         .report-page-block {
+           display: flex;
+           flex-direction: column;
+           gap: 10px;
+           min-height: 0;
+           position: relative;
+           padding: 12mm 12mm 13mm;
+           margin: 0 0 14px;
+           border-radius: 20px;
+           border: 1px solid var(--line-medium);
+           background: #ffffff;
+           box-shadow: var(--shadow-page);
+           page-break-after: always;
+           break-after: page;
+         }
         .report-page.report-page-last,
         .report-page-block.report-page-block-final {
           page-break-after: auto;
