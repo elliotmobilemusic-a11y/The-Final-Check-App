@@ -80,42 +80,85 @@ export function AppShell() {
   const { preferences } = usePreferences();
   const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
+  const [navHeight, setNavHeight] = useState(108);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const disableAutoHideNav = location.pathname.startsWith('/settings');
 
-  // Global scroll handler that lives forever
+  useEffect(() => {
+    const navElement = navRef.current;
+    if (!navElement) return;
+
+    const updateNavHeight = () => {
+      const nextHeight = Math.ceil(navElement.getBoundingClientRect().height);
+      if (nextHeight > 0) {
+        setNavHeight(nextHeight);
+      }
+    };
+
+    updateNavHeight();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateNavHeight);
+      return () => window.removeEventListener('resize', updateNavHeight);
+    }
+
+    const observer = new ResizeObserver(() => updateNavHeight());
+    observer.observe(navElement);
+    window.addEventListener('resize', updateNavHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateNavHeight);
+    };
+  }, []);
+
   useEffect(() => {
     if (disableAutoHideNav || !preferences.autoShowNav || preferences.reducedMotion) {
       setNavExpanded(true);
       return;
     }
 
-    let hideTimeout: ReturnType<typeof setTimeout> | undefined;
+    let ticking = false;
 
-    const handleScroll = () => {
+    const syncNavVisibility = () => {
       const currentScrollY = window.scrollY;
-      
-      if (currentScrollY < lastScrollY.current) {
-        // Scrolling UP
+      const delta = currentScrollY - lastScrollY.current;
+      const nearTop = currentScrollY <= 18;
+      const revealBand = currentScrollY <= navHeight + 12;
+
+      if (nearTop || revealBand || delta < -10) {
         setNavExpanded(true);
-      } else if (currentScrollY > lastScrollY.current && currentScrollY > 24) {
-        // Scrolling DOWN
+      } else if (delta > 14 && currentScrollY > navHeight + 48) {
         setNavExpanded(false);
       }
-      
+
       lastScrollY.current = currentScrollY;
+      ticking = false;
     };
 
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(syncNavVisibility);
+      }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.clientY <= Math.max(72, navHeight * 0.72)) {
+        setNavExpanded(true);
+      }
+    };
+
+    lastScrollY.current = window.scrollY;
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-      }
+      window.removeEventListener('pointermove', handlePointerMove);
     };
-  }, [disableAutoHideNav, preferences.autoShowNav, preferences.reducedMotion]);
+  }, [disableAutoHideNav, navHeight, preferences.autoShowNav, preferences.reducedMotion]);
   const displayName =
     preferences.displayName ||
     (typeof session?.user.user_metadata?.display_name === 'string'
@@ -160,8 +203,14 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--nav-offset', navExpanded ? '110px' : '24px');
-  }, [navExpanded]);
+    const visibleOffset = `${navHeight + 28}px`;
+    const collapsedOffset = `${Math.max(28, Math.round(navHeight * 0.34))}px`;
+    const peekHeight = `${Math.max(16, Math.round(navHeight * 0.18))}px`;
+
+    document.documentElement.style.setProperty('--nav-height', `${navHeight}px`);
+    document.documentElement.style.setProperty('--nav-offset', navExpanded ? visibleOffset : collapsedOffset);
+    document.documentElement.style.setProperty('--nav-peek', peekHeight);
+  }, [navExpanded, navHeight]);
 
   return (
     <div className="app-shell">

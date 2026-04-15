@@ -2390,13 +2390,8 @@ export function KitchenAuditPage() {
         </div>
       )}
 
-      <div style={{position: 'fixed', bottom: '24px', left: '24px', zIndex: 900}}>
-        <button className="button button-primary" style={{
-          minWidth: '180px',
-          minHeight: '54px',
-          padding: '0 24px',
-          boxShadow: '0 20px 60px rgba(11, 18, 27, 0.24)'
-        }} onClick={() => setControlModalOpen(true)}>
+      <div className="page-floating-controls">
+        <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
           Profit Controls
         </button>
       </div>
