@@ -54,6 +54,11 @@
   --nav-height: 108px;
   --nav-offset: 136px;
   --nav-peek: 18px;
+  --motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-soft: 260ms;
+  --motion-medium: 420ms;
+  --motion-slow: 620ms;
   font-family:
     Inter,
     ui-sans-serif,
@@ -413,7 +418,7 @@ textarea,
 .client-avatar-image,
 .client-avatar-fallback,
 .nav-item {
-  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all var(--motion-soft) var(--motion-spring);
 }
 
 /* Fade in entrance animation */
@@ -448,6 +453,40 @@ textarea,
   }
 }
 
+@keyframes surfaceReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes surfaceDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes softSweep {
+  0% {
+    transform: translateX(-130%) skewX(-18deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.34;
+  }
+  100% {
+    transform: translateX(130%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
 @keyframes subtlePulse {
   0%, 100% {
     opacity: 1;
@@ -468,7 +507,7 @@ textarea,
 
 /* Staggered entrance animations for page content */
 .page-stack > * {
-  animation: fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: fadeInUp var(--motion-medium) var(--motion-smooth) both;
 }
 
 .page-stack > *:nth-child(1) { animation-delay: 0.05s; }
@@ -1769,7 +1808,8 @@ input[type="radio"]:checked {
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: all 0.24s ease;
+  transition: all var(--motion-soft) ease;
+  animation: surfaceDrift 4.8s ease-in-out 1.4s infinite;
 }
 
 .support-fab:hover {
@@ -1783,6 +1823,7 @@ input[type="radio"]:checked {
 
 .support-drawer {
   width: min(1160px, 100%);
+  animation: surfaceReveal var(--motion-medium) var(--motion-smooth) both;
 }
 
 .support-drawer-shell {
@@ -1971,6 +2012,7 @@ input[type="radio"]:checked {
   width: min(460px, calc(100vw - 44px));
   max-height: min(760px, calc(100vh - 120px));
   display: grid;
+  animation: fadeInScale 320ms var(--motion-smooth) both;
 }
 
 .support-chat-header {
@@ -2054,6 +2096,17 @@ input[type="radio"]:checked {
   font-size: 12px;
   font-weight: 700;
   box-shadow: var(--shadow-soft);
+  transition:
+    transform var(--motion-soft) var(--motion-spring),
+    box-shadow var(--motion-soft) ease,
+    border-color var(--motion-soft) ease,
+    background-color var(--motion-soft) ease;
+}
+
+.support-prompt-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(198, 161, 97, 0.24);
+  box-shadow: 0 14px 26px rgba(36, 31, 38, 0.1);
 }
 
 .support-chat-form {
@@ -3299,6 +3352,7 @@ form.login-success {
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface-card-strong) 84%, white 16%), var(--surface-card));
   border: 1px solid var(--shell-line);
   box-shadow: var(--shadow-soft);
+  animation: surfaceReveal var(--motion-medium) var(--motion-smooth) both;
 }
 
 .page-intro::before {
@@ -3307,6 +3361,18 @@ form.login-success {
   inset: 0 0 auto 0;
   height: 2px;
   background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 70%, white 30%) 18%, color-mix(in srgb, var(--accent-strong) 84%, transparent 16%) 50%, transparent 100%);
+}
+
+.page-intro::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -20%;
+  width: 36%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.26) 45%, transparent 100%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  opacity: 0;
+  animation: softSweep 7.2s ease-in-out 1.2s infinite;
 }
 
 .page-intro-main,
@@ -3340,6 +3406,7 @@ form.login-success {
   line-height: 1.06;
   letter-spacing: -0.035em;
   color: var(--text);
+  animation: fadeInUp 520ms var(--motion-smooth) 80ms both;
 }
 
 .page-intro-copy p {
@@ -3348,6 +3415,7 @@ form.login-success {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.7;
+  animation: fadeInUp 520ms var(--motion-smooth) 150ms both;
 }
 
 .page-intro-meta {
@@ -3419,6 +3487,18 @@ form.login-success {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(86, 81, 91, 0.08);
+  transition:
+    transform var(--motion-soft) var(--motion-spring),
+    box-shadow var(--motion-soft) ease,
+    border-color var(--motion-soft) ease,
+    background-color var(--motion-soft) ease;
+}
+
+.page-intro-summary-list div:hover,
+.record-header-grid div:hover {
+  transform: translateY(-2px);
+  border-color: rgba(198, 161, 97, 0.18);
+  box-shadow: 0 14px 28px rgba(36, 31, 38, 0.08);
 }
 
 .page-intro-summary-list span,
@@ -3550,17 +3630,21 @@ form.login-success {
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(6px);
   transition:
-    box-shadow 0.18s ease;
+    transform var(--motion-soft) var(--motion-spring),
+    box-shadow var(--motion-soft) ease,
+    border-color var(--motion-soft) ease,
+    background-color var(--motion-soft) ease;
 }
 
 .stat-card:hover,
 .feature-card:hover,
 .panel:hover {
+  transform: translateY(-4px);
   box-shadow: var(--shadow-strong);
+  border-color: rgba(198, 161, 97, 0.16);
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow);
 }
 
@@ -3621,7 +3705,22 @@ form.login-success {
 .stat-card::after,
 .feature-card::after,
 .panel::after {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -26%;
+  width: 30%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  transition: opacity var(--motion-soft) ease;
+}
+
+.stat-card:hover::after,
+.feature-card:hover::after,
+.panel:hover::after {
+  opacity: 1;
+  animation: softSweep 900ms var(--motion-smooth) both;
 }
 
 .stat-label {
@@ -4233,6 +4332,7 @@ body[data-theme="midnight"] .data-table td {
   background: rgba(33, 29, 36, 0.34);
   backdrop-filter: blur(2px);
   overscroll-behavior: contain;
+  animation: fadeInScale 220ms ease both;
 }
 
 .drawer-panel {
@@ -4245,6 +4345,7 @@ body[data-theme="midnight"] .data-table td {
   border-radius: 28px;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
+  animation: surfaceReveal 420ms var(--motion-smooth) both;
 }
 
 .control-drawer-backdrop {
@@ -4273,6 +4374,7 @@ body[data-theme="midnight"] .data-table td {
   box-shadow:
     0 28px 90px rgba(15, 10, 17, 0.26),
     0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  animation: fadeInScale 300ms var(--motion-smooth) both;
 }
 
 .control-drawer-body {
@@ -8524,6 +8626,7 @@ body {
   margin-top: 6px;
   padding-bottom: 6px;
   pointer-events: none;
+  animation: fadeInUp 420ms var(--motion-smooth) 180ms both;
 }
 
 .page-floating-controls > * {
@@ -8538,10 +8641,18 @@ body {
   box-shadow:
     0 18px 42px rgba(11, 18, 27, 0.18),
     0 0 0 1px rgba(255, 255, 255, 0.18) inset;
+  transition:
+    transform var(--motion-soft) var(--motion-spring),
+    box-shadow var(--motion-soft) ease,
+    filter var(--motion-soft) ease;
 }
 
 .control-dock-button:hover {
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-4px) scale(1.015);
+  box-shadow:
+    0 24px 52px rgba(11, 18, 27, 0.24),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  filter: saturate(1.03);
 }
 
 .client-inline-summary-compact {
