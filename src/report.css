@@ -83,10 +83,10 @@
   font-size: 18pt;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   color: #1a191e;
   page-break-after: avoid;
-  padding-top: 6mm;
+  padding-top: 8mm;
   border-top: 1px solid #f0f0f0;
 }
 
@@ -102,8 +102,8 @@
 /* Body text */
 p {
   font-size: 10.5pt;
-  line-height: 1.6;
-  margin: 0 0 12px 0;
+  line-height: 1.65;
+  margin: 0 0 14px 0;
   orphans: 3;
   widows: 3;
   color: #36333b;
@@ -154,8 +154,8 @@ p {
 .report-key-metrics {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 24px;
-  margin: 32px 0;
+  gap: 32px;
+  margin: 40px 0;
   page-break-inside: avoid;
 }
 
@@ -166,12 +166,12 @@ p {
 }
 
 .report-metric-value {
-  font-size: 22pt;
+  font-size: 28pt;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #111111;
   line-height: 1.1;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .report-metric-label {
@@ -180,6 +180,7 @@ p {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #777777;
+  margin-top: 0;
 }
 
 .report-executive-summary {
@@ -317,7 +318,7 @@ p {
 
 .report-table th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-bottom: 2px solid #dddddd;
   background: #f8f8f8 !important;
   font-weight: 600;
@@ -328,10 +329,10 @@ p {
 }
 
 .report-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #eeeeee;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f5f5f5;
   vertical-align: top;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #36333b;
 }
 
