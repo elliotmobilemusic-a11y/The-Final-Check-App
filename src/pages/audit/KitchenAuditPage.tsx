@@ -652,46 +652,43 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       : '';
 
   const coverBody = `
-    <section class="report-cover">
-      <div class="report-cover-intro">
-        <div class="report-cover-kicker">Kitchen Profit Audit</div>
-        <div class="report-cover-title-block">
-          <h1>${safe(state.businessName || 'Kitchen Profit Audit')}</h1>
-          <p>${
-            safe(narrative.executiveSummary) ||
-            'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.'
-          }</p>
+    <div class="report-cover">
+      <div class="report-cover-header">
+        <h1 class="report-title">Kitchen Profit Audit</h1>
+        <h2 class="report-client-name">${safe(state.businessName) || 'Client Site'}</h2>
+        
+        <div class="report-cover-divider"></div>
+        
+        <p class="report-executive-summary">${
+          safe(narrative.executiveSummary) ||
+          'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.'
+        }</p>
+      </div>
+
+      <div class="report-key-metrics">
+        <div class="report-metric-card">
+          <div class="report-metric-label">Weekly Opportunity</div>
+          <div class="report-metric-value">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
+        </div>
+        <div class="report-metric-card">
+          <div class="report-metric-label">Annual Opportunity</div>
+          <div class="report-metric-value">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
+        </div>
+        <div class="report-metric-card">
+          <div class="report-metric-label">Control Compliance</div>
+          <div class="report-metric-value">${Math.round(calc.controlScore)}%</div>
         </div>
       </div>
 
-      <div class="report-cover-keyline"></div>
-
-      <div class="report-grid columns-4">
-        <div><strong>Site</strong><br />${safe(state.businessName) || 'Unnamed site'}</div>
-        <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
-        <div><strong>Visit date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
-        <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
-        <div><strong>Service style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
-        <div><strong>Trading days</strong><br />${safe(state.tradingDays) || 'Not recorded'}</div>
-        <div><strong>Covers per week</strong><br />${state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded'}</div>
-        <div><strong>Average spend</strong><br />${state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded'}</div>
-      </div>
-
-      <div class="report-metrics-grid">
-        <div class="report-metric-cell">
-          <div class="report-label">Weekly opportunity</div>
-          <div class="report-value-large">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
-        </div>
-        <div class="report-metric-cell">
-          <div class="report-label">Annual opportunity</div>
-          <div class="report-value-large">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
-        </div>
-        <div class="report-metric-cell">
-          <div class="report-label">Control compliance</div>
-          <div class="report-value-large">${Math.round(calc.controlScore)}%</div>
+      <div class="report-footer">
+        <div class="report-grid columns-4">
+          <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
+          <div><strong>Visit Date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
+          <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
+          <div><strong>Service Style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
         </div>
       </div>
-    </section>
+    </div>
   `;
 
   const commercialChapter = renderChapter(
