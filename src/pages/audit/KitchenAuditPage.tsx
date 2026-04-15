@@ -802,7 +802,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       .join('')
   );
 
-  return [coverBody, commercialChapter, actionChapter, controlsChapter, findingsChapter]
+  return [coverBody, commercialChapter, actionChapter, controlsChapter, findingsChapter, reportFooter]
     .filter(Boolean)
     .join('');
 }
