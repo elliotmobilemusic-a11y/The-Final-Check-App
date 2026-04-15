@@ -2304,11 +2304,11 @@ export function KitchenAuditPage() {
       </section>
 
       {controlModalOpen && (
-        <div className="drawer-backdrop" style={{ zIndex: 1000 }} onClick={() => setControlModalOpen(false)}>
-          <div className="drawer-panel" onClick={e => e.stopPropagation()}>
-            <div style={{padding: '24px', height: '100%', overflow: 'auto'}}>
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
-                <h2 style={{fontSize: '24px', fontWeight: 700}}>Profit Audit Controls</h2>
+        <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
+          <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
+            <div className="control-drawer-body">
+              <div className="control-drawer-header">
+                <h2 className="control-drawer-title">Profit Audit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
                   Close ✕
                 </button>
