@@ -413,13 +413,16 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     </div>
   `;
 
-  const renderSection = (title: string, body: string) =>
+  const renderSection = (title: string, body: string, lead?: string) =>
     body
       ? `
-        <section class="report-editorial-section">
-          <h2 class="report-section-heading">${title}</h2>
+        <article class="report-section-block">
+          <div class="report-section-header">
+            <h3>${title}</h3>
+            ${lead ? `<p>${lead}</p>` : ''}
+          </div>
           ${body}
-        </section>
+        </article>
       `
       : '';
 
@@ -520,7 +523,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     .filter(Boolean)
     .join('');
 
-  const controlsPageBody = controlsTableRows
+  const controlsChapterBody = controlsTableRows
     ? renderSection(
         'Controls and Evidence Register',
         `
@@ -541,12 +544,13 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
             </thead>
             <tbody>${controlsTableRows}</tbody>
           </table>
-          ${renderAuditPhotoGallery(state.photos, 'controls')}
-        `
+          ${renderAuditPhotoGallery(state.photos, 'controls', '')}
+        `,
+        'Core controls reviewed onsite, with status and supporting notes ready for management follow-up.'
       )
     : '';
 
-  const findingsPageBody = [
+  const findingsChapterBody = [
     wasteRows
       ? renderSection(
           'Cost Control',
@@ -568,7 +572,8 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
               </thead>
               <tbody>${wasteRows}</tbody>
             </table>
-          `
+          `,
+          'Waste lines that are currently leaking margin and the immediate correction required.'
         )
       : '',
     portionRows
@@ -592,7 +597,8 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
               </thead>
               <tbody>${portionRows}</tbody>
             </table>
-          `
+          `,
+          'Portion inconsistencies affecting gross profit and how to correct them.'
         )
       : '',
     orderingRows
@@ -616,20 +622,59 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
               </thead>
               <tbody>${orderingRows}</tbody>
             </table>
-          `
+          `,
+          'Ordering and operating issues that are driving avoidable cost or service risk.'
         )
       : '',
     findingsCards
-      ? renderSection('Additional Findings', `<div class="report-story-grid report-story-grid-editorial">${findingsCards}</div>`)
+      ? renderSection(
+          'Additional Findings',
+          `<div class="report-story-grid report-story-grid-editorial">${findingsCards}</div>`,
+          'Broader leadership, people, systems, and layout observations captured during the review.'
+        )
       : ''
   ]
     .filter(Boolean)
-    .join('') + renderAuditPhotoGallery(state.photos, 'findings') + renderAuditPhotoGallery(state.photos, 'layout');
+    .join('');
 
-  const pageBodies = [
-    `
-      <div style="margin-top: 4pt; margin-bottom: 16pt;">
-        <div style="font-size: 24pt; font-weight: 700; letter-spacing: -0.02em;">Kitchen Profit Audit</div>
+  const renderChapter = (kicker: string, title: string, lead: string, body: string) =>
+    body
+      ? `
+        <section class="report-chapter report-chapter-break">
+          <div class="report-chapter-header">
+            <p class="report-chapter-kicker">${kicker}</p>
+            <h2>${title}</h2>
+            <p>${lead}</p>
+          </div>
+          ${body}
+        </section>
+      `
+      : '';
+
+  const coverBody = `
+    <section class="report-cover">
+      <div class="report-cover-intro">
+        <div class="report-cover-kicker">Kitchen Profit Audit</div>
+        <div class="report-cover-title-block">
+          <h1>${safe(state.businessName || 'Kitchen Profit Audit')}</h1>
+          <p>${
+            safe(narrative.executiveSummary) ||
+            'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.'
+          }</p>
+        </div>
+      </div>
+
+      <div class="report-cover-keyline"></div>
+
+      <div class="report-grid columns-4">
+        <div><strong>Site</strong><br />${safe(state.businessName) || 'Unnamed site'}</div>
+        <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
+        <div><strong>Visit date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
+        <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
+        <div><strong>Service style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
+        <div><strong>Trading days</strong><br />${safe(state.tradingDays) || 'Not recorded'}</div>
+        <div><strong>Covers per week</strong><br />${state.coversPerWeek > 0 ? String(state.coversPerWeek) : 'Not recorded'}</div>
+        <div><strong>Average spend</strong><br />${state.averageSpend > 0 ? fmtCurrency(state.averageSpend) : 'Not recorded'}</div>
       </div>
 
       <div class="report-metrics-grid">
@@ -646,46 +691,82 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
           <div class="report-value-large">${Math.round(calc.controlScore)}%</div>
         </div>
       </div>
+    </section>
+  `;
 
-      ${hasMeaningfulText(narrative.executiveSummary) ? `<p style="margin-top: 16pt; line-height: 1.58; font-size: 10pt;">${safe(narrative.executiveSummary)}</p>` : ''}
-    `,
+  const commercialChapter = renderChapter(
+    'Commercial view',
+    'Commercial Snapshot',
+    'The current trading baseline, the performance gap, and the biggest issues reducing profit.',
     [
       renderSection(
-        'Commercial Snapshot',
+        'Commercial snapshot',
         [
           pageTwoMetrics ? `<div class="report-metric-grid report-metric-grid-4">${pageTwoMetrics}</div>` : '',
-          renderAuditPhotoGallery(state.photos, 'commercial')
+          renderAuditPhotoGallery(state.photos, 'commercial', '')
         ]
           .filter(Boolean)
-          .join('')
+          .join(''),
+        'Weekly sales, food cost, labour, and gross profit markers captured during the visit.'
       ),
-      renderSection('Key Issues', renderList(narrative.keyIssues))
-    ]
-      .filter(Boolean)
-      .join(''),
-    [
-      renderSection('Immediate Quick Wins', quickWinsHtml),
-      renderSection('30–90 Day Action Plan', actionPlanHtml),
       renderSection(
-        'Follow-Up Recommendation',
-        [followUpHtml, renderAuditPhotoGallery(state.photos, 'actions')].filter(Boolean).join('')
+        'Key issues',
+        renderList(narrative.keyIssues),
+        'The most material issues currently suppressing margin, control, or operating consistency.'
       )
     ]
       .filter(Boolean)
-      .join(''),
-    controlsPageBody || findingsPageBody
-  ];
-
-  const visiblePages = pageBodies.filter((body) => hasMeaningfulText(body)).slice(0, 4);
-  const pages = visiblePages.map(
-    (body, index) => `
-      <div class="report-page ${index === 0 ? 'report-cover-page report-cover-page-minimal' : 'report-page-block'} ${index === visiblePages.length - 1 ? 'report-page-last' : ''}">
-        ${body}
-      </div>
-    `
+      .join('')
   );
 
-  return pages.join('');
+  const actionChapter = renderChapter(
+    'Action plan',
+    'Immediate Priorities and Follow-Up',
+    'A practical action sequence covering quick wins, the next 30 to 90 days, and the recommended follow-up cadence.',
+    [
+      renderSection(
+        'Immediate quick wins',
+        quickWinsHtml,
+        'Fast operational corrections that can usually be put in place immediately.'
+      ),
+      renderSection(
+        '30–90 day action plan',
+        actionPlanHtml,
+        'Structured medium-term actions to stabilise margin, systems, and team execution.'
+      ),
+      renderSection(
+        'Follow-up recommendation',
+        [followUpHtml, renderAuditPhotoGallery(state.photos, 'actions', '')].filter(Boolean).join(''),
+        'Recommended next review point, ownership, and evidence gathered against the action plan.'
+      )
+    ]
+      .filter(Boolean)
+      .join('')
+  );
+
+  const controlsChapter = renderChapter(
+    'Controls and evidence',
+    'Controls and Evidence Register',
+    'Named control checks reviewed onsite, with clear status and supporting notes for management follow-up.',
+    controlsChapterBody
+  );
+
+  const findingsChapter = renderChapter(
+    'Findings and narrative',
+    'Operational Findings',
+    'Detailed findings across waste, portion control, ordering, layout, and other operational observations.',
+    [
+      findingsChapterBody,
+      renderAuditPhotoGallery(state.photos, 'findings', ''),
+      renderAuditPhotoGallery(state.photos, 'layout', '')
+    ]
+      .filter(Boolean)
+      .join('')
+  );
+
+  return [coverBody, commercialChapter, actionChapter, controlsChapter, findingsChapter]
+    .filter(Boolean)
+    .join('');
 }
 
 function completionSummary(form: AuditFormState) {

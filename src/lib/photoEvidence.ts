@@ -91,11 +91,18 @@ export function renderAuditPhotoGallery(
   const sectionPhotos = photos.filter((photo) => photo.section === section && photo.imageDataUrl);
 
   if (!sectionPhotos.length) {
-    return `<p class="muted-copy">${escapeHtml(emptyCopy)}</p>`;
+    return emptyCopy
+      ? `<p class="report-empty-note muted-copy">${escapeHtml(emptyCopy)}</p>`
+      : '';
   }
 
   return `
-    <div class="report-photo-grid ${sectionPhotos.length > 2 ? 'report-photo-grid-featured' : ''}">
+    <section class="report-photo-section">
+      <div class="report-photo-section-heading">
+        <span>Evidence photos</span>
+        <strong>${escapeHtml(sectionPhotos[0]?.sectionLabel || 'Section evidence')}</strong>
+      </div>
+      <div class="report-photo-grid ${sectionPhotos.length > 2 ? 'report-photo-grid-featured' : ''}">
       ${sectionPhotos
         .map(
           (photo) => `
@@ -109,6 +116,7 @@ export function renderAuditPhotoGallery(
           `
         )
         .join('')}
-    </div>
+      </div>
+    </section>
   `;
 }
