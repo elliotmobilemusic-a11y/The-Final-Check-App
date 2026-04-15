@@ -132,12 +132,28 @@ p {
    3. COVER PAGE
    ============================================== */
 
-.report-cover {
+.report-cover-page {
+  break-after: page;
   page-break-after: always;
-  min-height: 250mm;
+  min-height: 257mm;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.report-cover-metrics {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-cover-details-grid {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-body > section:first-child {
+  break-before: page;
+  page-break-before: always;
 }
 
 .report-cover-top-bar {

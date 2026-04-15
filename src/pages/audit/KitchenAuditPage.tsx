@@ -651,17 +651,25 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       `
       : '';
 
-  // Automatic title formatting
-  const formatTitle = (text: string) => {
-    if (!text) return '';
-    return text
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+  // Formatting helpers
+  const humanizeTitle = (value: string) => {
+    return String(value ?? "")
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
       .trim();
   };
 
+  const formatCurrencyShort = (value: number) => {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: "GBP",
+      maximumFractionDigits: 0
+    }).format(Number(value || 0));
+  };
+
   const coverBody = `
-    <div class="report-cover">
+    <div class="report-cover-page">
       <div class="report-cover-top-bar">
         <div>
           <div class="report-cover-brand">The Final Check</div>
@@ -675,7 +683,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
       <div>
         <div class="report-cover-report-type">Kitchen Profit Audit</div>
-        <h1 class="report-cover-client-title">${formatTitle(safe(state.businessName) || 'Client Site')}</h1>
+        <h1 class="report-cover-client-title">${humanizeTitle(safe(state.businessName) || 'Client Site')}</h1>
         
         <p class="report-cover-summary">${
           safe(narrative.executiveSummary) ||
@@ -685,11 +693,11 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
       <div class="report-cover-metrics">
         <div class="report-cover-metric primary">
-          <div class="report-cover-metric-value">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
+          <div class="report-cover-metric-value">${formatCurrencyShort(calc.totalWeeklyOpportunity)}</div>
           <div class="report-cover-metric-label">Weekly profit opportunity</div>
         </div>
         <div class="report-cover-metric">
-          <div class="report-cover-metric-value">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
+          <div class="report-cover-metric-value">${formatCurrencyShort(calc.totalAnnualOpportunity)}</div>
           <div class="report-cover-metric-label">Annual opportunity</div>
         </div>
         <div class="report-cover-metric">
@@ -701,7 +709,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       <div class="report-cover-details-grid">
         <div class="report-cover-detail">
           <span class="report-cover-detail-label">Site</span>
-          <span class="report-cover-detail-value">${formatTitle(safe(state.businessName) || 'Not recorded')}</span>
+          <span class="report-cover-detail-value">${humanizeTitle(safe(state.businessName) || 'Not recorded')}</span>
         </div>
         <div class="report-cover-detail">
           <span class="report-cover-detail-label">Location</span>
@@ -717,7 +725,12 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         </div>
       </div>
     </div>
+
+    <div class="report-body">
   `;
+
+  // Close report-body wrapper at the very end
+  const reportFooter = `</div>`;
 
   const commercialChapter = renderChapter(
     'Commercial view',
