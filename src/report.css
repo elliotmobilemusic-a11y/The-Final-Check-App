@@ -140,6 +140,108 @@ p {
   justify-content: space-between;
 }
 
+.report-cover-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eeeeee;
+  margin-bottom: 32px;
+}
+
+.report-cover-brand {
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: -0.01em;
+  color: #111111;
+}
+
+.report-cover-brand-tagline {
+  font-size: 9pt;
+  color: #777777;
+  margin-top: 2px;
+}
+
+.report-cover-meta {
+  text-align: right;
+  font-size: 9pt;
+  color: #555555;
+}
+
+.report-cover-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  margin: 40px 0;
+  page-break-inside: avoid;
+}
+
+.report-cover-metric {
+  padding: 24px 20px;
+  page-break-inside: avoid;
+}
+
+.report-cover-metric.primary {
+  background: #111111;
+  color: white;
+  border-radius: 6px 0 0 6px;
+}
+
+.report-cover-metric.primary .report-cover-metric-label {
+  color: #aaaaaa;
+}
+
+.report-cover-metric:nth-child(2) {
+  border-top: 1px solid #eeeeee;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.report-cover-metric:nth-child(3) {
+  border: 1px solid #eeeeee;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+}
+
+.report-cover-metric-value {
+  font-size: 32pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.report-cover-metric-label {
+  font-size: 8.5pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #777777;
+}
+
+.report-cover-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 32px;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #eeeeee;
+}
+
+.report-cover-footer-item {
+  font-size: 9.5pt;
+}
+
+.report-cover-footer-item strong {
+  display: block;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 2px;
+}
+
+.report-cover-footer-item span {
+  color: #666666;
+}
+
 .report-cover-header {
   padding-top: 15mm;
 }
@@ -306,6 +408,7 @@ p {
 
 .report-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   page-break-inside: auto;
   margin: 16px 0 24px 0;
@@ -334,6 +437,9 @@ p {
   vertical-align: top;
   line-height: 1.55;
   color: #36333b;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .report-table tbody tr:nth-child(even) td {
@@ -343,6 +449,10 @@ p {
 .report-table tr {
   page-break-inside: avoid;
   page-break-after: auto;
+}
+
+.report-table thead {
+  display: table-header-group;
 }
 
 /* ==============================================

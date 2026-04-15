@@ -653,7 +653,18 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
   const coverBody = `
     <div class="report-cover">
-      <div class="report-cover-header">
+      <div class="report-cover-header-bar">
+        <div>
+          <div class="report-cover-brand">The Final Check</div>
+          <div class="report-cover-brand-tagline">Kitchen Profit Audit</div>
+        </div>
+        <div class="report-cover-meta">
+          <div>Prepared: ${safe(state.visitDate) || new Date().toISOString().split('T')[0]}</div>
+          <div>Consultant: ${safe(state.consultantName) || 'Not recorded'}</div>
+        </div>
+      </div>
+
+      <div>
         <h1 class="report-title">Kitchen Profit Audit</h1>
         <h2 class="report-client-name">${safe(state.businessName) || 'Client Site'}</h2>
         
@@ -665,27 +676,37 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         }</p>
       </div>
 
-      <div class="report-key-metrics">
-        <div class="report-metric-card">
-          <div class="report-metric-label">Weekly Opportunity</div>
-          <div class="report-metric-value">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
+      <div class="report-cover-metrics">
+        <div class="report-cover-metric primary">
+          <div class="report-cover-metric-value">${fmtCurrency(calc.totalWeeklyOpportunity)}</div>
+          <div class="report-cover-metric-label">Weekly profit opportunity</div>
         </div>
-        <div class="report-metric-card">
-          <div class="report-metric-label">Annual Opportunity</div>
-          <div class="report-metric-value">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
+        <div class="report-cover-metric">
+          <div class="report-cover-metric-value">${fmtCurrency(calc.totalAnnualOpportunity)}</div>
+          <div class="report-cover-metric-label">Annual opportunity</div>
         </div>
-        <div class="report-metric-card">
-          <div class="report-metric-label">Control Compliance</div>
-          <div class="report-metric-value">${Math.round(calc.controlScore)}%</div>
+        <div class="report-cover-metric">
+          <div class="report-cover-metric-value">${Math.round(calc.controlScore)}%</div>
+          <div class="report-cover-metric-label">Control compliance</div>
         </div>
       </div>
 
-      <div class="report-footer">
-        <div class="report-grid columns-4">
-          <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
-          <div><strong>Visit Date</strong><br />${safe(state.visitDate) || 'Not recorded'}</div>
-          <div><strong>Consultant</strong><br />${safe(state.consultantName) || 'Not recorded'}</div>
-          <div><strong>Service Style</strong><br />${safe(state.serviceStyle) || 'Not recorded'}</div>
+      <div class="report-cover-footer-grid">
+        <div class="report-cover-footer-item">
+          <strong>Site</strong>
+          <span>${safe(state.businessName) || 'Not recorded'}</span>
+        </div>
+        <div class="report-cover-footer-item">
+          <strong>Location</strong>
+          <span>${safe(state.location) || 'Not recorded'}</span>
+        </div>
+        <div class="report-cover-footer-item">
+          <strong>Service style</strong>
+          <span>${safe(state.serviceStyle) || 'Not recorded'}</span>
+        </div>
+        <div class="report-cover-footer-item">
+          <strong>Trading days</strong>
+          <span>${safe(state.tradingDays) || 'Not recorded'}</span>
         </div>
       </div>
     </div>
