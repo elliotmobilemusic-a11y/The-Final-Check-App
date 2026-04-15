@@ -651,26 +651,33 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       `
       : '';
 
+  // Automatic title formatting
+  const formatTitle = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .trim();
+  };
+
   const coverBody = `
     <div class="report-cover">
-      <div class="report-cover-header-bar">
+      <div class="report-cover-top-bar">
         <div>
           <div class="report-cover-brand">The Final Check</div>
           <div class="report-cover-brand-tagline">Kitchen Profit Audit</div>
         </div>
-        <div class="report-cover-meta">
+        <div class="report-cover-consultant">
           <div>Prepared: ${safe(state.visitDate) || new Date().toISOString().split('T')[0]}</div>
           <div>Consultant: ${safe(state.consultantName) || 'Not recorded'}</div>
         </div>
       </div>
 
       <div>
-        <h1 class="report-title">Kitchen Profit Audit</h1>
-        <h2 class="report-client-name">${safe(state.businessName) || 'Client Site'}</h2>
+        <div class="report-cover-report-type">Kitchen Profit Audit</div>
+        <h1 class="report-cover-client-title">${formatTitle(safe(state.businessName) || 'Client Site')}</h1>
         
-        <div class="report-cover-divider"></div>
-        
-        <p class="report-executive-summary">${
+        <p class="report-cover-summary">${
           safe(narrative.executiveSummary) ||
           'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.'
         }</p>
@@ -691,22 +698,22 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         </div>
       </div>
 
-      <div class="report-cover-footer-grid">
-        <div class="report-cover-footer-item">
-          <strong>Site</strong>
-          <span>${safe(state.businessName) || 'Not recorded'}</span>
+      <div class="report-cover-details-grid">
+        <div class="report-cover-detail">
+          <span class="report-cover-detail-label">Site</span>
+          <span class="report-cover-detail-value">${formatTitle(safe(state.businessName) || 'Not recorded')}</span>
         </div>
-        <div class="report-cover-footer-item">
-          <strong>Location</strong>
-          <span>${safe(state.location) || 'Not recorded'}</span>
+        <div class="report-cover-detail">
+          <span class="report-cover-detail-label">Location</span>
+          <span class="report-cover-detail-value">${safe(state.location) || 'Not recorded'}</span>
         </div>
-        <div class="report-cover-footer-item">
-          <strong>Service style</strong>
-          <span>${safe(state.serviceStyle) || 'Not recorded'}</span>
+        <div class="report-cover-detail">
+          <span class="report-cover-detail-label">Service style</span>
+          <span class="report-cover-detail-value">${safe(state.serviceStyle) || 'Not recorded'}</span>
         </div>
-        <div class="report-cover-footer-item">
-          <strong>Trading days</strong>
-          <span>${safe(state.tradingDays) || 'Not recorded'}</span>
+        <div class="report-cover-detail">
+          <span class="report-cover-detail-label">Trading days</span>
+          <span class="report-cover-detail-value">${safe(state.tradingDays) || 'Not recorded'}</span>
         </div>
       </div>
     </div>
