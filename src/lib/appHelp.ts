@@ -15,8 +15,11 @@ export type AppHelpPage = {
     | 'login'
     | 'dashboard'
     | 'clients'
+    | 'new-client'
     | 'client-profile'
     | 'audit'
+    | 'food-safety'
+    | 'mystery-shop'
     | 'menu'
     | 'settings'
     | 'not-found';
@@ -43,11 +46,11 @@ const helpPages: AppHelpPage[] = [
     title: 'Login',
     routeLabel: 'Sign in',
     summary:
-      'Use the login page to enter the app with your approved email and password. Once signed in, you can move into clients, audits, menus, and billing.',
+      'Use login to open your protected workspace. Once you are signed in, the app keeps you inside the main client, audit, menu, and settings flows.',
     quickStart: [
-      'Enter the approved email address connected to your account.',
-      'Enter the password for that account and submit the form.',
-      'If sign-in works, you are taken into the protected area and can start using clients, audits, and menu work.'
+      'Enter the approved email attached to your workspace.',
+      'Enter the current password for that account and submit the form.',
+      'After sign-in, use the dashboard for overview work or jump straight into a client or audit workflow.'
     ],
     sections: [
       {
@@ -56,655 +59,632 @@ const helpPages: AppHelpPage[] = [
         fields: [
           {
             label: 'Email',
-            guidance:
-              'Use the same approved email that should own the saved clients, audits, and menu projects.'
+            guidance: 'Use the same email that should own the saved clients, linked reports, and working history.'
           },
           {
             label: 'Password',
-            guidance:
-              'Enter the current password for that account. Password issues are usually account-side rather than form-side.'
+            guidance: 'Use the current password for that account. If this fails, it is usually an account issue rather than a page workflow issue.'
           }
         ]
       },
       {
         title: 'After login',
-        purpose: 'The app remembers the active session so you can move around the product without signing in again.',
+        purpose: 'The app returns you to the protected workspace and remembers your current device preferences.',
         steps: [
-          'Check the top bar to confirm the correct account email is showing.',
-          'Start on the dashboard if you want a full overview, or jump straight into clients, audit, or menu work.'
+          'Check the shell header to confirm you are in the correct account.',
+          'Open dashboard for overall priorities or go directly into clients, audits, or menu work if you already know the next task.'
         ]
       }
     ],
     tips: [
-      'If login fails, double-check the email first because saved work is tied to the signed-in user.',
-      'Use the dashboard after login when you want the fastest overview of open work and recent updates.'
+      'Saved work is tied to the signed-in account, so start by confirming the email is correct.',
+      'If you mainly work from one page, set the default landing page in settings after login.'
     ],
     prompts: [
       'How do I sign in?',
-      'What happens after I log in?',
-      'Where should I start once I am in the app?'
+      'What should I do after login?',
+      'Why is the dashboard the best place to start?'
     ]
   },
   {
     key: 'dashboard',
     title: 'Dashboard',
-    routeLabel: 'Overview',
+    routeLabel: 'Command centre',
     summary:
-      'The dashboard is the main overview for the app. It shows current clients, recent activity, follow-up pressure points, and the quickest route into the next useful piece of work.',
+      'The dashboard is the high-level operating view. It shows workload, client pressure points, recent activity, and the quickest route into the next useful piece of work.',
     quickStart: [
-      'Check the top summary cards and operations board to see overall workload and health.',
-      'Use recent activity and spotlight sections to jump straight into a client, audit, or menu project.',
-      'Use the follow-up queue to decide what needs attention next.'
+      'Read the summary cards and command-centre blocks to understand workload and health.',
+      'Use recent activity or spotlight areas to jump back into a saved client, audit, or menu project.',
+      'Use the follow-up queue to decide what deserves attention next.'
     ],
     sections: [
       {
-        title: 'Operations board',
+        title: 'Command centre',
         purpose:
-          'This is the quickest high-level read on active clients, linked workstreams, tasks, reviews, and system activity.'
-      },
-      {
-        title: 'Command centre and system health',
-        purpose:
-          'These blocks tell you if the app is set up well or if there are gaps like unlinked work, inactive clients, or missing follow-up.'
+          'This area gives you a fast read on the portfolio, live workstreams, upcoming reviews, and overall operating momentum.'
       },
       {
         title: 'Recent activity',
         purpose:
-          'Use this list when you want to continue from the latest saved audit, menu project, or client update instead of browsing manually.',
+          'Use this when you want to resume work from the latest saved change rather than browsing manually.',
         steps: [
-          'Open the newest item if you are resuming existing work.',
-          'Use the label to understand whether the item is a client, audit, or menu workflow.'
+          'Open the newest relevant item if you are continuing existing work.',
+          'Use the labels to understand whether the item belongs to CRM, audit, food safety, mystery shop, or menu work.'
         ]
       },
       {
-        title: 'Client spotlight and follow-up queue',
+        title: 'Quick-start links',
         purpose:
-          'These sections help you prioritise relationships, overdue reviews, open tasks, and accounts with the most live work.'
+          'The dashboard is also a launch pad into the most common workflows such as adding a client or opening the audit tools.'
       }
     ],
     tips: [
-      'Use the dashboard to choose what to do next, not to enter detailed data.',
-      'If you see clients with no workstreams, create or link an audit or menu review from the relevant page.'
+      'Use dashboard to choose priorities, not to enter detailed records.',
+      'If you notice clients without linked delivery work, open the client or tool page and connect the missing audit or menu project.'
     ],
     prompts: [
       'How should I use the dashboard each day?',
-      'What is the operations board for?',
-      'How do I decide what to work on next from here?'
+      'What is the best way to pick my next task from here?',
+      'What do the recent activity sections mean?'
     ]
   },
   {
     key: 'clients',
     title: 'Clients',
-    routeLabel: 'Client CRM',
+    routeLabel: 'CRM list',
     summary:
-      'The clients page is the main CRM list. Use it to filter, sort, review, export, and open the full client profile. Use the Add new client button to open the dedicated setup page when you need to create an account.',
+      'The clients page is the portfolio view for the CRM. Use it to search, filter, sort, open client records, export account summaries, and create intake links for new accounts.',
     quickStart: [
-      'Use the Add new client button when you need to create a new account.',
-      'Use portfolio controls to search, filter by status, and sort by urgency or value.',
-      'Open a client profile when you need full CRM, invoice, timeline, and delivery detail.'
+      'Use Add new client when you need to create the base CRM record.',
+      'Use portfolio controls to search, filter by status, and sort by urgency or account value.',
+      'Open a client profile when you need deeper CRM, billing, portal, or linked-workstream management.'
     ],
     sections: [
       {
-        title: 'New client setup',
-        purpose:
-          'The Add new client button opens a dedicated setup page where you can create the base CRM record before you start delivery work or billing.',
-        fields: [
-          {
-            label: 'Company name',
-            guidance: 'Use the trading name you want to recognise everywhere in the app and in exports.'
-          },
-          {
-            label: 'Primary contact name',
-            guidance: 'Add the main day-to-day contact or decision-maker for the account.'
-          },
-          {
-            label: 'Primary contact email',
-            guidance: 'Use the real working email for follow-up, billing, or relationship tracking.'
-          },
-          {
-            label: 'Primary contact phone',
-            guidance: 'Add the most useful direct number for quick contact.'
-          },
-          {
-            label: 'Location',
-            guidance: 'Use the main site or account location so the client is easy to recognise in lists.'
-          },
-          {
-            label: 'Status',
-            guidance: 'Set where the relationship currently sits such as Active, Prospect, Onboarding, or Inactive.'
-          },
-          {
-            label: 'Tier',
-            guidance: 'Use this for account priority or service level such as Standard, Growth, or Premium.'
-          },
-          {
-            label: 'Industry',
-            guidance: 'Describe the business type clearly so future reporting and filtering make sense.'
-          },
-          {
-            label: 'Website',
-            guidance: 'Add the live business website if it helps with reference or account context.'
-          },
-          {
-            label: 'Next review date',
-            guidance: 'Use the next meaningful account review date so the CRM can show urgency.'
-          },
-          {
-            label: 'Tags and notes',
-            guidance: 'Use tags for searchable labels and notes for context that should travel with the account.'
-          }
-        ]
-      },
-      {
         title: 'Portfolio controls',
-        purpose:
-          'Search and narrow the long client list so you can manage the CRM quickly and consistently.',
+        purpose: 'Use the top controls to reduce admin and find the right account quickly.',
         fields: [
           {
             label: 'Search',
-            guidance: 'Search by company, contact, location, industry, or tags.'
+            guidance: 'Search by company, contact, location, industry, or tags when the portfolio is growing.'
           },
           {
             label: 'Status filter',
-            guidance: 'Use this to focus only on active clients, prospects, onboarding accounts, or inactive ones.'
+            guidance: 'Use this to isolate active accounts, prospects, onboarding work, or inactive records.'
           },
           {
             label: 'Sort',
-            guidance: 'Choose the sort mode that best matches the decision you are making, such as updated, review date, value, or company.'
+            guidance: 'Pick the sort mode that matches the decision you are making, such as updated date, company, value, or review pressure.'
           }
         ]
       },
       {
-        title: 'Client CRM list',
+        title: 'Client intake links',
         purpose:
-          'This is the operational list view for the whole portfolio. Use it to open a client, export their record, or remove an account when needed.'
+          'Use intake links when you want a client or lead to complete their own onboarding information through a shareable form.',
+        steps: [
+          'Generate the intake link from the clients page when you want information collected outside the app.',
+          'Send the link to the client and use the completed intake as the basis for the CRM record.'
+        ]
+      },
+      {
+        title: 'Client list',
+        purpose:
+          'This is the operational list for the portfolio. Use it to open the client hub, export records, or jump into the next commercial action.'
       }
     ],
     tips: [
-      'Create the client first so audits and menu projects can be linked cleanly.',
-      'Use next review dates and tags to make follow-up more systematic.',
-      'Export PDF from the list when you need a quick client pack without opening the full profile.'
+      'Create the client before creating linked delivery work so audits and menus stay connected cleanly.',
+      'Use intake links to reduce manual retyping when clients can supply the setup details themselves.',
+      'Use review dates and tags honestly so the dashboard stays meaningful.'
+    ],
+    prompts: [
+      'How do I use the clients page properly?',
+      'What are intake links for?',
+      'How should I use search, filters, and sorting?'
+    ]
+  },
+  {
+    key: 'new-client',
+    title: 'New Client Setup',
+    routeLabel: 'Create account',
+    summary:
+      'The new client page is for creating the base account record before delivery, billing, and portal work begin. Keep it clean so the rest of the app starts from a solid CRM foundation.',
+    quickStart: [
+      'Fill the core identity fields first so the account is recognisable everywhere in the app.',
+      'Add relationship and review details that make follow-up easier later.',
+      'Save the client, then continue into the full client profile for deeper CRM or billing work.'
+    ],
+    sections: [
+      {
+        title: 'Core account fields',
+        purpose: 'These create the main CRM identity for the record.',
+        fields: [
+          {
+            label: 'Company name',
+            guidance: 'Use the trading name you want to see in CRM lists, linked tools, exports, and portal release screens.'
+          },
+          {
+            label: 'Primary contact name, email, and phone',
+            guidance: 'Use the day-to-day decision-maker or the best operational contact for follow-up.'
+          },
+          {
+            label: 'Location',
+            guidance: 'Use the most recognisable site or account location so the business is easy to identify later.'
+          }
+        ]
+      },
+      {
+        title: 'Commercial and planning fields',
+        purpose: 'These make the record more useful once it moves into active account management.',
+        fields: [
+          {
+            label: 'Status and tier',
+            guidance: 'Set the real relationship stage and service priority so the CRM stays honest.'
+          },
+          {
+            label: 'Industry and website',
+            guidance: 'Use clear business-type detail that helps with later reporting and account context.'
+          },
+          {
+            label: 'Next review date',
+            guidance: 'Use the next meaningful review date so the dashboard can surface timing pressure.'
+          },
+          {
+            label: 'Tags and notes',
+            guidance: 'Use tags for fast filtering and notes for useful context that should travel with the account.'
+          }
+        ]
+      }
+    ],
+    tips: [
+      'Keep setup clean and simple here, then use the client profile for deeper CRM detail.',
+      'A good next review date makes follow-up much easier later.'
     ],
     prompts: [
       'How do I add a client properly?',
-      'What should I put in the new client form?',
-      'How do I use the filters and sorting?'
+      'What should I fill in on the new client page first?',
+      'Which fields matter most on setup?'
     ]
   },
   {
     key: 'client-profile',
     title: 'Client Profile',
-    routeLabel: 'Account record',
+    routeLabel: 'Client hub',
     summary:
-      'The client profile is the full account record. Use it to manage relationship data, billing details, deals, contacts, tasks, timeline, invoices, and linked audits and menu projects.',
+      'The client profile is the full account hub. Use it for CRM, billing, invoices, tasks, timeline, linked delivery work, and client portal publishing.',
     quickStart: [
-      'Complete the core profile and relationship sections first so the account is well-defined.',
-      'Use CRM and billing controls to make invoicing and account management reliable.',
-      'Use the lower sections for operational follow-up: deals, contacts, sites, timeline, tasks, and invoices.'
+      'Complete core profile, relationship, and billing details first so the account is commercially usable.',
+      'Use the lower CRM sections for contacts, sites, pipeline, tasks, and timeline management.',
+      'Use the portal and release controls when you are ready to share reports or client-facing resources.'
     ],
     sections: [
       {
-        title: 'Core profile',
-        purpose: 'Set the account identity and main reference details.',
+        title: 'Core profile and relationship',
+        purpose: 'Keep this current because it becomes the account source of truth.',
         fields: [
           {
-            label: 'Company name, location, industry, status, tier, website, review date',
-            guidance:
-              'These fields define how the account appears across the CRM and dashboard. Keep them current because they drive recognition and prioritisation.'
+            label: 'Company details, status, tier, review date, and notes',
+            guidance: 'These fields drive how the account appears across the dashboard, CRM, and exports.'
           },
           {
-            label: 'Logo, cover, and notes',
-            guidance:
-              'Use these when you want richer account context. Notes should hold the broad account summary, not every task-level detail.'
-          }
-        ]
-      },
-      {
-        title: 'Main relationship details',
-        purpose: 'Capture the best internal view of the relationship.',
-        fields: [
-          {
-            label: 'Account owner',
-            guidance: 'Set the consultant or internal owner responsible for the account.'
-          },
-          {
-            label: 'Lead source',
-            guidance: 'Use the real origin of the account for commercial tracking.'
-          },
-          {
-            label: 'Relationship health',
-            guidance: 'Use Strong, Watch, or At Risk honestly so the CRM reflects reality.'
-          },
-          {
-            label: 'Profile summary and internal notes',
-            guidance:
-              'Profile summary is the client-facing account snapshot. Internal notes are for private commercial or operational context.'
+            label: 'Account owner, lead source, and relationship health',
+            guidance: 'Use these honestly so commercial oversight stays reliable.'
           }
         ]
       },
       {
         title: 'CRM and billing controls',
-        purpose: 'Store the details needed for commercial management and invoice production.',
+        purpose:
+          'Use these fields to support invoice drafts, payment terms, and account-level commercial management.',
         fields: [
           {
             label: 'Estimated monthly value',
-            guidance: 'Use a realistic value so the portfolio can be sorted and compared properly.'
+            guidance: 'Use a realistic figure so the account can be prioritised sensibly.'
           },
           {
-            label: 'Billing name, billing email, billing address',
-            guidance: 'Fill these in exactly as they should appear on invoices and exports.'
+            label: 'Billing name, email, and address',
+            guidance: 'Fill these exactly as they should appear on invoices and client-facing exports.'
           },
           {
-            label: 'Payment terms, VAT number, company number',
-            guidance: 'Use these fields to make invoicing and collections cleaner.'
+            label: 'Payment terms, VAT number, and company number',
+            guidance: 'These make billing cleaner and reduce avoidable invoice admin.'
           }
         ]
       },
       {
-        title: 'Goals, risks, and opportunities',
+        title: 'Working CRM sections',
         purpose:
-          'Use these lists to capture what the client wants, what could go wrong, and where value can be created.'
-      },
-      {
-        title: 'Pipeline, contacts, sites, timeline, and tasks',
-        purpose:
-          'These sections turn the page into a working CRM rather than just a profile. Add only current, useful records and keep statuses honest.'
+          'Pipeline, contacts, sites, tasks, timeline, goals, risks, and opportunities turn the page into an active account workspace rather than a static record.'
       },
       {
         title: 'Invoices and exports',
         purpose:
-          'Build invoice drafts with line items, then export either the whole client record or a single invoice as a printable PDF.'
+          'Use invoice drafts and exports when you need printable account or invoice outputs without rebuilding detail elsewhere.'
+      },
+      {
+        title: 'Client portal and report release',
+        purpose:
+          'This section lets you publish a client-facing portal with released audits, food safety reviews, mystery shop work, menu reports, and payment-based visibility controls.',
+        steps: [
+          'Enable the portal when you want to prepare a client-facing link.',
+          'Choose the visibility mode and hide any linked reports or menus that should stay private.',
+          'Publish the portal once the welcome message, access rules, and released resources look right.'
+        ]
       }
     ],
     tips: [
-      'Use this page as the source of truth for the account, not just a static profile.',
-      'Keep tasks, timeline items, and deals current so the dashboard remains useful.',
-      'Complete billing details before drafting serious invoices.'
+      'Use the client profile as the account control point once a client becomes active.',
+      'Keep linked workstream visibility tidy before publishing the client portal.',
+      'Complete billing details before serious invoice drafting or release.'
     ],
     prompts: [
-      'How do I fill in the client profile?',
-      'What should go in CRM and billing controls?',
-      'How do invoices work on this page?'
+      'How do I use the client profile as my main account hub?',
+      'How does the client portal work?',
+      'Where should I manage billing and invoices?'
     ]
   },
   {
     key: 'audit',
-    title: 'Audit Tool',
-    routeLabel: 'Kitchen audit',
+    title: 'Kitchen Profit Audit',
+    routeLabel: 'Profit audit',
     summary:
-      'The audit tool is built to reduce onsite workload. It helps you capture the visit quickly, score the kitchen, generate actions, draft narrative, and export the audit as a printable client-ready report.',
+      'The kitchen profit audit is the main operational and commercial audit tool. Use it to capture the visit, score the kitchen, log control gaps, generate actions, draft narrative, open the control panel, and export or share the finished report.',
     quickStart: [
-      'Start with site details and trading profile so the report has the right context.',
-      'Add commercial numbers and score the operation to expose the biggest risks.',
-      'Use controls, findings, layout review, and action planning to turn the visit into a real follow-up plan.'
+      'Start with site details and trading context so the report has the right business picture.',
+      'Add the commercial baseline and score the operation honestly so the biggest issues surface quickly.',
+      'Finish with findings, actions, narrative, control review, and export or share once the live report is clean.'
     ],
     sections: [
       {
-        title: 'Site details',
-        purpose: 'Set the identity of the audit and link it to the right client.',
+        title: 'Site and context setup',
+        purpose: 'Set the identity of the audit and capture the operating environment before judging performance.',
         fields: [
           {
-            label: 'Report title',
-            guidance: 'Use a clear title that matches the kind of visit such as operational audit, margin recovery, or opening support.'
+            label: 'Report title, business name, location, visit date, consultant, and site contact',
+            guidance: 'These become part of the saved record and printed report, so keep them factual and clean.'
           },
           {
-            label: 'Business name, location, visit date, consultant, site contact',
-            guidance:
-              'These should match the real visit details because they appear in the final report and saved record.'
+            label: 'Client profile and audit type',
+            guidance: 'Link the audit to the right client and use the closest audit type so records stay searchable and clear.'
           },
           {
-            label: 'Client profile',
-            guidance: 'Link the audit to the right client so it appears in that account history.'
-          },
-          {
-            label: 'Audit type',
-            guidance: 'Choose the closest type to the real engagement so the record and exported report stay clear.'
+            label: 'Service style, trading days, supplier, covers, spend, team size',
+            guidance: 'Use real operating detail because it shapes how the findings should be interpreted.'
           }
         ]
       },
       {
-        title: 'Trading and context profile',
-        purpose: 'Describe the operating environment before you judge the kitchen.',
+        title: 'Commercial baseline',
+        purpose: 'Use the financial inputs to show how much margin pressure exists before recommendations are made.',
         fields: [
           {
-            label: 'Service style, trading days, main supplier',
-            guidance: 'These explain what kind of kitchen you are assessing and how it is supplied.'
-          },
-          {
-            label: 'Covers per week and average spend',
-            guidance: 'Use these when live weekly sales are unknown. The tool can estimate weekly sales from them.'
-          },
-          {
-            label: 'Kitchen team size',
-            guidance: 'Use the live operating headcount, not the theoretical target structure.'
-          },
-          {
-            label: 'Allergen confidence, hygiene risk, equipment condition',
-            guidance: 'Score these honestly because they directly affect the risk profile and suggested actions.'
-          }
-        ]
-      },
-      {
-        title: 'Commercial snapshot',
-        purpose: 'Capture the financial baseline behind the audit.',
-        fields: [
-          {
-            label: 'Weekly food sales and weekly food cost',
-            guidance: 'Use the most reliable current figures available. These drive actual GP and commercial opportunity.'
-          },
-          {
-            label: 'Target GP',
-            guidance: 'Set the realistic target you are measuring against, not a fantasy number.'
-          },
-          {
-            label: 'Weekly waste and labour',
-            guidance: 'Use actual observed or reported levels so the tool can reflect true pressure areas.'
+            label: 'Weekly food sales, food cost, waste, labour, and target GP',
+            guidance: 'Use the most reliable current numbers you have. These drive GP, loss, and improvement opportunity.'
           },
           {
             label: 'Ordering control',
-            guidance: 'Choose Low, Moderate, or High based on how disciplined the purchasing system really is.'
+            guidance: 'Set Low, Moderate, or High based on how disciplined the real purchasing and stock routine is.'
           }
         ]
       },
       {
-        title: 'Operational scorecard and controls',
+        title: 'Scorecard and controls',
         purpose:
-          'Use the scorecard to grade the operation quickly, and the controls register to record whether the kitchen’s systems actually exist and are being used.',
+          'Use the scorecard for fast operational grading and the control register for clear evidence of whether systems are actually in place.',
         fields: [
           {
             label: 'Scorecard ratings',
-            guidance:
-              'Use 0 to 10 ratings based on what you saw during the visit. Score the kitchen as it operates now, not as it should operate.'
+            guidance: 'Use the live operating reality, not the intended standard.'
           },
           {
-            label: 'Controls and evidence register',
-            guidance:
-              'Mark each control as In Place, Partial, Missing, or N/A. Add short notes that explain what evidence you saw or what was missing.'
+            label: 'Controls and evidence notes',
+            guidance: 'Mark each control honestly and add short proof-based notes so follow-up does not become vague.'
           }
         ]
       },
       {
-        title: 'Operational observations and findings',
+        title: 'Findings, actions, and narrative',
         purpose:
-          'This is where you turn the visit into clear evidence. Use observations for narrative and repeatable findings sections for specific losses or issues.',
-        fields: [
-          {
-            label: 'Executive summary, leadership, food quality, systems',
-            guidance:
-              'Write concise, high-signal notes. Focus on what matters commercially and operationally rather than writing long generic paragraphs.'
-          },
-          {
-            label: 'Waste, over-portioning, ordering findings',
-            guidance:
-              'Add separate records for each real issue so the action plan and report are specific instead of vague.'
-          },
-          {
-            label: 'Layout review',
-            guidance:
-              'Describe strengths, issues, equipment needs, and commercial impact in operational language.'
-          }
-        ]
-      },
-      {
-        title: 'Action planning and exports',
-        purpose:
-          'Finish the audit by converting findings into ownership, narrative, and a report the client can actually use.',
+          'This is where the visit becomes a client-usable report. Capture real issues, generate actions, and turn observations into clear follow-up.',
         steps: [
-          'Use Generate action plan when you want the tool to suggest structured follow-up items.',
-          'Use Draft narrative when you want the tool to create first-pass summary, quick wins, priority actions, and next-visit guidance.',
-          'Use Export PDF when the report preview is ready and you want a printable document.'
-        ],
-        fields: [
-          {
-            label: 'Action items',
-            guidance:
-              'Give each action a clear title, area, owner, due date, and impact note so follow-up becomes manageable.'
-          },
-          {
-            label: 'Quick wins, long-term strategy, priority actions, recommended follow-up',
-            guidance:
-              'Keep these practical. Use one line per idea so the exported report is easy to read.'
-          }
+          'Use the findings sections for waste, portioning, ordering, systems, and layout issues.',
+          'Use Generate actions to create a structured starting point for follow-up.',
+          'Use Draft narrative to produce first-pass summary, quick wins, and next-step commentary.'
         ]
+      },
+      {
+        title: 'Control panel, export, and sharing',
+        purpose:
+          'Use the floating control button when you need a clean snapshot of readiness, system checks, and profit position. Export PDF or create a share link only after the report content looks right.'
       }
     ],
     tips: [
-      'Use the preset buttons when the visit is clearly margin-led, operations-led, or opening-led.',
-      'If weekly sales are missing, covers and average spend are still worth entering because they unlock a working estimate.',
-      'The PDF export is a print-ready document, so use the browser print dialog to save it as a PDF.'
+      'Use the audit from top to bottom the first time, then use the floating control panel for quick progress checks.',
+      'Share links are best used once the live report reads cleanly and action owners are set.',
+      'If weekly sales are unknown, covers and spend still help create a usable working estimate.'
     ],
     prompts: [
-      'How do I run an audit with the least admin?',
-      'What should I fill in first on the audit page?',
-      'How do the scorecard and controls register work?'
+      'How do I run a kitchen profit audit with the least admin?',
+      'What does the control panel on this page do?',
+      'When should I export or create a share link?'
+    ]
+  },
+  {
+    key: 'food-safety',
+    title: 'Food Safety Audit',
+    routeLabel: 'Compliance review',
+    summary:
+      'The food safety audit is for compliance-focused site reviews. Use it to capture site context, assess key controls, record temperature checks, structure corrective actions, open the control panel, and export or share the finished review.',
+    quickStart: [
+      'Capture the site context and audit basics first so the review has a clear identity.',
+      'Work through the control checks and temperature logs honestly, using pass, watch, fail, or not applicable where needed.',
+      'Finish with action items, summary detail, and then export or share once the review reads clearly.'
+    ],
+    sections: [
+      {
+        title: 'Audit setup and context',
+        purpose: 'Use the opening fields to anchor the compliance visit to the correct site and account.',
+        fields: [
+          {
+            label: 'Title, business details, visit date, reviewer, and linked client',
+            guidance: 'Keep these accurate because they drive both the saved record and the shared report.'
+          }
+        ]
+      },
+      {
+        title: 'Compliance checks',
+        purpose:
+          'The core check list is the main evidence capture area for the audit. Use it to record whether food safety controls are passing, slipping, or failing.',
+        fields: [
+          {
+            label: 'Check status and notes',
+            guidance: 'Use concise notes that explain what you saw or what was missing so the action plan stays evidence-led.'
+          }
+        ]
+      },
+      {
+        title: 'Temperature and operational records',
+        purpose:
+          'Use the temperature section for hot-hold, cooling, delivery, storage, and any other readings that support the compliance picture.'
+      },
+      {
+        title: 'Actions, risk view, and control panel',
+        purpose:
+          'Finish the audit by recording corrective actions and use the floating control panel for a quick summary of risk, pass rate, and action volume.'
+      },
+      {
+        title: 'Export and sharing',
+        purpose:
+          'Use Export PDF for a printable review and Create share link when you want to send the finished result directly to a client or stakeholder.'
+      }
+    ],
+    tips: [
+      'Use watch status when the control exists but is not reliable enough to count as a clean pass.',
+      'The control panel is useful when you need a quick readiness and risk summary without scrolling through the whole page.',
+      'Only share once the action list is specific and the evidence notes are clear.'
+    ],
+    prompts: [
+      'How should I use the food safety audit page?',
+      'What do pass, watch, and fail mean here?',
+      'What is the floating audit controls panel for?'
+    ]
+  },
+  {
+    key: 'mystery-shop',
+    title: 'Mystery Shop Audit',
+    routeLabel: 'Guest journey',
+    summary:
+      'The mystery shop audit is for customer-experience reviews. Use it to score the guest journey, log observations, structure actions, review the control panel, and export or share the final report.',
+    quickStart: [
+      'Set the site and visit context first so the review is anchored correctly.',
+      'Score each part of the guest journey honestly and capture standout and low moments as separate observations.',
+      'Use the action and summary sections to turn the visit into a clear client-facing follow-up report.'
+    ],
+    sections: [
+      {
+        title: 'Visit setup',
+        purpose: 'Use the opening fields to define the mystery shop record clearly.',
+        fields: [
+          {
+            label: 'Title, business, date, reviewer, and linked client',
+            guidance: 'Keep these accurate because they frame the report and later sharing.'
+          }
+        ]
+      },
+      {
+        title: 'Scorecard',
+        purpose:
+          'Use the scorecard to rate arrival, service, product, cleanliness, atmosphere, and value with a consistent 0 to 10 approach.'
+      },
+      {
+        title: 'Observations and actions',
+        purpose:
+          'Use observations for memorable moments and action items for follow-up work the client can actually act on.'
+      },
+      {
+        title: 'Control panel, export, and share',
+        purpose:
+          'The floating control panel gives you a quick read on overall grade, score breakdown, and action volume. Use export and share once the report is presentable.'
+      }
+    ],
+    tips: [
+      'Capture standout and low moments separately so the report feels specific rather than generic.',
+      'Use the control panel for a fast high-level summary during review.',
+      'Create the share link after the narrative and actions are ready for client eyes.'
+    ],
+    prompts: [
+      'How should I structure a mystery shop review?',
+      'What is the best way to score the guest journey?',
+      'What does the control panel show on this page?'
     ]
   },
   {
     key: 'menu',
-    title: 'Menu Builder',
+    title: 'Menu Profit Engine',
     routeLabel: 'Menu engineering',
     summary:
-      'The menu builder is the commercial menu-engineering page. Use it to structure sections, cost dishes, add ingredients, review GP, and export a client-ready menu report.',
+      'The menu profit engine is for menu engineering and dish costing. Use it to structure sections, build dishes, cost ingredients, review margin signals, open the control panel, and export or share the finished menu report.',
     quickStart: [
-      'Start with menu information and the default target GP.',
-      'Build sections before adding dishes so the menu structure stays clean.',
-      'Cost each dish properly with ingredients and use the live report to review the commercial story.'
+      'Set the menu information and default target GP first.',
+      'Create sections before adding dishes so the menu structure stays clean.',
+      'Cost dishes properly with ingredients, then use the report and control panel to review pricing and profit opportunities.'
     ],
     sections: [
       {
-        title: 'Menu information',
-        purpose: 'Set the menu project context before adding dishes.',
+        title: 'Project setup',
+        purpose: 'Define the menu project before adding commercial detail.',
         fields: [
           {
-            label: 'Menu name, site name, review date',
-            guidance: 'Use the real project name and site so the saved work and exported report stay clear.'
-          },
-          {
-            label: 'Client link',
-            guidance: 'Link the project to the client whenever possible so account history stays connected.'
-          },
-          {
-            label: 'Default target GP',
-            guidance: 'Use the target that should apply to most dishes, then adjust dish-level targets only when needed.'
+            label: 'Menu name, site, review date, linked client, and default target GP',
+            guidance: 'These fields create the project identity and set the default commercial benchmark.'
           }
         ]
       },
       {
-        title: 'Commercial overview',
+        title: 'Sections and dishes',
         purpose:
-          'Use this area to understand whether the menu is commercially healthy before going dish by dish.'
+          'Build the menu structure first, then add dishes with pricing and sales-mix context so the project stays readable.'
       },
       {
-        title: 'Section management',
+        title: 'Ingredients and costing',
         purpose:
-          'Create the menu structure first. Separate sections clearly so dish analysis is easier to manage and explain.'
-      },
-      {
-        title: 'Dish editor',
-        purpose: 'This is where each menu item becomes commercially useful.',
+          'Ingredient inputs are what make dish costing believable. Use real pack sizes, real costs, and sensible dish usage amounts.',
         fields: [
-          {
-            label: 'Dish name',
-            guidance: 'Use the trading name the client will recognise.'
-          },
-          {
-            label: 'Sell price',
-            guidance: 'Enter the live or proposed sell price for that dish.'
-          },
-          {
-            label: 'Target GP',
-            guidance: 'Use the specific target for that dish if it should differ from the menu default.'
-          },
-          {
-            label: 'Mix',
-            guidance: 'Use this as the sales-mix or popularity input if you want stronger commercial interpretation.'
-          },
-          {
-            label: 'Notes',
-            guidance: 'Use notes for commercial or product context, not full ingredient detail.'
-          }
-        ]
-      },
-      {
-        title: 'Ingredients',
-        purpose: 'Ingredients are what make costing accurate.',
-        fields: [
-          {
-            label: 'Ingredient name',
-            guidance: 'Use the real ingredient or component name.'
-          },
           {
             label: 'Qty used',
-            guidance: 'Enter how much of the pack is used in one dish.'
+            guidance: 'Enter the amount used by one dish or portion.'
           },
           {
-            label: 'Pack qty',
-            guidance: 'Enter the full purchase pack size in the same unit logic as qty used.'
-          },
-          {
-            label: 'Pack cost',
-            guidance: 'Use the current purchase cost so the dish GP calculation means something.'
+            label: 'Pack qty and pack cost',
+            guidance: 'Use the real purchasing quantity and current purchase cost so GP calculations stay useful.'
           }
         ]
       },
       {
-        title: 'Reports and exports',
+        title: 'Report, control panel, export, and share',
         purpose:
-          'Use the live menu report to review the commercial case and export a printable PDF when the project is ready.'
+          'Use the live report to review weighted GP, watch dishes, and opportunity areas. Use the floating control panel for a compact snapshot, then export or share when the project is client-ready.'
       }
     ],
     tips: [
-      'Build the menu structure before deep costing so you do not lose track of where dishes belong.',
-      'Dish GP is only as good as the ingredient inputs, so pack quantities and pack costs matter.',
-      'Use the report preview before exporting so you can catch obvious pricing or naming issues.'
+      'Build the structure before deep costing so dishes do not become disorganised.',
+      'The control panel is useful for quick completion and insight checks without leaving your place.',
+      'Dish GP quality depends on ingredient accuracy, so keep pack sizes and costs current.'
     ],
     prompts: [
       'How do I cost a dish properly?',
-      'What should I put in the ingredient fields?',
-      'How should I use the menu builder workflow?'
+      'What is the best menu-builder workflow?',
+      'What does the menu control panel help with?'
     ]
   },
   {
     key: 'settings',
     title: 'Settings',
-    routeLabel: 'Account and preferences',
+    routeLabel: 'Profile and preferences',
     summary:
-      'The settings page lets you personalise the app, update your visible account details, control theme and layout preferences, and decide how it behaves on this device.',
+      'Settings controls your profile identity, visual theme, landing-page behaviour, motion preferences, and top-navigation behaviour on this device.',
     quickStart: [
-      'Set your display name and avatar first so the shell reflects your account properly.',
-      'Choose the theme and layout options that feel best for how you work.',
-      'Set your default landing page and remember-me preference so the app opens the way you expect.'
+      'Set display name and avatar first so the shell reflects your account properly.',
+      'Choose the theme and motion settings that suit how you work.',
+      'Set default landing page and navigation preferences so the app feels right when you return.'
     ],
     sections: [
       {
         title: 'Account profile',
-        purpose:
-          'Use this section to control the visible account identity across the app.',
+        purpose: 'These fields control the visible identity used around the app shell and settings preview.',
         fields: [
           {
             label: 'Display name',
-            guidance:
-              'This is the name shown in the app shell and settings preview. Use the name you want to work under inside the app.'
+            guidance: 'Use the working name you want shown across the product.'
           },
           {
             label: 'Avatar image URL',
-            guidance:
-              'Add a direct image URL if you want a profile picture in the shell. Leave it blank to use initials instead.'
+            guidance: 'Add a direct image URL for a profile image, or leave it blank to keep the initials avatar.'
           },
           {
-            label: 'Account email and user ID',
-            guidance:
-              'These are read-only references so you can confirm which signed-in account you are editing.'
+            label: 'Avatar preview',
+            guidance: 'Use the preview to confirm the account identity looks right before saving.'
           }
         ]
       },
       {
-        title: 'Theme and appearance',
-        purpose:
-          'This section controls the visual feel of the app on your device.',
+        title: 'Theme and motion',
+        purpose: 'Use these controls to shape how the product feels on the current device.',
         fields: [
           {
             label: 'Theme selection',
-            guidance:
-              'Choose the palette you prefer, including dark mode. The app remembers this on the current device.'
-          },
-          {
-            label: 'Compact layout',
-            guidance:
-              'Turn this on if you want tighter spacing and more information visible at once.'
+            guidance: 'Choose the visual palette that feels best for your daily workflow.'
           },
           {
             label: 'Reduced motion',
-            guidance:
-              'Use this if you want fewer movement effects and a calmer working experience.'
+            guidance: 'Turn this on if you want fewer motion effects and calmer transitions.'
+          },
+          {
+            label: 'Auto-show navigation',
+            guidance: 'Use this when you want the top navigation to respond to scrolling and activity automatically.'
           }
         ]
       },
       {
-        title: 'Device and workflow preferences',
-        purpose:
-          'These settings decide how the app behaves when you return to it on this device.',
+        title: 'Device workflow preferences',
+        purpose: 'These controls shape how the app opens and behaves on this device.',
         fields: [
           {
             label: 'Default landing page',
-            guidance:
-              'Choose the page you want to land on when there is no deeper redirect waiting after sign-in.'
-          },
-          {
-            label: 'Remember me on this device',
-            guidance:
-              'Enable this to keep login persistence in local storage. Turn it off if you want sign-in to stay session-only.'
+            guidance: 'Choose the page you want to land on when no deeper redirect is waiting after sign-in.'
           }
         ]
       },
       {
         title: 'Password update',
-        purpose:
-          'Use this section only when you actually want to rotate your password.',
+        purpose: 'Only use this section when you genuinely want to rotate the current password.',
         fields: [
           {
             label: 'New password and confirmation',
-            guidance:
-              'Leave these blank unless you want to change the password. If you do change it, make sure both entries match.'
+            guidance: 'Leave these blank unless you are intentionally changing the password, and make sure both entries match.'
           }
         ]
       }
     ],
     tips: [
-      'Theme and layout choices are remembered on this device, so different devices can feel different if you want them to.',
-      'Reset device preferences if you want to return to the default look and feel without losing your account name or avatar.'
+      'Theme and motion settings are remembered on this device, so different devices can feel different if needed.',
+      'Use default landing page and auto-show navigation together to make the app feel more natural for your workflow.'
     ],
     prompts: [
-      'How do I change my profile name and picture?',
-      'How do themes work in settings?',
-      'What does remember me do in settings?'
+      'How do I set up my profile and theme?',
+      'What does auto-show navigation do?',
+      'How should I use the settings page?'
     ]
   },
   {
     key: 'not-found',
     title: 'Page guide',
-    routeLabel: 'Support',
+    routeLabel: 'Help',
     summary:
-      'If you land somewhere unexpected, use the guide to jump back into dashboard, clients, audit, or menu work.',
+      'If you land somewhere unexpected, the fastest route back into useful work is through dashboard, clients, audits, menu, or settings.',
     quickStart: [
-      'Open the dashboard to get back to the main overview.',
-      'Use clients if you need account setup or CRM work.',
-      'Use audit or menu if you are resuming delivery work.'
+      'Use dashboard when you want the overall picture.',
+      'Use clients when you need CRM, account setup, or portal work.',
+      'Use audit, food safety, mystery shop, or menu when you are resuming delivery work.'
     ],
     sections: [],
-    tips: ['The main working pages are dashboard, clients, audit tool, and menu builder.'],
-    prompts: ['What are the main pages in this app?', 'Where should I go next?']
+    tips: ['The core workspaces are dashboard, clients, kitchen audit, food safety, mystery shop, menu, and settings.'],
+    prompts: ['What are the main pages in this app?', 'Where should I go next?', 'Which page should I use for this job?']
   }
 ];
 
 const pageKeywords: Record<AppHelpPage['key'], string[]> = {
   login: ['login', 'sign in', 'signin', 'password', 'email'],
-  dashboard: ['dashboard', 'overview', 'command centre', 'command center', 'operations board'],
-  clients: ['clients', 'crm', 'portfolio', 'new client'],
-  'client-profile': ['client profile', 'account', 'invoice', 'billing', 'deals', 'timeline'],
-  audit: ['audit', 'kitchen', 'scorecard', 'controls', 'waste', 'portion', 'ordering'],
+  dashboard: ['dashboard', 'command centre', 'command center', 'overview', 'recent activity'],
+  clients: ['clients', 'crm', 'portfolio', 'intake link', 'intake'],
+  'new-client': ['new client', 'add client', 'create client', 'setup client'],
+  'client-profile': ['client profile', 'account', 'billing', 'invoice', 'portal', 'released reports'],
+  audit: ['audit', 'kitchen', 'profit audit', 'controls', 'narrative', 'generate actions'],
+  'food-safety': ['food safety', 'compliance', 'temperature', 'pass watch fail', 'haccp'],
+  'mystery-shop': ['mystery shop', 'guest journey', 'service score', 'observations'],
   menu: ['menu', 'dish', 'ingredient', 'gp', 'pricing', 'costing'],
-  settings: ['settings', 'theme', 'username', 'avatar', 'profile picture', 'landing page'],
+  settings: ['settings', 'theme', 'avatar', 'display name', 'landing page', 'navigation'],
   'not-found': ['help', 'support']
 };
 
@@ -712,11 +692,13 @@ function routeKey(pathname: string): AppHelpPage['key'] {
   if (pathname === '/login') return 'login';
   if (pathname === '/dashboard' || pathname === '/') return 'dashboard';
   if (pathname === '/clients') return 'clients';
-  if (pathname === '/clients/new') return 'clients';
+  if (pathname === '/clients/new') return 'new-client';
   if (pathname.startsWith('/clients/')) return 'client-profile';
   if (pathname === '/audit') return 'audit';
+  if (pathname === '/food-safety') return 'food-safety';
+  if (pathname === '/mystery-shop') return 'mystery-shop';
   if (pathname === '/menu') return 'menu';
-  if (pathname === '/settings') return 'settings';
+  if (pathname.startsWith('/settings')) return 'settings';
   return 'not-found';
 }
 
@@ -752,7 +734,7 @@ function buildEntries() {
     entries.push({
       page,
       title: page.title,
-      body: [page.summary, ...page.quickStart, ...page.tips].join(' ')
+      body: [page.summary, ...page.quickStart, ...page.tips, ...page.prompts].join(' ')
     });
 
     for (const section of page.sections) {
@@ -823,7 +805,7 @@ function pageFromQuestion(question: string, pathname: string) {
 export function createAssistantWelcome(pathname: string) {
   const page = getHelpPage(pathname);
 
-  return `I can walk you through every page in this app and explain what each form field is for.\n\nYou are currently on ${page.title}. A good starting point here is:\n1. ${page.quickStart[0] ?? 'Open the main workflow for this page.'}\n2. ${page.quickStart[1] ?? 'Use the page sections from top to bottom.'}\n3. ${page.quickStart[2] ?? 'Export or save once the page is complete.'}`;
+  return `I can guide you through every main workspace in this app, including CRM, kitchen audits, food safety, mystery shop, menu engineering, client portal release, and settings.\n\nYou are currently on ${page.title}. A strong starting point here is:\n1. ${page.quickStart[0] ?? 'Open the main workflow for this page.'}\n2. ${page.quickStart[1] ?? 'Work through the page in order.'}\n3. ${page.quickStart[2] ?? 'Save, export, or share only once the record looks clean.'}`;
 }
 
 export function buildAssistantReply(question: string, pathname: string) {
@@ -837,7 +819,7 @@ export function buildAssistantReply(question: string, pathname: string) {
   const targetPage = pageFromQuestion(trimmed, pathname);
   const matches = relevantEntries(trimmed, pathname);
   const isGeneric =
-    /\b(help|how|use|start|page|form|fill|workflow|what do i do)\b/.test(lowered) ||
+    /\b(help|how|use|start|page|form|fill|workflow|what do i do|where do i)\b/.test(lowered) ||
     trimmed.split(/\s+/).length <= 4;
   const fieldMatches = matches.filter((entry) => entry.field);
   const sectionMatches = matches.filter((entry) => entry.section && !entry.field);
@@ -846,15 +828,16 @@ export function buildAssistantReply(question: string, pathname: string) {
     const lines = fieldMatches.slice(0, 3).map((entry) => {
       const field = entry.field!;
       const section = entry.section!;
-      return `${field.label} on ${targetPage.title} (${section.title}): ${field.guidance}`;
+      return `${field.label} on ${entry.page.title} (${section.title}): ${field.guidance}`;
     });
 
-    return `Here is the most relevant field guidance for ${targetPage.title}:\n\n- ${lines.join('\n- ')}\n\nBest next step: fill those fields first, then continue through the section in order.`;
+    return `Here is the most relevant field guidance:\n\n- ${lines.join('\n- ')}\n\nBest next step: complete those fields first, then continue through that section in order.`;
   }
 
   if (isGeneric || matches.length === 0) {
     const lines = targetPage.quickStart.slice(0, 3).map((step, index) => `${index + 1}. ${step}`);
     const tips = targetPage.tips.slice(0, 2).map((tip) => `- ${tip}`).join('\n');
+
     return `${targetPage.title} is used for ${targetPage.summary}\n\nBest way to work through it:\n${lines.join('\n')}\n\nImportant tips:\n${tips}`;
   }
 
@@ -862,11 +845,11 @@ export function buildAssistantReply(question: string, pathname: string) {
     .slice(0, 3)
     .map((entry) => {
       if (entry.section) {
-        return `${entry.section.title}: ${entry.section.purpose}`;
+        return `${entry.page.title} - ${entry.section.title}: ${entry.section.purpose}`;
       }
 
       return `${entry.page.title}: ${entry.body}`;
     });
 
-  return `For ${targetPage.title}, the most relevant guidance is:\n\n- ${detailLines.join('\n- ')}\n\nBest next step: follow the page from top to bottom, save once the record is clean, and use the export buttons only after the live preview or data looks correct.`;
+  return `For ${targetPage.title}, the most relevant guidance is:\n\n- ${detailLines.join('\n- ')}\n\nBest next step: work from top to bottom, keep the record clean, and only export or share once the live content looks ready for someone else to read.`;
 }

@@ -5,6 +5,7 @@ import {
   createAssistantWelcome,
   getAllHelpPages,
   getHelpPage,
+  getSuggestedPrompts,
   type AppHelpPage
 } from '../../lib/appHelp';
 
@@ -139,8 +140,10 @@ function AssistantPanel({
   pathname,
   messages,
   input,
+  prompts,
   onClose,
   onInputChange,
+  onPromptClick,
   onSubmit,
   onReset,
   onOpenGuide
@@ -149,8 +152,10 @@ function AssistantPanel({
   pathname: string;
   messages: ChatMessage[];
   input: string;
+  prompts: string[];
   onClose: () => void;
   onInputChange: (value: string) => void;
+  onPromptClick: (prompt: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onReset: () => void;
   onOpenGuide: () => void;
@@ -195,6 +200,21 @@ function AssistantPanel({
             ))}
           </div>
 
+          {prompts.length ? (
+            <div className="support-prompt-row">
+              {prompts.map((prompt) => (
+                <button
+                  className="support-prompt-chip"
+                  key={prompt}
+                  onClick={() => onPromptClick(prompt)}
+                  type="button"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <form className="support-chat-form" onSubmit={onSubmit}>
             <label className="field">
               <span>Ask about this page</span>
@@ -220,6 +240,7 @@ export function SupportHub() {
   const location = useLocation();
   const pages = useMemo(() => getAllHelpPages(), []);
   const currentPage = useMemo(() => getHelpPage(location.pathname), [location.pathname]);
+  const suggestedPrompts = useMemo(() => getSuggestedPrompts(location.pathname), [location.pathname]);
   const [guideOpen, setGuideOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [selectedPageKey, setSelectedPageKey] = useState<AppHelpPage['key']>(currentPage.key);
@@ -235,6 +256,17 @@ export function SupportHub() {
   useEffect(() => {
     setSelectedPageKey(currentPage.key);
   }, [currentPage.key]);
+
+  useEffect(() => {
+    setMessages([
+      {
+        id: uid('assistant'),
+        role: 'assistant',
+        content: createAssistantWelcome(location.pathname)
+      }
+    ]);
+    setInput('');
+  }, [location.pathname]);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -315,8 +347,10 @@ export function SupportHub() {
         pathname={location.pathname}
         messages={messages}
         input={input}
+        prompts={suggestedPrompts}
         onClose={() => setAssistantOpen(false)}
         onInputChange={setInput}
+        onPromptClick={askQuestion}
         onSubmit={handleSubmit}
         onReset={resetChat}
         onOpenGuide={() => {
