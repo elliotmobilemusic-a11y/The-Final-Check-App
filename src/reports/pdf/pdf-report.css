@@ -1,0 +1,457 @@
+/* ==========================================================================
+    THE FINAL CHECK - PREMIUM PDF REPORT DESIGN SYSTEM
+    Single source of truth for all printable exports
+    Optimised for A4 PDF generation in Chromium/Electron
+    ========================================================================== */
+
+/* ==============================================
+   1. PRINT PAGE SETUP
+   ============================================== */
+
+@page {
+  size: A4 portrait;
+  margin: 16mm 16mm 18mm 16mm;
+  marks: none;
+}
+
+@media print {
+  html {
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: white !important;
+    color: #1a191e;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    line-height: 1.55;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+/* ==============================================
+   2. DOCUMENT BASE
+   ============================================== */
+
+.pdf-document {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1a191e;
+  line-height: 1.6;
+  font-size: 10.5pt;
+}
+
+/* ==============================================
+   3. COVER PAGE
+   ============================================== */
+
+.pdf-cover-page {
+  break-after: page;
+  page-break-after: always;
+  min-height: 257mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pdf-cover-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eeeeee;
+  margin-bottom: 48px;
+}
+
+.pdf-cover-brand {
+  font-weight: 700;
+  font-size: 11pt;
+  letter-spacing: -0.01em;
+  color: #111111;
+}
+
+.pdf-cover-brand-tagline {
+  font-size: 8.5pt;
+  color: #777777;
+  margin-top: 2px;
+}
+
+.pdf-cover-meta {
+  text-align: right;
+  font-size: 9pt;
+  color: #555555;
+}
+
+.pdf-cover-report-type {
+  font-size: 8.5pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-bottom: 8px;
+}
+
+.pdf-cover-client-title {
+  font-size: 32pt;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #111111;
+  margin: 0 0 24px 0;
+}
+
+.pdf-cover-summary {
+  max-width: 140mm;
+  font-size: 11pt;
+  line-height: 1.7;
+  margin: 0 0 64px 0;
+  color: #36333b;
+}
+
+.pdf-cover-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+  margin: 0 0 64px 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-metric {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-metric.primary {
+  background: #111111;
+  color: white;
+  border-radius: 6px;
+  padding: 24px 24px 20px 24px;
+}
+
+.pdf-cover-metric.primary .pdf-cover-metric-label {
+  color: #aaaaaa;
+}
+
+.pdf-cover-metric-value {
+  font-size: 38pt;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.pdf-cover-metric-label {
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #777777;
+}
+
+.pdf-cover-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 40px;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #eeeeee;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-detail {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-detail-label {
+  font-size: 7.5pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.pdf-cover-detail-value {
+  font-size: 10.5pt;
+  color: #36333b;
+}
+
+/* ==============================================
+   4. REPORT BODY
+   ============================================== */
+
+.pdf-report-body {
+  break-before: page;
+  page-break-before: always;
+}
+
+.pdf-chapter {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12mm 12mm 13mm;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  background: #ffffff;
+  page-break-inside: avoid;
+}
+
+.pdf-chapter-header {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eeeeee;
+  page-break-after: avoid;
+}
+
+.pdf-chapter-kicker {
+  color: #777777;
+  font-size: 9pt;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pdf-chapter-header h2 {
+  font-size: 24px;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.pdf-chapter-header p {
+  color: #666666;
+  max-width: 78ch;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ==============================================
+   5. SECTION SYSTEM
+   ============================================== */
+
+.pdf-section {
+  display: grid;
+  gap: 10px;
+  page-break-inside: auto;
+}
+
+.pdf-section + .pdf-section {
+  margin-top: 12px;
+}
+
+.pdf-section-header {
+  display: grid;
+  gap: 4px;
+  page-break-after: avoid;
+}
+
+.pdf-section-header h3 {
+  font-size: 15px;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.pdf-section-header p {
+  color: #777777;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+/* ==============================================
+   6. TABLE SYSTEM
+   ============================================== */
+
+.pdf-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  page-break-inside: auto;
+  margin: 16px 0 24px 0;
+  font-size: 9.5pt;
+}
+
+.pdf-table thead {
+  display: table-header-group;
+}
+
+.pdf-table th {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 2px solid #dddddd;
+  background: #f8f8f8 !important;
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #555555;
+}
+
+.pdf-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: top;
+  line-height: 1.55;
+  color: #36333b;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.pdf-table tbody tr:nth-child(even) td {
+  background: #fcfcfc !important;
+}
+
+.pdf-table tr {
+  page-break-inside: avoid;
+  page-break-after: auto;
+}
+
+/* ==============================================
+   7. TYPOGRAPHY SYSTEM
+   ============================================== */
+
+h1, h2, h3, p { margin: 0; }
+
+h1 {
+  font-size: 28px;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  max-width: 15ch;
+}
+
+h2 {
+  font-size: 17px;
+  margin-bottom: 0;
+  letter-spacing: -0.025em;
+  line-height: 1.18;
+}
+
+h3 {
+  font-size: 13px;
+  margin-bottom: 6px;
+  line-height: 1.28;
+}
+
+p {
+  line-height: 1.58;
+}
+
+p,
+li {
+  orphans: 3;
+  widows: 3;
+}
+
+li + li {
+  margin-top: 7px;
+}
+
+.pdf-label {
+  color: #777777;
+  font-size: 8pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pdf-muted {
+  color: #777777;
+  font-size: 9pt;
+  line-height: 1.45;
+}
+
+/* ==============================================
+   8. SPACING & RHYTHM
+   ============================================== */
+
+.pdf-metric-grid {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.pdf-metric-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pdf-metric-card {
+  padding: 11px 12px 12px;
+  border-radius: 6px;
+  border: 1px solid #eeeeee;
+  background: #ffffff;
+  page-break-inside: avoid;
+}
+
+.pdf-metric-card span {
+  display: block;
+  margin-bottom: 6px;
+  color: #777777;
+  font-size: 8pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pdf-metric-card strong {
+  display: block;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+/* ==============================================
+   9. PRINT MODE OVERRIDES
+   ============================================== */
+
+@media print {
+  body {
+    padding: 0;
+    background: white;
+  }
+
+  .pdf-cover-page {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: #ffffff;
+  }
+
+  .pdf-chapter {
+    margin: 0;
+    padding: 6mm 6mm 6.5mm;
+    border-radius: 0;
+    box-shadow: none;
+    background: #ffffff;
+  }
+
+  .pdf-cover-page,
+  .pdf-chapter {
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
+/* ==============================================
+   10. EMPTY STATES
+   ============================================== */
+
+.pdf-empty-state {
+  margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  font-style: italic;
+  color: #999999;
+}
+
+.pdf-hide-empty {
+  display: none !important;
+}

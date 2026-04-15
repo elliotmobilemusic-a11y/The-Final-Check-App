@@ -6,7 +6,15 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildReportDocumentHtml,
+  buildPdfDocumentHtml,
+  buildReportCoverHtml,
+  buildChapterHtml,
+  buildSectionHtml,
+  humanizeTitle,
+  formatCurrencyShort
+} from '../../reports/pdf';
+
+import {
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import { getAuditById, saveAudit } from '../../services/audits';
@@ -651,86 +659,34 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       `
       : '';
 
-  // Formatting helpers
-  const humanizeTitle = (value: string) => {
-    return String(value ?? "")
-      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-      .replace(/[_-]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
-
-  const formatCurrencyShort = (value: number) => {
-    return new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: "GBP",
-      maximumFractionDigits: 0
-    }).format(Number(value || 0));
-  };
-
-  const coverBody = `
-    <div class="report-cover-page">
-      <div class="report-cover-top-bar">
-        <div>
-          <div class="report-cover-brand">The Final Check</div>
-          <div class="report-cover-brand-tagline">Kitchen Profit Audit</div>
-        </div>
-        <div class="report-cover-consultant">
-          <div>Prepared: ${safe(state.visitDate) || new Date().toISOString().split('T')[0]}</div>
-          <div>Consultant: ${safe(state.consultantName) || 'Not recorded'}</div>
-        </div>
-      </div>
-
-      <div>
-        <div class="report-cover-report-type">Kitchen Profit Audit</div>
-        <h1 class="report-cover-client-title">${humanizeTitle(safe(state.businessName) || 'Client Site')}</h1>
-        
-        <p class="report-cover-summary">${
-          safe(narrative.executiveSummary) ||
-          'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.'
-        }</p>
-      </div>
-
-      <div class="report-cover-metrics">
-        <div class="report-cover-metric primary">
-          <div class="report-cover-metric-value">${formatCurrencyShort(calc.totalWeeklyOpportunity)}</div>
-          <div class="report-cover-metric-label">Weekly profit opportunity</div>
-        </div>
-        <div class="report-cover-metric">
-          <div class="report-cover-metric-value">${formatCurrencyShort(calc.totalAnnualOpportunity)}</div>
-          <div class="report-cover-metric-label">Annual opportunity</div>
-        </div>
-        <div class="report-cover-metric">
-          <div class="report-cover-metric-value">${Math.round(calc.controlScore)}%</div>
-          <div class="report-cover-metric-label">Control compliance</div>
-        </div>
-      </div>
-
-      <div class="report-cover-details-grid">
-        <div class="report-cover-detail">
-          <span class="report-cover-detail-label">Site</span>
-          <span class="report-cover-detail-value">${humanizeTitle(safe(state.businessName) || 'Not recorded')}</span>
-        </div>
-        <div class="report-cover-detail">
-          <span class="report-cover-detail-label">Location</span>
-          <span class="report-cover-detail-value">${safe(state.location) || 'Not recorded'}</span>
-        </div>
-        <div class="report-cover-detail">
-          <span class="report-cover-detail-label">Service style</span>
-          <span class="report-cover-detail-value">${safe(state.serviceStyle) || 'Not recorded'}</span>
-        </div>
-        <div class="report-cover-detail">
-          <span class="report-cover-detail-label">Trading days</span>
-          <span class="report-cover-detail-value">${safe(state.tradingDays) || 'Not recorded'}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="report-body">
-  `;
-
-  // Close report-body wrapper at the very end
-  const reportFooter = `</div>`;
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Kitchen Profit Audit',
+    clientName: safe(state.businessName) || 'Client Site',
+    preparedDate: safe(state.visitDate) || new Date().toISOString().split('T')[0],
+    consultant: safe(state.consultantName) || 'Not recorded',
+    summary: safe(narrative.executiveSummary) || 'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.',
+    metrics: [
+      {
+        label: 'Weekly profit opportunity',
+        value: formatCurrencyShort(calc.totalWeeklyOpportunity),
+        primary: true
+      },
+      {
+        label: 'Annual opportunity',
+        value: formatCurrencyShort(calc.totalAnnualOpportunity)
+      },
+      {
+        label: 'Control compliance',
+        value: `${Math.round(calc.controlScore)}%`
+      }
+    ],
+    details: [
+      { label: 'Site', value: safe(state.businessName) || 'Not recorded' },
+      { label: 'Location', value: safe(state.location) || 'Not recorded' },
+      { label: 'Service style', value: safe(state.serviceStyle) || 'Not recorded' },
+      { label: 'Trading days', value: safe(state.tradingDays) || 'Not recorded' }
+    ]
+  });
 
   const commercialChapter = renderChapter(
     'Commercial view',
@@ -802,7 +758,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       .join('')
   );
 
-  return [coverBody, commercialChapter, actionChapter, controlsChapter, findingsChapter, reportFooter]
+  return [coverHtml, commercialChapter, actionChapter, controlsChapter, findingsChapter]
     .filter(Boolean)
     .join('');
 }
@@ -1086,7 +1042,7 @@ export function KitchenAuditPage() {
   const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
   const standaloneReportHtml = useMemo(
     () =>
-      buildReportDocumentHtml(`${safe(form.businessName || 'Kitchen Profit Audit')} report`, reportHtml, {
+      buildPdfDocumentHtml(`${safe(form.businessName || 'Kitchen Profit Audit')} report`, reportHtml, {
         autoPrint: false,
         showCloseButton: false,
         formatLabel: 'Standalone HTML report'

@@ -6,7 +6,15 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildReportHeroHtml,
+  buildPdfDocumentHtml,
+  buildReportCoverHtml,
+  buildChapterHtml,
+  buildSectionHtml,
+  humanizeTitle,
+  formatCurrencyShort
+} from '../../reports/pdf';
+
+import {
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
@@ -256,31 +264,37 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
   const completedActions = actions.filter((item) => item.status === 'Done').length;
   const openActions = Math.max(actions.length - completedActions, 0);
 
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Food Safety Audit',
+    clientName: safe(state.siteName) || 'Client Site',
+    preparedDate: formatShortDate(state.auditDate),
+    consultant: safe(state.auditorName) || 'Not recorded',
+    summary: 'Food safety readiness, compliance risk, and immediate actions prepared for site follow-up.',
+    metrics: [
+      {
+        label: 'Control pass rate',
+        value: `${calc.completion}%`,
+        primary: true
+      },
+      {
+        label: 'Risk position',
+        value: calc.riskLabel
+      },
+      {
+        label: 'Failed checks',
+        value: `${calc.failCount}`
+      }
+    ],
+    details: [
+      { label: 'Site', value: safe(state.siteName) || 'Not recorded' },
+      { label: 'Location', value: safe(state.location) || 'Not recorded' },
+      { label: 'Service period', value: safe(state.servicePeriod) || 'Not recorded' },
+      { label: 'Site lead', value: safe(state.managerName) || 'Not recorded' }
+    ]
+  });
+
   return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Food safety audit',
-      title: safe(state.title) || 'Food Safety Audit',
-      leadHtml: `<strong>${safe(state.siteName) || 'Unnamed site'}</strong>${
-        safe(state.location) ? ` • ${safe(state.location)}` : ''
-      }`,
-      description:
-        'Food safety readiness, compliance risk, and immediate actions prepared for site follow-up.',
-      chips: [
-        safe(state.servicePeriod) || 'Service review',
-        calc.riskLabel,
-        `${calc.failCount} fail${calc.failCount === 1 ? '' : 's'}`
-      ],
-      cards: [
-        { label: 'Audit date', value: formatShortDate(state.auditDate) },
-        { label: 'Auditor', value: safe(state.auditorName) || 'Not recorded' },
-        { label: 'Site lead', value: safe(state.managerName) || 'Not recorded' },
-        {
-          label: 'Control pass rate',
-          value: `${calc.completion}%`,
-          detail: `${calc.passCount} pass • ${calc.watchCount} watch • ${calc.failCount} fail`
-        }
-      ]
-    })}
+    ${coverHtml}
 
     <div class="summary-grid">
       <div class="meta-card"><span>Risk position</span><strong>${calc.riskLabel}</strong></div>

@@ -6,7 +6,15 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildReportHeroHtml,
+  buildPdfDocumentHtml,
+  buildReportCoverHtml,
+  buildChapterHtml,
+  buildSectionHtml,
+  humanizeTitle,
+  formatCurrencyShort
+} from '../../reports/pdf';
+
+import {
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
@@ -197,31 +205,37 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
   const standoutObservations = state.observations.filter((item) => item.score >= 8).slice(0, 4);
   const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 4);
 
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Mystery Shop Audit',
+    clientName: safe(state.siteName) || 'Client Site',
+    preparedDate: formatShortDate(state.visitDate),
+    consultant: safe(state.shopperName) || 'Not recorded',
+    summary: 'Guest-experience review, scoring, and service-improvement actions prepared for management follow-up.',
+    metrics: [
+      {
+        label: 'Overall score',
+        value: `${calc.overallScore}/10`,
+        primary: true
+      },
+      {
+        label: 'Grade',
+        value: calc.grade
+      },
+      {
+        label: 'Weak moments',
+        value: `${calc.lowMoments}`
+      }
+    ],
+    details: [
+      { label: 'Site', value: safe(state.siteName) || 'Not recorded' },
+      { label: 'Location', value: safe(state.location) || 'Not recorded' },
+      { label: 'Visit window', value: safe(state.visitWindow) || 'Not recorded' },
+      { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded' }
+    ]
+  });
+
   return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Mystery shop audit',
-      title: safe(state.title) || 'Mystery Shop Audit',
-      leadHtml: `<strong>${safe(state.siteName) || 'Unnamed site'}</strong>${
-        safe(state.location) ? ` • ${safe(state.location)}` : ''
-      }`,
-      description:
-        'Guest-experience review, scoring, and service-improvement actions prepared for management follow-up.',
-      chips: [
-        safe(state.visitWindow) || 'Guest visit',
-        `${calc.overallScore}/10`,
-        calc.grade
-      ],
-      cards: [
-        { label: 'Visit date', value: formatShortDate(state.visitDate) },
-        { label: 'Shopper', value: safe(state.shopperName) || 'Not recorded' },
-        { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded' },
-        {
-          label: 'Overall score',
-          value: `${calc.overallScore}/10`,
-          detail: `${calc.standoutMoments} standout • ${calc.lowMoments} weak moments`
-        }
-      ]
-    })}
+    ${coverHtml}
 
     <div class="summary-grid">
       <div class="meta-card"><span>Overall score</span><strong>${calc.overallScore}/10</strong></div>

@@ -5,7 +5,15 @@ import { StatCard } from '../../components/ui/StatCard';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildReportHeroHtml,
+  buildPdfDocumentHtml,
+  buildReportCoverHtml,
+  buildChapterHtml,
+  buildSectionHtml,
+  humanizeTitle,
+  formatCurrencyShort
+} from '../../reports/pdf';
+
+import {
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import {
@@ -158,40 +166,37 @@ export function buildMenuReport(project: MenuProjectState) {
     .sort((left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left))
     .slice(0, 4);
 
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Menu Profit Engine',
+    clientName: safe(project.siteName) || 'Client Site',
+    preparedDate: formatShortDate(project.reviewDate),
+    consultant: 'The Final Check',
+    summary: 'Dish-level margin, weekly contribution, and pricing opportunity prepared for client review and PDF handover.',
+    metrics: [
+      {
+        label: 'Weighted GP',
+        value: fmtPercent(summary.weightedGp),
+        primary: true
+      },
+      {
+        label: 'Weekly profit',
+        value: fmtCurrency(summary.weeklyProfit)
+      },
+      {
+        label: 'Weekly opportunity',
+        value: fmtCurrency(summary.totalOpportunity)
+      }
+    ],
+    details: [
+      { label: 'Menu', value: safe(project.menuName) || 'Not recorded' },
+      { label: 'Sections', value: `${project.sections.length}` },
+      { label: 'Dishes', value: `${allDishes.length}` },
+      { label: 'Below target', value: `${summary.belowTargetCount}` }
+    ]
+  });
+
   return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Menu Profit Engine',
-      title: safe(project.menuName) || 'Menu Profit Engine Report',
-      leadHtml: `<strong>${safe(project.siteName) || 'Unnamed site'}</strong>${
-        safe(project.reviewDate) ? ` • Review date ${formatShortDate(project.reviewDate)}` : ''
-      }`,
-      description:
-        'Dish-level margin, weekly contribution, and pricing opportunity prepared for client review and PDF handover.',
-      chips: [
-        `${project.sections.length} section${project.sections.length === 1 ? '' : 's'}`,
-        `${allDishes.length} dish${allDishes.length === 1 ? '' : 'es'}`,
-        `${summary.belowTargetCount} below target GP`
-      ],
-      cards: [
-        {
-          label: 'Weighted GP',
-          value: fmtPercent(summary.weightedGp)
-        },
-        {
-          label: 'Weekly revenue',
-          value: fmtCurrency(summary.weeklyRevenue)
-        },
-        {
-          label: 'Weekly profit',
-          value: fmtCurrency(summary.weeklyProfit)
-        },
-        {
-          label: 'Weekly opportunity',
-          value: fmtCurrency(summary.totalOpportunity),
-          detail: `${pricingMoveCount} dishes need pricing or cost correction`
-        }
-      ]
-    })}
+    ${coverHtml}
 
     <div class="summary-grid">
       <div class="meta-card"><span>Review date</span><strong>${formatShortDate(project.reviewDate)}</strong></div>

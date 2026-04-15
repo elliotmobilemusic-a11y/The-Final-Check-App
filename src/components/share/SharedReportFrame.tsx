@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { buildReportDocumentHtml } from '../../features/clients/clientExports';
+import { buildPdfDocumentHtml } from '../../reports/pdf';
 import { downloadText } from '../../lib/utils';
 
 type SharedReportFrameProps = {
@@ -18,7 +18,7 @@ export function SharedReportFrame({
   title
 }: SharedReportFrameProps) {
   const documentHtml = ready
-    ? buildReportDocumentHtml(`${title} | The Final Check`, bodyHtml, {
+    ? buildPdfDocumentHtml(`${title} | The Final Check`, bodyHtml, {
         autoPrint: false,
         showCloseButton: false,
         formatLabel: 'Shared HTML report'
