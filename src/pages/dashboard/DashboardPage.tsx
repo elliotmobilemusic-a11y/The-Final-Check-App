@@ -366,9 +366,6 @@ export function DashboardPage() {
         description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
         actions={
           <>
-            <Link className="button button-primary" to="/audit?visit=1">
-              Start visit mode
-            </Link>
             <Link className="button button-primary" to="/clients">
               Open clients
             </Link>
@@ -414,29 +411,6 @@ export function DashboardPage() {
       </section>
 
       <section className="card-grid two-columns">
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Day of visit</h3>
-              <p>Launch directly into a cleaner onsite workflow</p>
-            </div>
-          </div>
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link className="button button-primary" to="/audit?visit=1" style={{ justifyContent: 'flex-start' }}>
-              Start kitchen visit mode
-            </Link>
-            <Link className="button button-secondary" to="/food-safety?visit=1" style={{ justifyContent: 'flex-start' }}>
-              Start food safety visit
-            </Link>
-            <Link className="button button-secondary" to="/mystery-shop?visit=1" style={{ justifyContent: 'flex-start' }}>
-              Start mystery shop visit
-            </Link>
-            <p className="muted-copy" style={{ margin: '4px 0 0' }}>
-              Visit mode opens a faster onsite layout with larger inputs, quick section jumps, and less screen clutter.
-            </p>
-          </div>
-        </article>
-
         <article className="feature-card">
           <div className="feature-top">
             <div>

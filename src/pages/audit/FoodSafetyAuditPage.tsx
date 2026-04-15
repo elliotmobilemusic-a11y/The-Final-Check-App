@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
@@ -21,15 +22,23 @@ import { useVisitMode } from '../../lib/useVisitMode';
 import type {
   AuditActionItem,
   AuditAreaSummary,
+  AuditPhoto,
   ClientRecord,
   FoodSafetyAuditState,
   FoodSafetyCheckItem,
   FoodSafetyTemperatureItem
 } from '../../types';
 import { safe, todayIso, uid } from '../../lib/utils';
+import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
 const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
+const foodSafetyPhotoSections = {
+  overview: 'Audit overview',
+  checks: 'Control checks',
+  temperature: 'Temperature evidence',
+  actions: 'Summary and actions'
+} as const;
 const foodSafetyVisitSections = [
   { href: '#food-safety-site', label: 'Site details' },
   { href: '#food-safety-checks', label: 'Checks' },
@@ -165,7 +174,8 @@ function createDefaultFoodSafetyAudit(): FoodSafetyAuditState {
       blankFoodSafetyTemperature({ area: 'Delivery frozen goods', target: '-18C or below' })
     ],
     focusAreas: [blankAreaSummary()],
-    actionItems: [blankActionItem()]
+    actionItems: [blankActionItem()],
+    photos: []
   };
 }
 
@@ -190,7 +200,11 @@ function normalizeFoodSafetyAudit(data?: Partial<FoodSafetyAuditState> | null): 
     actionItems:
       data?.actionItems?.length
         ? data.actionItems.map((item) => blankActionItem(item))
-        : defaults.actionItems
+        : defaults.actionItems,
+    photos:
+      data?.photos?.length
+        ? data.photos.map((photo) => ({ ...photo, id: photo.id || uid('photo') }))
+        : defaults.photos
   };
 }
 
@@ -300,6 +314,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
         <div><strong>Active actions</strong><br />${openActions}</div>
         <div><strong>Closed actions</strong><br />${completedActions}</div>
       </div>
+      ${renderAuditPhotoGallery(state.photos, 'overview')}
     </section>
 
     <section>
@@ -347,6 +362,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
         </table>`
           : '<p class="muted-copy">No checks recorded.</p>'
       }
+      ${renderAuditPhotoGallery(state.photos, 'checks')}
     </section>
 
     <section>
@@ -380,6 +396,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
         </table>`
           : '<p class="muted-copy">No temperature checks recorded.</p>'
       }
+      ${renderAuditPhotoGallery(state.photos, 'temperature')}
     </section>
 
     <section>
@@ -401,6 +418,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
             </div>`
           : '<p class="muted-copy">No area summaries recorded.</p>'
       }
+      ${renderAuditPhotoGallery(state.photos, 'actions')}
     </section>
 
     <section>
@@ -545,6 +563,27 @@ export function FoodSafetyAuditPage() {
       temperatureLog: current.temperatureLog.map((item) =>
         item.id === id ? { ...item, [key]: value } : item
       )
+    }));
+  }
+
+  function addPhotos(section: keyof typeof foodSafetyPhotoSections, photos: AuditPhoto[]) {
+    setForm((current) => ({
+      ...current,
+      photos: [...current.photos, ...photos]
+    }));
+  }
+
+  function updatePhotoCaption(photoId: string, caption: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.map((photo) => (photo.id === photoId ? { ...photo, caption } : photo))
+    }));
+  }
+
+  function removePhoto(photoId: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.filter((photo) => photo.id !== photoId)
     }));
   }
 
@@ -904,6 +943,16 @@ export function FoodSafetyAuditPage() {
                   </Link>
                 </div>
               ) : null}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('overview', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="overview"
+                sectionLabel={foodSafetyPhotoSections.overview}
+              />
             </div>
           </article>
 
@@ -932,6 +981,16 @@ export function FoodSafetyAuditPage() {
                   </div>
                 </div>
               ))}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('checks', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="checks"
+                sectionLabel={foodSafetyPhotoSections.checks}
+              />
             </div>
           </article>
 
@@ -976,6 +1035,16 @@ export function FoodSafetyAuditPage() {
                   </div>
                 </div>
               ))}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('temperature', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="temperature"
+                sectionLabel={foodSafetyPhotoSections.temperature}
+              />
             </div>
           </article>
 
@@ -1062,6 +1131,16 @@ export function FoodSafetyAuditPage() {
                   ))}
                 </div>
               </div>
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('actions', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="actions"
+                sectionLabel={foodSafetyPhotoSections.actions}
+              />
 
               <div className="tool-action-list">
                 {form.actionItems.map((item) => (

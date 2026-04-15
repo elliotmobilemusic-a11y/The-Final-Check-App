@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
@@ -21,15 +22,24 @@ import { useVisitMode } from '../../lib/useVisitMode';
 import type {
   AuditActionItem,
   AuditAreaSummary,
+  AuditPhoto,
   ClientRecord,
   MysteryShopAuditState,
   MysteryShopObservation,
   MysteryShopScorecard
 } from '../../types';
 import { safe, todayIso, uid } from '../../lib/utils';
+import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
 const MYSTERY_SHOP_DRAFT_KEY = 'mystery-shop-audit-draft-v1';
+const mysteryPhotoSections = {
+  visit: 'Visit details',
+  scorecard: 'Scorecard',
+  journey: 'Guest journey',
+  observations: 'Touchpoint observations',
+  actions: 'Service action plan'
+} as const;
 const mysteryShopVisitSections = [
   { href: '#mystery-visit', label: 'Visit details' },
   { href: '#mystery-scorecard', label: 'Scorecard' },
@@ -110,7 +120,8 @@ function createDefaultMysteryShopAudit(): MysteryShopAuditState {
       blankObservation({ area: 'Environment', touchpoint: 'Cleanliness, atmosphere, and bathrooms' })
     ],
     focusAreas: [blankAreaSummary()],
-    actionItems: [blankActionItem()]
+    actionItems: [blankActionItem()],
+    photos: []
   };
 }
 
@@ -136,7 +147,11 @@ function normalizeMysteryShopAudit(
     actionItems:
       data?.actionItems?.length
         ? data.actionItems.map((item) => blankActionItem(item))
-        : defaults.actionItems
+        : defaults.actionItems,
+    photos:
+      data?.photos?.length
+        ? data.photos.map((photo) => ({ ...photo, id: photo.id || uid('photo') }))
+        : defaults.photos
   };
 }
 
@@ -228,6 +243,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
         <div><strong>Atmosphere</strong><br />${state.scorecard.atmosphere}/10</div>
         <div><strong>Value</strong><br />${state.scorecard.value}/10</div>
       </div>
+      ${renderAuditPhotoGallery(state.photos, 'scorecard')}
     </section>
 
     <section>
@@ -241,6 +257,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
         <div class="report-story-card"><h3>Cleanliness and atmosphere</h3><p>${safe(state.cleanlinessNotes) || 'No cleanliness notes recorded.'}</p></div>
         <div class="report-story-card"><h3>Recommendations</h3><p>${safe(state.recommendations) || 'No recommendations recorded.'}</p></div>
       </div>
+      ${renderAuditPhotoGallery(state.photos, 'journey')}
     </section>
 
     <section>
@@ -274,6 +291,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
           }
         </div>
       </div>
+      ${renderAuditPhotoGallery(state.photos, 'visit')}
     </section>
 
     <section>
@@ -307,6 +325,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
         </table>`
           : '<p class="muted-copy">No mystery shop observations recorded.</p>'
       }
+      ${renderAuditPhotoGallery(state.photos, 'observations')}
     </section>
 
     <section>
@@ -328,6 +347,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
             </div>`
           : '<p class="muted-copy">No area summaries recorded.</p>'
       }
+      ${renderAuditPhotoGallery(state.photos, 'actions')}
     </section>
 
     <section>
@@ -477,6 +497,27 @@ export function MysteryShopAuditPage() {
       observations: current.observations.map((item) =>
         item.id === id ? { ...item, [key]: value } : item
       )
+    }));
+  }
+
+  function addPhotos(section: keyof typeof mysteryPhotoSections, photos: AuditPhoto[]) {
+    setForm((current) => ({
+      ...current,
+      photos: [...current.photos, ...photos]
+    }));
+  }
+
+  function updatePhotoCaption(photoId: string, caption: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.map((photo) => (photo.id === photoId ? { ...photo, caption } : photo))
+    }));
+  }
+
+  function removePhoto(photoId: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.filter((photo) => photo.id !== photoId)
     }));
   }
 
@@ -798,6 +839,16 @@ export function MysteryShopAuditPage() {
                   </Link>
                 </div>
               ) : null}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('visit', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="visit"
+                sectionLabel={mysteryPhotoSections.visit}
+              />
             </div>
           </article>
 
@@ -824,6 +875,16 @@ export function MysteryShopAuditPage() {
                   />
                 </label>
               ))}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('scorecard', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="scorecard"
+                sectionLabel={mysteryPhotoSections.scorecard}
+              />
             </div>
           </article>
 
@@ -861,6 +922,16 @@ export function MysteryShopAuditPage() {
                   <textarea className="input" value={form.recommendations} onChange={(event) => updateField('recommendations', event.target.value)} />
                 </label>
               </div>
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('journey', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="journey"
+                sectionLabel={mysteryPhotoSections.journey}
+              />
             </div>
           </article>
 
@@ -894,6 +965,16 @@ export function MysteryShopAuditPage() {
                   </div>
                 </div>
               ))}
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('observations', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="observations"
+                sectionLabel={mysteryPhotoSections.observations}
+              />
             </div>
           </article>
 
@@ -1003,6 +1084,16 @@ export function MysteryShopAuditPage() {
                   </div>
                 ))}
               </div>
+
+              <PhotoEvidenceField
+                onAddPhotos={(photos) => addPhotos('actions', photos)}
+                onCaptionChange={updatePhotoCaption}
+                onMessage={setMessage}
+                onRemovePhoto={removePhoto}
+                photos={form.photos}
+                section="actions"
+                sectionLabel={mysteryPhotoSections.actions}
+              />
             </div>
           </article>
         </div>

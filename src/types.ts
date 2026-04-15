@@ -9,6 +9,15 @@ export type MeasurementUnit =
   | 'portion'
   | 'pack';
 
+export interface AuditPhoto {
+  id: string;
+  section: string;
+  sectionLabel: string;
+  caption: string;
+  imageDataUrl: string;
+  createdAt: string;
+}
+
 export interface AuditWasteItem {
   id: string;
   item: string;
@@ -108,6 +117,7 @@ export interface AuditFormState {
   orderingItems: AuditOrderingItem[];
   actionItems: AuditActionItem[];
   controlChecks: AuditControlCheck[];
+  photos: AuditPhoto[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -156,6 +166,7 @@ export interface FoodSafetyAuditState {
   temperatureLog: FoodSafetyTemperatureItem[];
   focusAreas: AuditAreaSummary[];
   actionItems: AuditActionItem[];
+  photos: AuditPhoto[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -199,6 +210,7 @@ export interface MysteryShopAuditState {
   observations: MysteryShopObservation[];
   focusAreas: AuditAreaSummary[];
   actionItems: AuditActionItem[];
+  photos: AuditPhoto[];
   createdAt?: string;
   updatedAt?: string;
 }

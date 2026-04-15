@@ -16,6 +16,12 @@ const navItems = [
   { to: '/menu', label: 'Menu Profit Engine' }
 ];
 
+const visitModeItems = [
+  { to: '/audit?visit=1', label: 'Profit Visit' },
+  { to: '/food-safety?visit=1', label: 'Safety Visit' },
+  { to: '/mystery-shop?visit=1', label: 'Mystery Visit' }
+];
+
 const workspaceDetails = [
   {
     match: '/dashboard',
@@ -236,6 +242,18 @@ export function AppShell() {
                      to={item.to}
                      end={item.to !== '/clients'}
                      className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
+                   >
+                     <span className="nav-link-inner">{item.label}</span>
+                   </NavLink>
+                 ))}
+               </nav>
+               <nav className="shell-secondary-nav" aria-label="Visit mode launches">
+                 <span className="shell-secondary-label">Visit mode</span>
+                 {visitModeItems.map((item) => (
+                   <NavLink
+                     key={item.to}
+                     to={item.to}
+                     className="shell-secondary-link"
                    >
                      <span className="nav-link-inner">{item.label}</span>
                    </NavLink>

@@ -562,6 +562,43 @@ export function buildReportDocumentHtml(
           font-size: 12px;
           line-height: 1.7;
         }
+        .report-photo-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-top: 10px;
+        }
+        .report-photo-card {
+          margin: 0;
+          border: 1px solid var(--line-medium);
+          background: #ffffff;
+          page-break-inside: avoid;
+          break-inside: avoid-page;
+        }
+        .report-photo-card img {
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          object-fit: cover;
+          display: block;
+          background: #f3eee7;
+        }
+        .report-photo-card figcaption {
+          display: grid;
+          gap: 4px;
+          padding: 10px 11px 11px;
+        }
+        .report-photo-card figcaption strong {
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--muted);
+        }
+        .report-photo-card figcaption span {
+          font-size: 12px;
+          line-height: 1.55;
+          color: var(--ink);
+        }
         .report-story-card ul {
           margin-top: 0;
         }
@@ -1036,6 +1073,7 @@ export function buildReportDocumentHtml(
           .report-metric-grid,
           .report-support-grid,
           .report-story-grid,
+          .report-photo-grid,
           .report-metrics-grid,
           .report-cover-top,
           .report-cover-pill-row,
@@ -1091,7 +1129,8 @@ export function buildReportDocumentHtml(
           .report-cover-pill-row,
           .report-cover-stat-grid,
           .report-cover-mini-grid,
-          .report-story-grid {
+          .report-story-grid,
+          .report-photo-grid {
             grid-template-columns: 1fr;
           }
           .meta-grid,

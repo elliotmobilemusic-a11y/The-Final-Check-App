@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
@@ -14,6 +15,7 @@ import type {
   AuditActionItem,
   AuditCategoryScores,
   AuditControlCheck,
+  AuditPhoto,
   AuditFormState,
   AuditOrderingItem,
   AuditPortionItem,
@@ -35,6 +37,7 @@ import { createKitchenAuditShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import { useVisitMode } from '../../lib/useVisitMode';
+import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 import {
   buildKitchenProfitNarrative,
   calculateKitchenProfitMetrics
@@ -116,6 +119,14 @@ function defaultCategoryScores(): AuditCategoryScores {
   };
 }
 
+const kitchenPhotoSections = {
+  commercial: 'Commercial snapshot',
+  controls: 'Controls and evidence',
+  findings: 'Operational findings',
+  layout: 'Layout and equipment',
+  actions: 'Action planning'
+} as const;
+
 function createDefaultAudit(clientId: string | null = null): AuditFormState {
   return {
     id: undefined,
@@ -161,7 +172,8 @@ function createDefaultAudit(clientId: string | null = null): AuditFormState {
     portionItems: [blankPortionItem()],
     orderingItems: [blankOrderingItem()],
     actionItems: [blankActionItem()],
-    controlChecks: defaultControlChecks()
+    controlChecks: defaultControlChecks(),
+    photos: []
   };
 }
 
@@ -175,6 +187,7 @@ function normalizeAuditState(
   const orderingItems = data.orderingItems ?? [];
   const actionItems = data.actionItems ?? [];
   const controlChecks = data.controlChecks ?? [];
+  const photos = data.photos ?? [];
 
   return {
     ...defaults,
@@ -219,7 +232,8 @@ function normalizeAuditState(
             ...item,
             id: item.id || uid('control')
           }))
-        : defaults.controlChecks
+        : defaults.controlChecks,
+    photos: photos.length > 0 ? photos.map((photo) => ({ ...photo, id: photo.id || uid('photo') })) : defaults.photos
   };
 }
 
@@ -527,6 +541,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
             </thead>
             <tbody>${controlsTableRows}</tbody>
           </table>
+          ${renderAuditPhotoGallery(state.photos, 'controls')}
         `
       )
     : '';
@@ -609,7 +624,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       : ''
   ]
     .filter(Boolean)
-    .join('');
+    .join('') + renderAuditPhotoGallery(state.photos, 'findings') + renderAuditPhotoGallery(state.photos, 'layout');
 
   const pageBodies = [
     `
@@ -637,7 +652,12 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     [
       renderSection(
         'Commercial Snapshot',
-        pageTwoMetrics ? `<div class="report-metric-grid report-metric-grid-4">${pageTwoMetrics}</div>` : ''
+        [
+          pageTwoMetrics ? `<div class="report-metric-grid report-metric-grid-4">${pageTwoMetrics}</div>` : '',
+          renderAuditPhotoGallery(state.photos, 'commercial')
+        ]
+          .filter(Boolean)
+          .join('')
       ),
       renderSection('Key Issues', renderList(narrative.keyIssues))
     ]
@@ -646,7 +666,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     [
       renderSection('Immediate Quick Wins', quickWinsHtml),
       renderSection('30–90 Day Action Plan', actionPlanHtml),
-      renderSection('Follow-Up Recommendation', followUpHtml)
+      renderSection(
+        'Follow-Up Recommendation',
+        [followUpHtml, renderAuditPhotoGallery(state.photos, 'actions')].filter(Boolean).join('')
+      )
     ]
       .filter(Boolean)
       .join(''),
@@ -1098,6 +1121,27 @@ export function KitchenAuditPage() {
       controlChecks: current.controlChecks.map((item) =>
         item.id === id ? { ...item, [key]: value } : item
       )
+    }));
+  }
+
+  function addPhotos(section: keyof typeof kitchenPhotoSections, photos: AuditPhoto[]) {
+    setForm((current) => ({
+      ...current,
+      photos: [...current.photos, ...photos]
+    }));
+  }
+
+  function updatePhotoCaption(photoId: string, caption: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.map((photo) => (photo.id === photoId ? { ...photo, caption } : photo))
+    }));
+  }
+
+  function removePhoto(photoId: string) {
+    setForm((current) => ({
+      ...current,
+      photos: current.photos.filter((photo) => photo.id !== photoId)
     }));
   }
 
@@ -1815,6 +1859,16 @@ export function KitchenAuditPage() {
                     Use covers x spend as weekly sales
                   </button>
                 </div>
+
+                <PhotoEvidenceField
+                  onAddPhotos={(photos) => addPhotos('commercial', photos)}
+                  onCaptionChange={updatePhotoCaption}
+                  onMessage={setMessage}
+                  onRemovePhoto={removePhoto}
+                  photos={form.photos}
+                  section="commercial"
+                  sectionLabel={kitchenPhotoSections.commercial}
+                />
               </section>
 
               <section className="sub-panel" id="audit-scorecard">
@@ -1916,6 +1970,16 @@ export function KitchenAuditPage() {
                     </div>
                   ))}
                 </div>
+
+                <PhotoEvidenceField
+                  onAddPhotos={(photos) => addPhotos('controls', photos)}
+                  onCaptionChange={updatePhotoCaption}
+                  onMessage={setMessage}
+                  onRemovePhoto={removePhoto}
+                  photos={form.photos}
+                  section="controls"
+                  sectionLabel={kitchenPhotoSections.controls}
+                />
               </section>
 
               <section className="sub-panel" id="audit-observations">
@@ -2025,6 +2089,16 @@ export function KitchenAuditPage() {
                     </div>
                   ))}
                 </div>
+
+                <PhotoEvidenceField
+                  onAddPhotos={(photos) => addPhotos('findings', photos)}
+                  onCaptionChange={updatePhotoCaption}
+                  onMessage={setMessage}
+                  onRemovePhoto={removePhoto}
+                  photos={form.photos}
+                  section="findings"
+                  sectionLabel={kitchenPhotoSections.findings}
+                />
               </section>
 
               <section className="sub-panel" id="audit-portion">
@@ -2223,6 +2297,16 @@ export function KitchenAuditPage() {
                     </label>
                   ))}
                 </div>
+
+                <PhotoEvidenceField
+                  onAddPhotos={(photos) => addPhotos('layout', photos)}
+                  onCaptionChange={updatePhotoCaption}
+                  onMessage={setMessage}
+                  onRemovePhoto={removePhoto}
+                  photos={form.photos}
+                  section="layout"
+                  sectionLabel={kitchenPhotoSections.layout}
+                />
               </section>
 
               <section className="sub-panel" id="audit-actions">
@@ -2336,6 +2420,16 @@ export function KitchenAuditPage() {
                     </div>
                   ))}
                 </div>
+
+                <PhotoEvidenceField
+                  onAddPhotos={(photos) => addPhotos('actions', photos)}
+                  onCaptionChange={updatePhotoCaption}
+                  onMessage={setMessage}
+                  onRemovePhoto={removePhoto}
+                  photos={form.photos}
+                  section="actions"
+                  sectionLabel={kitchenPhotoSections.actions}
+                />
               </section>
             </div>
           </div>
