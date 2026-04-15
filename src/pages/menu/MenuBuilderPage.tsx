@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -23,6 +23,7 @@ import type {
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createMenuShare } from '../../services/reportShares';
+import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import {
   buildMenuProfitSummary,
   dishActualGp,
@@ -517,6 +518,7 @@ export function MenuBuilderPage() {
   const [isSharing, setIsSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
+  const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
 
   const selectedSection = useMemo(
     () => project.sections.find((section) => section.id === project.selectedSectionId) ?? null,
@@ -552,6 +554,13 @@ export function MenuBuilderPage() {
     () => selectableSitesForClient(activeClient),
     [activeClient]
   );
+
+  useBodyScrollLock(controlModalOpen);
+
+  useEffect(() => {
+    if (!controlModalOpen) return;
+    controlDrawerBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [controlModalOpen]);
 
   const strongDishCount = useMemo(
     () => allDishes.filter((dish) => dishTheoGp(dish) >= num(dish.targetGp)).length,
@@ -1742,7 +1751,7 @@ export function MenuBuilderPage() {
       {controlModalOpen && (
         <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
           <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body">
+            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
               <div className="control-drawer-header">
                 <h2 className="control-drawer-title">Menu Profit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>

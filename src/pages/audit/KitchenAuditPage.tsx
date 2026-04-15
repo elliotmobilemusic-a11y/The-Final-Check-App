@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -32,6 +32,7 @@ import {
 } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
+import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import {
   buildKitchenProfitNarrative,
   calculateKitchenProfitMetrics
@@ -937,6 +938,7 @@ export function KitchenAuditPage() {
   );
   const [isSharing, setIsSharing] = useState(false);
   const reportHtml = useMemo(() => buildKitchenAuditReportHtml(form), [form]);
+  const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
   const standaloneReportHtml = useMemo(
     () =>
       buildReportDocumentHtml(`${safe(form.businessName || 'Kitchen Profit Audit')} report`, reportHtml, {
@@ -948,6 +950,13 @@ export function KitchenAuditPage() {
   );
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
+
+  useBodyScrollLock(controlModalOpen);
+
+  useEffect(() => {
+    if (!controlModalOpen) return;
+    controlDrawerBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [controlModalOpen]);
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
@@ -2306,7 +2315,7 @@ export function KitchenAuditPage() {
       {controlModalOpen && (
         <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
           <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body">
+            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
               <div className="control-drawer-header">
                 <h2 className="control-drawer-title">Profit Audit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>

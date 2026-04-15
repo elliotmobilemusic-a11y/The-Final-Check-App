@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -15,6 +15,7 @@ import {
 } from '../../services/localToolStore';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createFoodSafetyShare } from '../../services/reportShares';
+import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -447,6 +448,7 @@ export function FoodSafetyAuditPage() {
   const [message, setMessage] = useState('Food safety audit ready.');
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
+  const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
 
   const calc = useMemo(() => calculateFoodSafety(form), [form]);
   const activeClient = useMemo(
@@ -457,6 +459,13 @@ export function FoodSafetyAuditPage() {
     () => selectableSitesForClient(activeClient),
     [activeClient]
   );
+
+  useBodyScrollLock(controlModalOpen);
+
+  useEffect(() => {
+    if (!controlModalOpen) return;
+    controlDrawerBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [controlModalOpen]);
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
@@ -1067,7 +1076,7 @@ export function FoodSafetyAuditPage() {
       {controlModalOpen && (
         <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
           <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body">
+            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
               <div className="control-drawer-header">
                 <h2 className="control-drawer-title">Food Safety Audit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>

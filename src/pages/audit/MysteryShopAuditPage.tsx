@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -15,6 +15,7 @@ import {
 } from '../../services/localToolStore';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
+import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import type {
   AuditActionItem,
   AuditAreaSummary,
@@ -372,6 +373,7 @@ export function MysteryShopAuditPage() {
   const [message, setMessage] = useState('Mystery shop audit ready.');
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
+  const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
 
   const calc = useMemo(() => calculateMysteryShop(form), [form]);
   const activeClient = useMemo(
@@ -382,6 +384,13 @@ export function MysteryShopAuditPage() {
     () => selectableSitesForClient(activeClient),
     [activeClient]
   );
+
+  useBodyScrollLock(controlModalOpen);
+
+  useEffect(() => {
+    if (!controlModalOpen) return;
+    controlDrawerBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [controlModalOpen]);
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
@@ -965,7 +974,7 @@ export function MysteryShopAuditPage() {
       {controlModalOpen && (
         <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
           <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body">
+            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
               <div className="control-drawer-header">
                 <h2 className="control-drawer-title">Mystery Shop Audit Controls</h2>
                 <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
