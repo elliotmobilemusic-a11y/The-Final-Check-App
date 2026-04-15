@@ -9,9 +9,6 @@ export interface UserProfile {
   organisation?: string;
   updated_at: string;
 }
-
-const AVATAR_BUCKET = 'avatars';
-
 function isUsableAvatarUrl(value?: string | null) {
   const url = String(value ?? '').trim();
   return (
@@ -56,6 +53,10 @@ export async function uploadAvatar(file: File, userId: string): Promise<string> 
 
   if (!session?.access_token) {
     throw new Error('You must be signed in to upload an avatar.');
+  }
+
+  if (session.user.id !== userId) {
+    throw new Error('Avatar upload session mismatch. Please sign in again.');
   }
 
   const uploadResponse = await fetch('/api/upload-avatar', {

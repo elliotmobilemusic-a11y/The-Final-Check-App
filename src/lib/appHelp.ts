@@ -828,7 +828,6 @@ export function createAssistantWelcome(pathname: string) {
 
 export function buildAssistantReply(question: string, pathname: string) {
   const trimmed = question.trim();
-  const currentPage = getHelpPage(pathname);
 
   if (!trimmed) {
     return createAssistantWelcome(pathname);

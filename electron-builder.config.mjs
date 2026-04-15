@@ -45,14 +45,14 @@ export default {
   asar: true,
   mac: {
     identity: process.env.CSC_NAME || null,
-    icon: 'public/the-final-check-logo.png',
+    icon: 'the-final-check-logo.png',
     target: ['dmg', 'zip'],
     category: 'public.app-category.business',
     hardenedRuntime: true,
     notarize: true
   },
   win: {
-    icon: 'public/the-final-check-logo.png',
+    icon: 'the-final-check-logo.png',
     target: ['nsis', 'zip']
   },
   nsis: {

@@ -127,7 +127,7 @@ export function calculateKitchenProfitMetrics(state: AuditFormState): KitchenPro
 }
 
 export function buildKitchenProfitNarrative(
-  state: AuditFormState,
+  _state: AuditFormState,
   metrics: KitchenProfitMetrics
 ): KitchenProfitNarrative {
   const keyIssues: string[] = [];

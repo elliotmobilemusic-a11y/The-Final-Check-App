@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -8,7 +8,7 @@ import {
   buildReportDocumentHtml,
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
-import { deleteAudit, getAuditById, listAudits, saveAudit } from '../../services/audits';
+import { getAuditById, saveAudit } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import type {
   AuditActionItem,
@@ -18,8 +18,7 @@ import type {
   AuditOrderingItem,
   AuditPortionItem,
   AuditWasteItem,
-  ClientRecord,
-  SupabaseRecord
+  ClientRecord
 } from '../../types';
 import {
   downloadText,
@@ -221,25 +220,8 @@ function normalizeAuditState(
   };
 }
 
-function scoreClass(score: number) {
-  if (score >= 75) return 'status-pill status-danger';
-  if (score >= 40) return 'status-pill status-warning';
-  return 'status-pill status-success';
-}
-
-function scoreLabel(score: number) {
-  if (score >= 75) return 'High priority';
-  if (score >= 40) return 'Medium priority';
-  return 'Stable';
-}
-
 function calculateAudit(state: AuditFormState) {
   return calculateKitchenProfitMetrics(state);
-}
-
-function listHtml(items: string[], emptyText: string) {
-  if (!items.length) return `<p class="muted-copy">${emptyText}</p>`;
-  return `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`;
 }
 
 function buildSuggestedActionItems(
@@ -342,63 +324,11 @@ function buildSuggestedNarrative(
   };
 }
 
-function applyAuditPreset(kind: 'margin' | 'operations' | 'opening', state: AuditFormState) {
-  const base =
-    kind === 'margin'
-      ? {
-          auditType: 'Menu & GP Review',
-          title: 'Kitchen Margin Recovery Audit',
-          targetGp: 72,
-          orderingScore: 'High' as const,
-          quickWins:
-            'Review top margin leaks.\nTighten portions on high-volume dishes.\nReset daily waste tracking.',
-          priorityActions:
-            'Recover lost GP through recipe specs and pricing.\nSet weekly controls for waste and ordering.\nCreate a short ownership plan with the chef team.'
-        }
-      : kind === 'opening'
-        ? {
-            auditType: 'New Opening Support',
-            title: 'Kitchen Launch Readiness Audit',
-            targetGp: 68,
-            orderingScore: 'Moderate' as const,
-            quickWins:
-              'Confirm opening pars and ordering rhythm.\nFinalise recipe spec packs.\nBrief the team on service flow and controls.',
-            priorityActions:
-              'Build launch-week operating rhythm.\nProtect consistency during opening weeks.\nSet first follow-up review cadence.'
-          }
-        : {
-            auditType: 'Operational Audit',
-            title: 'Kitchen Systems and Performance Audit',
-            targetGp: 70,
-            orderingScore: 'Moderate' as const,
-            quickWins:
-              'Identify the top three operational leaks.\nCorrect any immediate control gaps.\nBrief the management team on critical next steps.',
-            priorityActions:
-              'Stabilise daily kitchen systems.\nReduce waste and labour drag.\nCreate a 30-day operational improvement plan.'
-          };
-
-  return {
-    ...state,
-    ...base
-  };
-}
-
 export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const calc = calculateAudit(state);
-  const actionRows = state.actionItems.filter((item) => safe(item.title));
   const controlRows = state.controlChecks.filter(
     (item) => item.status !== 'N/A' || safe(item.note) || safe(item.label)
   );
-  const scoreEntries = [
-    ['Leadership', state.categoryScores.leadership],
-    ['Food quality', state.categoryScores.foodQuality],
-    ['Systems', state.categoryScores.systems],
-    ['Cleanliness', state.categoryScores.cleanliness],
-    ['Flow', state.categoryScores.flow],
-    ['Training', state.categoryScores.training],
-    ['Stock', state.categoryScores.stock],
-    ['Safety', state.categoryScores.safety]
-  ];
 
   const detailedFindings: string[] = [];
   if (state.weeklySales > 0) {
@@ -491,17 +421,6 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       .filter((item) => Object.values(item).some((value) => hasMeaningfulText(value)))
       .map(formatter)
       .join('');
-
-  const supportMetricCards = [
-    calc.gpOpportunityValue > 0 ? renderMetric('GP opportunity', fmtCurrency(calc.gpOpportunityValue)) : '',
-    calc.weeklyWasteLoss > 0 ? renderMetric('Waste loss', fmtCurrency(calc.weeklyWasteLoss)) : '',
-    calc.labourOpportunityValue > 0 ? renderMetric('Labour opportunity', fmtCurrency(calc.labourOpportunityValue)) : '',
-    calc.totalPortionLoss > 0 ? renderMetric('Portion opportunity', fmtCurrency(calc.totalPortionLoss)) : '',
-    calc.controlScore > 0 ? renderMetric('Control compliance', `${Math.round(calc.controlScore)}%`) : ''
-  ]
-    .filter(Boolean)
-    .slice(0, 3)
-    .join('');
 
   const pageTwoMetrics = [
     state.weeklySales > 0 ? renderMetric('Weekly food sales', fmtCurrency(state.weeklySales)) : '',
@@ -741,18 +660,6 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   );
 
   return pages.join('');
-}
-
-function formatShortDate(value?: string | null) {
-  if (!value) return 'No date';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No date';
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }).format(date);
 }
 
 function completionSummary(form: AuditFormState) {
@@ -1013,12 +920,10 @@ export function KitchenAuditPage() {
           searchParams.get('client') || null
         )
   );
-  const [savedAudits, setSavedAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('Audit draft ready.');
   const [shareUrl, setShareUrl] = useState('');
-  const [loadingSaved, setLoadingSaved] = useState(true);
   const [controlModalOpen, setControlModalOpen] = useState(false);
 
   const calc = useMemo(() => calculateAudit(form), [form]);
@@ -1043,78 +948,10 @@ export function KitchenAuditPage() {
   );
   const completion = useMemo(() => completionSummary(form), [form]);
   const insights = useMemo(() => buildAuditInsights(form, calc), [form, calc]);
-  const readinessItems = useMemo(
-    () => [
-      {
-        label: 'Site setup',
-        value:
-          form.businessName.trim() && form.visitDate && form.auditType
-            ? 'Ready'
-            : 'Add site basics',
-        detail: 'Title, business, visit date, and audit type'
-      },
-      {
-        label: 'Commercial data',
-        value:
-          form.weeklySales > 0 && form.weeklyFoodCost > 0
-            ? 'Captured'
-            : 'Awaiting figures',
-        detail: 'Weekly sales, food cost, and target GP'
-      },
-      {
-        label: 'Action plan',
-        value:
-          calc.totalNamedActions > 0
-            ? `${calc.totalNamedActions} actions`
-            : 'Needs actions',
-        detail: 'Priority actions ready to present back to site'
-      },
-      {
-        label: 'Report readiness',
-        value:
-          completion.percent >= 70 && form.summary.trim()
-            ? 'Nearly ready'
-            : 'More evidence needed',
-        detail: 'Completion and narrative coverage before export'
-      }
-    ],
-    [
-      calc.totalNamedActions,
-      completion.percent,
-      form.auditType,
-      form.businessName,
-      form.summary,
-      form.visitDate,
-      form.weeklyFoodCost,
-      form.weeklySales
-    ]
-  );
-
-  const refreshAudits = useCallback(async () => {
-    try {
-      setLoadingSaved(true);
-      const activeClientId = searchParams.get('client') || form.clientId || undefined;
-      const rows = await listAudits(activeClientId || undefined);
-      const sorted = [...rows].sort((a, b) => {
-        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-        return bTime - aTime;
-      });
-      setSavedAudits(sorted);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not load audits.');
-    } finally {
-      setLoadingSaved(false);
-    }
-  }, [form.clientId, searchParams]);
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    refreshAudits();
-  }, [refreshAudits]);
 
   useEffect(() => {
     writeDraft(KITCHEN_AUDIT_DRAFT_KEY, form);
@@ -1336,7 +1173,6 @@ export function KitchenAuditPage() {
             updatedAt: saved.updated_at
           });
           setMessage('Audit saved.');
-          await refreshAudits();
         }
       );
     } catch (error) {
@@ -1346,43 +1182,11 @@ export function KitchenAuditPage() {
     }
   }
 
-  async function handleLoad(record: SupabaseRecord<AuditFormState>) {
-    setForm({
-      ...normalizeAuditState(record.data, record.client_id ?? record.data.clientId ?? null),
-      id: record.id,
-      clientId: record.client_id ?? record.data.clientId ?? null,
-      createdAt: record.created_at,
-      updatedAt: record.updated_at
-    });
-    setMessage(`Loaded "${record.title}".`);
-  }
-
-  async function handleDelete(id: string) {
-    if (!window.confirm('Delete this saved audit?')) return;
-
-    try {
-      await deleteAudit(id);
-      if (form.id === id) {
-        clearDraft(KITCHEN_AUDIT_DRAFT_KEY);
-        setForm(createDefaultAudit(searchParams.get('client') || null));
-      }
-      await refreshAudits();
-      setMessage('Audit deleted.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Delete failed.');
-    }
-  }
-
   function newAudit() {
     const activeClientId = searchParams.get('client') || null;
     clearDraft(KITCHEN_AUDIT_DRAFT_KEY);
     setForm(createDefaultAudit(activeClientId));
     setMessage('Started a new audit.');
-  }
-
-  function applyPreset(kind: 'margin' | 'operations' | 'opening') {
-    setForm((current) => applyAuditPreset(kind, current));
-    setMessage('Audit preset applied.');
   }
 
   function generateActions() {
@@ -1490,22 +1294,6 @@ export function KitchenAuditPage() {
     } finally {
       setIsSharing(false);
     }
-  }
-
-  function loadFromJson(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    file
-      .text()
-      .then((content) => {
-        const parsed = JSON.parse(content) as AuditFormState;
-        setForm(normalizeAuditState(parsed, searchParams.get('client') || null));
-        setMessage('Audit JSON loaded.');
-      })
-      .catch(() => setMessage('Could not read the selected JSON file.'));
-
-    event.target.value = '';
   }
 
   return (

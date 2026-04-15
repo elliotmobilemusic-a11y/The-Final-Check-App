@@ -4,10 +4,9 @@ import { supabaseAuthStorage } from './authStorage';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Environment validation with safe logging
 const validateSupabaseConfig = () => {
   const errors: string[] = [];
-  
+
   if (!supabaseUrl) {
     errors.push('❌ VITE_SUPABASE_URL is missing from environment variables');
   } else if (!supabaseUrl.includes('supabase.co')) {
@@ -40,11 +39,6 @@ const validateSupabaseConfig = () => {
     return false;
   }
 
-  console.log(`✅ Supabase configured: ${supabaseUrl}`);
-  if (supabaseAnonKey) {
-    console.log(`✅ Anon key loaded: ${supabaseAnonKey.substring(0, 12)}...${supabaseAnonKey.substring(supabaseAnonKey.length - 6)}`);
-  }
-  
   return true;
 };
 
@@ -52,7 +46,6 @@ const configValid = validateSupabaseConfig();
 
 export const hasSupabaseEnv = configValid;
 
-// Never return null - fail loudly with clear error instead of silent failures
 if (!configValid) {
   throw new Error('Supabase configuration is invalid. Check browser console for details.');
 }

@@ -68,6 +68,27 @@ function normalizeAvatarUrl(value?: string | null) {
   return /^https?:\/\/.+\/storage\/v1\/object\/public\/avatars\//i.test(url) ? url : '';
 }
 
+function normalizeAvatarPosition(value: unknown) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    'x' in value &&
+    'y' in value &&
+    'scale' in value &&
+    typeof value.x === 'number' &&
+    typeof value.y === 'number' &&
+    typeof value.scale === 'number'
+  ) {
+    return {
+      x: value.x,
+      y: value.y,
+      scale: value.scale
+    };
+  }
+
+  return { x: 50, y: 50, scale: 1 };
+}
+
 function readStoredPreferences(): Partial<AppPreferences> {
   if (!hasWindow()) return {};
 
@@ -124,9 +145,11 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
 
     if (!metadataDisplayName && !metadataAvatarUrl) return;
 
-    const metadataAvatarPosition = typeof metadata.avatar_position === 'object' 
-      ? metadata.avatar_position 
-      : { x: 50, y: 50, scale: 1 };
+    const metadataAvatarPosition = normalizeAvatarPosition(metadata.avatar_position);
+    const metadataJobTitle =
+      typeof metadata.job_title === 'string' ? metadata.job_title.trim() : '';
+    const metadataOrganisation =
+      typeof metadata.organisation === 'string' ? metadata.organisation.trim() : '';
 
     setPreferences((current) => {
       const next = {
@@ -134,13 +157,18 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
         displayName: current.displayName || metadataDisplayName,
         avatarUrl: current.avatarUrl || metadataAvatarUrl,
         avatarPosition: metadataAvatarPosition,
-        jobTitle: current.jobTitle || (typeof metadata.job_title === 'string' ? metadata.job_title.trim() : ''),
-        organisation: current.organisation || (typeof metadata.organisation === 'string' ? metadata.organisation.trim() : '')
+        jobTitle: current.jobTitle || metadataJobTitle,
+        organisation: current.organisation || metadataOrganisation
       };
 
       if (
         next.displayName === current.displayName &&
-        next.avatarUrl === current.avatarUrl
+        next.avatarUrl === current.avatarUrl &&
+        next.avatarPosition.x === current.avatarPosition.x &&
+        next.avatarPosition.y === current.avatarPosition.y &&
+        next.avatarPosition.scale === current.avatarPosition.scale &&
+        next.jobTitle === current.jobTitle &&
+        next.organisation === current.organisation
       ) {
         return current;
       }
@@ -204,7 +232,10 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
     setPreferences((current) => ({
       ...defaultPreferences,
       displayName: current.displayName,
-      avatarUrl: current.avatarUrl
+      avatarUrl: current.avatarUrl,
+      avatarPosition: current.avatarPosition,
+      jobTitle: current.jobTitle,
+      organisation: current.organisation
     }));
   }, []);
 

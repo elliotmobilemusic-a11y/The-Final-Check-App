@@ -10,9 +10,7 @@ import {
 } from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
 import {
-  deleteLocalToolRecord,
   getLocalToolRecord,
-  listLocalToolRecords,
   saveLocalToolRecord
 } from '../../services/localToolStore';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
@@ -23,10 +21,9 @@ import type {
   ClientRecord,
   FoodSafetyAuditState,
   FoodSafetyCheckItem,
-  FoodSafetyTemperatureItem,
-  LocalToolRecord
+  FoodSafetyTemperatureItem
 } from '../../types';
-import { lines, safe, todayIso, uid } from '../../lib/utils';
+import { safe, todayIso, uid } from '../../lib/utils';
 
 const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
 const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
@@ -445,7 +442,6 @@ export function FoodSafetyAuditPage() {
       ? createDefaultFoodSafetyAudit()
       : normalizeFoodSafetyAudit(readDraft<FoodSafetyAuditState>(FOOD_SAFETY_DRAFT_KEY))
   );
-  const [savedRecords, setSavedRecords] = useState<LocalToolRecord<FoodSafetyAuditState>[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [message, setMessage] = useState('Food safety audit ready.');
@@ -464,7 +460,6 @@ export function FoodSafetyAuditPage() {
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
-    setSavedRecords(listLocalToolRecords<FoodSafetyAuditState>(STORAGE_KEY));
   }, []);
 
   useEffect(() => {
@@ -590,51 +585,40 @@ export function FoodSafetyAuditPage() {
     }));
   }
 
-  function refreshSaved() {
-    setSavedRecords(listLocalToolRecords<FoodSafetyAuditState>(STORAGE_KEY));
-  }
-
   async function handleSave() {
-    await runWithActivity(
-      {
-        kicker: 'Final safety check',
-        title: 'Saving food safety audit',
-        detail: 'Updating the latest compliance record and keeping the saved version ready to reopen.'
-      },
-      async () => {
-        const record = saveLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, {
-          id: form.id || uid('food-safety'),
-          title: form.title || 'Food Safety Audit',
-          siteName: form.siteName || 'Unnamed site',
-          location: form.location || '',
-          reviewDate: form.auditDate || '',
-          data: form,
-          createdAt: form.createdAt,
-          updatedAt: form.updatedAt
-        });
+    try {
+      setIsSaving(true);
+      await runWithActivity(
+        {
+          kicker: 'Final safety check',
+          title: 'Saving food safety audit',
+          detail: 'Updating the latest compliance record and keeping the saved version ready to reopen.'
+        },
+        async () => {
+          const record = saveLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, {
+            id: form.id || uid('food-safety'),
+            title: form.title || 'Food Safety Audit',
+            siteName: form.siteName || 'Unnamed site',
+            location: form.location || '',
+            reviewDate: form.auditDate || '',
+            data: form,
+            createdAt: form.createdAt,
+            updatedAt: form.updatedAt
+          });
 
-        setForm((current) => ({
-          ...current,
-          id: record.id,
-          createdAt: record.createdAt,
-          updatedAt: record.updatedAt
-        }));
-        refreshSaved();
-        setMessage('Food safety audit saved.');
-      },
-      980
-    );
-  }
-
-  function handleDelete(id: string) {
-    if (!window.confirm('Delete this saved food safety audit?')) return;
-    deleteLocalToolRecord(STORAGE_KEY, id);
-    refreshSaved();
-    if (form.id === id) {
-      clearDraft(FOOD_SAFETY_DRAFT_KEY);
-      setForm(createDefaultFoodSafetyAudit());
+          setForm((current) => ({
+            ...current,
+            id: record.id,
+            createdAt: record.createdAt,
+            updatedAt: record.updatedAt
+          }));
+          setMessage('Food safety audit saved.');
+        },
+        980
+      );
+    } finally {
+      setIsSaving(false);
     }
-    setMessage('Saved food safety audit deleted.');
   }
 
   function handleExportPrint() {

@@ -1,13 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
-import {
-  buildClientPdfHtml,
-  invoiceTotal,
-  openPrintableHtmlDocument
-} from '../../features/clients/clientExports';
-import { clientRecordToProfile, createEmptyClientData } from '../../features/clients/clientData';
-import { fmtCurrency } from '../../lib/utils';
+import { createEmptyClientData } from '../../features/clients/clientData';
 import { createClientIntakeShare } from '../../services/clientIntakeShares';
 import { deleteClient, listClients } from '../../services/clients';
 import type { ClientRecord } from '../../types';
@@ -18,19 +12,6 @@ function getTimestamp(value?: string | null) {
   if (!value) return 0;
   const parsed = new Date(value).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function formatShortDate(value?: string | null) {
-  if (!value) return 'No date set';
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'No date set';
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }).format(parsed);
 }
 
 function daysUntil(value?: string | null) {
@@ -48,14 +29,6 @@ function daysUntil(value?: string | null) {
   ).getTime();
 
   return Math.round((startTarget - startToday) / (1000 * 60 * 60 * 24));
-}
-
-function reviewLabel(value?: string | null) {
-  const delta = daysUntil(value);
-  if (delta === null) return 'No review date';
-  if (delta < 0) return `${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} overdue`;
-  if (delta === 0) return 'Due today';
-  return `Due in ${delta} day${delta === 1 ? '' : 's'}`;
 }
 
 function statusTone(status?: string | null) {
@@ -109,11 +82,6 @@ export function ClientsPage() {
     } finally {
       setIsDeletingClient(false);
     }
-  }
-
-  function handleExportClient(record: ClientRecord) {
-    const profile = clientRecordToProfile(record);
-    openPrintableHtmlDocument(`${profile.companyName} CRM export`, buildClientPdfHtml(profile));
   }
 
   async function handleCreateIntakeLink() {
@@ -450,7 +418,6 @@ export function ClientsPage() {
                   </div>
                   <div className="clients-long-list" style={{ gap: '12px', marginTop: '12px', opacity: 0.7 }}>
                     {categorisedClients.archived.map((client) => {
-                      const data = client.data ?? createEmptyClientData();
                       return (
                         <article className="crm-client-row crm-client-row-simple" key={client.id}>
                           <div className="crm-client-simple-main">

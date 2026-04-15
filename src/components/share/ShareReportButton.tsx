@@ -1,12 +1,27 @@
 import { useState } from 'react';
 import { createKitchenAuditShare, createFoodSafetyShare, createMysteryShopShare, createMenuShare } from '../../services/reportShares';
+import type {
+  AuditFormState,
+  FoodSafetyAuditState,
+  MenuProjectState,
+  MysteryShopAuditState
+} from '../../types';
 
-interface ShareReportButtonProps {
-  type: 'kitchen' | 'food-safety' | 'mystery-shop' | 'menu';
-  data: any;
+type ShareType = 'kitchen' | 'food-safety' | 'mystery-shop' | 'menu';
+
+type SharePayloadMap = {
+  kitchen: AuditFormState;
+  'food-safety': FoodSafetyAuditState;
+  'mystery-shop': MysteryShopAuditState;
+  menu: MenuProjectState;
+};
+
+interface ShareReportButtonProps<T extends ShareType> {
+  type: T;
+  data: SharePayloadMap[T];
 }
 
-export function ShareReportButton({ type, data }: ShareReportButtonProps) {
+export function ShareReportButton<T extends ShareType>({ type, data }: ShareReportButtonProps<T>) {
   const [loading, setLoading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
 
@@ -14,20 +29,20 @@ export function ShareReportButton({ type, data }: ShareReportButtonProps) {
     setLoading(true);
     
     try {
-      let result;
+      let result: { url: string };
       
       switch(type) {
         case 'kitchen':
-          result = await createKitchenAuditShare(data);
+          result = await createKitchenAuditShare(data as AuditFormState);
           break;
         case 'food-safety':
-          result = await createFoodSafetyShare(data);
+          result = await createFoodSafetyShare(data as FoodSafetyAuditState);
           break;
         case 'mystery-shop':
-          result = await createMysteryShopShare(data);
+          result = await createMysteryShopShare(data as MysteryShopAuditState);
           break;
         case 'menu':
-          result = await createMenuShare(data);
+          result = await createMenuShare(data as MenuProjectState);
           break;
       }
 

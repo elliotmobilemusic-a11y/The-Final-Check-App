@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
+import { resetSupabaseAuthState } from '../../lib/authStorage';
 import { supabase } from '../../lib/supabase';
 import { CookingLoader } from './CookingLoader';
 
@@ -74,7 +75,6 @@ function normalizeAvatarUrl(value?: string | null) {
 }
 
 export function AppShell() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
   const { preferences } = usePreferences();
@@ -91,14 +91,7 @@ export function AppShell() {
       return;
     }
 
-    let hideTimeout: ReturnType<typeof setTimeout>;
-
-    const scheduleHide = () => {
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        setNavExpanded(false);
-      }, 2200);
-    };
+    let hideTimeout: ReturnType<typeof setTimeout> | undefined;
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -118,7 +111,9 @@ export function AppShell() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearTimeout(hideTimeout);
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+      }
     };
   }, [disableAutoHideNav, preferences.autoShowNav, preferences.reducedMotion]);
   const displayName =
@@ -143,19 +138,16 @@ export function AppShell() {
   };
 
   async function handleSignOut() {
-    // Clear everything first immediately
-    window.localStorage.clear();
-    
     if (supabase) {
       try {
         await supabase.auth.signOut();
-      } catch (e) {
-        // Ignore sign out errors - we are leaving anyway
+      } catch {
+        // Ignore sign-out errors and continue resetting the local auth state.
       }
     }
-    
-    // Hard redirect immediately - don't wait for anything
-    window.location.href = '/';
+
+    resetSupabaseAuthState();
+    window.location.assign('/#/login');
   }
 
   useEffect(() => {

@@ -1,14 +1,8 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { createEmptyClientData } from '../../features/clients/clientData';
-import {
-  getBusinessProfile,
-  searchBusinessProfiles,
-  type BusinessLookupProfile,
-  type BusinessLookupResult
-} from '../../features/clients/businessLookup';
 import { createClient } from '../../services/clients';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type { ClientProfile } from '../../types';
@@ -32,55 +26,6 @@ const blankClient: ClientProfile = {
 };
 const NEW_CLIENT_DRAFT_KEY = 'client-new-draft-v1';
 
-function clientSitesFromLookup(lookup: BusinessLookupProfile) {
-  return lookup.sites.map((site, index) => ({
-    id: `site-${lookup.id}-${index}`,
-    name: site.name,
-    address: site.address,
-    website: site.website,
-    status: site.status || 'Active',
-    notes: site.notes || 'Imported from Companies House lookup.'
-  }));
-}
-
-function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupProfile): ClientProfile {
-  const nextTags = [...new Set([lookup.industry, ...current.tags].filter(Boolean))];
-  const nextSites = current.data.sites.length ? current.data.sites : clientSitesFromLookup(lookup);
-
-  return {
-    ...current,
-    companyName: lookup.name || current.companyName,
-    location: lookup.location || current.location,
-    logoUrl: lookup.logoUrl || current.logoUrl,
-    coverUrl: lookup.coverUrl || current.coverUrl || lookup.logoUrl,
-    industry: lookup.industry || current.industry,
-    website: lookup.website || current.website,
-    contactEmail: lookup.email || current.contactEmail,
-    contactPhone: lookup.phone || current.contactPhone,
-    tags: nextTags,
-    data: {
-      ...current.data,
-      profileSummary: current.data.profileSummary || lookup.summary,
-      sites: nextSites,
-      accountScope: lookup.accountScope || current.data.accountScope,
-      operatingCountry: lookup.country || current.data.operatingCountry,
-      siteCountEstimate:
-        current.data.siteCountEstimate > 1
-          ? current.data.siteCountEstimate
-          : lookup.siteCountEstimate || nextSites.length || current.data.siteCountEstimate,
-      registeredName: current.data.registeredName || lookup.officialName || lookup.name,
-      registeredAddress:
-        current.data.registeredAddress || lookup.registeredAddress || lookup.addressLine,
-      billingName: current.data.billingName || lookup.name,
-      billingEmail: current.data.billingEmail || lookup.email,
-      billingAddress: current.data.billingAddress || lookup.registeredAddress || lookup.addressLine,
-      companyNumber: current.data.companyNumber || lookup.companyNumber,
-      vatNumber: current.data.vatNumber || lookup.vatNumber,
-      leadSource: current.data.leadSource || lookup.sourceLabel || 'Companies House lookup'
-    }
-  };
-}
-
 export function NewClientPage() {
   const { runWithActivity } = useActivityOverlay();
   const navigate = useNavigate();
@@ -89,31 +34,6 @@ export function NewClientPage() {
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('Set up the new account and then save it into the CRM.');
-  const [lookupQuery, setLookupQuery] = useState('');
-  const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupSelectionId, setLookupSelectionId] = useState('');
-  const [lookupMessage, setLookupMessage] = useState(
-    'Search by trading name, venue name, or registered company before saving the client.'
-  );
-  const setupChecklist = useMemo(
-    () => [
-      Boolean(form.companyName.trim()),
-      Boolean(form.contactName.trim() || form.contactEmail.trim()),
-      Boolean(form.data.accountOwner.trim()),
-      Boolean(form.data.profileSummary.trim()),
-      Boolean(form.website.trim() || form.logoUrl.trim() || form.data.registeredName.trim())
-    ],
-    [form]
-  );
-  const setupCompletionCount = setupChecklist.filter(Boolean).length;
-  const importedSites = form.data.sites.length;
-  const hasImportedBusinessData =
-    Boolean(form.logoUrl.trim()) ||
-    Boolean(form.website.trim()) ||
-    Boolean(form.data.registeredName.trim()) ||
-    importedSites > 0;
-
   useEffect(() => {
     writeDraft(NEW_CLIENT_DRAFT_KEY, form);
   }, [form]);
@@ -145,47 +65,6 @@ export function NewClientPage() {
       setMessage(error instanceof Error ? error.message : 'Could not create client.');
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleBusinessLookup() {
-    const query = lookupQuery.trim();
-    if (query.length < 2) {
-      setLookupMessage('Enter at least two characters to search for a business.');
-      setLookupResults([]);
-      return;
-    }
-
-    try {
-      setLookupLoading(true);
-      setLookupSelectionId('');
-      const results = await searchBusinessProfiles(query);
-      setLookupResults(results);
-      setLookupMessage(
-        results.length
-          ? `Found ${results.length} possible business match${results.length === 1 ? '' : 'es'}. Review the best match and apply it before saving.`
-          : 'No business matches found. Try the trading name, venue name, legal entity name, or company number.'
-      );
-    } catch (error) {
-      setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
-      setLookupResults([]);
-    } finally {
-      setLookupLoading(false);
-    }
-  }
-
-  async function handleUseLookup(result: BusinessLookupResult) {
-    try {
-      setLookupLoading(true);
-      setLookupSelectionId(result.id);
-      const profile = await getBusinessProfile(result);
-      setForm((current) => mergeLookupIntoClient(current, profile));
-      setLookupMessage(`Loaded details for ${profile.name}. Review the account information before saving.`);
-      setMessage(`Business details loaded for ${profile.name}.`);
-    } catch (error) {
-      setLookupMessage(error instanceof Error ? error.message : 'Could not load business details.');
-    } finally {
-      setLookupLoading(false);
     }
   }
 
@@ -234,7 +113,7 @@ export function NewClientPage() {
       <PageIntro
         eyebrow="Clients"
         title="Add new client"
-        description="Build the record once, pull in the right UK business details early, and save a cleaner account handoff into the CRM with commercial and site context already in place."
+        description="Build the record once and save a cleaner account handoff into the CRM with commercial and site context already in place."
         actions={
           <>
             <button className="button button-primary" form="new-client-form" disabled={saving}>

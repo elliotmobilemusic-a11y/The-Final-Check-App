@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
@@ -9,9 +9,7 @@ import {
   openPrintableHtmlDocument
 } from '../../features/clients/clientExports';
 import {
-  deleteMenuProject,
   getMenuProjectById,
-  listMenuProjects,
   saveMenuProject
 } from '../../services/menus';
 import { listClients } from '../../services/clients';
@@ -20,8 +18,7 @@ import type {
   DishIngredient,
   MeasurementUnit,
   MenuDish,
-  MenuProjectState,
-  SupabaseRecord
+  MenuProjectState
 } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
@@ -511,13 +508,11 @@ export function MenuBuilderPage() {
           readDraft<MenuProjectState>(MENU_BUILDER_DRAFT_KEY) ?? createDefaultMenu(queryClientId)
         )
   );
-  const [savedProjects, setSavedProjects] = useState<SupabaseRecord<MenuProjectState>[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [editingDishId, setEditingDishId] = useState<string | null>(null);
   const [dishDraft, setDishDraft] = useState<MenuDish | null>(null);
   const [sectionNameDraft, setSectionNameDraft] = useState('Starters');
   const [message, setMessage] = useState('Menu draft ready.');
-  const [loadingSaved, setLoadingSaved] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
@@ -577,15 +572,6 @@ export function MenuBuilderPage() {
     () => allDishes.filter((dish) => dishTheoGp(dish) < num(dish.targetGp) - 3).length,
     [allDishes]
   );
-  const pricingGapValue = useMemo(
-    () =>
-      allDishes.reduce((sum, dish) => {
-        const gap = dishPriceGap(dish);
-        return gap > 0 ? sum + gap * Math.max(num(dish.weeklySalesVolume), 1) : sum;
-      }, 0),
-    [allDishes]
-  );
-
   const selectedSectionSummary = useMemo(() => {
     if (!selectedSection) {
       return {
@@ -615,31 +601,9 @@ export function MenuBuilderPage() {
     };
   }, [selectedSection]);
 
-  const refreshProjects = useCallback(async () => {
-    try {
-      setLoadingSaved(true);
-      const activeClientId = queryClientId || project.clientId || undefined;
-      const rows = await listMenuProjects(activeClientId || undefined);
-      const sorted = [...rows].sort((a, b) => {
-        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-        return bTime - aTime;
-      });
-      setSavedProjects(sorted);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not load menus.');
-    } finally {
-      setLoadingSaved(false);
-    }
-  }, [project.clientId, queryClientId]);
-
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    refreshProjects();
-  }, [refreshProjects]);
 
   useEffect(() => {
     writeDraft(MENU_BUILDER_DRAFT_KEY, project);
@@ -945,7 +909,6 @@ export function MenuBuilderPage() {
             updatedAt: saved.updated_at
           });
           setMessage('Menu saved.');
-          await refreshProjects();
         }
       );
     } catch (error) {
@@ -1024,34 +987,6 @@ export function MenuBuilderPage() {
       .catch(() => setMessage('Could not read the selected JSON file.'));
 
     event.target.value = '';
-  }
-
-  async function handleLoad(record: SupabaseRecord<MenuProjectState>) {
-    setProject({
-      ...normalizeMenuProject(record.data),
-      id: record.id,
-      clientId: record.client_id ?? record.data.clientId ?? null,
-      createdAt: record.created_at,
-      updatedAt: record.updated_at
-    });
-    setMessage(`Loaded "${record.title}".`);
-  }
-
-  async function handleDeleteSaved(id: string) {
-    if (!window.confirm('Delete this saved menu project?')) return;
-
-    try {
-      await deleteMenuProject(id);
-
-      if (project.id === id) {
-        setProject(normalizeMenuProject(createDefaultMenu(queryClientId || null)));
-      }
-
-      await refreshProjects();
-      setMessage('Saved menu project deleted.');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Delete failed.');
-    }
   }
 
   return (

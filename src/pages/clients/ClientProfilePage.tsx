@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { StatCard } from '../../components/ui/StatCard';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { buildClientPdfHtml, buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
   getBusinessProfile,
@@ -428,7 +427,6 @@ export function ClientProfilePage() {
     );
   }
 
-  const activeClient = client;
   const activeForm = form;
   const portalLink = activeForm.data.portal.token
     ? `${window.location.origin}/#/portal/client/${activeForm.data.portal.token}`
@@ -778,14 +776,6 @@ function removeInvoice(invoiceId: string) {
     } finally {
       setLookupLoading(false);
     }
-  }
-
-  function exportClientPdf() {
-    if (!form) return;
-    openPrintableHtmlDocument(
-      `${form.companyName} CRM export`,
-      buildClientPdfHtml(form, audits, menus)
-    );
   }
 
   function exportInvoicePdf(invoice: ClientInvoice) {

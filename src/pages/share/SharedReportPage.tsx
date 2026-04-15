@@ -3,9 +3,14 @@ import { useParams } from 'react-router-dom';
 import { SharedReportFrame } from '../../components/share/SharedReportFrame';
 import { getReportShareByToken } from '../../services/reportShares';
 
+type SharedReportPayload = {
+  html?: string;
+  title?: string;
+};
+
 export function SharedReportPage() {
   const { token = '' } = useParams();
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<SharedReportPayload | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing'>('loading');
 
   useEffect(() => {

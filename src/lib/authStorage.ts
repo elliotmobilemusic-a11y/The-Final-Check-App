@@ -68,26 +68,15 @@ export function consumeAuthResetNotice() {
 
 export const supabaseAuthStorage = {
   getItem(key: string) {
-    // ✅ Only read from currently selected storage location
-    // Never cross read or merge storage state - this was causing corrupted sessions
     const remember = getRememberPreference();
     const storage = getStorage(remember);
-    
-    const value = storage.getItem(key);
-    
-    if (value) {
-      console.log(`🔐 Read auth from ${remember ? 'localStorage' : 'sessionStorage'}, length: ${value.length}`);
-    }
-    
-    return value;
+    return storage.getItem(key);
   },
   setItem(key: string, value: string) {
     const remember = getRememberPreference();
     const primary = getStorage(remember);
     const secondary = getStorage(!remember);
-    
-    console.log(`🔐 Writing auth to ${remember ? 'localStorage' : 'sessionStorage'}, length: ${value.length}`);
-    
+
     primary.setItem(key, value);
     secondary.removeItem(key);
   },

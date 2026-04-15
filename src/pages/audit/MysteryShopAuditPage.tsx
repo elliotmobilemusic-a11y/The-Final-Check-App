@@ -10,18 +10,15 @@ import {
 } from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
 import {
-  deleteLocalToolRecord,
   getLocalToolRecord,
-  listLocalToolRecords,
   saveLocalToolRecord
 } from '../../services/localToolStore';
-import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
 import type {
   AuditActionItem,
   AuditAreaSummary,
   ClientRecord,
-  LocalToolRecord,
   MysteryShopAuditState,
   MysteryShopObservation,
   MysteryShopScorecard
@@ -371,7 +368,6 @@ export function MysteryShopAuditPage() {
       ? createDefaultMysteryShopAudit()
       : normalizeMysteryShopAudit(readDraft<MysteryShopAuditState>(MYSTERY_SHOP_DRAFT_KEY))
   );
-  const [savedRecords, setSavedRecords] = useState<LocalToolRecord<MysteryShopAuditState>[]>([]);
   const [isSharing, setIsSharing] = useState(false);
   const [message, setMessage] = useState('Mystery shop audit ready.');
   const [shareUrl, setShareUrl] = useState('');
@@ -389,7 +385,6 @@ export function MysteryShopAuditPage() {
 
   useEffect(() => {
     listClients().then(setClients).catch(() => {});
-    setSavedRecords(listLocalToolRecords<MysteryShopAuditState>(STORAGE_KEY));
   }, []);
 
   useEffect(() => {
@@ -439,10 +434,6 @@ export function MysteryShopAuditPage() {
         !current.location.trim() ? singleSite.address || activeClient?.location || '' : current.location
     }));
   }, [activeClient, availableClientSites, form.clientId, form.clientSiteId]);
-
-  function refreshSaved() {
-    setSavedRecords(listLocalToolRecords<MysteryShopAuditState>(STORAGE_KEY));
-  }
 
   function updateField<K extends keyof MysteryShopAuditState>(
     key: K,
@@ -562,22 +553,10 @@ export function MysteryShopAuditPage() {
           createdAt: record.createdAt,
           updatedAt: record.updatedAt
         }));
-        refreshSaved();
         setMessage('Mystery shop audit saved.');
       },
       980
     );
-  }
-
-  function handleDelete(id: string) {
-    if (!window.confirm('Delete this saved mystery shop audit?')) return;
-    deleteLocalToolRecord(STORAGE_KEY, id);
-    refreshSaved();
-    if (form.id === id) {
-      clearDraft(MYSTERY_SHOP_DRAFT_KEY);
-      setForm(createDefaultMysteryShopAudit());
-    }
-    setMessage('Saved mystery shop audit deleted.');
   }
 
   function handleExportPrint() {
