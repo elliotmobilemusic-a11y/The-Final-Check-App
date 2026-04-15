@@ -199,7 +199,9 @@ export function buildReportDocumentHtml(
           margin: 0;
           padding: 22px 20px 30px;
           color: var(--ink);
-          background: linear-gradient(180deg, #f5f6f8 0%, #eceff3 100%);
+          background:
+            radial-gradient(circle at top, rgba(185, 127, 51, 0.08), transparent 26%),
+            linear-gradient(180deg, #f5f6f8 0%, #eceff3 100%);
         }
         .print-toolbar {
           position: sticky;
@@ -418,7 +420,7 @@ export function buildReportDocumentHtml(
           position: relative;
           padding: 12mm 12mm 13mm;
           margin: 0 0 14px;
-          border-radius: 0;
+          border-radius: 20px;
           border: 1px solid var(--line-medium);
           background: #ffffff;
           box-shadow: var(--shadow-page);
@@ -432,7 +434,7 @@ export function buildReportDocumentHtml(
         }
         .report-cover-block {
           padding: 12px 14px 14px;
-          border-radius: 0;
+          border-radius: 16px;
           border: 1px solid var(--line-medium);
           background: #ffffff;
           page-break-inside: avoid;
@@ -468,7 +470,7 @@ export function buildReportDocumentHtml(
           align-content: start;
           min-height: 60px;
           padding: 11px 12px;
-          border-radius: 0;
+          border-radius: 16px;
           border: 1px solid var(--line-medium);
           background: #ffffff;
         }
@@ -548,9 +550,9 @@ export function buildReportDocumentHtml(
         }
         .report-story-card {
           padding: 12px 13px 14px;
-          border-radius: 0;
+          border-radius: 16px;
           border: 1px solid var(--line-medium);
-          background: #ffffff;
+          background: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
         }
         .report-story-card h3 {
           margin-bottom: 10px;
@@ -565,13 +567,20 @@ export function buildReportDocumentHtml(
         .report-photo-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-          margin-top: 10px;
+          gap: 12px;
+          margin-top: 12px;
+          align-items: start;
+        }
+        .report-photo-grid-featured .report-photo-card:first-child {
+          grid-column: 1 / -1;
         }
         .report-photo-card {
           margin: 0;
           border: 1px solid var(--line-medium);
-          background: #ffffff;
+          border-radius: 18px;
+          overflow: hidden;
+          background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+          box-shadow: 0 12px 24px rgba(18, 28, 38, 0.06);
           page-break-inside: avoid;
           break-inside: avoid-page;
         }
@@ -582,10 +591,14 @@ export function buildReportDocumentHtml(
           display: block;
           background: #f3eee7;
         }
+        .report-photo-grid-featured .report-photo-card:first-child img {
+          aspect-ratio: 16 / 9;
+        }
         .report-photo-card figcaption {
           display: grid;
-          gap: 4px;
-          padding: 10px 11px 11px;
+          gap: 5px;
+          padding: 12px 13px 13px;
+          border-top: 1px solid rgba(25, 34, 44, 0.06);
         }
         .report-photo-card figcaption strong {
           font-size: 10px;
@@ -639,7 +652,7 @@ export function buildReportDocumentHtml(
         }
         .meta-card {
           padding: 11px 12px 12px;
-          border-radius: 0;
+          border-radius: 16px;
           border: 1px solid var(--line-medium);
           background: #ffffff;
           page-break-inside: avoid;
@@ -710,7 +723,7 @@ export function buildReportDocumentHtml(
         .report-columns > div,
         .report-grid > div {
           padding: 11px 12px 12px;
-          border-radius: 0;
+          border-radius: 16px;
           border: 1px solid var(--line-medium);
           background: #ffffff;
           page-break-inside: avoid;
@@ -749,7 +762,7 @@ export function buildReportDocumentHtml(
           font-size: 12px;
           overflow: visible;
           border: 1px solid var(--line-medium);
-          border-radius: 0;
+          border-radius: 16px;
           background: #ffffff;
           page-break-inside: auto;
           break-inside: auto;
@@ -769,7 +782,7 @@ export function buildReportDocumentHtml(
           text-align: left;
           vertical-align: top;
           overflow-wrap: break-word;
-          word-break: normal;
+          word-break: break-word;
         }
         th {
           color: var(--muted);
@@ -1098,6 +1111,17 @@ export function buildReportDocumentHtml(
           td {
             padding: 8px 9px;
           }
+          .report-photo-card,
+          .meta-card,
+          .report-story-card,
+          .report-meta > div,
+          .report-columns > div,
+          .report-grid > div,
+          .report-table,
+          table {
+            border-radius: 0;
+            box-shadow: none;
+          }
           .report-footer {
             display: none;
           }
@@ -1132,6 +1156,9 @@ export function buildReportDocumentHtml(
           .report-story-grid,
           .report-photo-grid {
             grid-template-columns: 1fr;
+          }
+          .report-photo-grid-featured .report-photo-card:first-child {
+            grid-column: auto;
           }
           .meta-grid,
           .summary-grid,

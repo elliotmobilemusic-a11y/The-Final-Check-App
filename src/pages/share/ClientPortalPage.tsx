@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { fmtCurrency } from '../../lib/utils';
 import { getClientPortalShareByToken } from '../../services/reportShares';
 import type { ClientPortalResource, ClientPortalSharePayload } from '../../types';
-import { fmtCurrency } from '../../lib/utils';
 
 function formatShortDate(value?: string | null) {
-  if (!value) return 'No date set';
+  if (!value) return 'Not set';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'No date set';
+  if (Number.isNaN(parsed.getTime())) return 'Not set';
 
   return new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
@@ -18,66 +18,59 @@ function formatShortDate(value?: string | null) {
 
 function resourceKindLabel(kind: ClientPortalResource['kind']) {
   if (kind === 'audit') return 'Kitchen audit';
-  if (kind === 'food_safety') return 'Food safety';
+  if (kind === 'food_safety') return 'Food safety audit';
   if (kind === 'mystery_shop') return 'Mystery shop';
-  return 'Menu project';
+  return 'Menu review';
 }
 
-function portalInvoiceLabel(portal: ClientPortalSharePayload) {
+function invoiceStatusLabel(portal: ClientPortalSharePayload) {
   if (!portal.hasOutstandingInvoices) return 'Released and up to date';
-  if (portal.visibilityMode === 'paid_only') return 'Payment lock active';
-  return 'Outstanding balance';
+  if (portal.visibilityMode === 'paid_only') return 'Locked until payment clears';
+  return 'Open balance on account';
 }
 
 export function ClientPortalPage() {
   const { token = '' } = useParams();
   const [portal, setPortal] = useState<ClientPortalSharePayload | null>(null);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Loading client portal...');
-  const [ready, setReady] = useState(false);
-  const [introStage, setIntroStage] = useState<'welcome' | 'brand' | 'done'>('welcome');
 
   useEffect(() => {
-    if (!token) {
-      setMessage('This portal link is incomplete.');
-      return;
-    }
+    let cancelled = false;
 
-    getClientPortalShareByToken(token)
-      .then((share) => {
+    async function loadPortal() {
+      if (!token) {
+        setMessage('This portal link is incomplete.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const share = await getClientPortalShareByToken(token);
+
+        if (cancelled) return;
+
         if (!share) {
           setMessage('This client portal is no longer available.');
+          setLoading(false);
           return;
         }
 
         setPortal(share.payload);
-        setReady(true);
-      })
-      .catch((error) => {
+        setLoading(false);
+      } catch (error) {
+        if (cancelled) return;
         setMessage(error instanceof Error ? error.message : 'Could not load this client portal.');
-      });
-  }, [token]);
-
-  useEffect(() => {
-    if (!portal || !ready) return;
-
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      setIntroStage('done');
-      return;
+        setLoading(false);
+      }
     }
 
-    setIntroStage('welcome');
-    const brandTimer = window.setTimeout(() => setIntroStage('brand'), 1750);
-    const finishTimer = window.setTimeout(() => setIntroStage('done'), 3550);
+    void loadPortal();
 
     return () => {
-      window.clearTimeout(brandTimer);
-      window.clearTimeout(finishTimer);
+      cancelled = true;
     };
-  }, [portal, ready]);
+  }, [token]);
 
   const releasedResources = useMemo(
     () => portal?.resources.filter((item) => !item.locked) ?? [],
@@ -92,7 +85,7 @@ export function ClientPortalPage() {
     [portal]
   );
 
-  if (!ready || !portal) {
+  if (loading || !portal) {
     return (
       <main className="client-portal-loading">
         <div className="client-portal-loading-card">
@@ -109,109 +102,73 @@ export function ClientPortalPage() {
 
   return (
     <main className="client-portal-page">
-      {introStage !== 'done' ? (
-        <div className="login-brand-animation client-portal-intro" key={introStage}>
-          <div className="login-animation-stage client-portal-intro-stage">
-            {introStage === 'welcome' ? (
-              <>
-                <div className="login-animation-kicker">Portal prepared</div>
-                <div className="login-animation-logo">
-                  <strong>{portal.clientName}</strong>
-                  <span>
-                    {portal.welcomeTitle || `Welcome to your client portal`}
-                  </span>
-                </div>
-                <div className="login-animation-line">
-                  <span className="login-animation-line-core" />
-                  <span className="login-animation-line-glow" />
-                </div>
-                <div className="client-portal-intro-caption">
-                  Your latest reviews, reports, and released actions are being presented now.
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="login-animation-kicker">Presented by</div>
-                <div className="login-animation-logo">
-                  <strong>The Final Check</strong>
-                  <span>Opening a tailored workspace for {portal.clientName}</span>
-                </div>
-                <div className="login-animation-line">
-                  <span className="login-animation-line-core" />
-                  <span className="login-animation-line-glow" />
-                </div>
-                <div className="login-animation-orbit">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      <section className="client-portal-shell">
-        <header
-          className="client-portal-hero"
-          style={{
-            backgroundImage: `linear-gradient(135deg, rgba(33, 40, 47, 0.9), rgba(63, 77, 92, 0.84)), url(${
-              portal.coverUrl || portal.logoUrl || ''
-            })`
-          }}
-        >
-          <div className="client-portal-hero-copy">
+      <section className="client-portal-shell client-portal-shell-clean">
+        <header className="client-portal-clean-hero">
+          <div className="client-portal-clean-copy">
             <p className="client-portal-eyebrow">The Final Check Client Portal</p>
             <h1>{portal.welcomeTitle || `Welcome, ${portal.clientName}`}</h1>
-            <p className="client-portal-hero-text">{portal.welcomeMessage}</p>
+            <p className="client-portal-clean-lead">
+              {portal.welcomeMessage ||
+                'Your latest reviews, shared reports, and agreed next actions are available below.'}
+            </p>
+
             <div className="client-portal-chip-row">
               <span>{portal.clientName}</span>
               <span>{portal.industry || 'Client workspace'}</span>
+              <span>{portal.location || 'Location not set'}</span>
               <span>Next review {formatShortDate(portal.nextReviewDate)}</span>
-              <span>{portalInvoiceLabel(portal)}</span>
             </div>
           </div>
 
-          <aside className="client-portal-brand-card">
+          <aside className="client-portal-clean-summary">
             {portal.logoUrl ? (
-              <img src={portal.logoUrl} alt={portal.clientName} className="client-portal-brand-image" />
-            ) : null}
-            <div>
-              <p className="client-portal-brand-kicker">Prepared for</p>
+              <img
+                src={portal.logoUrl}
+                alt={portal.clientName}
+                className="client-portal-brand-image"
+              />
+            ) : (
+              <div className="client-portal-brand-fallback" aria-hidden="true">
+                {portal.clientName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+
+            <div className="client-portal-clean-summary-copy">
               <strong>{portal.clientName}</strong>
               <span>Published {formatShortDate(portal.publishedAt)}</span>
+              <span>{invoiceStatusLabel(portal)}</span>
             </div>
           </aside>
         </header>
 
-        <section className="client-portal-summary-grid">
+        <section className="client-portal-clean-stats">
           <article className="client-portal-stat-card">
-            <span>Released documents</span>
+            <span>Released items</span>
             <strong>{releasedResources.length}</strong>
-            <small>Reports and resources ready to open</small>
+            <small>Reports and resources currently open to view.</small>
           </article>
           <article className="client-portal-stat-card">
             <span>Held items</span>
             <strong>{lockedResources.length}</strong>
-            <small>Visible but still locked from access</small>
+            <small>Visible in the portal but not yet available to open.</small>
           </article>
           <article className="client-portal-stat-card">
             <span>Open actions</span>
             <strong>{portal.openTaskCount}</strong>
-            <small>Live follow-up items currently in motion</small>
+            <small>Follow-up items still being worked through.</small>
           </article>
           <article className="client-portal-stat-card">
-            <span>Invoice status</span>
+            <span>Outstanding balance</span>
             <strong>
               {portal.hasOutstandingInvoices
                 ? fmtCurrency(portal.outstandingInvoiceValue)
                 : 'Up to date'}
             </strong>
-            <small>{portalInvoiceLabel(portal)}</small>
+            <small>{invoiceStatusLabel(portal)}</small>
           </article>
         </section>
 
-        <section className="client-portal-main">
+        <section className="client-portal-main client-portal-main-clean">
           <div className="client-portal-primary">
             {portal.portalNote ? (
               <article className="client-portal-note-card">
@@ -224,7 +181,7 @@ export function ClientPortalPage() {
               <div className="client-portal-section-heading">
                 <div>
                   <p className="client-portal-section-kicker">Released work</p>
-                  <h2>Reports, audits, and action plans</h2>
+                  <h2>Reports ready to open</h2>
                 </div>
                 <span className="client-portal-section-count">{releasedResources.length}</span>
               </div>
@@ -242,20 +199,25 @@ export function ClientPortalPage() {
                           <strong>{resource.title}</strong>
                           <span>{resourceKindLabel(resource.kind)}</span>
                         </div>
-                        <p>{resource.subtitle}</p>
+                        <p>{resource.subtitle || 'Released client document'}</p>
                         <div className="client-portal-resource-meta">
                           <span>Review {formatShortDate(resource.reviewDate)}</span>
-                          <span>Ready to open</span>
+                          <span>{resource.url ? 'Available now' : 'Awaiting link'}</span>
                         </div>
                       </div>
-                      <a
-                        className="client-portal-resource-link"
-                        href={resource.url || '#'}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open report
-                      </a>
+
+                      {resource.url ? (
+                        <a
+                          className="client-portal-resource-link"
+                          href={resource.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open report
+                        </a>
+                      ) : (
+                        <span className="client-portal-resource-pill">Link pending</span>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -267,7 +229,7 @@ export function ClientPortalPage() {
                 <div className="client-portal-section-heading">
                   <div>
                     <p className="client-portal-section-kicker">Awaiting release</p>
-                    <h2>Visible but currently locked</h2>
+                    <h2>Items still held back</h2>
                   </div>
                   <span className="client-portal-section-count">{lockedResources.length}</span>
                 </div>
@@ -283,9 +245,9 @@ export function ClientPortalPage() {
                           <strong>{resource.title}</strong>
                           <span>{resourceKindLabel(resource.kind)}</span>
                         </div>
-                        <p>{resource.subtitle}</p>
+                        <p>{resource.subtitle || 'Held client document'}</p>
                         <div className="client-portal-resource-lock">
-                          {resource.lockReason || 'This item is temporarily unavailable.'}
+                          {resource.lockReason || 'This item is currently unavailable.'}
                         </div>
                       </div>
                       <div className="client-portal-resource-pill">Locked</div>
@@ -298,17 +260,17 @@ export function ClientPortalPage() {
 
           <aside className="client-portal-sidebar">
             <article className="client-portal-side-card">
-              <p className="client-portal-section-kicker">Account overview</p>
-              <h3>Current release status</h3>
+              <p className="client-portal-section-kicker">Portal overview</p>
+              <h3>Account status</h3>
               <div className="client-portal-side-list">
                 <div>
                   <span>Portal access</span>
-                  <strong>{portal.hasOutstandingInvoices ? 'Partially restricted' : 'Fully open'}</strong>
+                  <strong>{portal.hasOutstandingInvoices ? 'Partially restricted' : 'Open'}</strong>
                 </div>
                 <div>
                   <span>Release rule</span>
                   <strong>
-                    {portal.visibilityMode === 'paid_only' ? 'Unlock after payment' : 'Immediate release'}
+                    {portal.visibilityMode === 'paid_only' ? 'Release after payment' : 'Immediate release'}
                   </strong>
                 </div>
                 <div>
@@ -324,7 +286,8 @@ export function ClientPortalPage() {
 
             <article className="client-portal-side-card">
               <p className="client-portal-section-kicker">Action plan</p>
-              <h3>Current follow-up activity</h3>
+              <h3>Next follow-up steps</h3>
+
               {nextActions.length === 0 ? (
                 <div className="client-portal-empty-state compact">
                   No open actions are currently listed in this portal.

@@ -95,7 +95,7 @@ export function renderAuditPhotoGallery(
   }
 
   return `
-    <div class="report-photo-grid">
+    <div class="report-photo-grid ${sectionPhotos.length > 2 ? 'report-photo-grid-featured' : ''}">
       ${sectionPhotos
         .map(
           (photo) => `
