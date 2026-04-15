@@ -33,6 +33,7 @@ import {
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
+import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   buildKitchenProfitNarrative,
   calculateKitchenProfitMetrics
@@ -2312,16 +2313,12 @@ export function KitchenAuditPage() {
 
       </section>
 
-      {controlModalOpen && (
-        <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
-          <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
-              <div className="control-drawer-header">
-                <h2 className="control-drawer-title">Profit Audit Controls</h2>
-                <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
-                  Close ✕
-                </button>
-              </div>
+      <ControlPanelModal
+        bodyRef={controlDrawerBodyRef}
+        onClose={() => setControlModalOpen(false)}
+        open={controlModalOpen}
+        title="Profit Audit Controls"
+      >
 
               <div className="audit-side-block">
                 <div className="audit-side-title-row">
@@ -2394,10 +2391,7 @@ export function KitchenAuditPage() {
                 </div>
               </div>
 
-            </div>
-          </div>
-        </div>
-      )}
+      </ControlPanelModal>
 
       <div className="page-floating-controls">
         <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>

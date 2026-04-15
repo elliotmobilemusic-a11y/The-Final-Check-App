@@ -24,6 +24,7 @@ import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/uti
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createMenuShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
+import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   buildMenuProfitSummary,
   dishActualGp,
@@ -1748,16 +1749,12 @@ export function MenuBuilderPage() {
         </div>
       ) : null}
 
-      {controlModalOpen && (
-        <div className="drawer-backdrop control-drawer-backdrop" onClick={() => setControlModalOpen(false)}>
-          <div className="drawer-panel control-drawer-panel" onClick={e => e.stopPropagation()}>
-            <div className="control-drawer-body" ref={controlDrawerBodyRef}>
-              <div className="control-drawer-header">
-                <h2 className="control-drawer-title">Menu Profit Controls</h2>
-                <button className="button button-secondary" onClick={() => setControlModalOpen(false)}>
-                  Close ✕
-                </button>
-              </div>
+      <ControlPanelModal
+        bodyRef={controlDrawerBodyRef}
+        onClose={() => setControlModalOpen(false)}
+        open={controlModalOpen}
+        title="Menu Profit Controls"
+      >
 
               <div className="audit-side-block">
                 <div className="audit-side-title-row">
@@ -1837,10 +1834,7 @@ export function MenuBuilderPage() {
                 </div>
               </div>
 
-            </div>
-          </div>
-        </div>
-      )}
+      </ControlPanelModal>
 
       <div className="page-floating-controls">
         <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
