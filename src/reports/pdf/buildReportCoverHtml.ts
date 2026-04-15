@@ -35,7 +35,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
     .map(detail => `
       <div class="pdf-cover-detail">
         <span class="pdf-cover-detail-label">${escapeHtml(detail.label)}</span>
-        <span class="pdf-cover-detail-value">${humanizeTitle(escapeHtml(detail.value))}</span>
+        <span class="pdf-cover-detail-value">${escapeHtml(humanizeTitle(detail.value))}</span>
       </div>
     `)
     .join('');
@@ -55,7 +55,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
 
       <div>
         <div class="pdf-cover-report-type">${escapeHtml(config.reportType)}</div>
-        <h1 class="pdf-cover-client-title">${humanizeTitle(escapeHtml(config.clientName))}</h1>
+        <h1 class="pdf-cover-client-title">${escapeHtml(humanizeTitle(config.clientName))}</h1>
         
         ${config.summary ? `
           <p class="pdf-cover-summary">${escapeHtml(config.summary)}</p>
