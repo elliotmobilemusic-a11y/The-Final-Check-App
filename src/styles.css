@@ -9137,11 +9137,13 @@ body[data-theme="midnight"] .crm-inline-stat {
 
 .client-portal-shell-clean {
   gap: 24px;
+  width: min(1480px, calc(100vw - 48px));
+  max-width: 100%;
 }
 
 .client-portal-clean-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.78fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.55fr);
   gap: 18px;
   align-items: stretch;
   padding: 24px;
@@ -9156,7 +9158,7 @@ body[data-theme="midnight"] .crm-inline-stat {
 .client-portal-clean-copy h1 {
   font-size: clamp(30px, 4vw, 52px);
   line-height: 0.98;
-  max-width: 12ch;
+  max-width: 14ch;
 }
 
 .client-portal-clean-lead {
@@ -9173,6 +9175,11 @@ body[data-theme="midnight"] .crm-inline-stat {
   border: 1px solid color-mix(in srgb, var(--line-strong) 68%, white 32%);
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(10px);
+}
+
+.client-portal-clean-summary-minimal {
+  gap: 10px;
+  justify-content: start;
 }
 
 .client-portal-clean-summary-copy strong {
@@ -9205,20 +9212,106 @@ body[data-theme="midnight"] .crm-inline-stat {
 
 .client-portal-main-clean {
   align-items: start;
+  grid-template-columns: 1fr;
+}
+
+.client-portal-primary-full {
+  display: grid;
+  gap: 18px;
+}
+
+.client-portal-note-card-wide {
+  width: 100%;
+}
+
+.client-portal-wide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.client-portal-launch-strip {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px 22px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 72%, white 28%);
+  background: color-mix(in srgb, var(--surface-card-strong) 97%, white 3%);
+  box-shadow: var(--shadow-soft);
+}
+
+.client-portal-launch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.client-portal-launch-card {
+  display: grid;
+  gap: 6px;
+  min-height: 120px;
+  padding: 16px;
+  border-radius: 20px;
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 70%, white 30%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 250, 252, 0.98));
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.client-portal-launch-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(18, 28, 38, 0.08);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line-strong) 70%);
+}
+
+.client-portal-launch-card span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.client-portal-launch-card strong {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+}
+
+.client-portal-launch-card small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.client-portal-launch-card.is-disabled {
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.client-portal-resource-list-muted {
+  gap: 12px;
 }
 
 body[data-theme="midnight"] .crm-highlight-card,
 body[data-theme="midnight"] .crm-attention-card,
 body[data-theme="midnight"] .crm-client-row-redesign,
 body[data-theme="midnight"] .client-portal-clean-hero,
-body[data-theme="midnight"] .client-portal-clean-summary {
+body[data-theme="midnight"] .client-portal-clean-summary,
+body[data-theme="midnight"] .client-portal-launch-strip,
+body[data-theme="midnight"] .client-portal-launch-card {
   border-color: color-mix(in srgb, var(--line-strong) 82%, white 18%);
 }
 
 @media (max-width: 1200px) {
   .crm-highlight-grid,
   .client-portal-clean-stats,
-  .crm-client-meta-grid {
+  .crm-client-meta-grid,
+  .client-portal-wide-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -9234,6 +9327,10 @@ body[data-theme="midnight"] .client-portal-clean-summary {
     grid-template-columns: 1fr;
   }
 
+  .client-portal-wide-grid {
+    grid-template-columns: 1fr;
+  }
+
   .crm-client-action-stack {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -9243,7 +9340,9 @@ body[data-theme="midnight"] .client-portal-clean-summary {
   .crm-highlight-grid,
   .crm-attention-grid,
   .crm-client-meta-grid,
-  .client-portal-clean-stats {
+  .client-portal-clean-stats,
+  .client-portal-wide-grid,
+  .client-portal-launch-row {
     grid-template-columns: 1fr;
   }
 
@@ -9262,7 +9361,8 @@ body[data-theme="midnight"] .client-portal-clean-summary {
   .client-portal-stat-card,
   .client-portal-note-card,
   .client-portal-section,
-  .client-portal-side-card {
+  .client-portal-side-card,
+  .client-portal-launch-strip {
     padding: 18px;
     border-radius: 22px;
   }

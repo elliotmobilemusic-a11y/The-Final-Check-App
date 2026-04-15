@@ -146,7 +146,7 @@ export function ClientPortalPage() {
         <header className="client-portal-clean-hero">
           <div className="client-portal-clean-copy">
             <p className="client-portal-eyebrow">The Final Check Client Portal</p>
-            <h1>{portal.welcomeTitle || `Welcome, ${portal.clientName}`}</h1>
+            <h1>{`Hi, ${portal.clientName}`}</h1>
             <p className="client-portal-clean-lead">
               {portal.welcomeMessage ||
                 'Your latest reviews, shared reports, and agreed next actions are available below.'}
@@ -160,7 +160,7 @@ export function ClientPortalPage() {
             </div>
           </div>
 
-          <aside className="client-portal-clean-summary">
+          <aside className="client-portal-clean-summary client-portal-clean-summary-minimal">
             {portal.logoUrl ? (
               <img
                 src={portal.logoUrl}
@@ -209,63 +209,74 @@ export function ClientPortalPage() {
         </section>
 
         <section className="client-portal-main client-portal-main-clean">
-          <div className="client-portal-primary">
+          <div className="client-portal-primary client-portal-primary-full">
             {portal.portalNote ? (
-              <article className="client-portal-note-card">
+              <article className="client-portal-note-card client-portal-note-card-wide">
                 <p className="client-portal-section-kicker">Portal note</p>
                 <p>{portal.portalNote}</p>
               </article>
             ) : null}
 
-            <article className="client-portal-section">
+            <div className="client-portal-wide-grid">
+              <article className="client-portal-side-card">
+                <p className="client-portal-section-kicker">Release status</p>
+                <h3>Account overview</h3>
+                <div className="client-portal-side-list">
+                  <div>
+                    <span>Portal access</span>
+                    <strong>{portal.hasOutstandingInvoices ? 'Partially restricted' : 'Open'}</strong>
+                  </div>
+                  <div>
+                    <span>Release rule</span>
+                    <strong>
+                      {portal.visibilityMode === 'paid_only' ? 'Release after payment' : 'Immediate release'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Paid value</span>
+                    <strong>{fmtCurrency(portal.paidInvoiceValue)}</strong>
+                  </div>
+                  <div>
+                    <span>Outstanding value</span>
+                    <strong>{fmtCurrency(portal.outstandingInvoiceValue)}</strong>
+                  </div>
+                </div>
+              </article>
+
+              <article className="client-portal-side-card">
+                <p className="client-portal-section-kicker">Next steps</p>
+                <h3>Current action plan</h3>
+                {nextActions.length === 0 ? (
+                  <div className="client-portal-empty-state compact">
+                    No open actions are currently listed in this portal.
+                  </div>
+                ) : (
+                  <div className="client-portal-task-list">
+                    {nextActions.map((task) => (
+                      <div className="client-portal-task-card" key={task.id}>
+                        <strong>{task.title}</strong>
+                        <span>{task.owner || 'The Final Check team'}</span>
+                        <small>
+                          {task.dueDate ? `Due ${formatShortDate(task.dueDate)}` : 'Due date to be confirmed'}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+            </div>
+
+            <article className="client-portal-side-card">
               <div className="client-portal-section-heading">
                 <div>
                   <p className="client-portal-section-kicker">Released work</p>
-                  <h2>Reports ready to open</h2>
+                  <h2>Available in this portal</h2>
                 </div>
                 <span className="client-portal-section-count">{releasedResources.length}</span>
               </div>
-
-              {releasedResources.length === 0 ? (
-                <div className="client-portal-empty-state">
-                  No reports or resources have been released yet.
-                </div>
-              ) : (
-                <div className="client-portal-resource-list">
-                  {releasedResources.map((resource) => {
-                    const resourceUrl = resolvePortalResourceUrl(resource);
-
-                    return (
-                      <article className="client-portal-resource-card" key={resource.id}>
-                        <div className="client-portal-resource-copy">
-                          <div className="client-portal-resource-header">
-                            <strong>{resource.title}</strong>
-                            <span>{resourceKindLabel(resource.kind)}</span>
-                          </div>
-                          <p>{resource.subtitle || 'Released client document'}</p>
-                          <div className="client-portal-resource-meta">
-                            <span>Review {formatShortDate(resource.reviewDate)}</span>
-                            <span>{resourceUrl ? 'Available now' : 'Awaiting link'}</span>
-                          </div>
-                        </div>
-
-                        {resourceUrl ? (
-                          <a
-                            className="client-portal-resource-link"
-                            href={resourceUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Open report
-                          </a>
-                        ) : (
-                          <span className="client-portal-resource-pill">Link pending</span>
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
+              <p className="client-portal-clean-lead">
+                Everything released for this account can be opened from the quick access strip below.
+              </p>
             </article>
 
             {lockedResources.length > 0 ? (
@@ -273,12 +284,12 @@ export function ClientPortalPage() {
                 <div className="client-portal-section-heading">
                   <div>
                     <p className="client-portal-section-kicker">Awaiting release</p>
-                    <h2>Items still held back</h2>
+                    <h2>Still locked</h2>
                   </div>
                   <span className="client-portal-section-count">{lockedResources.length}</span>
                 </div>
 
-                <div className="client-portal-resource-list">
+                <div className="client-portal-resource-list client-portal-resource-list-muted">
                   {lockedResources.map((resource) => (
                     <article
                       className="client-portal-resource-card client-portal-resource-card-locked"
@@ -301,56 +312,46 @@ export function ClientPortalPage() {
               </article>
             ) : null}
           </div>
+        </section>
 
-          <aside className="client-portal-sidebar">
-            <article className="client-portal-side-card">
-              <p className="client-portal-section-kicker">Portal overview</p>
-              <h3>Account status</h3>
-              <div className="client-portal-side-list">
-                <div>
-                  <span>Portal access</span>
-                  <strong>{portal.hasOutstandingInvoices ? 'Partially restricted' : 'Open'}</strong>
-                </div>
-                <div>
-                  <span>Release rule</span>
-                  <strong>
-                    {portal.visibilityMode === 'paid_only' ? 'Release after payment' : 'Immediate release'}
-                  </strong>
-                </div>
-                <div>
-                  <span>Paid value</span>
-                  <strong>{fmtCurrency(portal.paidInvoiceValue)}</strong>
-                </div>
-                <div>
-                  <span>Outstanding value</span>
-                  <strong>{fmtCurrency(portal.outstandingInvoiceValue)}</strong>
-                </div>
-              </div>
-            </article>
+        <section className="client-portal-launch-strip">
+          <div className="client-portal-section-heading">
+            <div>
+              <p className="client-portal-section-kicker">Open reports</p>
+              <h2>Quick access</h2>
+            </div>
+            <span className="client-portal-section-count">{releasedResources.length}</span>
+          </div>
 
-            <article className="client-portal-side-card">
-              <p className="client-portal-section-kicker">Action plan</p>
-              <h3>Next follow-up steps</h3>
+          {releasedResources.length === 0 ? (
+            <div className="client-portal-empty-state compact">
+              No reports or resources have been released yet.
+            </div>
+          ) : (
+            <div className="client-portal-launch-row">
+              {releasedResources.map((resource) => {
+                const resourceUrl = resolvePortalResourceUrl(resource);
 
-              {nextActions.length === 0 ? (
-                <div className="client-portal-empty-state compact">
-                  No open actions are currently listed in this portal.
-                </div>
-              ) : (
-                <div className="client-portal-task-list">
-                  {nextActions.map((task) => (
-                    <div className="client-portal-task-card" key={task.id}>
-                      <strong>{task.title}</strong>
-                      <span>{task.owner || 'The Final Check team'}</span>
-                      <small>
-                        {task.dueDate ? `Due ${formatShortDate(task.dueDate)}` : 'Due date to be confirmed'}
-                      </small>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          </aside>
+                return (
+                  <a
+                    className={`client-portal-launch-card${resourceUrl ? '' : ' is-disabled'}`}
+                    href={resourceUrl || '#'}
+                    key={resource.id}
+                    target={resourceUrl ? '_blank' : undefined}
+                    rel={resourceUrl ? 'noreferrer' : undefined}
+                    aria-disabled={!resourceUrl}
+                    onClick={(event) => {
+                      if (!resourceUrl) event.preventDefault();
+                    }}
+                  >
+                    <span>{resourceKindLabel(resource.kind)}</span>
+                    <strong>{resource.title}</strong>
+                    <small>{resource.subtitle || `Review ${formatShortDate(resource.reviewDate)}`}</small>
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </section>
       </section>
     </main>
