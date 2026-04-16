@@ -14,27 +14,27 @@ function normalizePushStorageError(error, fallbackMessage) {
 }
 
 function getSupabaseUrl() {
-  return process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+  return (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
 }
 
 function getAnonKey() {
-  return process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  return (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
 }
 
 function getServiceRoleKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 }
 
 function getVapidPublicKey() {
-  return process.env.WEB_PUSH_VAPID_PUBLIC_KEY || '';
+  return (process.env.WEB_PUSH_VAPID_PUBLIC_KEY || '').trim();
 }
 
 function getVapidPrivateKey() {
-  return process.env.WEB_PUSH_VAPID_PRIVATE_KEY || '';
+  return (process.env.WEB_PUSH_VAPID_PRIVATE_KEY || '').trim();
 }
 
 function getVapidSubject() {
-  return process.env.WEB_PUSH_VAPID_SUBJECT || 'mailto:hello@thefinalcheck.uk';
+  return (process.env.WEB_PUSH_VAPID_SUBJECT || 'mailto:hello@thefinalcheck.uk').trim();
 }
 
 export function createAdminClient() {
