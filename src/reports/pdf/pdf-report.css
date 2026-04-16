@@ -486,17 +486,18 @@ strong {
 .pdf-chapter,
 .report-chapter {
   display: grid;
-  gap: 14px;
-  margin: 0 0 14px;
-  padding: 12mm 12mm 13mm;
-  border: 1px solid var(--pdf-line-medium);
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(251, 248, 242, 0.75) 0%, rgba(255, 255, 255, 0) 26%),
-    #ffffff;
-  box-shadow: var(--pdf-shadow-card);
-  page-break-inside: avoid;
-  break-inside: avoid-page;
+  gap: 18px;
+  margin: 0;
+  padding: 18mm 18mm 20mm;
+  border: none;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: none;
+  page-break-after: always;
+  break-after: page;
+  page-break-inside: auto;
+  break-inside: auto;
+  min-height: 270mm;
 }
 
 .report-chapter-break {
@@ -927,7 +928,7 @@ table tr {
   .pdf-chapter,
   .report-chapter {
     margin: 0;
-    padding: 5mm 5mm 5.5mm;
+    padding: 16mm 16mm 18mm;
     border-radius: 0;
   }
 
