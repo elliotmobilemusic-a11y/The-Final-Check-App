@@ -152,6 +152,20 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create table public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  device_label text,
+  platform text,
+  user_agent text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now()
+);
+
 create index clients_user_id_idx on public.clients(user_id);
 create index clients_company_name_idx on public.clients(user_id, company_name asc);
 create index clients_next_review_idx on public.clients(user_id, next_review_date);
@@ -183,6 +197,8 @@ create index user_drafts_updated_at_idx on public.user_drafts(user_id, updated_a
 create index report_shares_token_idx on public.report_shares(token);
 create index report_shares_public_idx on public.report_shares(is_public, expires_at);
 create index profiles_updated_at_idx on public.profiles(updated_at desc);
+create index push_subscriptions_user_id_idx on public.push_subscriptions(user_id);
+create index push_subscriptions_last_seen_idx on public.push_subscriptions(user_id, last_seen_at desc);
 
 create trigger set_clients_updated_at before update on public.clients for each row execute procedure public.set_updated_at();
 create trigger set_audits_updated_at before update on public.audits for each row execute procedure public.set_updated_at();
@@ -194,6 +210,7 @@ create trigger set_dashboard_tasks_updated_at before update on public.dashboard_
 create trigger set_user_drafts_updated_at before update on public.user_drafts for each row execute procedure public.set_updated_at();
 create trigger set_report_shares_updated_at before update on public.report_shares for each row execute procedure public.set_updated_at();
 create trigger set_profiles_updated_at before update on public.profiles for each row execute procedure public.set_updated_at();
+create trigger set_push_subscriptions_updated_at before update on public.push_subscriptions for each row execute procedure public.set_updated_at();
 
 alter table public.clients enable row level security;
 alter table public.audits enable row level security;
@@ -205,6 +222,7 @@ alter table public.dashboard_tasks enable row level security;
 alter table public.user_drafts enable row level security;
 alter table public.report_shares enable row level security;
 alter table public.profiles enable row level security;
+alter table public.push_subscriptions enable row level security;
 
 create policy "Users can view own clients" on public.clients for select using (auth.uid() = user_id);
 create policy "Users can insert own clients" on public.clients for insert with check (auth.uid() = user_id);
@@ -256,6 +274,11 @@ create policy "Users can view own profile" on public.profiles for select using (
 create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = user_id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "Users can delete own profile" on public.profiles for delete using (auth.uid() = user_id);
+
+create policy "Users can view own push subscriptions" on public.push_subscriptions for select using (auth.uid() = user_id);
+create policy "Users can insert own push subscriptions" on public.push_subscriptions for insert with check (auth.uid() = user_id);
+create policy "Users can update own push subscriptions" on public.push_subscriptions for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Users can delete own push subscriptions" on public.push_subscriptions for delete using (auth.uid() = user_id);
 
 grant usage on schema public to authenticated, service_role, anon;
 

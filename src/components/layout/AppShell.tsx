@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { resetSupabaseAuthState } from '../../lib/authStorage';
 import { supabase } from '../../lib/supabase';
+import { disablePushNotifications } from '../../services/pushNotifications';
 import { CookingLoader } from './CookingLoader';
 
 const navItems = [
@@ -187,6 +188,14 @@ export function AppShell() {
   };
 
   async function handleSignOut() {
+    if (session?.access_token) {
+      try {
+        await disablePushNotifications(session.access_token);
+      } catch {
+        // Ignore device notification cleanup failures during sign-out.
+      }
+    }
+
     if (supabase) {
       try {
         await supabase.auth.signOut();

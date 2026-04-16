@@ -19,6 +19,14 @@ import {
 } from '../../lib/desktop';
 import { supabase } from '../../lib/supabase';
 import { saveAvatarUrl, uploadAvatar, updateProfile } from '../../services/profiles';
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushDeviceStatus,
+  sendTestPushNotification,
+  syncPushNotifications,
+  type PushDeviceStatus
+} from '../../services/pushNotifications';
 
 type ThemePreview = {
   value: ThemeMode;
@@ -127,6 +135,12 @@ export function SettingsPage() {
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarPosition] = useState({ x: 50, y: 50, scale: 1 });
+  const [pushStatus, setPushStatus] = useState<PushDeviceStatus>({
+    supported: false,
+    subscribed: false,
+    permission: 'unsupported'
+  });
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     setDisplayName(preferences.displayName);
@@ -164,6 +178,36 @@ export function SettingsPage() {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getPushDeviceStatus()
+      .then((status) => {
+        if (!cancelled) {
+          setPushStatus(status);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPushStatus({
+            supported: false,
+            subscribed: false,
+            permission: 'unsupported'
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id]);
+
+  useEffect(() => {
+    if (!session?.access_token) return;
+
+    syncPushNotifications(session.access_token).catch(() => {});
+  }, [session?.access_token]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -298,6 +342,76 @@ export function SettingsPage() {
 
   async function handleInstallDesktopUpdate() {
     await installDesktopUpdate();
+  }
+
+  async function refreshPushStatus() {
+    const status = await getPushDeviceStatus();
+    setPushStatus(status);
+  }
+
+  async function handleEnablePush() {
+    if (!session?.access_token) {
+      setMessage('You must be signed in before notifications can be enabled.');
+      return;
+    }
+
+    try {
+      setPushBusy(true);
+      await runWithActivity(
+        {
+          kicker: 'Linking device',
+          title: 'Enabling notifications',
+          detail: 'Registering this browser so signed-in alerts can reach this device.'
+        },
+        () => enablePushNotifications(session.access_token),
+        500
+      );
+      await refreshPushStatus();
+      setMessage('Notifications are enabled for this signed-in device.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not enable notifications.');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleDisablePush() {
+    if (!session?.access_token) {
+      setMessage('You must be signed in before notifications can be changed.');
+      return;
+    }
+
+    try {
+      setPushBusy(true);
+      await disablePushNotifications(session.access_token);
+      await refreshPushStatus();
+      setMessage('Notifications are disabled for this device.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not disable notifications.');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleSendTestPush() {
+    if (!session?.access_token) {
+      setMessage('You must be signed in before sending a test notification.');
+      return;
+    }
+
+    try {
+      setPushBusy(true);
+      const result = await sendTestPushNotification(session.access_token);
+      setMessage(
+        result.delivered > 0
+          ? 'Test notification sent.'
+          : 'No active notification subscriptions were found for this signed-in user.'
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not send the test notification.');
+    } finally {
+      setPushBusy(false);
+    }
   }
 
   return (
@@ -596,6 +710,93 @@ export function SettingsPage() {
                           onChange={(event) => setConfirmPassword(event.target.value)}
                         />
                       </label>
+                    </div>
+                  </section>
+
+                  <section className="sub-panel">
+                    <div className="sub-panel-header">
+                      <h4>Browser notifications</h4>
+                      <span className="soft-pill">
+                        {pushStatus.supported
+                          ? pushStatus.subscribed
+                            ? 'Enabled on this device'
+                            : 'Available on this device'
+                          : 'Not supported here'}
+                      </span>
+                    </div>
+
+                    <div className="settings-toggle-grid">
+                      <label className="settings-toggle-card">
+                        <div>
+                          <strong>Signed-in device alerts</strong>
+                          <p>
+                            Enable browser notifications on this phone or computer. Each device must opt in separately while signed in.
+                          </p>
+                        </div>
+                        <input
+                          checked={pushStatus.subscribed}
+                          disabled
+                          readOnly
+                          type="checkbox"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="form-grid two-columns">
+                      <label className="field">
+                        <span>Permission</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={pushStatus.permission === 'unsupported' ? 'Unsupported' : pushStatus.permission}
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>Delivery status</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={
+                            !pushStatus.supported
+                              ? 'Unavailable'
+                              : pushStatus.subscribed
+                                ? 'Subscribed'
+                                : 'Not subscribed'
+                          }
+                        />
+                      </label>
+                    </div>
+
+                    <p className="muted-copy">
+                      Notifications are only available to authenticated users, and each signed-in browser or device needs its own approval.
+                    </p>
+
+                    <div className="header-actions">
+                      <button
+                        className="button button-primary"
+                        disabled={pushBusy || !pushStatus.supported || pushStatus.subscribed}
+                        onClick={handleEnablePush}
+                        type="button"
+                      >
+                        {pushBusy && !pushStatus.subscribed ? 'Enabling...' : 'Enable notifications'}
+                      </button>
+                      <button
+                        className="button button-secondary"
+                        disabled={pushBusy || !pushStatus.subscribed}
+                        onClick={handleSendTestPush}
+                        type="button"
+                      >
+                        Send test notification
+                      </button>
+                      <button
+                        className="button button-ghost"
+                        disabled={pushBusy || !pushStatus.subscribed}
+                        onClick={handleDisablePush}
+                        type="button"
+                      >
+                        Disable on this device
+                      </button>
                     </div>
                   </section>
 
