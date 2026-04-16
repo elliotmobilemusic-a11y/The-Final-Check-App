@@ -49,8 +49,18 @@ function buildDeviceLabel() {
 
 async function getRegistration() {
   ensurePushSupport();
-  const registration = await navigator.serviceWorker.register('/sw.js');
-  return navigator.serviceWorker.ready.then(() => registration);
+  const registration = await navigator.serviceWorker.register('/sw.js', {
+    updateViaCache: 'none'
+  });
+
+  await registration.update();
+
+  if (registration.waiting) {
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+
+  await navigator.serviceWorker.ready;
+  return registration;
 }
 
 async function getPushPublicKey() {
