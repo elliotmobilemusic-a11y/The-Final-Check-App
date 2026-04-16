@@ -267,15 +267,13 @@ strong {
 .pdf-cover-hero {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 12px;
-  min-height: 110mm;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 24px;
+  min-height: 200mm;
   break-inside: avoid;
   page-break-inside: avoid;
+  margin-top: 18px;
 }
 
 .pdf-cover-hero-main {
@@ -374,7 +372,7 @@ strong {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin: 0 auto;
-  max-width: 170mm;
+  max-width: 180mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
