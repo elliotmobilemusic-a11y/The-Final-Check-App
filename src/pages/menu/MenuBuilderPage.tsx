@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
@@ -1500,265 +1501,268 @@ export function MenuBuilderPage() {
         </div>
       </section>
 
-      {dishDraft ? (
-        <div
-          className="drawer-backdrop dish-modal-backdrop"
-          onClick={closeDishEditor}
-        >
-          <div
-            aria-modal="true"
-            className="drawer-panel dish-modal-panel"
-            role="dialog"
-            aria-label={editingDishId ? 'Edit dish' : 'Add dish'}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="panel-header dish-modal-header">
-              <div>
-                <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
-                <p className="muted-copy">
-                  Build each dish from ingredients, selling price, target GP, and weekly sales volume so the profit opportunity is explicit.
-                </p>
-              </div>
-              <button className="button button-ghost" onClick={closeDishEditor}>
-                Close
-              </button>
-            </div>
-
-            <div className="panel-body stack gap-20 dish-modal-body">
-              <div className="dish-editor-layout">
-                <div className="dish-editor-main">
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <div>
-                          <h4>Dish profit inputs</h4>
-                        <p className="muted-copy">
-                          Name the dish, set the selling price, and enter the commercial inputs used in the profit model.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="form-grid two-columns">
-                      <label className="field">
-                        <span>Dish name</span>
-                        <input
-                          className="input"
-                          value={dishDraft.name}
-                          onChange={(e) => updateDish('name', e.target.value)}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Sell price (£)</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={dishDraft.sellPrice}
-                          onChange={(e) => updateDish('sellPrice', num(e.target.value))}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Target GP %</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={dishDraft.targetGp}
-                          onChange={(e) => updateDish('targetGp', num(e.target.value))}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Sales mix %</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={dishDraft.salesMixPercent}
-                          onChange={(e) => updateDish('salesMixPercent', num(e.target.value))}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Weekly sales volume</span>
-                        <input
-                          className="input"
-                          type="number"
-                          value={dishDraft.weeklySalesVolume}
-                          onChange={(e) => updateDish('weeklySalesVolume', num(e.target.value))}
-                        />
-                      </label>
-                    </div>
-
-                    <label className="field">
-                      <span>Notes / description</span>
-                      <textarea
-                        className="input textarea"
-                        value={dishDraft.notes}
-                        onChange={(e) => updateDish('notes', e.target.value)}
-                      />
-                    </label>
-                  </section>
-
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <div>
-                        <h4>Ingredients</h4>
-                        <p className="muted-copy">
-                          Add the exact quantity used per dish, then the purchased pack size and
-                          cost so the unit cost stays accurate.
-                        </p>
-                      </div>
-                      <button className="button button-secondary" onClick={addIngredient}>
-                        Add ingredient
-                      </button>
-                    </div>
-
-                    <div className="ingredient-list">
-                      {dishDraft.ingredients.map((ingredient, index) => (
-                        <div className="ingredient-card" key={ingredient.id}>
-                          <div className="ingredient-card-header">
-                            <div className="ingredient-card-title">
-                              <strong>{ingredient.name || `Ingredient ${index + 1}`}</strong>
-                              <span className="muted-copy">
-                                Used to build the live dish cost and GP calculation.
-                              </span>
-                            </div>
-                            <button
-                              className="button button-ghost danger-text"
-                              onClick={() => removeIngredient(ingredient.id)}
-                            >
-                              Remove
-                            </button>
-                          </div>
-
-                          <div className="ingredient-card-grid">
-                            <label className="field ingredient-field ingredient-field-name">
-                              <span>Ingredient</span>
-                              <input
-                                className="input"
-                                value={ingredient.name}
-                                onChange={(e) =>
-                                  updateIngredient(ingredient.id, 'name', e.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="field ingredient-field ingredient-field-qty">
-                              <span>Qty used</span>
-                              <div className="unit-input-row">
-                                <input
-                                  className="input"
-                                  type="number"
-                                  value={ingredient.qtyUsed}
-                                  onChange={(e) =>
-                                    updateIngredient(ingredient.id, 'qtyUsed', num(e.target.value))
-                                  }
-                                />
-                                <select
-                                  className="input unit-select"
-                                  value={ingredient.qtyUnit}
-                                  onChange={(e) =>
-                                    updateIngredient(
-                                      ingredient.id,
-                                      'qtyUnit',
-                                      e.target.value as MeasurementUnit
-                                    )
-                                  }
-                                >
-                                  {ingredientUnitOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </label>
-                            <label className="field ingredient-field ingredient-field-pack">
-                              <span>Pack size</span>
-                              <div className="unit-input-row">
-                                <input
-                                  className="input"
-                                  type="number"
-                                  value={ingredient.packQty}
-                                  onChange={(e) =>
-                                    updateIngredient(
-                                      ingredient.id,
-                                      'packQty',
-                                      Math.max(1, num(e.target.value))
-                                    )
-                                  }
-                                />
-                                <select
-                                  className="input unit-select"
-                                  value={ingredient.packUnit}
-                                  onChange={(e) =>
-                                    updateIngredient(
-                                      ingredient.id,
-                                      'packUnit',
-                                      e.target.value as MeasurementUnit
-                                    )
-                                  }
-                                >
-                                  {ingredientUnitOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </label>
-                            <label className="field ingredient-field ingredient-field-cost">
-                              <span>Pack cost (£)</span>
-                              <input
-                                className="input"
-                                type="number"
-                                value={ingredient.packCost}
-                                onChange={(e) =>
-                                  updateIngredient(ingredient.id, 'packCost', num(e.target.value))
-                                }
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+      {dishDraft && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className="drawer-backdrop dish-modal-backdrop"
+              onClick={closeDishEditor}
+            >
+              <div
+                aria-modal="true"
+                className="drawer-panel dish-modal-panel"
+                role="dialog"
+                aria-label={editingDishId ? 'Edit dish' : 'Add dish'}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="panel-header dish-modal-header">
+                  <div>
+                    <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
+                    <p className="muted-copy">
+                      Build each dish from ingredients, selling price, target GP, and weekly sales volume so the profit opportunity is explicit.
+                    </p>
+                  </div>
+                  <button className="button button-ghost" onClick={closeDishEditor}>
+                    Close
+                  </button>
                 </div>
 
-                <aside className="dish-editor-side">
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <div>
-                        <h4>Profit snapshot</h4>
-                        <p className="muted-copy">
-                          Live costing updates as ingredients, pack sizes, pricing, and weekly volume are added.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="dish-editor-stat-grid">
-                      <StatCard label="Ingredient cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
-                      <StatCard label="Actual GP" value={fmtPercent(dishTheoGp(dishDraft))} />
-                      <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
-                      <StatCard label="Weekly profit" value={fmtCurrency(dishWeeklyProfit(dishDraft))} />
-                      <StatCard
-                        label="Target sell"
-                        value={fmtCurrency(dishRecommendedPrice(dishDraft))}
-                      />
-                      <StatCard
-                        label="Opportunity"
-                        value={fmtCurrency(dishWeeklyOpportunity(dishDraft))}
-                      />
-                    </div>
-                  </section>
-                </aside>
-              </div>
+                <div className="panel-body stack gap-20 dish-modal-body">
+                  <div className="dish-editor-layout">
+                    <div className="dish-editor-main">
+                      <section className="sub-panel">
+                        <div className="sub-panel-header">
+                          <div>
+                            <h4>Dish profit inputs</h4>
+                            <p className="muted-copy">
+                              Name the dish, set the selling price, and enter the commercial inputs used in the profit model.
+                            </p>
+                          </div>
+                        </div>
 
-              <div className="header-actions">
-                <button className="button button-primary" onClick={saveDish}>
-                  Save dish
-                </button>
-                <button className="button button-secondary" onClick={closeDishEditor}>
-                  Cancel
-                </button>
+                        <div className="form-grid two-columns">
+                          <label className="field">
+                            <span>Dish name</span>
+                            <input
+                              className="input"
+                              value={dishDraft.name}
+                              onChange={(e) => updateDish('name', e.target.value)}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Sell price (£)</span>
+                            <input
+                              className="input"
+                              type="number"
+                              value={dishDraft.sellPrice}
+                              onChange={(e) => updateDish('sellPrice', num(e.target.value))}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Target GP %</span>
+                            <input
+                              className="input"
+                              type="number"
+                              value={dishDraft.targetGp}
+                              onChange={(e) => updateDish('targetGp', num(e.target.value))}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Sales mix %</span>
+                            <input
+                              className="input"
+                              type="number"
+                              value={dishDraft.salesMixPercent}
+                              onChange={(e) => updateDish('salesMixPercent', num(e.target.value))}
+                            />
+                          </label>
+                          <label className="field">
+                            <span>Weekly sales volume</span>
+                            <input
+                              className="input"
+                              type="number"
+                              value={dishDraft.weeklySalesVolume}
+                              onChange={(e) => updateDish('weeklySalesVolume', num(e.target.value))}
+                            />
+                          </label>
+                        </div>
+
+                        <label className="field">
+                          <span>Notes / description</span>
+                          <textarea
+                            className="input textarea"
+                            value={dishDraft.notes}
+                            onChange={(e) => updateDish('notes', e.target.value)}
+                          />
+                        </label>
+                      </section>
+
+                      <section className="sub-panel">
+                        <div className="sub-panel-header">
+                          <div>
+                            <h4>Ingredients</h4>
+                            <p className="muted-copy">
+                              Add the exact quantity used per dish, then the purchased pack size and
+                              cost so the unit cost stays accurate.
+                            </p>
+                          </div>
+                          <button className="button button-secondary" onClick={addIngredient}>
+                            Add ingredient
+                          </button>
+                        </div>
+
+                        <div className="ingredient-list">
+                          {dishDraft.ingredients.map((ingredient, index) => (
+                            <div className="ingredient-card" key={ingredient.id}>
+                              <div className="ingredient-card-header">
+                                <div className="ingredient-card-title">
+                                  <strong>{ingredient.name || `Ingredient ${index + 1}`}</strong>
+                                  <span className="muted-copy">
+                                    Used to build the live dish cost and GP calculation.
+                                  </span>
+                                </div>
+                                <button
+                                  className="button button-ghost danger-text"
+                                  onClick={() => removeIngredient(ingredient.id)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+
+                              <div className="ingredient-card-grid">
+                                <label className="field ingredient-field ingredient-field-name">
+                                  <span>Ingredient</span>
+                                  <input
+                                    className="input"
+                                    value={ingredient.name}
+                                    onChange={(e) =>
+                                      updateIngredient(ingredient.id, 'name', e.target.value)
+                                    }
+                                  />
+                                </label>
+                                <label className="field ingredient-field ingredient-field-qty">
+                                  <span>Qty used</span>
+                                  <div className="unit-input-row">
+                                    <input
+                                      className="input"
+                                      type="number"
+                                      value={ingredient.qtyUsed}
+                                      onChange={(e) =>
+                                        updateIngredient(ingredient.id, 'qtyUsed', num(e.target.value))
+                                      }
+                                    />
+                                    <select
+                                      className="input unit-select"
+                                      value={ingredient.qtyUnit}
+                                      onChange={(e) =>
+                                        updateIngredient(
+                                          ingredient.id,
+                                          'qtyUnit',
+                                          e.target.value as MeasurementUnit
+                                        )
+                                      }
+                                    >
+                                      {ingredientUnitOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                          {option.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </label>
+                                <label className="field ingredient-field ingredient-field-pack">
+                                  <span>Pack size</span>
+                                  <div className="unit-input-row">
+                                    <input
+                                      className="input"
+                                      type="number"
+                                      value={ingredient.packQty}
+                                      onChange={(e) =>
+                                        updateIngredient(
+                                          ingredient.id,
+                                          'packQty',
+                                          Math.max(1, num(e.target.value))
+                                        )
+                                      }
+                                    />
+                                    <select
+                                      className="input unit-select"
+                                      value={ingredient.packUnit}
+                                      onChange={(e) =>
+                                        updateIngredient(
+                                          ingredient.id,
+                                          'packUnit',
+                                          e.target.value as MeasurementUnit
+                                        )
+                                      }
+                                    >
+                                      {ingredientUnitOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                          {option.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                </label>
+                                <label className="field ingredient-field ingredient-field-cost">
+                                  <span>Pack cost (£)</span>
+                                  <input
+                                    className="input"
+                                    type="number"
+                                    value={ingredient.packCost}
+                                    onChange={(e) =>
+                                      updateIngredient(ingredient.id, 'packCost', num(e.target.value))
+                                    }
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    </div>
+
+                    <aside className="dish-editor-side">
+                      <section className="sub-panel">
+                        <div className="sub-panel-header">
+                          <div>
+                            <h4>Profit snapshot</h4>
+                            <p className="muted-copy">
+                              Live costing updates as ingredients, pack sizes, pricing, and weekly volume are added.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="dish-editor-stat-grid">
+                          <StatCard label="Ingredient cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
+                          <StatCard label="Actual GP" value={fmtPercent(dishTheoGp(dishDraft))} />
+                          <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
+                          <StatCard label="Weekly profit" value={fmtCurrency(dishWeeklyProfit(dishDraft))} />
+                          <StatCard
+                            label="Target sell"
+                            value={fmtCurrency(dishRecommendedPrice(dishDraft))}
+                          />
+                          <StatCard
+                            label="Opportunity"
+                            value={fmtCurrency(dishWeeklyOpportunity(dishDraft))}
+                          />
+                        </div>
+                      </section>
+                    </aside>
+                  </div>
+
+                  <div className="header-actions">
+                    <button className="button button-primary" onClick={saveDish}>
+                      Save dish
+                    </button>
+                    <button className="button button-secondary" onClick={closeDishEditor}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body
+          )
+        : null}
 
       <ControlPanelModal
         bodyRef={controlDrawerBodyRef}
