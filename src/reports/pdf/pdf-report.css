@@ -10,7 +10,7 @@
 
 @page {
   size: A4 portrait;
-  margin: 16mm 16mm 18mm 16mm;
+  margin: 0;
   marks: none;
 }
 
@@ -906,18 +906,21 @@ table tr {
 @media print {
   html {
     font-size: 14px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   body {
     padding: 0;
     background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .pdf-document {
     max-width: none;
     padding: 0;
-    box-shadow: none;
-    background: transparent;
+    background: #ffffff;
   }
 
   .pdf-cover-page,
@@ -926,30 +929,13 @@ table tr {
     margin: 0;
     padding: 5mm 5mm 5.5mm;
     border-radius: 0;
-    box-shadow: none;
-    background: #ffffff;
   }
 
-  .pdf-cover-page,
-  .pdf-chapter,
-  .report-chapter,
-  .report-photo-card,
-  .meta-card,
-  .report-columns > div,
-  .report-grid > div,
-  .report-story-card,
-  .pdf-metric-card,
-  .pdf-cover-metric,
-  .pdf-cover-detail,
-  .pdf-table,
-  .report-table,
-  table {
-    box-shadow: none;
-  }
+
 
   .pdf-cover-page::before,
   .pdf-cover-page::after {
-    opacity: 0.75;
+    opacity: 1;
   }
 
   .summary-grid {
