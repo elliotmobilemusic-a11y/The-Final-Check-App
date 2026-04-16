@@ -16,7 +16,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   const coverHtml = buildReportCoverHtml({
     clientName: audit.businessName,
     reportType: 'Kitchen Profit Audit',
-    reportDate: audit.visitDate,
+    date: audit.visitDate,
     auditor: audit.consultantName,
     location: audit.location,
     metrics: [
@@ -155,7 +155,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
           <td>${escapeHtml(control.label)}</td>
           <td>${escapeHtml(control.category)}</td>
           <td style="font-weight: 700; ${
-            control.status === 'Pass' ? 'color: #2e7d32' :
+            control.status === 'In Place' ? 'color: #2e7d32' :
             control.status === 'Partial' ? 'color: #ed6c02' :
             'color: #d32f2f'
           }">${control.status}</td>
@@ -273,7 +273,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // --------------------------
   const leadershipHtml = `
     ${buildSectionHtml('Culture & Leadership', `<p>${normalizeProseText(audit.cultureLeadership)}</p>`)}
-    ${buildSectionHtml('Team & Training', `<p>${normalizeProseText(audit.training || 'Training assessment complete')}</p>`)}
+    ${buildSectionHtml('Team & Training', `<p>${normalizeProseText(audit.cultureLeadership || 'Training assessment complete')}</p>`)}
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--pdf-line-medium);">
       <h3>Closing Summary</h3>
