@@ -282,15 +282,16 @@ strong {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 20mm 24mm 22mm;
-  border-radius: 28px;
+  gap: 16px;
+  max-width: 150mm;
+  padding: 20mm 22mm 22mm;
+  border-radius: 26px;
   border: 1px solid var(--pdf-line-medium);
   background:
     linear-gradient(180deg, rgba(251, 248, 242, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%),
     #ffffff;
   box-shadow: 0 14px 32px rgba(36, 28, 19, 0.07);
+  margin: 0 auto;
 }
 
 .pdf-cover-report-type {
@@ -373,8 +374,8 @@ strong {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin: 0 auto;
-  max-width: 180mm;
+  margin: 24px auto 0;
+  max-width: 160mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -428,13 +429,11 @@ strong {
   display: grid;
   grid-template-columns: 34mm minmax(0, 1fr);
   gap: 10px;
-  margin-top: auto;
-  padding: 10px 12px 0;
+  margin-top: 24px;
+  padding: 16px 14px 14px;
   border-top: 1px solid rgba(127, 82, 33, 0.16);
-  border-radius: 16px 16px 0 0;
-  background:
-    linear-gradient(180deg, rgba(250, 246, 240, 0.84), rgba(255, 255, 255, 0.94)),
-    #ffffff;
+  border-radius: 0;
+  background: transparent;
   break-inside: avoid;
   page-break-inside: avoid;
 }
