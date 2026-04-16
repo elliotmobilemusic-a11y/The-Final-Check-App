@@ -89,25 +89,47 @@ export function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-export function humanizeTitle(value: unknown): string {
-  return String(value ?? '')
+const PDF_TEXT_REPAIRS: Array<[RegExp, string]> = [
+  [/\band\s+follow\s*-\s*up\b/gi, 'and Follow-Up'],
+  [/\bfollow\s*-\s*up\b/gi, 'Follow-Up'],
+  [/\boperational\s+findings\b/gi, 'Operational Findings'],
+  [/\bcommercial\s+snapshot\b/gi, 'Commercial Snapshot'],
+  [/\bseal\s+bay\s+resort\b/gi, 'Seal Bay Resort'],
+  [/\bordering\b/gi, 'ordering'],
+  [/\binconsistencies\b/gi, 'inconsistencies'],
+  [/\bindicating\b/gi, 'indicating'],
+  [/\bintentionally\b/gi, 'intentionally']
+];
+
+function normalizePdfText(value: unknown): string {
+  let text = String(value ?? '')
+    .replace(/[\u00A0\u2000-\u200D\u202F\u205F\u3000]/g, ' ')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)([A-Z])/gi, '$1 $2')
+    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)(?=[A-Z])/g, '$1 ')
+    .replace(/([A-Za-z])\/([A-Za-z])/g, '$1 / $2')
     .replace(/_/g, ' ')
     .replace(/\s*-\s*/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
+
+  for (const [pattern, replacement] of PDF_TEXT_REPAIRS) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/\(\s+/g, '(')
+    .replace(/\s+\)/g, ')')
+    .trim();
+}
+
+export function humanizeTitle(value: unknown): string {
+  return normalizePdfText(value);
 }
 
 export function humanizeSentence(value: unknown): string {
-  return String(value ?? '')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)([A-Z])/gi, '$1 $2')
-    .replace(/_/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizePdfText(value);
 }
 
 export function formatCurrencyShort(value: number): string {

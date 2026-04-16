@@ -73,6 +73,12 @@ h2,
 h3,
 p {
   margin: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  hyphens: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0;
 }
 
 h1,
@@ -108,6 +114,9 @@ p,
 li {
   orphans: 3;
   widows: 3;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 ul,
@@ -122,6 +131,9 @@ li + li {
 
 strong {
   color: var(--pdf-ink);
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .pdf-label,
@@ -287,7 +299,7 @@ strong {
 }
 
 .pdf-cover-client-title {
-  max-width: 10ch;
+  max-width: 11ch;
   margin: 12px 0 10px;
   color: var(--pdf-ink);
   font-size: 33pt;
@@ -295,6 +307,7 @@ strong {
   letter-spacing: -0.055em;
   word-break: keep-all;
   overflow-wrap: normal;
+  hyphens: none;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -305,6 +318,9 @@ strong {
   color: var(--pdf-ink-soft);
   font-size: 10.2pt;
   line-height: 1.58;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .pdf-cover-hero-aside {
@@ -521,6 +537,9 @@ strong {
   color: var(--pdf-muted-strong);
   font-size: 12px;
   line-height: 1.72;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* ==============================================
@@ -560,6 +579,9 @@ section > h2 {
 .pdf-section-header h3,
 .report-section-header h3 {
   font-size: 15px;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .pdf-section-header p,
@@ -568,6 +590,9 @@ section > h2 {
   color: var(--pdf-muted);
   font-size: 11px;
   line-height: 1.68;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 section {
@@ -683,6 +708,9 @@ section > h3 + * {
 .report-story-card li {
   color: var(--pdf-ink-soft);
   line-height: 1.58;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .report-story-card ul {
@@ -728,6 +756,9 @@ table th {
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 .pdf-table td,
@@ -738,9 +769,10 @@ table td {
   vertical-align: top;
   color: var(--pdf-ink-soft);
   line-height: 1.55;
-  word-break: break-word;
+  word-break: normal;
   overflow-wrap: break-word;
   white-space: normal;
+  hyphens: none;
   background: #ffffff;
 }
 

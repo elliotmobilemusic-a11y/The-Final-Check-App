@@ -407,9 +407,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   };
 
   const nonEmptyLines = (items: string[]) => items.filter((item) => hasMeaningfulText(item));
+  const cleanCopy = (value: unknown) => humanizeSentence(safe(value));
   const renderList = (items: string[]) =>
     nonEmptyLines(items).length
-      ? `<ul>${nonEmptyLines(items).map((item) => `<li>${item}</li>`).join('')}</ul>`
+      ? `<ul>${nonEmptyLines(items).map((item) => `<li>${cleanCopy(item)}</li>`).join('')}</ul>`
       : '';
 
   const renderMetric = (label: string, value: string, emphasis: 'default' | 'primary' = 'default') => `
@@ -467,7 +468,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   );
   const followUpHtml =
     hasMeaningfulText(state.nextVisit) || hasMeaningfulText(narrative.followUpRecommendation)
-      ? `<p>${safe(state.nextVisit) || safe(narrative.followUpRecommendation)}</p>`
+      ? `<p>${cleanCopy(state.nextVisit) || cleanCopy(narrative.followUpRecommendation)}</p>`
       : '';
 
   const controlsTableRows = controlRows
@@ -475,10 +476,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     .map(
       (item) => `
         <tr>
-          <td>${hasMeaningfulText(item.category) ? safe(item.category) : ''}</td>
-          <td>${hasMeaningfulText(item.label) ? safe(item.label) : ''}</td>
+          <td>${hasMeaningfulText(item.category) ? cleanCopy(item.category) : ''}</td>
+          <td>${hasMeaningfulText(item.label) ? cleanCopy(item.label) : ''}</td>
           <td>${item.status === 'N/A' ? '' : item.status}</td>
-          <td>${hasMeaningfulText(item.note) ? safe(item.note) : ''}</td>
+          <td>${hasMeaningfulText(item.note) ? cleanCopy(item.note) : ''}</td>
         </tr>
       `
     )
@@ -488,10 +489,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     state.wasteItems,
     (item) => `
       <tr>
-        <td>${safe(item.item)}</td>
+        <td>${cleanCopy(item.item)}</td>
         <td>${num(item.cost) > 0 ? fmtCurrency(num(item.cost)) : ''}</td>
-        <td>${hasMeaningfulText(item.cause) ? safe(item.cause) : ''}</td>
-        <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+        <td>${hasMeaningfulText(item.cause) ? cleanCopy(item.cause) : ''}</td>
+        <td>${hasMeaningfulText(item.fix) ? cleanCopy(item.fix) : ''}</td>
       </tr>
     `
   );
@@ -500,10 +501,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     state.portionItems,
     (item) => `
       <tr>
-        <td>${safe(item.dish)}</td>
+        <td>${cleanCopy(item.dish)}</td>
         <td>${num(item.loss) > 0 ? fmtCurrency(num(item.loss)) : ''}</td>
-        <td>${hasMeaningfulText(item.issue) ? safe(item.issue) : ''}</td>
-        <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+        <td>${hasMeaningfulText(item.issue) ? cleanCopy(item.issue) : ''}</td>
+        <td>${hasMeaningfulText(item.fix) ? cleanCopy(item.fix) : ''}</td>
       </tr>
     `
   );
@@ -512,10 +513,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     state.orderingItems,
     (item) => `
       <tr>
-        <td>${safe(item.category)}</td>
-        <td>${hasMeaningfulText(item.problem) ? safe(item.problem) : ''}</td>
-        <td>${hasMeaningfulText(item.impact) ? safe(item.impact) : ''}</td>
-        <td>${hasMeaningfulText(item.fix) ? safe(item.fix) : ''}</td>
+        <td>${cleanCopy(item.category)}</td>
+        <td>${hasMeaningfulText(item.problem) ? cleanCopy(item.problem) : ''}</td>
+        <td>${hasMeaningfulText(item.impact) ? cleanCopy(item.impact) : ''}</td>
+        <td>${hasMeaningfulText(item.fix) ? cleanCopy(item.fix) : ''}</td>
       </tr>
     `
   );
@@ -524,30 +525,30 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     renderStory(
       'Systems',
       [
-        hasMeaningfulText(state.systems) ? `<p>${safe(state.systems)}</p>` : '',
+        hasMeaningfulText(state.systems) ? `<p>${cleanCopy(state.systems)}</p>` : '',
         controlsTableRows ? `<p class="muted-copy">Control compliance currently sits at ${Math.round(calc.controlScore)}%, with the register below capturing the named evidence points for follow-up.</p>` : ''
       ].filter(Boolean).join('')
     ),
     renderStory(
       'People and culture',
       [
-        hasMeaningfulText(state.cultureLeadership) ? `<p>${safe(state.cultureLeadership)}</p>` : '',
-        hasMeaningfulText(state.foodQuality) ? `<p class="muted-copy"><strong>Food quality and offer:</strong> ${safe(state.foodQuality)}</p>` : ''
+        hasMeaningfulText(state.cultureLeadership) ? `<p>${cleanCopy(state.cultureLeadership)}</p>` : '',
+        hasMeaningfulText(state.foodQuality) ? `<p class="muted-copy"><strong>Food quality and offer:</strong> ${cleanCopy(state.foodQuality)}</p>` : ''
       ].filter(Boolean).join('')
     ),
     renderStory(
       'Operations',
       [
-        hasMeaningfulText(state.layoutIssues) ? `<p>${safe(state.layoutIssues)}</p>` : '',
-        hasMeaningfulText(state.layoutImpact) ? `<p class="muted-copy"><strong>Commercial impact:</strong> ${safe(state.layoutImpact)}</p>` : '',
-        !hasMeaningfulText(state.layoutImpact) && hasMeaningfulText(state.layoutStrengths) ? `<p class="muted-copy"><strong>Current strength:</strong> ${safe(state.layoutStrengths)}</p>` : ''
+        hasMeaningfulText(state.layoutIssues) ? `<p>${cleanCopy(state.layoutIssues)}</p>` : '',
+        hasMeaningfulText(state.layoutImpact) ? `<p class="muted-copy"><strong>Commercial impact:</strong> ${cleanCopy(state.layoutImpact)}</p>` : '',
+        !hasMeaningfulText(state.layoutImpact) && hasMeaningfulText(state.layoutStrengths) ? `<p class="muted-copy"><strong>Current strength:</strong> ${cleanCopy(state.layoutStrengths)}</p>` : ''
       ].filter(Boolean).join('')
     ),
     renderStory(
       'Compliance and equipment',
       [
-        hasMeaningfulText(state.equipmentNeeds) ? `<p>${safe(state.equipmentNeeds)}</p>` : '',
-        hasMeaningfulText(state.nextVisit) ? `<p class="muted-copy"><strong>Follow-up context:</strong> ${safe(state.nextVisit)}</p>` : ''
+        hasMeaningfulText(state.equipmentNeeds) ? `<p>${cleanCopy(state.equipmentNeeds)}</p>` : '',
+        hasMeaningfulText(state.nextVisit) ? `<p class="muted-copy"><strong>Follow-up context:</strong> ${cleanCopy(state.nextVisit)}</p>` : ''
       ].filter(Boolean).join('')
     )
   ]
