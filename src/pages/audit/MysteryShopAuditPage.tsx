@@ -10,13 +10,10 @@ import {
   buildReportCoverHtml,
   buildChapterHtml,
   buildSectionHtml,
+  openPdfDocument,
   humanizeTitle,
   formatCurrencyShort
 } from '../../reports/pdf';
-
-import {
-  openPrintableHtmlDocument
-} from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
 import {
   getLocalToolRecord,
@@ -641,7 +638,7 @@ export function MysteryShopAuditPage() {
         detail: 'Formatting the guest journey review into a printable report.'
       },
       async () => {
-        openPrintableHtmlDocument(
+        openPdfDocument(
           `${form.title || 'Mystery Shop Audit'} printout`,
           buildMysteryShopReport(form)
         );

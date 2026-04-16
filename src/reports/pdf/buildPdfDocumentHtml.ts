@@ -53,6 +53,33 @@ ${PDF_REPORT_CSS}
 </html>`;
 }
 
+export function openPdfDocument(
+  title: string,
+  bodyHtml: string,
+  options: PdfDocumentOptions = {}
+) {
+  const popup = window.open('', '_blank', 'width=1200,height=900');
+  if (!popup) {
+    throw new Error('Enable pop-ups to export PDFs from this workspace.');
+  }
+
+  try {
+    popup.opener = null;
+  } catch {
+    // Ignore browsers that prevent rewriting opener after opening the window.
+  }
+
+  popup.document.open();
+  popup.document.write(
+    buildPdfDocumentHtml(title, bodyHtml, {
+      ...options,
+      autoPrint: options.autoPrint ?? true
+    })
+  );
+  popup.document.close();
+  popup.focus();
+}
+
 export function escapeHtml(value: unknown): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')

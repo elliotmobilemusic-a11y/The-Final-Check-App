@@ -10,13 +10,10 @@ import {
   buildReportCoverHtml,
   buildChapterHtml,
   buildSectionHtml,
+  openPdfDocument,
   humanizeTitle,
   formatCurrencyShort
 } from '../../reports/pdf';
-
-import {
-  openPrintableHtmlDocument
-} from '../../features/clients/clientExports';
 import { getAuditById, saveAudit } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import type {
@@ -1367,7 +1364,7 @@ export function KitchenAuditPage() {
         detail: 'Formatting the kitchen audit into a clean client-ready report.'
       },
       async () => {
-        openPrintableHtmlDocument(
+        openPdfDocument(
           `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
           reportHtml
         );

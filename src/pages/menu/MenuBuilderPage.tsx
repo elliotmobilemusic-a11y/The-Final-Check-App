@@ -9,13 +9,10 @@ import {
   buildReportCoverHtml,
   buildChapterHtml,
   buildSectionHtml,
+  openPdfDocument,
   humanizeTitle,
   formatCurrencyShort
 } from '../../reports/pdf';
-
-import {
-  openPrintableHtmlDocument
-} from '../../features/clients/clientExports';
 import {
   getMenuProjectById,
   saveMenuProject
@@ -948,7 +945,7 @@ export function MenuBuilderPage() {
         detail: 'Formatting the menu profit engine into a clean client-ready report.'
       },
       async () => {
-        openPrintableHtmlDocument(
+        openPdfDocument(
           `${safe(project.menuName || 'Menu Builder Report')} report`,
           reportHtml
         );

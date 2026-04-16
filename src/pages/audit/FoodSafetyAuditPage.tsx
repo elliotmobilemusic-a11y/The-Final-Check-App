@@ -10,13 +10,10 @@ import {
   buildReportCoverHtml,
   buildChapterHtml,
   buildSectionHtml,
+  openPdfDocument,
   humanizeTitle,
   formatCurrencyShort
 } from '../../reports/pdf';
-
-import {
-  openPrintableHtmlDocument
-} from '../../features/clients/clientExports';
 import { listClients } from '../../services/clients';
 import {
   getLocalToolRecord,
@@ -700,7 +697,7 @@ export function FoodSafetyAuditPage() {
         detail: 'Formatting the food safety audit into a printable report.'
       },
       async () => {
-        openPrintableHtmlDocument(
+        openPdfDocument(
           `${form.title || 'Food Safety Audit'} printout`,
           buildFoodSafetyReport(form)
         );
