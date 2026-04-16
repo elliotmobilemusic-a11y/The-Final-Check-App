@@ -14,6 +14,7 @@ import {
   humanizeSentence,
   humanizeTitle,
   normalizeProseText,
+  normalizeTitleLabel,
   formatCurrencyShort
 } from '../../reports/pdf';
 import { getAuditById, saveAudit } from '../../services/audits';
@@ -671,8 +672,8 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       ? `
         <section class="report-chapter report-chapter-break">
           <div class="report-chapter-header">
-            <p class="report-chapter-kicker">${humanizeTitle(kicker)}</p>
-            <h2>${humanizeTitle(title)}</h2>
+            <p class="report-chapter-kicker">${normalizeTitleLabel(kicker)}</p>
+            <h2>${normalizeTitleLabel(title)}</h2>
             <p>${humanizeSentence(lead)}</p>
           </div>
           ${body}
@@ -682,7 +683,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
   const coverHtml = buildReportCoverHtml({
     reportType: 'Kitchen Profit Audit',
-    clientName: safe(state.businessName) || 'Client Site',
+    clientName: normalizeTitleLabel(safe(state.businessName) || 'Client Site'),
     preparedDate: safe(state.visitDate) || new Date().toISOString().split('T')[0],
     consultant: safe(state.consultantName) || 'Not recorded',
     summary: safe(narrative.executiveSummary) || 'A commercial review of margin leakage, operating controls, and weekly recovery opportunity.',
@@ -1389,7 +1390,7 @@ export function KitchenAuditPage() {
       },
       async () => {
         openPdfDocument(
-          `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
+          `${normalizeTitleLabel(safe(form.businessName || 'Kitchen Profit Audit'))} report`,
           reportHtml
         );
       },
