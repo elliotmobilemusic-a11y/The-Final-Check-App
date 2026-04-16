@@ -932,8 +932,7 @@ table tr {
   }
 
   .pdf-cover-page {
-    position: absolute;
-    inset: 0;
+    position: relative;
     margin: 0;
     padding: 16mm 16mm 18mm;
     border-radius: 0;
@@ -944,6 +943,8 @@ table tr {
       linear-gradient(180deg, rgba(251, 248, 242, 0.45) 0%, rgba(255, 255, 255, 0.25) 100%);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    break-after: page;
+    page-break-after: always;
   }
 
   .pdf-chapter,
