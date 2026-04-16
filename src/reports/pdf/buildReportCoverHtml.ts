@@ -34,7 +34,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
   const detailsHtml = config.details
     .map(detail => `
       <div class="pdf-cover-detail">
-        <span class="pdf-cover-detail-label">${escapeHtml(detail.label)}</span>
+        <span class="pdf-cover-detail-label">${escapeHtml(humanizeTitle(detail.label))}</span>
         <span class="pdf-cover-detail-value">${escapeHtml(humanizeTitle(detail.value))}</span>
       </div>
     `)

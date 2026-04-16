@@ -162,10 +162,10 @@ strong {
 .pdf-cover-page {
   position: relative;
   overflow: hidden;
-  min-height: 254mm;
+  min-height: 240mm;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   break-after: page;
   page-break-after: always;
   break-inside: avoid-page;
@@ -180,8 +180,8 @@ strong {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 34mm;
-  background: linear-gradient(180deg, rgba(244, 239, 229, 0), rgba(244, 239, 229, 0.5));
+  height: 22mm;
+  background: linear-gradient(180deg, rgba(244, 239, 229, 0), rgba(244, 239, 229, 0.24));
   pointer-events: none;
 }
 
@@ -191,8 +191,8 @@ strong {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 22px;
-  padding: 0 0 10px;
+  gap: 18px;
+  padding: 0 0 8px;
   border-bottom: 1px solid rgba(127, 82, 33, 0.18);
   break-inside: avoid;
   page-break-inside: avoid;
@@ -200,7 +200,7 @@ strong {
 
 .pdf-cover-brand-block {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pdf-cover-brand {
@@ -212,21 +212,21 @@ strong {
 
 .pdf-cover-brand-tagline {
   color: var(--pdf-accent);
-  font-size: 7.5pt;
+  font-size: 7.2pt;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .pdf-cover-brand-context {
   color: var(--pdf-muted);
-  font-size: 10pt;
-  line-height: 1.4;
+  font-size: 9.6pt;
+  line-height: 1.35;
 }
 
 .pdf-cover-meta {
   display: flex;
-  gap: 18px;
+  gap: 14px;
   align-items: flex-end;
 }
 
@@ -241,7 +241,7 @@ strong {
   color: var(--pdf-muted);
   font-size: 7pt;
   font-weight: 800;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -256,10 +256,10 @@ strong {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.18fr) 92mm;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.22fr) 78mm;
+  gap: 14px;
   align-items: stretch;
-  min-height: 78mm;
+  min-height: 64mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -275,22 +275,22 @@ strong {
   align-items: center;
   gap: 8px;
   width: fit-content;
-  padding: 7px 14px 6px;
+  padding: 6px 13px 5px;
   border: 1px solid rgba(159, 107, 47, 0.26);
   border-radius: 999px;
   background: rgba(244, 239, 229, 0.92);
   color: var(--pdf-accent-strong);
-  font-size: 7.8pt;
+  font-size: 7.3pt;
   font-weight: 800;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .pdf-cover-client-title {
   max-width: 10ch;
-  margin: 14px 0 12px;
+  margin: 12px 0 10px;
   color: var(--pdf-ink);
-  font-size: 37pt;
+  font-size: 33pt;
   line-height: 0.94;
   letter-spacing: -0.055em;
   word-break: keep-all;
@@ -300,27 +300,27 @@ strong {
 }
 
 .pdf-cover-summary {
-  max-width: 123mm;
+  max-width: 108mm;
   margin: 0;
   color: var(--pdf-ink-soft);
-  font-size: 11pt;
-  line-height: 1.62;
+  font-size: 10.2pt;
+  line-height: 1.58;
 }
 
 .pdf-cover-hero-aside {
   position: relative;
   overflow: hidden;
-  border-radius: 28px 0 0 28px;
+  border-radius: 22px 0 0 22px;
   background:
     linear-gradient(180deg, rgba(248, 243, 235, 0.9), rgba(243, 237, 228, 0.5)),
     #fbf8f2;
   border: 1px solid rgba(127, 82, 33, 0.12);
-  min-height: 66mm;
+  min-height: 54mm;
 }
 
 .pdf-cover-hero-aside-frame {
   position: absolute;
-  inset: 16px;
+  inset: 13px;
   border-top: 1px solid rgba(159, 107, 47, 0.2);
   border-left: 1px solid rgba(159, 107, 47, 0.2);
   border-radius: 18px 0 0 0;
@@ -329,17 +329,17 @@ strong {
 .pdf-cover-hero-aside-accent {
   position: absolute;
   inset: auto 0 0 auto;
-  width: 78%;
-  height: 36%;
+  width: 76%;
+  height: 33%;
   background: linear-gradient(135deg, rgba(159, 107, 47, 0.16), rgba(159, 107, 47, 0.03));
   clip-path: polygon(34% 0, 100% 0, 100% 100%, 0 100%);
 }
 
 .pdf-cover-hero-aside-orb {
   position: absolute;
-  inset: 14% -8% auto auto;
-  width: 58mm;
-  height: 58mm;
+  inset: 12% -12% auto auto;
+  width: 48mm;
+  height: 48mm;
   border-radius: 50%;
   background:
     radial-gradient(circle at 38% 38%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 35%),
@@ -350,8 +350,8 @@ strong {
 .pdf-cover-metrics {
   display: grid;
   grid-template-columns: 1.18fr 1fr 0.92fr;
-  gap: 10px;
-  margin: 2px 0 0;
+  gap: 8px;
+  margin: 0;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -359,10 +359,10 @@ strong {
 .pdf-cover-metric {
   display: grid;
   align-content: space-between;
-  min-height: 28mm;
-  padding: 10px 12px 11px;
+  min-height: 24mm;
+  padding: 8px 10px 9px;
   border: 1px solid rgba(127, 82, 33, 0.18);
-  border-radius: 16px;
+  border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 248, 242, 0.9) 100%);
   box-shadow: 0 10px 24px rgba(36, 28, 19, 0.05);
@@ -381,19 +381,19 @@ strong {
   order: 2;
   max-width: 14ch;
   color: var(--pdf-muted);
-  font-size: 7.1pt;
+  font-size: 6.8pt;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  line-height: 1.32;
+  line-height: 1.28;
 }
 
 .pdf-cover-metric-value {
   order: 1;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--pdf-ink);
   font-family: "Georgia", "Times New Roman", serif;
-  font-size: 32pt;
+  font-size: 27pt;
   font-weight: 700;
   line-height: 0.92;
   letter-spacing: -0.05em;
@@ -403,19 +403,26 @@ strong {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 8px;
+  grid-template-columns: 34mm minmax(0, 1fr);
+  gap: 10px;
   margin-top: auto;
-  padding: 10px 0 0;
-  border-top: 1px solid rgba(127, 82, 33, 0.18);
+  padding: 10px 12px 0;
+  border-top: 1px solid rgba(127, 82, 33, 0.16);
+  border-radius: 16px 16px 0 0;
+  background:
+    linear-gradient(180deg, rgba(250, 246, 240, 0.84), rgba(255, 255, 255, 0.94)),
+    #ffffff;
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
 .pdf-cover-details-heading {
   color: var(--pdf-accent);
-  font-size: 6.8pt;
+  align-self: start;
+  padding-top: 3px;
+  font-size: 6.6pt;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -426,10 +433,11 @@ strong {
 }
 
 .pdf-cover-detail {
-  padding: 8px 10px 9px;
-  border-radius: 10px;
-  background: rgba(251, 248, 242, 0.88);
-  border: 1px solid rgba(127, 82, 33, 0.12);
+  padding: 7px 8px 8px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(127, 82, 33, 0.12);
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -438,16 +446,16 @@ strong {
   display: block;
   margin-bottom: 3px;
   color: var(--pdf-muted);
-  font-size: 6.4pt;
+  font-size: 6.1pt;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .pdf-cover-detail-value {
   color: var(--pdf-ink-soft);
-  font-size: 9.1pt;
-  line-height: 1.34;
+  font-size: 8.6pt;
+  line-height: 1.32;
 }
 
 /* ==============================================
@@ -884,7 +892,7 @@ table tr {
   .pdf-chapter,
   .report-chapter {
     margin: 0;
-    padding: 6mm 6mm 6.5mm;
+    padding: 5mm 5mm 5.5mm;
     border-radius: 0;
     box-shadow: none;
     background: #ffffff;
@@ -924,13 +932,13 @@ table tr {
   }
 
   .pdf-cover-metrics {
-    gap: 10px;
+    gap: 7px;
   }
 
   .pdf-cover-hero {
-    grid-template-columns: minmax(0, 1.12fr) 84mm;
-    gap: 12px;
-    min-height: 72mm;
+    grid-template-columns: minmax(0, 1.18fr) 74mm;
+    gap: 10px;
+    min-height: 58mm;
   }
 
   .meta-card,
@@ -944,34 +952,36 @@ table tr {
   }
 
   .pdf-cover-top-bar {
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
 
   .pdf-cover-brand {
-    font-size: 15pt;
+    font-size: 14pt;
   }
 
   .pdf-cover-client-title {
-    font-size: 34pt;
+    font-size: 30pt;
   }
 
   .pdf-cover-metric {
-    min-height: 24mm;
-    padding: 9px 10px 10px;
+    min-height: 21mm;
+    padding: 7px 8px 8px;
   }
 
   .pdf-cover-metric-value {
-    margin-bottom: 6px;
-    font-size: 28pt;
+    margin-bottom: 5px;
+    font-size: 24pt;
   }
 
   .pdf-cover-details-band {
-    gap: 6px;
-    padding-top: 8px;
+    grid-template-columns: 30mm minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 10px 0;
   }
 
   .pdf-cover-details-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .report-photo-card figcaption {
