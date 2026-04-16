@@ -174,10 +174,10 @@ strong {
 .pdf-cover-page {
   position: relative;
   overflow: hidden;
-  min-height: 240mm;
+  min-height: 270mm;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   break-after: page;
   page-break-after: always;
   break-inside: avoid-page;
@@ -267,19 +267,23 @@ strong {
 .pdf-cover-hero {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1.22fr) 78mm;
-  gap: 14px;
-  align-items: stretch;
-  min-height: 64mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  min-height: 170mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
 .pdf-cover-hero-main {
   display: grid;
-  align-content: start;
-  gap: 0;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  max-width: 150mm;
 }
 
 .pdf-cover-report-type {
@@ -299,10 +303,10 @@ strong {
 }
 
 .pdf-cover-client-title {
-  max-width: 11ch;
-  margin: 12px 0 10px;
+  max-width: 20ch;
+  margin: 16px 0 12px;
   color: var(--pdf-ink);
-  font-size: 33pt;
+  font-size: 38pt;
   line-height: 0.94;
   letter-spacing: -0.055em;
   word-break: keep-all;
@@ -310,28 +314,23 @@ strong {
   hyphens: none;
   break-inside: avoid;
   page-break-inside: avoid;
+  text-align: center;
 }
 
 .pdf-cover-summary {
-  max-width: 108mm;
-  margin: 0;
+  max-width: 160mm;
+  margin: 8px 0 24px;
   color: var(--pdf-ink-soft);
-  font-size: 10.2pt;
-  line-height: 1.58;
+  font-size: 10.5pt;
+  line-height: 1.65;
   word-break: normal;
   overflow-wrap: normal;
   hyphens: none;
+  text-align: center;
 }
 
 .pdf-cover-hero-aside {
-  position: relative;
-  overflow: hidden;
-  border-radius: 22px 0 0 22px;
-  background:
-    linear-gradient(180deg, rgba(248, 243, 235, 0.9), rgba(243, 237, 228, 0.5)),
-    #fbf8f2;
-  border: 1px solid rgba(127, 82, 33, 0.12);
-  min-height: 54mm;
+  display: none;
 }
 
 .pdf-cover-hero-aside-frame {
@@ -365,9 +364,10 @@ strong {
 
 .pdf-cover-metrics {
   display: grid;
-  grid-template-columns: 1.18fr 1fr 0.92fr;
-  gap: 8px;
-  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 auto;
+  max-width: 170mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
