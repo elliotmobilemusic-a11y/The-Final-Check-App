@@ -16,13 +16,18 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   const coverHtml = buildReportCoverHtml({
     clientName: audit.businessName,
     reportType: 'Kitchen Profit Audit',
-    date: audit.visitDate,
-    auditor: audit.consultantName,
-    location: audit.location,
+    preparedDate: audit.visitDate,
+    consultant: audit.consultantName,
     metrics: [
       { label: 'Overall Score', value: `${Math.round(Object.values(audit.categoryScores).reduce((a,b) => a+b, 0) / 8)}/10` },
       { label: 'Current GP', value: `${audit.targetGp}%` },
       { label: 'Missed Opportunity', value: formatCurrencyShort(audit.actualWasteValue * 4) }
+    ],
+    details: [
+      { label: 'Location', value: audit.location },
+      { label: 'Covers / Week', value: String(audit.coversPerWeek) },
+      { label: 'Average Spend', value: formatCurrencyShort(audit.averageSpend) },
+      { label: 'Kitchen Team', value: String(audit.kitchenTeamSize) }
     ],
     summary: audit.summary
   });
