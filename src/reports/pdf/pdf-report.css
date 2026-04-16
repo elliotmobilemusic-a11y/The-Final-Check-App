@@ -273,7 +273,7 @@ strong {
   justify-content: center;
   text-align: center;
   gap: 12px;
-  min-height: 170mm;
+  min-height: 110mm;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -284,6 +284,13 @@ strong {
   justify-items: center;
   gap: 12px;
   max-width: 150mm;
+  padding: 16mm 20mm 18mm;
+  border-radius: 24px;
+  border: 1px solid var(--pdf-line-medium);
+  background:
+    linear-gradient(180deg, rgba(251, 248, 242, 0.85) 0%, rgba(255, 255, 255, 0.95) 100%),
+    #ffffff;
+  box-shadow: 0 14px 32px rgba(36, 28, 19, 0.07);
 }
 
 .pdf-cover-report-type {
@@ -408,11 +415,11 @@ strong {
   order: 1;
   margin-bottom: 6px;
   color: var(--pdf-ink);
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 27pt;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 0.92;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.02em;
 }
 
 .pdf-cover-details-band {
