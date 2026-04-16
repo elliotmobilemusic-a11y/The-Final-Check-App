@@ -91,8 +91,21 @@ export function escapeHtml(value: unknown): string {
 
 export function humanizeTitle(value: unknown): string {
   return String(value ?? '')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
+    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)([A-Z])/gi, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function humanizeSentence(value: unknown): string {
+  return String(value ?? '')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)([A-Z])/gi, '$1 $2')
+    .replace(/_/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

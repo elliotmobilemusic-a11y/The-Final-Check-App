@@ -162,12 +162,14 @@ strong {
 .pdf-cover-page {
   position: relative;
   overflow: hidden;
-  min-height: 257mm;
+  min-height: 254mm;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
   break-after: page;
   page-break-after: always;
+  break-inside: avoid-page;
+  page-break-inside: avoid;
 }
 
 .pdf-cover-page::before {
@@ -178,8 +180,8 @@ strong {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 58mm;
-  background: linear-gradient(180deg, rgba(244, 239, 229, 0), rgba(244, 239, 229, 0.88));
+  height: 34mm;
+  background: linear-gradient(180deg, rgba(244, 239, 229, 0), rgba(244, 239, 229, 0.5));
   pointer-events: none;
 }
 
@@ -190,8 +192,10 @@ strong {
   justify-content: space-between;
   align-items: flex-end;
   gap: 22px;
-  padding: 0 0 14px;
+  padding: 0 0 10px;
   border-bottom: 1px solid rgba(127, 82, 33, 0.18);
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .pdf-cover-brand-block {
@@ -210,7 +214,7 @@ strong {
   color: var(--pdf-accent);
   font-size: 7.5pt;
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -237,7 +241,7 @@ strong {
   color: var(--pdf-muted);
   font-size: 7pt;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
@@ -253,9 +257,11 @@ strong {
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) 92mm;
-  gap: 20px;
+  gap: 16px;
   align-items: stretch;
-  min-height: 100mm;
+  min-height: 78mm;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .pdf-cover-hero-main {
@@ -276,25 +282,29 @@ strong {
   color: var(--pdf-accent-strong);
   font-size: 7.8pt;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
 .pdf-cover-client-title {
   max-width: 10ch;
-  margin: 22px 0 18px;
+  margin: 14px 0 12px;
   color: var(--pdf-ink);
-  font-size: 44pt;
-  line-height: 0.92;
+  font-size: 37pt;
+  line-height: 0.94;
   letter-spacing: -0.055em;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .pdf-cover-summary {
   max-width: 123mm;
   margin: 0;
   color: var(--pdf-ink-soft);
-  font-size: 12pt;
-  line-height: 1.72;
+  font-size: 11pt;
+  line-height: 1.62;
 }
 
 .pdf-cover-hero-aside {
@@ -305,7 +315,7 @@ strong {
     linear-gradient(180deg, rgba(248, 243, 235, 0.9), rgba(243, 237, 228, 0.5)),
     #fbf8f2;
   border: 1px solid rgba(127, 82, 33, 0.12);
-  min-height: 88mm;
+  min-height: 66mm;
 }
 
 .pdf-cover-hero-aside-frame {
@@ -320,7 +330,7 @@ strong {
   position: absolute;
   inset: auto 0 0 auto;
   width: 78%;
-  height: 44%;
+  height: 36%;
   background: linear-gradient(135deg, rgba(159, 107, 47, 0.16), rgba(159, 107, 47, 0.03));
   clip-path: polygon(34% 0, 100% 0, 100% 100%, 0 100%);
 }
@@ -328,8 +338,8 @@ strong {
 .pdf-cover-hero-aside-orb {
   position: absolute;
   inset: 14% -8% auto auto;
-  width: 78mm;
-  height: 78mm;
+  width: 58mm;
+  height: 58mm;
   border-radius: 50%;
   background:
     radial-gradient(circle at 38% 38%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 35%),
@@ -341,7 +351,7 @@ strong {
   display: grid;
   grid-template-columns: 1.18fr 1fr 0.92fr;
   gap: 10px;
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   break-inside: avoid;
   page-break-inside: avoid;
 }
@@ -349,8 +359,8 @@ strong {
 .pdf-cover-metric {
   display: grid;
   align-content: space-between;
-  min-height: 39mm;
-  padding: 14px 16px 15px;
+  min-height: 28mm;
+  padding: 10px 12px 11px;
   border: 1px solid rgba(127, 82, 33, 0.18);
   border-radius: 16px;
   background:
@@ -371,21 +381,21 @@ strong {
   order: 2;
   max-width: 14ch;
   color: var(--pdf-muted);
-  font-size: 7.6pt;
+  font-size: 7.1pt;
   font-weight: 800;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  line-height: 1.4;
+  line-height: 1.32;
 }
 
 .pdf-cover-metric-value {
   order: 1;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   color: var(--pdf-ink);
   font-family: "Georgia", "Times New Roman", serif;
-  font-size: 40pt;
+  font-size: 32pt;
   font-weight: 700;
-  line-height: 0.9;
+  line-height: 0.92;
   letter-spacing: -0.05em;
 }
 
@@ -393,46 +403,31 @@ strong {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 40mm minmax(0, 1fr);
-  gap: 14px;
+  gap: 8px;
   margin-top: auto;
-  padding: 16px 0 0;
+  padding: 10px 0 0;
   border-top: 1px solid rgba(127, 82, 33, 0.18);
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
-.pdf-cover-details-intro {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  padding-top: 3px;
-}
-
-.pdf-cover-details-intro span {
+.pdf-cover-details-heading {
   color: var(--pdf-accent);
-  font-size: 7pt;
+  font-size: 6.8pt;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-}
-
-.pdf-cover-details-intro strong {
-  color: var(--pdf-ink-soft);
-  font-size: 10.5pt;
-  font-weight: 600;
-  line-height: 1.5;
 }
 
 .pdf-cover-details-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .pdf-cover-detail {
-  padding: 10px 12px 11px;
-  border-radius: 12px;
+  padding: 8px 10px 9px;
+  border-radius: 10px;
   background: rgba(251, 248, 242, 0.88);
   border: 1px solid rgba(127, 82, 33, 0.12);
   break-inside: avoid;
@@ -441,18 +436,18 @@ strong {
 
 .pdf-cover-detail-label {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: var(--pdf-muted);
-  font-size: 6.8pt;
+  font-size: 6.4pt;
   font-weight: 800;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .pdf-cover-detail-value {
   color: var(--pdf-ink-soft);
-  font-size: 10pt;
-  line-height: 1.42;
+  font-size: 9.1pt;
+  line-height: 1.34;
 }
 
 /* ==============================================
@@ -498,9 +493,9 @@ strong {
 .pdf-chapter-kicker,
 .report-chapter-kicker {
   color: var(--pdf-accent);
-  font-size: 8.5pt;
+  font-size: 8pt;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -934,8 +929,8 @@ table tr {
 
   .pdf-cover-hero {
     grid-template-columns: minmax(0, 1.12fr) 84mm;
-    gap: 16px;
-    min-height: 92mm;
+    gap: 12px;
+    min-height: 72mm;
   }
 
   .meta-card,
@@ -957,23 +952,26 @@ table tr {
   }
 
   .pdf-cover-client-title {
-    font-size: 40pt;
-  }
-
-  .pdf-cover-metric {
-    min-height: 35mm;
-    padding: 12px 13px 13px;
-  }
-
-  .pdf-cover-metric-value {
-    margin-bottom: 10px;
     font-size: 34pt;
   }
 
+  .pdf-cover-metric {
+    min-height: 24mm;
+    padding: 9px 10px 10px;
+  }
+
+  .pdf-cover-metric-value {
+    margin-bottom: 6px;
+    font-size: 28pt;
+  }
+
   .pdf-cover-details-band {
-    grid-template-columns: 36mm minmax(0, 1fr);
-    gap: 10px;
-    padding-top: 12px;
+    gap: 6px;
+    padding-top: 8px;
+  }
+
+  .pdf-cover-details-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .report-photo-card figcaption {

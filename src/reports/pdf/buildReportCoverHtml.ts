@@ -1,4 +1,4 @@
-import { escapeHtml, humanizeTitle } from './buildPdfDocumentHtml';
+import { escapeHtml, humanizeSentence, humanizeTitle } from './buildPdfDocumentHtml';
 
 export type ReportCoverMetric = {
   label: string;
@@ -25,7 +25,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
   const metricsHtml = config.metrics
     .map(metric => `
       <div class="pdf-cover-metric ${metric.primary ? 'primary' : ''}">
-        <div class="pdf-cover-metric-label">${escapeHtml(metric.label)}</div>
+        <div class="pdf-cover-metric-label">${escapeHtml(humanizeTitle(metric.label))}</div>
         <div class="pdf-cover-metric-value">${escapeHtml(metric.value)}</div>
       </div>
     `)
@@ -46,7 +46,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
         <div class="pdf-cover-brand-block">
           <div class="pdf-cover-brand">The Final Check</div>
           <div class="pdf-cover-brand-tagline">Boutique consultancy reporting</div>
-          <div class="pdf-cover-brand-context">${escapeHtml(config.reportType)}</div>
+          <div class="pdf-cover-brand-context">${escapeHtml(humanizeTitle(config.reportType))}</div>
         </div>
         <div class="pdf-cover-meta">
           <div class="pdf-cover-meta-item">
@@ -62,11 +62,11 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
 
       <div class="pdf-cover-hero">
         <div class="pdf-cover-hero-main">
-          <div class="pdf-cover-report-type">${escapeHtml(config.reportType)}</div>
+          <div class="pdf-cover-report-type">${escapeHtml(humanizeTitle(config.reportType))}</div>
           <h1 class="pdf-cover-client-title">${escapeHtml(humanizeTitle(config.clientName))}</h1>
 
           ${config.summary ? `
-            <p class="pdf-cover-summary">${escapeHtml(config.summary)}</p>
+            <p class="pdf-cover-summary">${escapeHtml(humanizeSentence(config.summary))}</p>
           ` : ''}
         </div>
 
@@ -82,10 +82,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
       </div>
 
       <div class="pdf-cover-details-band">
-        <div class="pdf-cover-details-intro">
-          <span>Engagement details</span>
-          <strong>Operational review prepared for client handover and leadership follow-up.</strong>
-        </div>
+        <div class="pdf-cover-details-heading">Engagement details</div>
         <div class="pdf-cover-details-grid">
           ${detailsHtml}
         </div>

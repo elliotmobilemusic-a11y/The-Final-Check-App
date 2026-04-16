@@ -11,6 +11,7 @@ import {
   buildChapterHtml,
   buildSectionHtml,
   openPdfDocument,
+  humanizeSentence,
   humanizeTitle,
   formatCurrencyShort
 } from '../../reports/pdf';
@@ -413,7 +414,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
 
   const renderMetric = (label: string, value: string, emphasis: 'default' | 'primary' = 'default') => `
     <div class="report-metric-card report-metric-card-${emphasis}">
-      <span>${label}</span>
+      <span>${humanizeTitle(label)}</span>
       <strong>${value}</strong>
     </div>
   `;
@@ -423,8 +424,8 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       ? `
         <article class="report-section-block">
           <div class="report-section-header">
-            <h3>${title}</h3>
-            ${lead ? `<p>${lead}</p>` : ''}
+            <h3>${humanizeTitle(title)}</h3>
+            ${lead ? `<p>${humanizeSentence(lead)}</p>` : ''}
           </div>
           ${body}
         </article>
@@ -435,7 +436,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     body
       ? `
         <div class="report-story-card">
-          <h3>${title}</h3>
+          <h3>${humanizeTitle(title)}</h3>
           ${body}
         </div>
       `
@@ -520,18 +521,41 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   );
 
   const findingsCards = [
-    renderStory('Systems', hasMeaningfulText(state.systems) ? `<p>${safe(state.systems)}</p>` : ''),
-    renderStory('People', hasMeaningfulText(state.cultureLeadership) ? `<p>${safe(state.cultureLeadership)}</p>` : ''),
-    renderStory('Operations', hasMeaningfulText(state.layoutIssues) ? `<p>${safe(state.layoutIssues)}</p>` : ''),
-    renderStory('Compliance', hasMeaningfulText(state.equipmentNeeds) ? `<p>${safe(state.equipmentNeeds)}</p>` : '')
+    renderStory(
+      'Systems',
+      [
+        hasMeaningfulText(state.systems) ? `<p>${safe(state.systems)}</p>` : '',
+        controlsTableRows ? `<p class="muted-copy">Control compliance currently sits at ${Math.round(calc.controlScore)}%, with the register below capturing the named evidence points for follow-up.</p>` : ''
+      ].filter(Boolean).join('')
+    ),
+    renderStory(
+      'People and culture',
+      [
+        hasMeaningfulText(state.cultureLeadership) ? `<p>${safe(state.cultureLeadership)}</p>` : '',
+        hasMeaningfulText(state.foodQuality) ? `<p class="muted-copy"><strong>Food quality and offer:</strong> ${safe(state.foodQuality)}</p>` : ''
+      ].filter(Boolean).join('')
+    ),
+    renderStory(
+      'Operations',
+      [
+        hasMeaningfulText(state.layoutIssues) ? `<p>${safe(state.layoutIssues)}</p>` : '',
+        hasMeaningfulText(state.layoutImpact) ? `<p class="muted-copy"><strong>Commercial impact:</strong> ${safe(state.layoutImpact)}</p>` : '',
+        !hasMeaningfulText(state.layoutImpact) && hasMeaningfulText(state.layoutStrengths) ? `<p class="muted-copy"><strong>Current strength:</strong> ${safe(state.layoutStrengths)}</p>` : ''
+      ].filter(Boolean).join('')
+    ),
+    renderStory(
+      'Compliance and equipment',
+      [
+        hasMeaningfulText(state.equipmentNeeds) ? `<p>${safe(state.equipmentNeeds)}</p>` : '',
+        hasMeaningfulText(state.nextVisit) ? `<p class="muted-copy"><strong>Follow-up context:</strong> ${safe(state.nextVisit)}</p>` : ''
+      ].filter(Boolean).join('')
+    )
   ]
     .filter(Boolean)
     .join('');
 
   const controlsChapterBody = controlsTableRows
-    ? renderSection(
-        'Controls and Evidence Register',
-        `
+    ? `
           <table class="report-table report-table-compact report-table-tight">
             <colgroup>
               <col style="width: 16%" />
@@ -550,9 +574,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
             <tbody>${controlsTableRows}</tbody>
           </table>
           ${renderAuditPhotoGallery(state.photos, 'controls', '')}
-        `,
-        'Core controls reviewed onsite, with status and supporting notes ready for management follow-up.'
-      )
+        `
     : '';
 
   const findingsChapterBody = [
@@ -633,9 +655,9 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       : '',
     findingsCards
       ? renderSection(
-          'Additional Findings',
+          'Leadership and operating narrative',
           `<div class="report-story-grid report-story-grid-editorial">${findingsCards}</div>`,
-          'Broader leadership, people, systems, and layout observations captured during the review.'
+          'Balanced narrative notes across systems, people, operations, and compliance to close the report intentionally.'
         )
       : ''
   ]
@@ -647,9 +669,9 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       ? `
         <section class="report-chapter report-chapter-break">
           <div class="report-chapter-header">
-            <p class="report-chapter-kicker">${kicker}</p>
-            <h2>${title}</h2>
-            <p>${lead}</p>
+            <p class="report-chapter-kicker">${humanizeTitle(kicker)}</p>
+            <h2>${humanizeTitle(title)}</h2>
+            <p>${humanizeSentence(lead)}</p>
           </div>
           ${body}
         </section>
