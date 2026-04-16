@@ -89,47 +89,56 @@ export function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-const PDF_TEXT_REPAIRS: Array<[RegExp, string]> = [
-  [/\band\s+follow\s*-\s*up\b/gi, 'and Follow-Up'],
-  [/\bfollow\s*-\s*up\b/gi, 'Follow-Up'],
+const PDF_TITLE_REPAIRS: Array<[RegExp, string]> = [
+  [/\bseal\s+bay\s+resort\b/gi, 'Seal Bay Resort'],
+  [/\bimmediate\s+priorities\s+and\s+follow-up\b/gi, 'Immediate Priorities and Follow-Up'],
   [/\boperational\s+findings\b/gi, 'Operational Findings'],
   [/\bcommercial\s+snapshot\b/gi, 'Commercial Snapshot'],
-  [/\bseal\s+bay\s+resort\b/gi, 'Seal Bay Resort'],
-  [/\bordering\b/gi, 'ordering'],
-  [/\binconsistencies\b/gi, 'inconsistencies'],
-  [/\bindicating\b/gi, 'indicating'],
-  [/\bintentionally\b/gi, 'intentionally']
+  [/\bkitchen\s+profit\s+audit\b/gi, 'Kitchen Profit Audit'],
+  [/\bfood\s+safety\s+audit\b/gi, 'Food Safety Audit'],
+  [/\bmystery\s+shop\s+audit\b/gi, 'Mystery Shop Audit'],
+  [/\bmenu\s+profit\s+engine\b/gi, 'Menu Profit Engine']
 ];
 
-function normalizePdfText(value: unknown): string {
-  let text = String(value ?? '')
+function normalizeSharedPdfText(value: unknown): string {
+  return String(value ?? '')
     .replace(/[\u00A0\u2000-\u200D\u202F\u205F\u3000]/g, ' ')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)(?=[A-Z])/g, '$1 ')
     .replace(/([A-Za-z])\/([A-Za-z])/g, '$1 / $2')
     .replace(/_/g, ' ')
-    .replace(/\s*-\s*/g, '-')
     .replace(/\s+/g, ' ')
-    .trim();
-
-  for (const [pattern, replacement] of PDF_TEXT_REPAIRS) {
-    text = text.replace(pattern, replacement);
-  }
-
-  return text
+    .trim()
     .replace(/\s+([,.;:!?])/g, '$1')
     .replace(/\(\s+/g, '(')
     .replace(/\s+\)/g, ')')
     .trim();
 }
 
+export function normalizeTitleLabel(value: unknown): string {
+  let text = normalizeSharedPdfText(value)
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\b(and|or|of|for|to|the|with|by|in|on|at|via|vs)(?=[A-Z])/g, '$1 ')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  for (const [pattern, replacement] of PDF_TITLE_REPAIRS) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text.trim();
+}
+
+export function normalizeProseText(value: unknown): string {
+  return normalizeSharedPdfText(value);
+}
+
 export function humanizeTitle(value: unknown): string {
-  return normalizePdfText(value);
+  return normalizeTitleLabel(value);
 }
 
 export function humanizeSentence(value: unknown): string {
-  return normalizePdfText(value);
+  return normalizeProseText(value);
 }
 
 export function formatCurrencyShort(value: number): string {

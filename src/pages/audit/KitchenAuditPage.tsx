@@ -13,6 +13,7 @@ import {
   openPdfDocument,
   humanizeSentence,
   humanizeTitle,
+  normalizeProseText,
   formatCurrencyShort
 } from '../../reports/pdf';
 import { getAuditById, saveAudit } from '../../services/audits';
@@ -407,7 +408,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   };
 
   const nonEmptyLines = (items: string[]) => items.filter((item) => hasMeaningfulText(item));
-  const cleanCopy = (value: unknown) => humanizeSentence(safe(value));
+  const cleanCopy = (value: unknown) => normalizeProseText(safe(value));
   const renderList = (items: string[]) =>
     nonEmptyLines(items).length
       ? `<ul>${nonEmptyLines(items).map((item) => `<li>${cleanCopy(item)}</li>`).join('')}</ul>`
