@@ -182,12 +182,6 @@ strong {
   page-break-after: always;
   break-inside: avoid-page;
   page-break-inside: avoid;
-  border: 1px solid var(--pdf-line-medium);
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 75% 12%, rgba(159, 107, 47, 0.05), transparent 28%),
-    radial-gradient(circle at 15% 88%, rgba(159, 107, 47, 0.04), transparent 32%),
-    linear-gradient(180deg, rgba(251, 248, 242, 0.45) 0%, rgba(255, 255, 255, 0.25) 100%);
 }
 
 .pdf-cover-page::before {
@@ -937,12 +931,28 @@ table tr {
     background: #ffffff;
   }
 
-  .pdf-cover-page,
-  .pdf-chapter,
-  .report-chapter {
+  .pdf-cover-page {
+    position: absolute;
+    inset: 0;
     margin: 0;
     padding: 16mm 16mm 18mm;
     border-radius: 0;
+    border: 0.5px solid var(--pdf-line-medium);
+    background:
+      radial-gradient(circle at 75% 12%, rgba(159, 107, 47, 0.05), transparent 28%),
+      radial-gradient(circle at 15% 88%, rgba(159, 107, 47, 0.04), transparent 32%),
+      linear-gradient(180deg, rgba(251, 248, 242, 0.45) 0%, rgba(255, 255, 255, 0.25) 100%);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .pdf-chapter,
+  .report-chapter {
+    margin: 0;
+    padding: 18mm 18mm 20mm;
+    border-radius: 0;
+    background: #ffffff;
+    border: none;
   }
 
 
