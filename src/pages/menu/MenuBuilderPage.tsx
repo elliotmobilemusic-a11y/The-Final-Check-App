@@ -558,7 +558,7 @@ export function MenuBuilderPage() {
     [activeClient]
   );
 
-  useBodyScrollLock(controlModalOpen);
+  useBodyScrollLock(controlModalOpen || Boolean(dishDraft));
 
   useEffect(() => {
     if (!controlModalOpen) return;
@@ -1501,9 +1501,18 @@ export function MenuBuilderPage() {
       </section>
 
       {dishDraft ? (
-        <div className="drawer-backdrop" onClick={closeDishEditor}>
-          <div className="drawer-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-header">
+        <div
+          className="drawer-backdrop dish-modal-backdrop"
+          onClick={closeDishEditor}
+        >
+          <div
+            aria-modal="true"
+            className="drawer-panel dish-modal-panel"
+            role="dialog"
+            aria-label={editingDishId ? 'Edit dish' : 'Add dish'}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="panel-header dish-modal-header">
               <div>
                 <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
                 <p className="muted-copy">
@@ -1515,7 +1524,7 @@ export function MenuBuilderPage() {
               </button>
             </div>
 
-            <div className="panel-body stack gap-20">
+            <div className="panel-body stack gap-20 dish-modal-body">
               <div className="dish-editor-layout">
                 <div className="dish-editor-main">
                   <section className="sub-panel">

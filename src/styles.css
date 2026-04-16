@@ -4537,6 +4537,62 @@ body[data-theme="midnight"] .control-drawer-panel {
   background: linear-gradient(180deg, rgba(26, 34, 46, 0.98) 0%, rgba(18, 24, 33, 0.96) 100%);
 }
 
+.dish-modal-backdrop {
+  z-index: 10010;
+  display: block;
+  padding: 14px;
+  background: rgba(22, 18, 23, 0.44);
+  backdrop-filter: blur(10px);
+}
+
+.dish-modal-panel {
+  position: fixed;
+  inset: 14px;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: linear-gradient(180deg, #f5f0eb 0%, #efe9e3 100%);
+  box-shadow:
+    0 28px 90px rgba(15, 10, 17, 0.26),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  animation: fadeInScale 300ms var(--motion-smooth) both;
+}
+
+.dish-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 24px 24px 18px;
+  background: linear-gradient(180deg, rgba(245, 240, 235, 0.98) 0%, rgba(245, 240, 235, 0.92) 100%);
+  border-bottom: 1px solid rgba(86, 81, 91, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.dish-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+body[data-theme="midnight"] .dish-modal-panel {
+  background: linear-gradient(180deg, rgba(26, 34, 46, 0.98) 0%, rgba(18, 24, 33, 0.96) 100%);
+}
+
+body[data-theme="midnight"] .dish-modal-header {
+  background: linear-gradient(180deg, rgba(26, 34, 46, 0.98) 0%, rgba(26, 34, 46, 0.92) 100%);
+  border-bottom-color: rgba(145, 162, 184, 0.14);
+}
+
 .dish-editor-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.92fr);
@@ -5871,6 +5927,20 @@ body[data-theme="midnight"] .control-drawer-panel {
     height: calc(100vh - 12px);
     margin: 12px 6px 0;
     border-radius: 24px 24px 0 0;
+  }
+
+  .dish-modal-backdrop {
+    padding: 8px;
+  }
+
+  .dish-modal-panel {
+    inset: 8px;
+    border-radius: 22px;
+  }
+
+  .dish-modal-header,
+  .dish-modal-body {
+    padding: 18px;
   }
 
   .dish-editor-layout,
