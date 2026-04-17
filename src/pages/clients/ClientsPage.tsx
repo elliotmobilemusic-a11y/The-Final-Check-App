@@ -408,41 +408,66 @@ export function ClientsPage() {
                 <span className="status-pill">{visibleClients.length}</span>
               </div>
 
-              <div className="clients-long-list">
+              <div className="crm-client-list-container stack gap-14">
                   {visibleClients.map((client) => {
                     const signals = buildClientSignals(client);
 
                     return (
-                      <Link
-                        className={`crm-client-row crm-client-row-balanced${signals.needsAttention ? ' is-attention' : ''}`}
+                      <article
+                        className={`crm-client-account-card${signals.needsAttention ? ' is-attention' : ''}`}
                         key={client.id}
-                        to={`/clients/${client.id}`}
                       >
-                        <div className="crm-client-row-left">
-                          <strong>{client.company_name}</strong>
-                          {client.contact_name && <span>{client.contact_name}</span>}
-                        </div>
-
-                        <div className="crm-client-row-middle">
-                          <div className="crm-client-row-stats">
-                            <div>
-                              <small>Next review</small>
-                              <span>{formatReviewLabel(client.next_review_date)}</span>
+                        <div className="crm-account-card-header">
+                          <div className="crm-account-card-identity">
+                            <div className="crm-account-avatar">
+                              {(client.company_name || 'C').charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                              <small>Value</small>
-                              <span>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</span>
+                            <div className="crm-account-names">
+                              <h5>{client.company_name}</h5>
+                              <span>{client.contact_name || 'No contact set'}</span>
                             </div>
+                          </div>
+                          
+                          <div className="crm-account-status-badges">
+                            <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                            {signals.needsAttention && (
+                              <span className="status-pill status-danger">{signals.attentionLabel}</span>
+                            )}
                           </div>
                         </div>
 
-                        <div className="crm-client-row-right">
-                          <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
-                          {signals.needsAttention && (
-                            <span className="status-pill status-danger">{signals.attentionLabel}</span>
-                          )}
+                        {signals.needsAttention && (
+                          <div className="crm-account-attention-bar">
+                            <span className="attention-indicator">⚠️</span>
+                            {signals.attentionLabel}
+                          </div>
+                        )}
+
+                        <div className="crm-account-card-metrics">
+                          <div className="crm-metric">
+                            <small>Next review</small>
+                            <span>{formatReviewLabel(client.next_review_date)}</span>
+                          </div>
+                          <div className="crm-metric">
+                            <small>Monthly value</small>
+                            <span>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</span>
+                          </div>
+                          <div className="crm-metric">
+                            <small>Open tasks</small>
+                            <span className={signals.openTasks > 0 ? 'text-danger' : ''}>{signals.openTasks}</span>
+                          </div>
+                          <div className="crm-metric">
+                            <small>Overdue invoices</small>
+                            <span className={signals.overdueInvoices > 0 ? 'text-danger' : ''}>{signals.overdueInvoices}</span>
+                          </div>
                         </div>
-                      </Link>
+
+                        <div className="crm-account-card-actions">
+                          <Link className="button button-small button-primary" to={`/clients/${client.id}`}>
+                            Open client profile
+                          </Link>
+                        </div>
+                      </article>
                     );
                   })}
               </div>
