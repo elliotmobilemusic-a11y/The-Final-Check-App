@@ -409,91 +409,30 @@ export function ClientsPage() {
               </div>
 
               <div className="clients-long-list">
-                {visibleClients.map((client) => {
-                  const signals = buildClientSignals(client);
-                  const siteCount = signals.data.sites.length || signals.data.siteCountEstimate || 1;
+                  {visibleClients.map((client) => {
+                    const signals = buildClientSignals(client);
 
-                  return (
-                    <article
-                      className={`crm-client-row crm-client-row-redesign${signals.needsAttention ? ' is-attention' : ''}`}
-                      key={client.id}
-                    >
-                      <div className="crm-client-main crm-client-main-redesign">
-                        <div className="crm-client-topbar">
-                          <div className="crm-client-title-block">
-                            <strong>{client.company_name}</strong>
-                            <p>
-                              {client.location || 'Location not set'}
-                              {client.contact_name ? ` • ${client.contact_name}` : ''}
-                              {client.contact_email ? ` • ${client.contact_email}` : ''}
-                            </p>
-                          </div>
-
-                          <div className="crm-client-badges">
-                            <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
-                            <span className={relationshipTone(signals.data.relationshipHealth)}>
-                              {signals.data.relationshipHealth}
-                            </span>
-                          </div>
+                    return (
+                      <Link
+                        className={`crm-client-row crm-client-row-simple${signals.needsAttention ? ' is-attention' : ''}`}
+                        key={client.id}
+                        to={`/clients/${client.id}`}
+                      >
+                        <div className="crm-client-row-left">
+                          <strong>{client.company_name}</strong>
+                          <span>{client.location || ''}</span>
+                          {client.contact_name && <small>{client.contact_name}</small>}
                         </div>
 
-                        <div className="crm-client-meta-grid">
-                          <div className="crm-inline-stat">
-                            <span>Next review</span>
-                            <strong>{formatReviewLabel(client.next_review_date)}</strong>
-                          </div>
-                          <div className="crm-inline-stat">
-                            <span>Open tasks</span>
-                            <strong>{signals.openTasks}</strong>
-                          </div>
-                          <div className="crm-inline-stat">
-                            <span>Sites</span>
-                            <strong>{siteCount}</strong>
-                          </div>
-                          <div className="crm-inline-stat">
-                            <span>Monthly value</span>
-                            <strong>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</strong>
-                          </div>
+                        <div className="crm-client-row-right">
+                          <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                          {signals.needsAttention && (
+                            <span className="status-pill status-danger">{signals.attentionLabel}</span>
+                          )}
                         </div>
-
-                        <div className="crm-client-supporting-copy">
-                          <div className="crm-client-flag-list">
-                            <span className={`crm-alert-chip ${signals.needsAttention ? 'is-critical' : 'is-stable'}`}>
-                              {signals.attentionLabel}
-                            </span>
-                            {signals.overdueInvoices > 0 ? (
-                              <span className="crm-alert-chip is-warning">
-                                {signals.overdueInvoices} overdue invoice{signals.overdueInvoices === 1 ? '' : 's'}
-                              </span>
-                            ) : null}
-                            {client.industry ? <span className="crm-alert-chip">{client.industry}</span> : null}
-                            {signals.data.accountOwner ? (
-                              <span className="crm-alert-chip">Owner {signals.data.accountOwner}</span>
-                            ) : null}
-                          </div>
-                          <p>
-                            {signals.data.profileSummary ||
-                              client.notes ||
-                              'No account summary has been recorded yet.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="crm-client-actions crm-client-action-stack">
-                        <Link className="button button-primary" to={`/clients/${client.id}`}>
-                          Open account
-                        </Link>
-                        <button
-                          className="button button-ghost danger-text"
-                          onClick={() => setClientPendingDelete(client)}
-                          type="button"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
+                      </Link>
+                    );
+                  })}
               </div>
             </section>
           )}
