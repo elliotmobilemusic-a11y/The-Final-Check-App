@@ -414,14 +414,26 @@ export function ClientsPage() {
 
                     return (
                       <Link
-                        className={`crm-client-row crm-client-row-simple${signals.needsAttention ? ' is-attention' : ''}`}
+                        className={`crm-client-row crm-client-row-balanced${signals.needsAttention ? ' is-attention' : ''}`}
                         key={client.id}
                         to={`/clients/${client.id}`}
                       >
                         <div className="crm-client-row-left">
                           <strong>{client.company_name}</strong>
-                          <span>{client.location || ''}</span>
-                          {client.contact_name && <small>{client.contact_name}</small>}
+                          {client.contact_name && <span>{client.contact_name}</span>}
+                        </div>
+
+                        <div className="crm-client-row-middle">
+                          <div className="crm-client-row-stats">
+                            <div>
+                              <small>Next review</small>
+                              <span>{formatReviewLabel(client.next_review_date)}</span>
+                            </div>
+                            <div>
+                              <small>Value</small>
+                              <span>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</span>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="crm-client-row-right">
