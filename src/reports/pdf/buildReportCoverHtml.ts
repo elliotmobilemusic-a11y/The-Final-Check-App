@@ -63,7 +63,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
       <div class="pdf-cover-hero">
         <div class="pdf-cover-hero-main">
           <div class="pdf-cover-report-type">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
-          <h1 class="pdf-cover-client-title">${escapeHtml(normalizeTitleLabel(config.clientName))}</h1>
+          <h1 class="pdf-cover-client-title">${escapeHtml(config.clientName)}</h1>
 
           ${config.summary ? `
             <p class="pdf-cover-summary">${escapeHtml(normalizeProseText(config.summary))}</p>
