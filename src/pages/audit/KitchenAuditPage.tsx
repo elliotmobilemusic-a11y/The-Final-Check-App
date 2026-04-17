@@ -456,7 +456,7 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     state.weeklyFoodCost > 0 ? renderMetric('Weekly food cost', fmtCurrency(state.weeklyFoodCost)) : '',
     state.targetGp > 0 ? renderMetric('Target GP', fmtPercent(state.targetGp)) : '',
     state.weeklySales > 0 ? renderMetric('Actual GP', fmtPercent(calc.actualGp)) : '',
-    calc.gpGap > 0 ? renderMetric('GP gap', `${calc.gpGap.toFixed(1)} pts`) : '',
+    calc.gpGap > 0 ? renderMetric('GP gap', `${calc.gpGap.toFixed(1)}%`) : '',
     calc.weeklyWasteLoss > 0 ? renderMetric('Weekly waste loss', fmtCurrency(calc.weeklyWasteLoss)) : '',
     calc.labourOpportunityValue > 0 ? renderMetric('Labour opportunity', fmtCurrency(calc.labourOpportunityValue)) : '',
     calc.totalPortionLoss > 0 ? renderMetric('Portion opportunity', fmtCurrency(calc.totalPortionLoss)) : ''

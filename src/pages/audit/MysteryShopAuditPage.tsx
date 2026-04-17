@@ -248,10 +248,10 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
       <p class="report-section-lead">Category scoring across arrival, service, product, and overall guest value.</p>
       <div class="report-grid columns-4">
         <div><strong>Arrival</strong><br />${state.scorecard.arrival}/10</div>
-        <div><strong>Service</strong><br />${state.scorecard.service}/10</div>
-        <div><strong>Product</strong><br />${state.scorecard.product}/10</div>
         <div><strong>Cleanliness</strong><br />${state.scorecard.cleanliness}/10</div>
         <div><strong>Atmosphere</strong><br />${state.scorecard.atmosphere}/10</div>
+        <div><strong>Service</strong><br />${state.scorecard.service}/10</div>
+        <div><strong>Product</strong><br />${state.scorecard.product}/10</div>
         <div><strong>Value</strong><br />${state.scorecard.value}/10</div>
       </div>
       ${renderAuditPhotoGallery(state.photos, 'scorecard')}

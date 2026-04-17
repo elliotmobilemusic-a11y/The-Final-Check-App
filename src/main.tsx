@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './styles.css';
+import './tablet-responsive.css';
 import './report-new.css';
 
 // Suppress known browser extension errors that leak into unhandled rejections
