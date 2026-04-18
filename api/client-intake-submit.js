@@ -245,6 +245,35 @@ function mapSubmissionToClient(form, sharePayload, enrichment) {
 }
 
 export default async function handler(request, response) {
+  // Allow public CORS access for website form submissions
+  const allowedOrigins = [
+    'https://www.thefinalcheck.uk',
+    'https://thefinalcheck.uk',
+    'https://portal.thefinalcheck.uk',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ];
+  
+  const origin = request.headers.origin || request.headers.Origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Fallback to allow for testing and unknown origins
+    response.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  response.setHeader('Vary', 'Origin');
+  
+  // Handle preflight OPTIONS request
+  if (request.method === 'OPTIONS') {
+    response.status(200).end();
+    return;
+  }
+  
   if (request.method !== 'POST') {
     response.status(405).json({ error: 'Method not allowed.' });
     return;

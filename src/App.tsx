@@ -101,8 +101,9 @@ export default function App() {
         <Route path="/share/food-safety/:token" element={<SharedFoodSafetyAuditPage />} />
         <Route path="/share/mystery-shop/:token" element={<SharedMysteryShopAuditPage />} />
         <Route path="/share/menu/:token" element={<SharedMenuPage />} />
-        <Route path="/intake/client/:token" element={<ClientIntakePage />} />
-        <Route path="/portal/client/:token" element={<ClientPortalPage />} />
+         <Route path="/intake/client/:token" element={<ClientIntakePage />} />
+         <Route path="/contact" element={<ClientIntakePage />} />
+         <Route path="/portal/client/:token" element={<ClientPortalPage />} />
 
         <Route path="/*" element={<PrivateApp />}>
           <Route index element={<HomeRedirect />} />
