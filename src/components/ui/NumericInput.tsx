@@ -36,6 +36,9 @@ export function NumericInput({
   useEffect(() => {
     if (value === null || value === undefined || value === '') {
       setDisplayValue('');
+    } else if (typeof value === 'number') {
+      // Preserve 0 value instead of treating as empty
+      setDisplayValue(String(value));
     } else {
       setDisplayValue(String(value));
     }
@@ -82,6 +85,16 @@ export function NumericInput({
   const handleBlur = () => {
     if (value === null || value === undefined) {
       setDisplayValue('');
+      return;
+    }
+    
+    // Properly handle 0 value
+    if (value === 0) {
+      if (decimalPlaces !== undefined) {
+        setDisplayValue(Number(0).toFixed(decimalPlaces));
+      } else {
+        setDisplayValue('0');
+      }
       return;
     }
     
