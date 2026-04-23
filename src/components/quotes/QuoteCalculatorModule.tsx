@@ -636,23 +636,53 @@ export function QuoteCalculatorModule({
         </label>
       );
     }
+    
+    if (field.type === 'text') {
+      return (
+        <label className={fieldClassName} key={String(field.key)}>
+          <span>{field.label}</span>
+          <input
+            className="input"
+            type="text"
+            value={String(value ?? '')}
+            placeholder={field.placeholder}
+            onChange={(event) =>
+              updateValue(field.key, event.target.value as QuoteInputAnswers[typeof field.key])
+            }
+          />
+        </label>
+      );
+    }
+    
+    if (field.type === 'number' || field.type === 'currency') {
+      return (
+        <label className={fieldClassName} key={String(field.key)}>
+          <span>{field.label}</span>
+          <input
+            className="input"
+            type="number"
+            min={field.min}
+            step={field.step ?? 'any'}
+            value={String(num(value))}
+            onChange={(event) =>
+              updateValue(field.key, Number(event.target.value) as QuoteInputAnswers[typeof field.key])
+            }
+          />
+        </label>
+      );
+    }
 
+    // Fallback for safety - always render a plain text input
     return (
       <label className={fieldClassName} key={String(field.key)}>
         <span>{field.label}</span>
         <input
           className="input"
-          type={field.type === 'date' ? 'date' : 'number'}
-          min={field.min}
-          step={field.step ?? (field.type === 'number' || field.type === 'currency' ? 'any' : undefined)}
-          value={field.type === 'date' ? String(value ?? '') : String(num(value))}
+          type="text"
+          value={String(value ?? '')}
+          placeholder={field.placeholder}
           onChange={(event) =>
-            updateValue(
-              field.key,
-              (field.type === 'date'
-                ? event.target.value
-                : Number(event.target.value)) as QuoteInputAnswers[typeof field.key]
-            )
+            updateValue(field.key, event.target.value as QuoteInputAnswers[typeof field.key])
           }
         />
       </label>
