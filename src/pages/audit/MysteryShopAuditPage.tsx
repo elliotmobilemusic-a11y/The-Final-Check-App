@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { QuantityInput, CurrencyInput } from '../../components/ui/NumericInput';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
@@ -830,7 +831,10 @@ export function MysteryShopAuditPage() {
                 </label>
                 <label className="field">
                   <span>Spend amount</span>
-                  <input className="input" type="number" value={form.spendAmount} onChange={(event) => updateField('spendAmount', Number(event.target.value))} />
+                  <CurrencyInput
+                    value={form.spendAmount}
+                    onChange={(val) => updateField('spendAmount', val ?? 0)}
+                  />
                 </label>
                 <label className="field">
                   <span>Follow-up date</span>
@@ -874,15 +878,11 @@ export function MysteryShopAuditPage() {
               {Object.entries(form.scorecard).map(([key, value]) => (
                 <label className="field tool-score-card" key={key}>
                   <span>{key.replace(/([A-Z])/g, ' $1')}</span>
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    max="10"
+                  <QuantityInput
+                    min={0}
+                    max={10}
                     value={value}
-                    onChange={(event) =>
-                      updateScore(key as keyof MysteryShopScorecard, Number(event.target.value))
-                    }
+                    onChange={(val) => updateScore(key as keyof MysteryShopScorecard, val ?? 0)}
                   />
                 </label>
               ))}
@@ -967,7 +967,12 @@ export function MysteryShopAuditPage() {
                     </label>
                     <label className="field">
                       <span>Score</span>
-                      <input className="input" type="number" min="1" max="10" value={item.score} onChange={(event) => updateObservation(item.id, 'score', Number(event.target.value))} />
+                      <QuantityInput
+                        min={0}
+                        max={10}
+                        value={item.score}
+                        onChange={(val) => updateObservation(item.id, 'score', val ?? 0)}
+                      />
                     </label>
                     <label className="field">
                       <span>Observation</span>
