@@ -77,12 +77,12 @@ export function NumericInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value;
     
-    // Auto-replace 0 when user starts typing a new number
-    if (displayValue === '0' && raw.length > 1 && raw.startsWith('0')) {
-      raw = raw.slice(1);
+    // ✅ When field was exactly 0 and user types another number, replace the 0
+    if (displayValue === '0' && raw.length === 2 && raw[0] === '0' && /[0-9]/.test(raw[1])) {
+      raw = raw[1];
     }
     
-    // When user deletes everything, default to 0
+    // ✅ When user deletes everything, set to 0
     if (raw === '') {
       setDisplayValue('0');
       onChange(0);
