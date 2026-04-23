@@ -75,7 +75,20 @@ export function NumericInput({
   }, [min, max, decimalPlaces, allowNegative]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
+    let raw = e.target.value;
+    
+    // Auto-replace 0 when user starts typing a new number
+    if (displayValue === '0' && raw.length > 1 && raw.startsWith('0')) {
+      raw = raw.slice(1);
+    }
+    
+    // When user deletes everything, default to 0
+    if (raw === '') {
+      setDisplayValue('0');
+      onChange(0);
+      return;
+    }
+    
     setDisplayValue(raw);
     
     const parsed = parseValue(raw);
