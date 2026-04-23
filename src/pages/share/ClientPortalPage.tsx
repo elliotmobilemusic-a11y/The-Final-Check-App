@@ -20,6 +20,10 @@ function resourceKindLabel(kind: ClientPortalResource['kind']) {
   if (kind === 'audit') return 'Kitchen audit';
   if (kind === 'food_safety') return 'Food safety audit';
   if (kind === 'mystery_shop') return 'Mystery shop';
+  if (kind === 'quote') return 'Quote';
+  if (kind === 'invoice') return 'Invoice';
+  if (kind === 'report') return 'Report';
+  if (kind === 'action_plan') return 'Action plan';
   return 'Menu review';
 }
 

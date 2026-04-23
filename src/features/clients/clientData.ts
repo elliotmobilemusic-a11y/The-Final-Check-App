@@ -13,13 +13,17 @@ import type {
 } from '../../types';
 
 function normalizeContacts(value: ClientContact[] | undefined) {
-  return value ?? [];
+  return (value ?? []).map((contact) => ({
+    ...contact,
+    category: contact.category ?? (contact.isPrimary ? 'Primary' : 'General')
+  }));
 }
 
 function normalizeSites(value: ClientSite[] | undefined) {
   return (value ?? []).map((site) => ({
     ...site,
-    website: site.website ?? ''
+    website: site.website ?? '',
+    managerName: site.managerName ?? ''
   }));
 }
 
@@ -102,7 +106,8 @@ function normalizeQuotes(value: ClientQuote[] | undefined): ClientQuote[] {
       totalWithTax: Number(quote.calculation?.totalWithTax ?? 0) || 0,
       calculationVersion: Number(quote.calculation?.calculationVersion ?? 1) || 1,
       finalLineItems: normalizeQuoteLineItems(quote.calculation?.finalLineItems)
-    }
+    },
+    archivedAt: quote.archivedAt ?? null
   }));
 }
 
@@ -142,17 +147,26 @@ function normalizeInvoices(value: ClientInvoice[] | undefined): ClientInvoice[] 
     paymentTermsDays: Number(invoice.paymentTermsDays ?? 0) || 0,
     sourceQuoteId: invoice.sourceQuoteId ?? null,
     sourceQuoteTitle: invoice.sourceQuoteTitle ?? '',
-    quoteReference: invoice.quoteReference ?? ''
+    quoteReference: invoice.quoteReference ?? '',
+    archivedAt: invoice.archivedAt ?? null
   }));
 }
 
 export function createEmptyClientData(): ClientProfileData {
   return {
     profileSummary: '',
+    tradingName: '',
+    businessType: '',
     goals: [],
     risks: [],
     opportunities: [],
     internalNotes: '',
+    clientBackground: '',
+    clientContext: '',
+    painPoints: '',
+    priorWorkHistory: '',
+    importantNotes: '',
+    internalRelationshipNotes: '',
     contacts: [],
     sites: [],
     timeline: [],
@@ -175,6 +189,7 @@ export function createEmptyClientData(): ClientProfileData {
     deals: [],
     quotes: [],
     invoices: [],
+    archivedWorkItemIds: [],
     portal: {
       enabled: true,
       token: '',
@@ -187,6 +202,10 @@ export function createEmptyClientData(): ClientProfileData {
       hiddenFoodSafetyIds: [],
       hiddenMysteryShopIds: [],
       hiddenMenuIds: [],
+      hiddenQuoteIds: [],
+      hiddenInvoiceIds: [],
+      showReports: true,
+      showActionPlans: true,
       lastPublishedAt: ''
     }
   };
@@ -211,13 +230,16 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
     deals: normalizeDeals(data?.deals),
     quotes: normalizeQuotes(data?.quotes),
     invoices: normalizeInvoices(data?.invoices),
+    archivedWorkItemIds: data?.archivedWorkItemIds ?? [],
     portal: {
       ...empty.portal,
       ...data?.portal,
       hiddenAuditIds: data?.portal?.hiddenAuditIds ?? [],
       hiddenFoodSafetyIds: data?.portal?.hiddenFoodSafetyIds ?? [],
       hiddenMysteryShopIds: data?.portal?.hiddenMysteryShopIds ?? [],
-      hiddenMenuIds: data?.portal?.hiddenMenuIds ?? []
+      hiddenMenuIds: data?.portal?.hiddenMenuIds ?? [],
+      hiddenQuoteIds: data?.portal?.hiddenQuoteIds ?? [],
+      hiddenInvoiceIds: data?.portal?.hiddenInvoiceIds ?? []
     },
     accountScope: data?.accountScope ?? empty.accountScope,
     operatingCountry: data?.operatingCountry ?? empty.operatingCountry,

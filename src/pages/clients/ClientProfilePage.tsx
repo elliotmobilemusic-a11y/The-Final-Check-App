@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
-import { StatCard } from '../../components/ui/StatCard';
-import { QuoteCalculatorModule } from '../../components/quotes/QuoteCalculatorModule';
 import { buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
@@ -12,10 +10,27 @@ import {
   type BusinessLookupProfile,
   type BusinessLookupResult
 } from '../../features/clients/businessLookup';
+import { createInvoiceDraftFromQuote } from '../../features/quotes/invoices';
+import { ClientProfileHeader } from '../../components/clients/profile/ClientProfileHeader';
+import {
+  ClientProfileTabNav,
+  type ClientProfileTabKey
+} from '../../components/clients/profile/ClientProfileTabNav';
+import { ClientInformationTab } from '../../components/clients/profile/ClientInformationTab';
+import { ClientWorkTab, type ClientWorkItem } from '../../components/clients/profile/ClientWorkTab';
+import {
+  ClientPortalTab,
+  type ClientPortalCategoryControl,
+  type ClientPortalSharedItem
+} from '../../components/clients/profile/ClientPortalTab';
+import { ClientPricingTab } from '../../components/clients/profile/ClientPricingTab';
 import { getClientById, updateClient } from '../../services/clients';
-import { deleteAudit, listAudits } from '../../services/audits';
-import { deleteMenuProject, listMenuProjects } from '../../services/menus';
-import { listLocalToolRecordsForClient } from '../../services/localToolStore';
+import { listAudits, saveAudit } from '../../services/audits';
+import { listMenuProjects, saveMenuProject } from '../../services/menus';
+import {
+  listLocalToolRecordsForClient,
+  saveLocalToolRecord
+} from '../../services/localToolStore';
 import {
   createClientPortalShare,
   createFoodSafetyShare,
@@ -27,59 +42,37 @@ import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
   AuditFormState,
   ClientContact,
-  ClientDeal,
   ClientInvoice,
   ClientInvoiceLine,
-  ClientProfile,
+  ClientPortalResource,
   ClientPortalSettings,
   ClientPortalSharePayload,
+  ClientProfile,
   ClientProfileData,
+  ClientQuote,
   ClientSite,
-  ClientTask,
-  ClientTimelineItem,
   FoodSafetyAuditState,
   LocalToolRecord,
   MenuProjectState,
   MysteryShopAuditState,
+  QuoteLineItem,
   SupabaseRecord
 } from '../../types';
-import { fmtCurrency, num, safe, todayIso, uid } from '../../lib/utils';
+import { fmtCurrency, todayIso, uid } from '../../lib/utils';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
-type ClientSectionKey =
-  | 'profile'
-  | 'contacts'
-  | 'sites'
-  | 'commercial'
-  | 'strategy'
-  | 'activity';
 
-function isClientSectionKey(value?: string): value is ClientSectionKey {
-  return (
-    value === 'profile' ||
-    value === 'contacts' ||
-    value === 'sites' ||
-    value === 'commercial' ||
-    value === 'strategy' ||
-    value === 'activity'
-  );
-}
+const FOOD_SAFETY_STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
+const MYSTERY_SHOP_STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
 
-function splitLines(value: string) {
-  return value
-    .split('\n')
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function joinLines(values: string[]) {
-  return values.join('\n');
+function clientDraftKey(clientId: string) {
+  return `client-profile-draft-${clientId}`;
 }
 
 function formatShortDate(value?: string | null) {
-  if (!value) return 'No date set';
+  if (!value) return 'Not set';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'No date set';
+  if (Number.isNaN(parsed.getTime())) return 'Not set';
 
   return new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
@@ -88,35 +81,14 @@ function formatShortDate(value?: string | null) {
   }).format(parsed);
 }
 
-function daysUntil(value?: string | null) {
-  if (!value) return null;
-
-  const target = new Date(value);
-  if (Number.isNaN(target.getTime())) return null;
-
-  const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const startTarget = new Date(
-    target.getFullYear(),
-    target.getMonth(),
-    target.getDate()
-  ).getTime();
-
-  return Math.round((startTarget - startToday) / (1000 * 60 * 60 * 24));
-}
-
-function reviewLabel(value?: string | null) {
-  const delta = daysUntil(value);
-  if (delta === null) return 'Not scheduled';
-  if (delta < 0) return `${Math.abs(delta)} day${Math.abs(delta) === 1 ? '' : 's'} overdue`;
-  if (delta === 0) return 'Due today';
-  return `Due in ${delta} day${delta === 1 ? '' : 's'}`;
-}
-
 function hasOutstandingInvoices(profile: ClientProfile) {
   return profile.data.invoices.some(
     (invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled'
   );
+}
+
+function buildInvoiceNumber(existingCount: number) {
+  return `INV-${new Date().getFullYear()}-${String(existingCount + 1).padStart(3, '0')}`;
 }
 
 function blankContact(): ClientContact {
@@ -126,6 +98,7 @@ function blankContact(): ClientContact {
     role: '',
     email: '',
     phone: '',
+    category: 'General',
     isPrimary: false,
     notes: ''
   };
@@ -137,39 +110,8 @@ function blankSite(): ClientSite {
     name: '',
     address: '',
     website: '',
+    managerName: '',
     status: 'Active',
-    notes: ''
-  };
-}
-
-function blankTimeline(): ClientTimelineItem {
-  return {
-    id: uid('timeline'),
-    date: '',
-    type: 'Note',
-    title: '',
-    summary: ''
-  };
-}
-
-function blankTask(): ClientTask {
-  return {
-    id: uid('task'),
-    title: '',
-    dueDate: '',
-    owner: '',
-    status: 'Open'
-  };
-}
-
-function blankDeal(): ClientDeal {
-  return {
-    id: uid('deal'),
-    title: '',
-    stage: 'Lead',
-    value: 0,
-    closeDate: '',
-    owner: '',
     notes: ''
   };
 }
@@ -181,10 +123,6 @@ function blankInvoiceLine(): ClientInvoiceLine {
     quantity: 1,
     unitPrice: 0
   };
-}
-
-function buildInvoiceNumber(existingCount: number) {
-  return `INV-${new Date().getFullYear()}-${String(existingCount + 1).padStart(3, '0')}`;
 }
 
 function blankInvoice(existingCount: number, paymentTermsDays: number): ClientInvoice {
@@ -200,31 +138,16 @@ function blankInvoice(existingCount: number, paymentTermsDays: number): ClientIn
     dueDate: due.toISOString().slice(0, 10),
     status: 'Draft',
     notes: '',
-    lines: [blankInvoiceLine()]
+    lines: [blankInvoiceLine()],
+    taxEnabled: false,
+    taxRate: 20,
+    paymentTermsDays
   };
 }
 
 function deriveUserDisplayName(email?: string | null) {
   if (!email) return 'The Final Check';
   return email.split('@')[0].replace(/[._-]+/g, ' ');
-}
-
-function stageTone(stage: ClientDeal['stage']) {
-  if (stage === 'Won') return 'status-pill status-success';
-  if (stage === 'Lost') return 'status-pill status-danger';
-  return 'status-pill status-warning';
-}
-
-function invoiceTone(status: ClientInvoice['status']) {
-  if (status === 'Paid') return 'status-pill status-success';
-  if (status === 'Overdue' || status === 'Cancelled') return 'status-pill status-danger';
-  return 'status-pill status-warning';
-}
-
-function relationshipTone(health: ClientProfileData['relationshipHealth']) {
-  if (health === 'Strong') return 'status-pill status-success';
-  if (health === 'Watch') return 'status-pill status-warning';
-  return 'status-pill status-danger';
 }
 
 function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupProfile): ClientProfile {
@@ -236,8 +159,9 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
         name: site.name,
         address: site.address,
         website: site.website,
+        managerName: '',
         status: site.status || 'Active',
-        notes: site.notes || 'Imported from Companies House lookup.'
+        notes: site.notes || 'Imported from business lookup.'
       }));
 
   return {
@@ -274,41 +198,91 @@ function mergeLookupIntoClient(current: ClientProfile, lookup: BusinessLookupPro
   };
 }
 
-function clientDraftKey(clientId: string) {
-  return `client-profile-draft-${clientId}`;
+function getActiveTab(section?: string): ClientProfileTabKey {
+  if (
+    section === 'information' ||
+    section === 'profile' ||
+    section === 'contacts' ||
+    section === 'sites' ||
+    section === 'strategy'
+  ) {
+    return 'information';
+  }
+
+  if (section === 'services' || section === 'activity') return 'services';
+  if (section === 'portal') return 'portal';
+  if (section === 'pricing' || section === 'commercial') return 'pricing';
+  return 'information';
 }
 
-const FOOD_SAFETY_STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
-const MYSTERY_SHOP_STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+function workstreamSiteLabel(
+  record: { client_site_id?: string | null; site_name?: string | null },
+  siteNameById: Map<string, string>
+) {
+  if (record.client_site_id) {
+    return siteNameById.get(record.client_site_id) || record.site_name || 'Linked site';
+  }
+
+  return record.site_name || 'Account level';
+}
+
+function cloneQuoteLineItem(line: QuoteLineItem): QuoteLineItem {
+  return {
+    ...line,
+    id: uid('quote-line')
+  };
+}
+
+function createQuoteHistoryEntry(
+  quote: ClientQuote,
+  actor: string,
+  note: string
+) {
+  return {
+    id: uid('quote-history'),
+    action: 'created' as const,
+    actor,
+    at: new Date().toISOString(),
+    previousTotal: null,
+    nextTotal: quote.calculation.finalTotal,
+    manualOverrideUsed: quote.calculation.overrideTotal !== null,
+    addedLineLabels: quote.lineItems.map((line) => line.label),
+    removedLineLabels: [],
+    note
+  };
+}
 
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
+  const navigate = useNavigate();
   const { runWithActivity } = useActivityOverlay();
   const { session } = useAuth();
 
   const [client, setClient] = useState<ClientProfile | null>(null);
-  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<ClientProfile | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [message, setMessage] = useState('Client loaded.');
+  const [saving, setSaving] = useState(false);
+  const [publishingPortal, setPublishingPortal] = useState(false);
   const [audits, setAudits] = useState<SupabaseRecord<AuditFormState>[]>([]);
   const [foodSafetyAudits, setFoodSafetyAudits] = useState<LocalToolRecord<FoodSafetyAuditState>[]>(
     []
   );
-  const [menus, setMenus] = useState<SupabaseRecord<MenuProjectState>[]>([]);
   const [mysteryShopAudits, setMysteryShopAudits] = useState<
     LocalToolRecord<MysteryShopAuditState>[]
   >([]);
-  const [message, setMessage] = useState('Client loaded.');
-  const [saving, setSaving] = useState(false);
+  const [menus, setMenus] = useState<SupabaseRecord<MenuProjectState>[]>([]);
   const [lookupQuery, setLookupQuery] = useState('');
   const [lookupResults, setLookupResults] = useState<BusinessLookupResult[]>([]);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupScope, setLookupScope] = useState<LookupScopeFilter>('group');
   const [lookupMessage, setLookupMessage] = useState(
-    'Use the business finder to refresh the company name, logo, website, location, and profile summary from the strongest matched record.'
+    'Refresh the business record from the best matched public company profile.'
   );
   const [lookupSelectionId, setLookupSelectionId] = useState('');
-  const [deletingWorkKey, setDeletingWorkKey] = useState<string | null>(null);
-  const [publishingPortal, setPublishingPortal] = useState(false);
+  const [requestNewQuoteToken, setRequestNewQuoteToken] = useState(0);
+  const [externalQuoteToEditId, setExternalQuoteToEditId] = useState<string | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -322,12 +296,10 @@ export function ClientProfilePage() {
 
       const profile = clientRecordToProfile(clientRow);
       const draft = readDraft<ClientProfile>(clientDraftKey(clientId));
+      const nextForm = draft ?? profile;
+
       setClient(profile);
-      setForm(draft ?? profile);
-      if (draft) {
-        setEditing(true);
-        setMessage('Restored unsaved client draft.');
-      }
+      setForm(nextForm);
       setAudits(auditRows);
       setMenus(menuRows);
       setFoodSafetyAudits(
@@ -336,13 +308,18 @@ export function ClientProfilePage() {
       setMysteryShopAudits(
         listLocalToolRecordsForClient<MysteryShopAuditState>(MYSTERY_SHOP_STORAGE_KEY, clientId)
       );
+      setSelectedInvoiceId(nextForm.data.invoices[0]?.id ?? null);
+      if (draft) {
+        setEditing(true);
+        setMessage('Restored the unsaved client draft.');
+      }
     }
 
-    if (clientId) {
-      load().catch((error) => {
-        setMessage(error instanceof Error ? error.message : 'Could not load client.');
-      });
-    }
+    if (!clientId) return;
+
+    void load().catch((error) => {
+      setMessage(error instanceof Error ? error.message : 'Could not load client.');
+    });
   }, [clientId]);
 
   useEffect(() => {
@@ -350,79 +327,8 @@ export function ClientProfilePage() {
     writeDraft(clientDraftKey(clientId), form);
   }, [clientId, editing, form]);
 
-  const stats = useMemo(() => {
-    if (!client) {
-      return {
-        contacts: 0,
-        sites: 0,
-        tasksOpen: 0,
-        timeline: 0,
-        deals: 0,
-        invoicesOpen: 0
-      };
-    }
+  const activeTab = getActiveTab(section);
 
-    return {
-      contacts: client.data.contacts.length,
-      sites: client.data.sites.length,
-      tasksOpen: client.data.tasks.filter((task) => task.status !== 'Done').length,
-      timeline: client.data.timeline.length,
-      deals: client.data.deals.filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost').length,
-      invoicesOpen: client.data.invoices.filter((invoice) => invoice.status !== 'Paid').length
-    };
-  }, [client]);
-
-  const nextReviewState = useMemo(() => daysUntil(form?.nextReviewDate), [form?.nextReviewDate]);
-  const primaryContact =
-    form?.data.contacts.find((contact) => contact.isPrimary) ?? form?.data.contacts[0] ?? null;
-  const pipelineValue = useMemo(
-    () =>
-      form?.data.deals
-        .filter((deal) => deal.stage !== 'Won' && deal.stage !== 'Lost')
-        .reduce((sum, deal) => sum + num(deal.value), 0) ?? 0,
-    [form?.data.deals]
-  );
-  const outstandingInvoiceValue = useMemo(
-    () =>
-      form?.data.invoices
-        .filter((invoice) => invoice.status !== 'Paid')
-        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0) ?? 0,
-    [form?.data.invoices]
-  );
-  const invoiceSnapshot = useMemo(() => {
-    const invoices = form?.data.invoices ?? [];
-
-    return {
-      overdueCount: invoices.filter((invoice) => invoice.status === 'Overdue').length,
-      overdueValue: invoices
-        .filter((invoice) => invoice.status === 'Overdue')
-        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0),
-      paidValue: invoices
-        .filter((invoice) => invoice.status === 'Paid')
-        .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0)
-    };
-  }, [form?.data.invoices]);
-  const portalResourceCount =
-    audits.length + foodSafetyAudits.length + mysteryShopAudits.length + menus.length;
-  const linkedWorkstreams = portalResourceCount;
-  const scopedLookupResults = useMemo(() => {
-    if (lookupScope === 'all') return lookupResults;
-    return lookupResults.filter((result) =>
-      lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
-    );
-  }, [lookupResults, lookupScope]);
-  const visibleLookupResults = useMemo(() => {
-    if (lookupScope === 'all') return lookupResults;
-    return scopedLookupResults.length ? scopedLookupResults : lookupResults;
-  }, [lookupResults, lookupScope, scopedLookupResults]);
-  const isLookupFallbackVisible =
-    lookupScope !== 'all' && lookupResults.length > 0 && scopedLookupResults.length === 0;
-  const activeSection = isClientSectionKey(section) ? section : null;
-  const siteNameById = useMemo(
-    () => new Map((form?.data.sites ?? []).map((site) => [site.id, site.name || 'Unnamed site'])),
-    [form?.data.sites]
-  );
-  const linkedClientId = client?.id ?? clientId;
   const currentUserName =
     (typeof session?.user.user_metadata?.display_name === 'string'
       ? session.user.user_metadata.display_name
@@ -430,6 +336,19 @@ export function ClientProfilePage() {
     deriveUserDisplayName(session?.user.email) ||
     form?.data.accountOwner ||
     'The Final Check';
+
+  const siteNameById = useMemo(
+    () => new Map((form?.data.sites ?? []).map((site) => [site.id, site.name || 'Unnamed site'])),
+    [form?.data.sites]
+  );
+
+  const visibleLookupResults = useMemo(() => {
+    if (lookupScope === 'all') return lookupResults;
+    const scoped = lookupResults.filter((result) =>
+      lookupScope === 'group' ? result.resultType === 'group' : result.resultType === 'site'
+    );
+    return scoped.length ? scoped : lookupResults;
+  }, [lookupResults, lookupScope]);
 
   if (!client || !form) {
     return (
@@ -442,20 +361,24 @@ export function ClientProfilePage() {
     );
   }
 
+  const loadedClient = client;
   const activeForm = form;
+
   const portalLink = activeForm.data.portal.token
     ? `${window.location.origin}/#/portal/client/${activeForm.data.portal.token}`
     : '';
-  const portalHasOutstandingInvoices = hasOutstandingInvoices(activeForm);
+  const mainContact =
+    activeForm.data.contacts.find((contact) => contact.isPrimary) ?? activeForm.data.contacts[0];
+  const siteCount = activeForm.data.sites.length || activeForm.data.siteCountEstimate || 0;
+  const outstandingBalance = activeForm.data.invoices
+    .filter((invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled')
+    .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
 
   function updateField<K extends keyof ClientProfile>(key: K, value: ClientProfile[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
   }
 
-  function updateData<K extends keyof ClientProfileData>(
-    key: K,
-    value: ClientProfileData[K]
-  ) {
+  function updateData<K extends keyof ClientProfileData>(key: K, value: ClientProfileData[K]) {
     setForm((current) =>
       current
         ? {
@@ -469,257 +392,199 @@ export function ClientProfilePage() {
     );
   }
 
-  function updatePortal<K extends keyof ClientPortalSettings>(
+  function replacePortal(nextPortal: ClientPortalSettings) {
+    updateData('portal', nextPortal);
+  }
+
+  function updatePortalField<K extends keyof ClientPortalSettings>(
     key: K,
     value: ClientPortalSettings[K]
   ) {
-    updateData('portal', {
+    replacePortal({
       ...activeForm.data.portal,
       [key]: value
     });
   }
 
-  function togglePortalAudit(auditId: string, visible: boolean) {
-    const hiddenIds = new Set(activeForm.data.portal.hiddenAuditIds);
-    if (visible) {
-      hiddenIds.delete(auditId);
-    } else {
-      hiddenIds.add(auditId);
-    }
-
-    updatePortal('hiddenAuditIds', [...hiddenIds]);
-  }
-
-  function togglePortalMenu(menuId: string, visible: boolean) {
-    const hiddenIds = new Set(activeForm.data.portal.hiddenMenuIds);
-    if (visible) {
-      hiddenIds.delete(menuId);
-    } else {
-      hiddenIds.add(menuId);
-    }
-
-    updatePortal('hiddenMenuIds', [...hiddenIds]);
-  }
-
-  function togglePortalFoodSafety(auditId: string, visible: boolean) {
-    const hiddenIds = new Set(activeForm.data.portal.hiddenFoodSafetyIds);
-    if (visible) {
-      hiddenIds.delete(auditId);
-    } else {
-      hiddenIds.add(auditId);
-    }
-
-    updatePortal('hiddenFoodSafetyIds', [...hiddenIds]);
-  }
-
-  function togglePortalMysteryShop(auditId: string, visible: boolean) {
-    const hiddenIds = new Set(activeForm.data.portal.hiddenMysteryShopIds);
-    if (visible) {
-      hiddenIds.delete(auditId);
-    } else {
-      hiddenIds.add(auditId);
-    }
-
-    updatePortal('hiddenMysteryShopIds', [...hiddenIds]);
-  }
-
   function updateContact(id: string, key: keyof ClientContact, value: string | boolean) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            contacts: current.data.contacts.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              contacts: current.data.contacts.map((item) =>
+                item.id === id ? { ...item, [key]: value } : item
+              )
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateSite(id: string, key: keyof ClientSite, value: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            sites: current.data.sites.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+  function addContact() {
+    setEditing(true);
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              contacts: [...current.data.contacts, blankContact()]
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function removeSite(id: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            sites: current.data.sites.filter((item) => item.id !== id)
+  function removeContact(id: string) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              contacts: current.data.contacts.filter((item) => item.id !== id)
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateTimeline(id: string, key: keyof ClientTimelineItem, value: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            timeline: current.data.timeline.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+  function updateSite(id: string, key: keyof ClientSite, value: string) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              sites: current.data.sites.map((item) =>
+                item.id === id ? { ...item, [key]: value } : item
+              )
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateTask(id: string, key: keyof ClientTask, value: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            tasks: current.data.tasks.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+  function addSite() {
+    setEditing(true);
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              sites: [...current.data.sites, blankSite()]
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateDeal(id: string, key: keyof ClientDeal, value: string | number) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            deals: current.data.deals.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+  function removeSite(id: string) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              sites: current.data.sites.filter((item) => item.id !== id)
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateInvoice(
-  id: string,
-  key: keyof Omit<ClientInvoice, 'lines'>,
-  value: string | number | boolean | null
-) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            invoices: current.data.invoices.map((item) =>
-              item.id === id ? { ...item, [key]: value } : item
-            )
+  function updateInvoiceField(
+    invoiceId: string,
+    key: keyof Omit<ClientInvoice, 'lines'>,
+    value: string | number | boolean | null
+  ) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              invoices: current.data.invoices.map((invoice) =>
+                invoice.id === invoiceId ? { ...invoice, [key]: value } : invoice
+              )
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function updateInvoiceLine(
-  invoiceId: string,
-  lineId: string,
-  key: keyof ClientInvoiceLine,
-  value: string | number
-) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            invoices: current.data.invoices.map((invoice) =>
-              invoice.id === invoiceId
-                ? {
-                    ...invoice,
-                    lines: invoice.lines.map((line) =>
-                      line.id === lineId ? { ...line, [key]: value } : line
-                    )
-                  }
-                : invoice
-            )
+  function updateInvoiceLine(
+    invoiceId: string,
+    lineId: string,
+    key: keyof ClientInvoiceLine,
+    value: string | number
+  ) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              invoices: current.data.invoices.map((invoice) =>
+                invoice.id === invoiceId
+                  ? {
+                      ...invoice,
+                      lines: invoice.lines.map((line) =>
+                        line.id === lineId ? { ...line, [key]: value } : line
+                      )
+                    }
+                  : invoice
+              )
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function addInvoiceLine(invoiceId: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            invoices: current.data.invoices.map((invoice) =>
-              invoice.id === invoiceId
-                ? {
-                    ...invoice,
-                    lines: [...invoice.lines, blankInvoiceLine()]
-                  }
-                : invoice
-            )
+  function addInvoiceLine(invoiceId: string) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              invoices: current.data.invoices.map((invoice) =>
+                invoice.id === invoiceId
+                  ? {
+                      ...invoice,
+                      lines: [...invoice.lines, blankInvoiceLine()]
+                    }
+                  : invoice
+              )
+            }
           }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
-function removeInvoiceLine(invoiceId: string, lineId: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            invoices: current.data.invoices.map((invoice) =>
-              invoice.id === invoiceId
-                ? {
-                    ...invoice,
-                    lines: invoice.lines.filter((line) => line.id !== lineId)
-                  }
-                : invoice
-            )
+  function removeInvoiceLine(invoiceId: string, lineId: string) {
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              invoices: current.data.invoices.map((invoice) =>
+                invoice.id === invoiceId
+                  ? {
+                      ...invoice,
+                      lines: invoice.lines.filter((line) => line.id !== lineId)
+                    }
+                  : invoice
+              )
+            }
           }
-        }
-      : current
-  );
-}
-
-function removeInvoice(invoiceId: string) {
-  setForm((current) =>
-    current
-      ? {
-          ...current,
-          data: {
-            ...current.data,
-            invoices: current.data.invoices.filter((invoice) => invoice.id !== invoiceId)
-          }
-        }
-      : current
-  );
-}
+        : current
+    );
+  }
 
   async function persistClientProfile(
     nextProfile: ClientProfile,
@@ -732,39 +597,39 @@ function removeInvoice(invoiceId: string) {
       };
     }
   ) {
-    if (!client?.id) throw new Error('Client not found.');
+    if (!loadedClient.id) throw new Error('Client not found.');
 
-    const activeClientId = client.id;
     const updated = await runWithActivity(options.activity, async () =>
-      updateClient(activeClientId, nextProfile)
+      updateClient(loadedClient.id as string, nextProfile)
     );
     const next = clientRecordToProfile(updated);
-    clearDraft(clientDraftKey(activeClientId));
+    clearDraft(clientDraftKey(loadedClient.id as string));
     setClient(next);
     setForm(next);
     setEditing(false);
+    setSelectedInvoiceId(next.data.invoices[0]?.id ?? null);
     setMessage(options.successMessage);
     return next;
   }
 
   async function handleSave() {
-  if (!client?.id || !form) return;
+    if (!form) return;
 
-  try {
-    setSaving(true);
-    await persistClientProfile(form, {
-      successMessage: 'Client profile updated.',
-      activity: {
-        kicker: 'Updating account',
-        title: 'Saving client profile',
-        detail: 'Writing the latest client details back to the CRM and tidying the working draft.'
-      },
-    });
-  } catch (error) {
-    setMessage(error instanceof Error ? error.message : 'Could not save client.');
-  } finally {
-    setSaving(false);
-  }
+    try {
+      setSaving(true);
+      await persistClientProfile(form, {
+        successMessage: 'Client profile updated.',
+        activity: {
+          kicker: 'Client profile',
+          title: 'Saving client record',
+          detail: 'Updating the client, notes, portal settings, and billing details.'
+        }
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not save client.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleBusinessLookup() {
@@ -782,27 +647,25 @@ function removeInvoice(invoiceId: string) {
       setLookupResults(results);
       setLookupMessage(
         results.length
-          ? `Found ${results.length} business match${results.length === 1 ? '' : 'es'}. Start with the strongest match and review the record before saving.`
-          : 'No recognised business matches found. Try the trading name, location, or website.'
+          ? `Found ${results.length} possible matches.`
+          : 'No matching business records found.'
       );
     } catch (error) {
-      setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
       setLookupResults([]);
+      setLookupMessage(error instanceof Error ? error.message : 'Business lookup failed.');
     } finally {
       setLookupLoading(false);
     }
   }
 
   async function handleUseLookup(result: BusinessLookupResult) {
-    if (!form) return;
-
     try {
       setLookupLoading(true);
       setLookupSelectionId(result.id);
       const profile = await getBusinessProfile(result);
       setForm((current) => (current ? mergeLookupIntoClient(current, profile) : current));
-      setLookupMessage(`Loaded business details for ${profile.name}. Save the profile to keep the updated account data.`);
-      setMessage(`Business details loaded for ${profile.name}.`);
+      setEditing(true);
+      setMessage(`Loaded business details for ${profile.name}.`);
     } catch (error) {
       setLookupMessage(error instanceof Error ? error.message : 'Could not load business details.');
     } finally {
@@ -810,36 +673,149 @@ function removeInvoice(invoiceId: string) {
     }
   }
 
-  function exportInvoicePdf(invoice: ClientInvoice) {
-    if (!form) return;
-    openPrintableHtmlDocument(
-      `${invoice.number} invoice export`,
-      buildInvoicePdfHtml(form, invoice)
-    );
-  }
-
-  function workstreamSiteLabel(record: {
-    client_site_id?: string | null;
-    site_name?: string | null;
-  }) {
-    if (record.client_site_id) {
-      return siteNameById.get(record.client_site_id) || record.site_name || 'Linked site';
+  function toggleEditing() {
+    if (editing) {
+      clearDraft(clientDraftKey(clientId));
+      setForm(loadedClient);
+      setEditing(false);
+      setMessage('Edit mode closed.');
+      return;
     }
 
-    return record.site_name || 'Account level';
+    setEditing(true);
+    setMessage('Edit mode enabled.');
+  }
+
+  function openPricingTab() {
+    navigate(`/clients/${clientId}/pricing`);
+  }
+
+  function handleRequestNewQuote() {
+    openPricingTab();
+    setExternalQuoteToEditId(null);
+    setRequestNewQuoteToken(Date.now());
+  }
+
+  function handleRequestNewInvoice(line?: Partial<ClientInvoiceLine>, title?: string) {
+    const nextInvoice = blankInvoice(activeForm.data.invoices.length, activeForm.data.paymentTermsDays);
+    if (line) {
+      nextInvoice.lines = [
+        {
+          ...blankInvoiceLine(),
+          ...line
+        }
+      ];
+    }
+    if (title) {
+      nextInvoice.title = title;
+    }
+
+    setEditing(true);
+    setForm((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              invoices: [nextInvoice, ...current.data.invoices]
+            }
+          }
+        : current
+    );
+    setSelectedInvoiceId(nextInvoice.id);
+    openPricingTab();
+    setMessage('New invoice draft added. Save changes to keep it.');
+  }
+
+  function handleOpenPortal() {
+    if (portalLink) {
+      window.open(portalLink, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    navigate(`/clients/${clientId}/portal`);
+  }
+
+  function setPortalListVisibility(
+    key:
+      | 'hiddenAuditIds'
+      | 'hiddenFoodSafetyIds'
+      | 'hiddenMysteryShopIds'
+      | 'hiddenMenuIds'
+      | 'hiddenQuoteIds'
+      | 'hiddenInvoiceIds',
+    ids: string[],
+    visible: boolean
+  ) {
+    const hidden = new Set(activeForm.data.portal[key]);
+
+    ids.forEach((id) => {
+      if (visible) hidden.delete(id);
+      else hidden.add(id);
+    });
+
+    updatePortalField(key, [...hidden]);
+  }
+
+  function handleToggleSharedItem(resourceId: string, visible: boolean) {
+    const [kind, entityId] = resourceId.split(':');
+    if (!entityId) return;
+
+    setEditing(true);
+    if (kind === 'audit') setPortalListVisibility('hiddenAuditIds', [entityId], visible);
+    if (kind === 'food-safety') setPortalListVisibility('hiddenFoodSafetyIds', [entityId], visible);
+    if (kind === 'mystery-shop') setPortalListVisibility('hiddenMysteryShopIds', [entityId], visible);
+    if (kind === 'menu') setPortalListVisibility('hiddenMenuIds', [entityId], visible);
+    if (kind === 'quote') setPortalListVisibility('hiddenQuoteIds', [entityId], visible);
+    if (kind === 'invoice') setPortalListVisibility('hiddenInvoiceIds', [entityId], visible);
+  }
+
+  function handleTogglePortalCategory(key: string, enabled: boolean) {
+    setEditing(true);
+
+    if (key === 'audits') setPortalListVisibility('hiddenAuditIds', audits.map((audit) => audit.id), enabled);
+    if (key === 'foodSafety') {
+      setPortalListVisibility(
+        'hiddenFoodSafetyIds',
+        foodSafetyAudits.map((audit) => audit.id),
+        enabled
+      );
+    }
+    if (key === 'mysteryShops') {
+      setPortalListVisibility(
+        'hiddenMysteryShopIds',
+        mysteryShopAudits.map((audit) => audit.id),
+        enabled
+      );
+    }
+    if (key === 'menuProjects') setPortalListVisibility('hiddenMenuIds', menus.map((menu) => menu.id), enabled);
+    if (key === 'quotes') {
+      setPortalListVisibility(
+        'hiddenQuoteIds',
+        activeForm.data.quotes.map((quote) => quote.quoteId),
+        enabled
+      );
+    }
+    if (key === 'invoices') {
+      setPortalListVisibility(
+        'hiddenInvoiceIds',
+        activeForm.data.invoices.map((invoice) => invoice.id),
+        enabled
+      );
+    }
+    if (key === 'reports') updatePortalField('showReports', enabled);
+    if (key === 'actionPlans') updatePortalField('showActionPlans', enabled);
   }
 
   async function handlePublishPortal() {
-    if (!linkedClientId) return;
-
     try {
       setPublishingPortal(true);
+
       await runWithActivity(
         {
           kicker: 'Client portal',
-          title: 'Publishing portal access',
-          detail:
-            'Preparing the client portal, applying visibility rules, and releasing the latest linked work.'
+          title: 'Publishing client portal',
+          detail: 'Rebuilding the released client portal with the latest visibility settings.'
         },
         async () => {
           const paymentLockActive =
@@ -857,6 +833,12 @@ function removeInvoice(invoiceId: string) {
           const visibleMenus = menus.filter(
             (menu) => !activeForm.data.portal.hiddenMenuIds.includes(menu.id)
           );
+          const visibleQuotes = activeForm.data.quotes.filter(
+            (quote) => !activeForm.data.portal.hiddenQuoteIds.includes(quote.quoteId)
+          );
+          const visibleInvoices = activeForm.data.invoices.filter(
+            (invoice) => !activeForm.data.portal.hiddenInvoiceIds.includes(invoice.id)
+          );
 
           const auditResources = await Promise.all(
             visibleAudits.map(async (audit) => {
@@ -872,15 +854,13 @@ function removeInvoice(invoiceId: string) {
                 id: `audit:${audit.id}`,
                 title: audit.title,
                 kind: 'audit' as const,
-                subtitle: workstreamSiteLabel(audit),
+                subtitle: workstreamSiteLabel(audit, siteNameById),
                 reviewDate: audit.review_date,
                 url: share?.url ?? null,
                 shareToken: share?.token ?? null,
                 sharePath: '/share/kitchen-audit',
                 locked,
-                lockReason: locked
-                  ? 'This audit will unlock once the related work is marked as paid.'
-                  : ''
+                lockReason: locked ? 'This audit will unlock once the account is paid.' : ''
               };
             })
           );
@@ -905,14 +885,12 @@ function removeInvoice(invoiceId: string) {
                 shareToken: share?.token ?? null,
                 sharePath: '/share/food-safety',
                 locked,
-                lockReason: locked
-                  ? 'This food safety audit will unlock once the related work is marked as paid.'
-                  : ''
+                lockReason: locked ? 'This report will unlock once the account is paid.' : ''
               };
             })
           );
 
-          const mysteryShopResources = await Promise.all(
+          const mysteryResources = await Promise.all(
             visibleMysteryShopAudits.map(async (audit) => {
               const locked = paymentLockActive;
               const share = locked
@@ -932,9 +910,7 @@ function removeInvoice(invoiceId: string) {
                 shareToken: share?.token ?? null,
                 sharePath: '/share/mystery-shop',
                 locked,
-                lockReason: locked
-                  ? 'This mystery shop audit will unlock once the related work is marked as paid.'
-                  : ''
+                lockReason: locked ? 'This report will unlock once the account is paid.' : ''
               };
             })
           );
@@ -953,21 +929,45 @@ function removeInvoice(invoiceId: string) {
                 id: `menu:${menu.id}`,
                 title: menu.title,
                 kind: 'menu' as const,
-                subtitle: workstreamSiteLabel(menu),
+                subtitle: workstreamSiteLabel(menu, siteNameById),
                 reviewDate: menu.review_date,
                 url: share?.url ?? null,
                 shareToken: share?.token ?? null,
                 sharePath: '/share/menu',
                 locked,
-                lockReason: locked
-                  ? 'This resource will unlock once the related work is marked as paid.'
-                  : ''
+                lockReason: locked ? 'This resource will unlock once the account is paid.' : ''
               };
             })
           );
 
+          const quoteResources: ClientPortalResource[] = visibleQuotes.map((quote) => ({
+            id: `quote:${quote.quoteId}`,
+            title: quote.quoteTitle,
+            kind: 'quote',
+            subtitle:
+              quote.renderedSummary.externalPriceLabel ||
+              (quote.calculation.finalPriceHidden
+                ? 'Custom quote'
+                : fmtCurrency(quote.calculation.totalWithTax || quote.calculation.finalTotal)),
+            reviewDate: quote.updatedAt,
+            url: null,
+            locked: paymentLockActive,
+            lockReason: paymentLockActive ? 'This quote is hidden until the account is paid.' : ''
+          }));
+
+          const invoiceResources: ClientPortalResource[] = visibleInvoices.map((invoice) => ({
+            id: `invoice:${invoice.id}`,
+            title: invoice.title || invoice.number,
+            kind: 'invoice',
+            subtitle: `${invoice.number} • ${fmtCurrency(invoiceTotal(invoice))}`,
+            reviewDate: invoice.issueDate,
+            url: null,
+            locked: paymentLockActive,
+            lockReason: paymentLockActive ? 'This invoice is hidden until the account is paid.' : ''
+          }));
+
           const payload: ClientPortalSharePayload = {
-            clientId: linkedClientId,
+            clientId: activeForm.id ?? clientId,
             clientName: activeForm.companyName,
             status: activeForm.status,
             industry: activeForm.industry,
@@ -980,7 +980,7 @@ function removeInvoice(invoiceId: string) {
               `Welcome to ${activeForm.companyName || 'your'} portal`,
             welcomeMessage:
               activeForm.data.portal.welcomeMessage.trim() ||
-              'Your latest reports, reviews, and released action plans will appear here.',
+              'Your latest work, commercial records, and shared notes will appear here.',
             portalNote: activeForm.data.portal.portalNote,
             visibilityMode: activeForm.data.portal.visibilityMode,
             hasOutstandingInvoices: hasOutstandingInvoices(activeForm),
@@ -990,30 +990,21 @@ function removeInvoice(invoiceId: string) {
             paidInvoiceValue: activeForm.data.invoices
               .filter((invoice) => invoice.status === 'Paid')
               .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0),
-            openTaskCount: activeForm.data.tasks.filter((task) => task.status !== 'Done').length,
-            tasks: activeForm.data.tasks
-              .filter((task) => task.status !== 'Done')
-              .slice(0, 8)
-              .map((task) => ({
-                id: task.id,
-                title: task.title,
-                owner: task.owner,
-                dueDate: task.dueDate,
-                status: task.status
-              })),
+            openTaskCount: 0,
+            tasks: [],
             resources: [
               ...auditResources,
               ...foodSafetyResources,
-              ...mysteryShopResources,
-              ...menuResources
-            ].sort((left, right) =>
-              (right.reviewDate || '').localeCompare(left.reviewDate || '')
-            ),
+              ...mysteryResources,
+              ...menuResources,
+              ...quoteResources,
+              ...invoiceResources
+            ].sort((left, right) => (right.reviewDate || '').localeCompare(left.reviewDate || '')),
             publishedAt: new Date().toISOString()
           };
 
-          const portalShare = await createClientPortalShare(linkedClientId, payload);
-          const nextForm: ClientProfile = {
+          const portalShare = await createClientPortalShare(clientId, payload);
+          const nextProfile: ClientProfile = {
             ...activeForm,
             data: {
               ...activeForm.data,
@@ -1025,18 +1016,18 @@ function removeInvoice(invoiceId: string) {
             }
           };
 
-          const updated = await updateClient(linkedClientId, nextForm);
-          const nextProfile = clientRecordToProfile(updated);
-          clearDraft(clientDraftKey(linkedClientId));
-          setClient(nextProfile);
-          setForm(nextProfile);
-          setMessage('Client portal updated and ready to share.');
+          const updated = await updateClient(clientId, nextProfile);
+          const next = clientRecordToProfile(updated);
+          clearDraft(clientDraftKey(clientId));
+          setClient(next);
+          setForm(next);
+          setEditing(false);
 
           try {
             await navigator.clipboard.writeText(portalShare.url);
-            setMessage('Client portal updated and copied to clipboard.');
+            setMessage('Client portal published and copied to the clipboard.');
           } catch {
-            setMessage(`Client portal updated: ${portalShare.url}`);
+            setMessage(`Client portal published: ${portalShare.url}`);
           }
         }
       );
@@ -1047,2109 +1038,733 @@ function removeInvoice(invoiceId: string) {
     }
   }
 
-  async function handleDeleteAuditRecord(audit: SupabaseRecord<AuditFormState>) {
-    const confirmed = window.confirm(
-      `Delete the audit "${audit.title}" from this client? This cannot be undone.`
-    );
-    if (!confirmed) return;
-
-    try {
-      setDeletingWorkKey(`audit:${audit.id}`);
-      await deleteAudit(audit.id);
-      setAudits((current) => current.filter((item) => item.id !== audit.id));
-      setMessage(`Deleted audit "${audit.title}".`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not delete audit.');
-    } finally {
-      setDeletingWorkKey(null);
+  function serviceQuoteWorkType(quote: ClientQuote): ClientWorkItem['itemType'] | null {
+    if (quote.serviceType === 'trainingMentoring') return 'training';
+    if (quote.serviceType === 'newOpenings') return 'newOpenings';
+    if (
+      quote.serviceType === 'kitchenLayout' ||
+      quote.serviceType === 'procurementSupport' ||
+      quote.serviceType === 'recruitmentSupport'
+    ) {
+      return 'other';
     }
+
+    return null;
   }
 
-  async function handleDeleteMenuRecord(menu: SupabaseRecord<MenuProjectState>) {
-    const confirmed = window.confirm(
-      `Delete the menu project "${menu.title}" from this client? This cannot be undone.`
+  const workItems = useMemo<ClientWorkItem[]>(() => {
+    const archivedIds = new Set(activeForm.data.archivedWorkItemIds);
+
+    const operationalItems = audits.map((audit) => ({
+      id: `audit:${audit.id}`,
+      itemType: 'operationalAudit' as const,
+      label: 'Operational audit',
+      title: audit.title,
+      site: workstreamSiteLabel(audit, siteNameById),
+      status: 'Live',
+      createdAt: audit.created_at,
+      updatedAt: audit.updated_at,
+      portalVisible: !activeForm.data.portal.hiddenAuditIds.includes(audit.id),
+      valueLabel: 'Not priced here',
+      archived: archivedIds.has(`audit:${audit.id}`),
+      openPath: `/audit?client=${clientId}&load=${audit.id}`
+    }));
+
+    const foodSafetyItems = foodSafetyAudits.map((audit) => ({
+      id: `food-safety:${audit.id}`,
+      itemType: 'foodSafety' as const,
+      label: 'Food safety',
+      title: audit.title,
+      site: audit.siteName || 'Linked site',
+      status: 'Live',
+      createdAt: audit.createdAt,
+      updatedAt: audit.updatedAt,
+      portalVisible: !activeForm.data.portal.hiddenFoodSafetyIds.includes(audit.id),
+      valueLabel: 'Not priced here',
+      archived: archivedIds.has(`food-safety:${audit.id}`),
+      openPath: `/food-safety?client=${clientId}&load=${audit.id}`
+    }));
+
+    const mysteryItems = mysteryShopAudits.map((audit) => ({
+      id: `mystery-shop:${audit.id}`,
+      itemType: 'mysteryShop' as const,
+      label: 'Mystery shop',
+      title: audit.title,
+      site: audit.siteName || 'Linked site',
+      status: 'Live',
+      createdAt: audit.createdAt,
+      updatedAt: audit.updatedAt,
+      portalVisible: !activeForm.data.portal.hiddenMysteryShopIds.includes(audit.id),
+      valueLabel: 'Not priced here',
+      archived: archivedIds.has(`mystery-shop:${audit.id}`),
+      openPath: `/mystery-shop?client=${clientId}&load=${audit.id}`
+    }));
+
+    const menuItems = menus.map((menu) => ({
+      id: `menu:${menu.id}`,
+      itemType: 'menuProject' as const,
+      label: 'Menu project',
+      title: menu.title,
+      site: workstreamSiteLabel(menu, siteNameById),
+      status: 'Live',
+      createdAt: menu.created_at,
+      updatedAt: menu.updated_at,
+      portalVisible: !activeForm.data.portal.hiddenMenuIds.includes(menu.id),
+      valueLabel: 'Not priced here',
+      archived: archivedIds.has(`menu:${menu.id}`),
+      openPath: `/menu?client=${clientId}&load=${menu.id}`
+    }));
+
+    const serviceQuoteItems = activeForm.data.quotes.reduce<ClientWorkItem[]>((items, quote) => {
+      const itemType = serviceQuoteWorkType(quote);
+      if (!itemType) return items;
+
+      items.push({
+        id: `quote:${quote.quoteId}`,
+        itemType,
+        label: 'Service job',
+        title: quote.quoteTitle,
+        site: quote.location || 'Account level',
+        status: quote.status,
+        createdAt: quote.createdAt,
+        updatedAt: quote.updatedAt,
+        portalVisible: !activeForm.data.portal.hiddenQuoteIds.includes(quote.quoteId),
+        valueLabel: quote.calculation.finalPriceHidden
+          ? 'Custom quote'
+          : fmtCurrency(quote.calculation.totalWithTax || quote.calculation.finalTotal),
+        value: quote.calculation.totalWithTax || quote.calculation.finalTotal,
+        archived: Boolean(quote.archivedAt),
+        openPath: `/clients/${clientId}/pricing`
+      });
+
+      return items;
+    }, []);
+
+    return [
+      ...operationalItems,
+      ...foodSafetyItems,
+      ...mysteryItems,
+      ...menuItems,
+      ...serviceQuoteItems
+    ].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  }, [
+    activeForm.data.archivedWorkItemIds,
+    activeForm.data.portal.hiddenAuditIds,
+    activeForm.data.portal.hiddenFoodSafetyIds,
+    activeForm.data.portal.hiddenMenuIds,
+    activeForm.data.portal.hiddenMysteryShopIds,
+    activeForm.data.portal.hiddenQuoteIds,
+    activeForm.data.quotes,
+    audits,
+    clientId,
+    foodSafetyAudits,
+    menus,
+    mysteryShopAudits,
+    siteNameById
+  ]);
+
+  const sharedItems = useMemo<ClientPortalSharedItem[]>(() => {
+    return [
+      ...audits.map((audit) => ({
+        id: `audit:${audit.id}`,
+        title: audit.title,
+        typeLabel: 'Operational audit',
+        visible: !activeForm.data.portal.hiddenAuditIds.includes(audit.id),
+        releaseDate: formatShortDate(audit.review_date || audit.updated_at)
+      })),
+      ...foodSafetyAudits.map((audit) => ({
+        id: `food-safety:${audit.id}`,
+        title: audit.title,
+        typeLabel: 'Food safety',
+        visible: !activeForm.data.portal.hiddenFoodSafetyIds.includes(audit.id),
+        releaseDate: formatShortDate(audit.reviewDate || audit.updatedAt)
+      })),
+      ...mysteryShopAudits.map((audit) => ({
+        id: `mystery-shop:${audit.id}`,
+        title: audit.title,
+        typeLabel: 'Mystery shop',
+        visible: !activeForm.data.portal.hiddenMysteryShopIds.includes(audit.id),
+        releaseDate: formatShortDate(audit.reviewDate || audit.updatedAt)
+      })),
+      ...menus.map((menu) => ({
+        id: `menu:${menu.id}`,
+        title: menu.title,
+        typeLabel: 'Menu project',
+        visible: !activeForm.data.portal.hiddenMenuIds.includes(menu.id),
+        releaseDate: formatShortDate(menu.review_date || menu.updated_at)
+      })),
+      ...activeForm.data.quotes.map((quote) => ({
+        id: `quote:${quote.quoteId}`,
+        title: quote.quoteTitle,
+        typeLabel: 'Quote',
+        visible: !activeForm.data.portal.hiddenQuoteIds.includes(quote.quoteId),
+        releaseDate: formatShortDate(quote.updatedAt)
+      })),
+      ...activeForm.data.invoices.map((invoice) => ({
+        id: `invoice:${invoice.id}`,
+        title: invoice.title || invoice.number,
+        typeLabel: 'Invoice',
+        visible: !activeForm.data.portal.hiddenInvoiceIds.includes(invoice.id),
+        releaseDate: formatShortDate(invoice.issueDate)
+      }))
+    ].sort((left, right) => right.releaseDate.localeCompare(left.releaseDate));
+  }, [
+    activeForm.data.invoices,
+    activeForm.data.portal.hiddenAuditIds,
+    activeForm.data.portal.hiddenFoodSafetyIds,
+    activeForm.data.portal.hiddenInvoiceIds,
+    activeForm.data.portal.hiddenMenuIds,
+    activeForm.data.portal.hiddenMysteryShopIds,
+    activeForm.data.portal.hiddenQuoteIds,
+    activeForm.data.quotes,
+    audits,
+    foodSafetyAudits,
+    menus,
+    mysteryShopAudits
+  ]);
+
+  const portalCategoryControls = useMemo<ClientPortalCategoryControl[]>(
+    () => [
+      {
+        key: 'audits',
+        label: 'Audits visible',
+        description: 'Operational audits released to the portal.',
+        enabled: activeForm.data.portal.hiddenAuditIds.length < audits.length,
+        count: audits.length
+      },
+      {
+        key: 'foodSafety',
+        label: 'Food safety visible',
+        description: 'Food safety audits released to the portal.',
+        enabled: activeForm.data.portal.hiddenFoodSafetyIds.length < foodSafetyAudits.length,
+        count: foodSafetyAudits.length
+      },
+      {
+        key: 'mysteryShops',
+        label: 'Mystery shops visible',
+        description: 'Mystery visit reports available to the client.',
+        enabled: activeForm.data.portal.hiddenMysteryShopIds.length < mysteryShopAudits.length,
+        count: mysteryShopAudits.length
+      },
+      {
+        key: 'menuProjects',
+        label: 'Menu projects visible',
+        description: 'Menu rebuild work and menu deliverables.',
+        enabled: activeForm.data.portal.hiddenMenuIds.length < menus.length,
+        count: menus.length
+      },
+      {
+        key: 'quotes',
+        label: 'Quotes visible',
+        description: 'Saved quotes included in the client-facing view.',
+        enabled: activeForm.data.portal.hiddenQuoteIds.length < activeForm.data.quotes.length,
+        count: activeForm.data.quotes.length
+      },
+      {
+        key: 'invoices',
+        label: 'Invoices visible',
+        description: 'Invoice records included in the portal.',
+        enabled: activeForm.data.portal.hiddenInvoiceIds.length < activeForm.data.invoices.length,
+        count: activeForm.data.invoices.length
+      },
+      {
+        key: 'reports',
+        label: 'Reports visible',
+        description: 'Future report releases can be controlled from here.',
+        enabled: activeForm.data.portal.showReports
+      },
+      {
+        key: 'actionPlans',
+        label: 'Action plans visible',
+        description: 'Future action plan releases can be controlled from here.',
+        enabled: activeForm.data.portal.showActionPlans
+      }
+    ],
+    [
+      activeForm.data.invoices.length,
+      activeForm.data.portal.hiddenAuditIds.length,
+      activeForm.data.portal.hiddenFoodSafetyIds.length,
+      activeForm.data.portal.hiddenInvoiceIds.length,
+      activeForm.data.portal.hiddenMenuIds.length,
+      activeForm.data.portal.hiddenMysteryShopIds.length,
+      activeForm.data.portal.hiddenQuoteIds.length,
+      activeForm.data.portal.showActionPlans,
+      activeForm.data.portal.showReports,
+      activeForm.data.quotes.length,
+      audits.length,
+      foodSafetyAudits.length,
+      menus.length,
+      mysteryShopAudits.length
+    ]
+  );
+
+  async function refreshServiceLists() {
+    const [auditRows, menuRows] = await Promise.all([listAudits(clientId), listMenuProjects(clientId)]);
+    setAudits(auditRows);
+    setMenus(menuRows);
+    setFoodSafetyAudits(
+      listLocalToolRecordsForClient<FoodSafetyAuditState>(FOOD_SAFETY_STORAGE_KEY, clientId)
     );
-    if (!confirmed) return;
-
-    try {
-      setDeletingWorkKey(`menu:${menu.id}`);
-      await deleteMenuProject(menu.id);
-      setMenus((current) => current.filter((item) => item.id !== menu.id));
-      setMessage(`Deleted menu project "${menu.title}".`);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not delete menu project.');
-    } finally {
-      setDeletingWorkKey(null);
-    }
-  }
-
-  function renderLinkedWorkPanels() {
-    return (
-      <>
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Client portal</h3>
-              <p className="muted-copy">
-                Create a dedicated client link with released reports, action plans, and payment-based access control.
-              </p>
-            </div>
-            <div className="saved-actions">
-              <span className="soft-pill">
-                {activeForm.data.portal.enabled ? 'Enabled' : 'Hidden'}
-              </span>
-              <button
-                className="button button-primary"
-                disabled={publishingPortal || !activeForm.data.portal.enabled}
-                onClick={handlePublishPortal}
-              >
-                {publishingPortal ? 'Publishing...' : 'Publish portal'}
-              </button>
-            </div>
-          </div>
-          <div className="panel-body stack gap-12">
-            <div className="form-grid two-columns">
-              <label className="field">
-                <span>Portal enabled</span>
-                <select
-                  className="input"
-                  value={activeForm.data.portal.enabled ? 'enabled' : 'disabled'}
-                  onChange={(event) => updatePortal('enabled', event.target.value === 'enabled')}
-                  disabled={!editing}
-                >
-                  <option value="enabled">Enabled</option>
-                  <option value="disabled">Disabled</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Release rule</span>
-                <select
-                  className="input"
-                  value={activeForm.data.portal.visibilityMode}
-                  onChange={(event) =>
-                    updatePortal(
-                      'visibilityMode',
-                      event.target.value as ClientPortalSettings['visibilityMode']
-                    )
-                  }
-                  disabled={!editing}
-                >
-                  <option value="all">Show linked work immediately</option>
-                  <option value="paid_only">Hide linked work until invoices are paid</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Portal headline</span>
-              <input
-                className="input"
-                value={activeForm.data.portal.welcomeTitle}
-                onChange={(event) => updatePortal('welcomeTitle', event.target.value)}
-                disabled={!editing}
-              />
-            </label>
-
-            <label className="field">
-              <span>Welcome message</span>
-              <textarea
-                className="input textarea"
-                value={activeForm.data.portal.welcomeMessage}
-                onChange={(event) => updatePortal('welcomeMessage', event.target.value)}
-                disabled={!editing}
-              />
-            </label>
-
-            <label className="field">
-              <span>Portal note</span>
-              <textarea
-                className="input textarea"
-                value={activeForm.data.portal.portalNote}
-                onChange={(event) => updatePortal('portalNote', event.target.value)}
-                disabled={!editing}
-              />
-            </label>
-
-            <div className="mini-grid">
-              <div className="mini-box">
-                <span>Portal link</span>
-                <strong>{portalLink ? 'Ready' : 'Not published yet'}</strong>
-              </div>
-              <div className="mini-box">
-                <span>Release mode</span>
-                <strong>
-                  {activeForm.data.portal.visibilityMode === 'paid_only'
-                    ? 'Paid unlock'
-                    : 'Immediate release'}
-                </strong>
-              </div>
-              <div className="mini-box">
-                <span>Invoice state</span>
-                <strong>
-                  {portalHasOutstandingInvoices ? 'Outstanding balance' : 'Clear to release'}
-                </strong>
-              </div>
-              <div className="mini-box">
-                <span>Linked forms</span>
-                <strong>{portalResourceCount}</strong>
-              </div>
-            </div>
-
-            {portalLink ? (
-              <div className="share-link-row">
-                <input
-                  className="input"
-                  readOnly
-                  value={portalLink}
-                  onFocus={(event) => event.currentTarget.select()}
-                />
-                <button
-                  className="button button-secondary"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(portalLink);
-                      setMessage('Client portal link copied to clipboard.');
-                    } catch {
-                      setMessage(`Client portal link: ${portalLink}`);
-                    }
-                  }}
-                >
-                  Copy
-                </button>
-                <a className="button button-ghost" href={portalLink} target="_blank" rel="noreferrer">
-                  Open
-                </a>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Linked audits</h3>
-              <p className="muted-copy">
-                Operational reviews already connected to this account.
-              </p>
-            </div>
-            <div className="saved-actions">
-              <span className="soft-pill">{audits.length}</span>
-              <Link className="button button-secondary" to={`/audit?client=${linkedClientId}`}>
-                New audit
-              </Link>
-            </div>
-          </div>
-          <div className="panel-body stack gap-12">
-            {audits.length === 0 ? <div className="muted-copy">No audits yet.</div> : null}
-            {audits.map((audit) => {
-              const deleteKey = `audit:${audit.id}`;
-
-              return (
-                <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
-                  <div className="workstream-item-main">
-                    <strong>{audit.title}</strong>
-                    <div className="saved-meta">{workstreamSiteLabel(audit)}</div>
-                    <div className="workstream-meta-row">
-                      <span>Review {formatShortDate(audit.review_date || audit.updated_at)}</span>
-                      <span>Last updated {formatShortDate(audit.updated_at)}</span>
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    {editing ? (
-                      <label className="field" style={{ minWidth: 148 }}>
-                        <span>Portal</span>
-                        <select
-                          className="input"
-                          value={activeForm.data.portal.hiddenAuditIds.includes(audit.id) ? 'hidden' : 'visible'}
-                          onChange={(event) =>
-                            togglePortalAudit(audit.id, event.target.value === 'visible')
-                          }
-                        >
-                          <option value="visible">Visible in portal</option>
-                          <option value="hidden">Hidden in portal</option>
-                        </select>
-                      </label>
-                    ) : null}
-                    <Link
-                      className="button button-ghost"
-                      to={`/audit?client=${linkedClientId}&load=${audit.id}`}
-                    >
-                      Open
-                    </Link>
-                    <button
-                      className="button button-ghost danger-text"
-                      disabled={deletingWorkKey === deleteKey}
-                      onClick={() => handleDeleteAuditRecord(audit)}
-                    >
-                      {deletingWorkKey === deleteKey ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Linked food safety audits</h3>
-              <p className="muted-copy">
-                Compliance reviews stored against this client and ready for portal release.
-              </p>
-            </div>
-            <div className="saved-actions">
-              <span className="soft-pill">{foodSafetyAudits.length}</span>
-              <Link className="button button-secondary" to={`/food-safety?client=${linkedClientId}`}>
-                New food safety
-              </Link>
-            </div>
-          </div>
-          <div className="panel-body stack gap-12">
-            {foodSafetyAudits.length === 0 ? (
-              <div className="muted-copy">No food safety audits yet.</div>
-            ) : null}
-            {foodSafetyAudits.map((audit) => (
-              <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
-                <div className="workstream-item-main">
-                  <strong>{audit.title}</strong>
-                  <div className="saved-meta">{audit.siteName || 'Linked site'}</div>
-                  <div className="workstream-meta-row">
-                    <span>Review {formatShortDate(audit.reviewDate || audit.updatedAt)}</span>
-                    <span>Last updated {formatShortDate(audit.updatedAt)}</span>
-                  </div>
-                </div>
-                <div className="saved-actions">
-                  {editing ? (
-                    <label className="field" style={{ minWidth: 148 }}>
-                      <span>Portal</span>
-                      <select
-                        className="input"
-                        value={
-                          activeForm.data.portal.hiddenFoodSafetyIds.includes(audit.id)
-                            ? 'hidden'
-                            : 'visible'
-                        }
-                        onChange={(event) =>
-                          togglePortalFoodSafety(audit.id, event.target.value === 'visible')
-                        }
-                      >
-                        <option value="visible">Visible in portal</option>
-                        <option value="hidden">Hidden in portal</option>
-                      </select>
-                    </label>
-                  ) : null}
-                  <Link
-                    className="button button-ghost"
-                    to={`/food-safety?client=${linkedClientId}&load=${audit.id}`}
-                  >
-                    Open
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Linked mystery shop audits</h3>
-              <p className="muted-copy">
-                Guest-experience reviews already attached to this client record.
-              </p>
-            </div>
-            <div className="saved-actions">
-              <span className="soft-pill">{mysteryShopAudits.length}</span>
-              <Link className="button button-secondary" to={`/mystery-shop?client=${linkedClientId}`}>
-                New mystery shop
-              </Link>
-            </div>
-          </div>
-          <div className="panel-body stack gap-12">
-            {mysteryShopAudits.length === 0 ? (
-              <div className="muted-copy">No mystery shop audits yet.</div>
-            ) : null}
-            {mysteryShopAudits.map((audit) => (
-              <div className="saved-item saved-item-rich workstream-item" key={audit.id}>
-                <div className="workstream-item-main">
-                  <strong>{audit.title}</strong>
-                  <div className="saved-meta">{audit.siteName || 'Linked site'}</div>
-                  <div className="workstream-meta-row">
-                    <span>Review {formatShortDate(audit.reviewDate || audit.updatedAt)}</span>
-                    <span>Last updated {formatShortDate(audit.updatedAt)}</span>
-                  </div>
-                </div>
-                <div className="saved-actions">
-                  {editing ? (
-                    <label className="field" style={{ minWidth: 148 }}>
-                      <span>Portal</span>
-                      <select
-                        className="input"
-                        value={
-                          activeForm.data.portal.hiddenMysteryShopIds.includes(audit.id)
-                            ? 'hidden'
-                            : 'visible'
-                        }
-                        onChange={(event) =>
-                          togglePortalMysteryShop(audit.id, event.target.value === 'visible')
-                        }
-                      >
-                        <option value="visible">Visible in portal</option>
-                        <option value="hidden">Hidden in portal</option>
-                      </select>
-                    </label>
-                  ) : null}
-                  <Link
-                    className="button button-ghost"
-                    to={`/mystery-shop?client=${linkedClientId}&load=${audit.id}`}
-                  >
-                    Open
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Linked menu projects</h3>
-              <p className="muted-copy">
-                Commercial menu work already attached to this business record.
-              </p>
-            </div>
-            <div className="saved-actions">
-              <span className="soft-pill">{menus.length}</span>
-              <Link className="button button-secondary" to={`/menu?client=${linkedClientId}`}>
-                New menu
-              </Link>
-            </div>
-          </div>
-          <div className="panel-body stack gap-12">
-            {menus.length === 0 ? <div className="muted-copy">No menu projects yet.</div> : null}
-            {menus.map((menu) => {
-              const deleteKey = `menu:${menu.id}`;
-
-              return (
-                <div className="saved-item saved-item-rich workstream-item" key={menu.id}>
-                  <div className="workstream-item-main">
-                    <strong>{menu.title}</strong>
-                    <div className="saved-meta">{workstreamSiteLabel(menu)}</div>
-                    <div className="workstream-meta-row">
-                      <span>Review {formatShortDate(menu.review_date || menu.updated_at)}</span>
-                      <span>Last updated {formatShortDate(menu.updated_at)}</span>
-                    </div>
-                  </div>
-                  <div className="saved-actions">
-                    {editing ? (
-                      <label className="field" style={{ minWidth: 148 }}>
-                        <span>Portal</span>
-                        <select
-                          className="input"
-                          value={activeForm.data.portal.hiddenMenuIds.includes(menu.id) ? 'hidden' : 'visible'}
-                          onChange={(event) =>
-                            togglePortalMenu(menu.id, event.target.value === 'visible')
-                          }
-                        >
-                          <option value="visible">Visible in portal</option>
-                          <option value="hidden">Hidden in portal</option>
-                        </select>
-                      </label>
-                    ) : null}
-                    <Link
-                      className="button button-ghost"
-                      to={`/menu?client=${linkedClientId}&load=${menu.id}`}
-                    >
-                      Open
-                    </Link>
-                    <button
-                      className="button button-ghost danger-text"
-                      disabled={deletingWorkKey === deleteKey}
-                      onClick={() => handleDeleteMenuRecord(menu)}
-                    >
-                      {deletingWorkKey === deleteKey ? 'Deleting...' : 'Delete'}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </>
+    setMysteryShopAudits(
+      listLocalToolRecordsForClient<MysteryShopAuditState>(MYSTERY_SHOP_STORAGE_KEY, clientId)
     );
   }
 
-  const sectionCards: Array<{
-    key: ClientSectionKey;
-    label: string;
-    description: string;
-    value: string;
-    meta: string;
-  }> = [
-    {
-      key: 'profile',
-      label: 'Profile and business record',
-      description: 'Business finder, account basics, and the primary relationship details.',
-      value: form.status || 'Active',
-      meta: form.data.accountScope
-    },
-    {
-      key: 'contacts',
-      label: 'Contact information',
-      description: 'Decision-makers, operators, finance contacts, and the day-to-day relationship list.',
-      value: `${stats.contacts} contact${stats.contacts === 1 ? '' : 's'}`,
-      meta: primaryContact?.name || form.contactName || 'No primary contact'
-    },
-    {
-      key: 'sites',
-      label: 'Locations and sites',
-      description: 'Single-site and multi-site venue records kept separate from the core account.',
-      value: `${Math.max(stats.sites, form.data.siteCountEstimate || 0)} site${Math.max(stats.sites, form.data.siteCountEstimate || 0) === 1 ? '' : 's'}`,
-      meta: form.location || 'No location set'
-    },
-    {
-      key: 'commercial',
-      label: 'Commercial and billing',
-      description: 'Billing controls, pipeline, invoice drafts, and commercial account ownership.',
-      value: fmtCurrency(outstandingInvoiceValue),
-      meta: `${stats.invoicesOpen} open invoice${stats.invoicesOpen === 1 ? '' : 's'}`
-    },
-    {
-      key: 'strategy',
-      label: 'Account strategy',
-      description: 'Goals, risks, opportunities, and internal notes for client planning.',
-      value: `${form.data.relationshipHealth}`,
-      meta: `${form.data.goals.length} goals / ${form.data.opportunities.length} opportunities`
-    },
-    {
-      key: 'activity',
-      label: 'Activity and follow-up',
-      description: 'Timeline updates, open tasks, linked audits, and linked menu reviews.',
-      value: `${stats.tasksOpen} open task${stats.tasksOpen === 1 ? '' : 's'}`,
-      meta: `${linkedWorkstreams} linked workstream${linkedWorkstreams === 1 ? '' : 's'}`
-    }
-  ];
-  const activeSectionCard = activeSection
-    ? sectionCards.find((item) => item.key === activeSection) ?? null
-    : null;
-  const sectionSummaryLabel = activeSectionCard?.label ?? 'CRM hub';
-  const prioritySummary = [
-    {
-      label: 'Relationship',
-      value: form.data.relationshipHealth,
-      detail: primaryContact?.name || form.contactName || 'Primary contact not set'
-    },
-    {
-      label: 'Review',
-      value: reviewLabel(form.nextReviewDate),
-      detail: formatShortDate(form.nextReviewDate)
-    },
-    {
-      label: 'Outstanding',
-      value: fmtCurrency(outstandingInvoiceValue),
-      detail: `${stats.invoicesOpen} open invoice${stats.invoicesOpen === 1 ? '' : 's'}`
-    },
-    {
-      label: 'Linked work',
-      value: `${linkedWorkstreams}`,
-      detail: `${audits.length} audits and ${menus.length} menu projects`
-    }
-  ];
-
-  function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      updateField('logoUrl', dataUrl);
+  async function handleDuplicateQuote(quote: ClientQuote) {
+    const now = new Date().toISOString();
+    const nextQuote: ClientQuote = {
+      ...quote,
+      quoteId: uid('quote'),
+      quoteTitle: `${quote.quoteTitle} copy`,
+      createdAt: now,
+      updatedAt: now,
+      status: 'draft',
+      linkedInvoiceId: null,
+      archivedAt: null,
+      lineItems: quote.lineItems.map(cloneQuoteLineItem),
+      renderedSummary: {
+        ...quote.renderedSummary,
+        generatedAt: now
+      },
+      calculation: {
+        ...quote.calculation,
+        generatedLineItems: quote.calculation.generatedLineItems.map(cloneQuoteLineItem),
+        manualLineItems: quote.calculation.manualLineItems.map(cloneQuoteLineItem),
+        addOns: quote.calculation.addOns.map(cloneQuoteLineItem),
+        finalLineItems: quote.calculation.finalLineItems.map(cloneQuoteLineItem)
+      },
+      history: [
+        createQuoteHistoryEntry(quote, currentUserName, 'Quote duplicated from an existing quote.')
+      ]
     };
-    reader.readAsDataURL(file);
+
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        quotes: [nextQuote, ...activeForm.data.quotes]
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: 'Quote duplicated.',
+        activity: {
+          kicker: 'Quotes',
+          title: 'Duplicating quote',
+          detail: 'Creating a fresh draft copy of the selected quote.'
+        }
+      });
+      navigate(`/clients/${clientId}/pricing`);
+      setExternalQuoteToEditId(nextQuote.quoteId);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not duplicate quote.');
+    }
+  }
+
+  async function handleArchiveQuote(quote: ClientQuote) {
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        quotes: activeForm.data.quotes.map((item) =>
+          item.quoteId === quote.quoteId
+            ? {
+                ...item,
+                archivedAt: item.archivedAt ? null : new Date().toISOString()
+              }
+            : item
+        )
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: quote.archivedAt ? 'Quote restored.' : 'Quote archived.',
+        activity: {
+          kicker: 'Quotes',
+          title: quote.archivedAt ? 'Restoring quote' : 'Archiving quote',
+          detail: 'Updating the saved quote status inside the client pricing tab.'
+        }
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not update quote.');
+    }
+  }
+
+  async function handleCreateInvoiceFromQuote(quote: ClientQuote) {
+    if (quote.linkedInvoiceId) {
+      setMessage('This quote is already linked to an invoice.');
+      navigate(`/clients/${clientId}/pricing`);
+      setSelectedInvoiceId(quote.linkedInvoiceId);
+      return;
+    }
+
+    const invoiceDraft = createInvoiceDraftFromQuote(activeForm, quote, activeForm.data.invoices.length);
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        quotes: activeForm.data.quotes.map((item) =>
+          item.quoteId === quote.quoteId
+            ? {
+                ...item,
+                status: 'invoiced',
+                linkedInvoiceId: invoiceDraft.id,
+                updatedAt: new Date().toISOString()
+              }
+            : item
+        ),
+        invoices: [invoiceDraft, ...activeForm.data.invoices]
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: `Invoice draft ${invoiceDraft.number} created from quote.`,
+        activity: {
+          kicker: 'Pricing',
+          title: 'Creating invoice draft',
+          detail: 'Pulling the quote line items into the client invoice section.'
+        }
+      });
+      navigate(`/clients/${clientId}/pricing`);
+      setSelectedInvoiceId(invoiceDraft.id);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create invoice draft.');
+    }
+  }
+
+  async function handleDuplicateInvoice(invoice: ClientInvoice) {
+    const nextInvoice: ClientInvoice = {
+      ...invoice,
+      id: uid('invoice'),
+      number: buildInvoiceNumber(activeForm.data.invoices.length),
+      issueDate: todayIso(),
+      status: 'Draft',
+      archivedAt: null,
+      lines: invoice.lines.map((line) => ({
+        ...line,
+        id: uid('invoice-line')
+      }))
+    };
+
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        invoices: [nextInvoice, ...activeForm.data.invoices]
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: 'Invoice duplicated.',
+        activity: {
+          kicker: 'Invoices',
+          title: 'Duplicating invoice',
+          detail: 'Creating a new draft copy of the selected invoice.'
+        }
+      });
+      navigate(`/clients/${clientId}/pricing`);
+      setSelectedInvoiceId(nextInvoice.id);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not duplicate invoice.');
+    }
+  }
+
+  async function handleMarkInvoicePaid(invoice: ClientInvoice) {
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        invoices: activeForm.data.invoices.map((item) =>
+          item.id === invoice.id ? { ...item, status: 'Paid' } : item
+        )
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: `${invoice.number} marked as paid.`,
+        activity: {
+          kicker: 'Invoices',
+          title: 'Updating payment status',
+          detail: 'Marking the selected invoice as paid in the client record.'
+        }
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not update invoice.');
+    }
+  }
+
+  function handleToggleQuotePortalVisibility(quoteId: string, visible: boolean) {
+    setEditing(true);
+    setPortalListVisibility('hiddenQuoteIds', [quoteId], visible);
+  }
+
+  function handleToggleInvoicePortalVisibility(invoiceId: string, visible: boolean) {
+    setEditing(true);
+    setPortalListVisibility('hiddenInvoiceIds', [invoiceId], visible);
+  }
+
+  function exportInvoicePdf(invoice: ClientInvoice) {
+    openPrintableHtmlDocument(`${invoice.number} invoice export`, buildInvoicePdfHtml(activeForm, invoice));
+  }
+
+  async function handleDuplicateWorkItem(item: ClientWorkItem) {
+    try {
+      if (item.id.startsWith('audit:')) {
+        const source = audits.find((audit) => `audit:${audit.id}` === item.id);
+        if (!source) return;
+
+        await saveAudit({
+          ...source.data,
+          id: undefined,
+          title: `${source.title} copy`
+        });
+      } else if (item.id.startsWith('menu:')) {
+        const source = menus.find((menu) => `menu:${menu.id}` === item.id);
+        if (!source) return;
+
+        await saveMenuProject({
+          ...source.data,
+          id: undefined,
+          menuName: `${source.title} copy`
+        });
+      } else if (item.id.startsWith('food-safety:')) {
+        const source = foodSafetyAudits.find((audit) => `food-safety:${audit.id}` === item.id);
+        if (!source) return;
+
+        saveLocalToolRecord(FOOD_SAFETY_STORAGE_KEY, {
+          id: uid('food-safety'),
+          title: `${source.title} copy`,
+          siteName: source.siteName,
+          location: source.location,
+          reviewDate: source.reviewDate,
+          data: {
+            ...source.data,
+            id: undefined,
+            title: `${source.title} copy`
+          }
+        });
+      } else if (item.id.startsWith('mystery-shop:')) {
+        const source = mysteryShopAudits.find((audit) => `mystery-shop:${audit.id}` === item.id);
+        if (!source) return;
+
+        saveLocalToolRecord(MYSTERY_SHOP_STORAGE_KEY, {
+          id: uid('mystery-shop'),
+          title: `${source.title} copy`,
+          siteName: source.siteName,
+          location: source.location,
+          reviewDate: source.reviewDate,
+          data: {
+            ...source.data,
+            id: undefined,
+            title: `${source.title} copy`
+          }
+        });
+      } else if (item.id.startsWith('quote:')) {
+        const quote = activeForm.data.quotes.find((entry) => `quote:${entry.quoteId}` === item.id);
+        if (quote) {
+          await handleDuplicateQuote(quote);
+          return;
+        }
+      }
+
+      await refreshServiceLists();
+      setMessage('Work item duplicated.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not duplicate work item.');
+    }
+  }
+
+  async function handleArchiveWorkItem(item: ClientWorkItem) {
+    if (item.id.startsWith('quote:')) {
+      const quote = activeForm.data.quotes.find((entry) => `quote:${entry.quoteId}` === item.id);
+      if (quote) {
+        await handleArchiveQuote(quote);
+      }
+      return;
+    }
+
+    const archived = new Set(activeForm.data.archivedWorkItemIds);
+    if (archived.has(item.id)) archived.delete(item.id);
+    else archived.add(item.id);
+
+    const nextProfile: ClientProfile = {
+      ...activeForm,
+      data: {
+        ...activeForm.data,
+        archivedWorkItemIds: [...archived]
+      }
+    };
+
+    try {
+      await persistClientProfile(nextProfile, {
+        successMessage: item.archived ? 'Work item restored.' : 'Work item archived.',
+        activity: {
+          kicker: 'Work & services',
+          title: item.archived ? 'Restoring work item' : 'Archiving work item',
+          detail: 'Updating the work list without removing the original record.'
+        }
+      });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not update work item.');
+    }
+  }
+
+  async function handleToggleWorkItemPortalVisibility(item: ClientWorkItem, visible: boolean) {
+    setEditing(true);
+    handleToggleSharedItem(item.id, visible);
+    setMessage('Portal visibility updated. Save changes to keep it.');
+  }
+
+  function handleLinkWorkItemToInvoice(item: ClientWorkItem) {
+    if (item.id.startsWith('quote:')) {
+      const quote = activeForm.data.quotes.find((entry) => `quote:${entry.quoteId}` === item.id);
+      if (quote) {
+        void handleCreateInvoiceFromQuote(quote);
+      }
+      return;
+    }
+
+    handleRequestNewInvoice(
+      {
+        description: `${item.label} - ${item.title}`,
+        quantity: 1,
+        unitPrice: item.value ?? 0
+      },
+      item.title
+    );
   }
 
   return (
-    <div className="page-stack">
-      <section className="client-profile-banner">
-        <div className="client-banner-inner">
-          <div className="client-banner-left">
-            <div className="client-avatar-container">
-              <label className="client-avatar-label" htmlFor="client-avatar-upload">
-                {form.logoUrl ? (
-                  <img src={form.logoUrl} alt={form.companyName} className="client-avatar-image" />
-                ) : (
-                  <div className="client-avatar-fallback">
-                    {safe(form.companyName).slice(0, 2).toUpperCase() || 'CL'}
-                  </div>
-                )}
-                <div className="client-avatar-overlay">
-                  <span>📷 Change photo</span>
-                </div>
-              </label>
-              <input
-                id="client-avatar-upload"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleAvatarUpload}
-              />
-            </div>
-            
-            <div className="client-banner-info">
-              <div className="client-banner-badges">
-                <span className="status-badge status-primary">{form.status}</span>
-                <span className="status-badge status-secondary">{form.data.accountScope}</span>
-                <span className="status-badge status-muted">{sectionSummaryLabel}</span>
-              </div>
-              
-              <h1 className="client-banner-title">{form.companyName}</h1>
-              <p className="client-banner-subtitle">
-                {form.industry || 'Industry not set'} • {form.location || 'Location not set'} • {form.tier || 'Standard'}
-              </p>
-              
-              {form.tags.length ? (
-                <div className="client-banner-tags">
-                  {form.tags.map((tag) => (
-                    <span className="client-tag" key={tag}>{tag}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-          
-          <div className="client-banner-actions">
-            <Link className="button button-secondary" to="/clients">← Client list</Link>
-            {activeSection && (
-              <Link className="button button-secondary" to={`/clients/${client.id}`}>← CRM hub</Link>
-            )}
-            <button 
-              className={editing ? 'button button-warning' : 'button button-secondary'} 
-              onClick={() => setEditing(v => !v)}
-            >
-              {editing ? '✕ Cancel edit' : '✏️ Edit client'}
-            </button>
-            <button 
-              className="button button-primary" 
-              disabled={!editing || saving} 
-              onClick={handleSave}
-            >
-              {saving ? '⏳ Saving...' : '💾 Save changes'}
-            </button>
-          </div>
-        </div>
-        
-        <div className="client-banner-stats">
-          {prioritySummary.map((stat, i) => (
-            <div className="client-stat-card" key={i}>
-              <span className="client-stat-label">{stat.label}</span>
-              <strong className="client-stat-value">{stat.value}</strong>
-              <span className="client-stat-detail">{stat.detail}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+    <main className="client-profile-page-simplified">
+      <div className="client-profile-shell">
+        <ClientProfileHeader
+          client={activeForm}
+          mainContact={mainContact?.name || activeForm.contactName || 'No main contact set'}
+          siteCount={siteCount}
+          outstandingBalance={fmtCurrency(outstandingBalance)}
+          lastReviewDate={formatShortDate(activeForm.nextReviewDate)}
+          editing={editing}
+          saving={saving}
+          onToggleEditing={toggleEditing}
+          onSave={handleSave}
+          onNewQuote={handleRequestNewQuote}
+          onNewInvoice={() => handleRequestNewInvoice()}
+          onNewAudit={() => navigate(`/audit?client=${clientId}`)}
+          onOpenPortal={handleOpenPortal}
+        />
 
-      <div className="record-header-message">
+        <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
         <div className="page-inline-note">{message}</div>
-        <div className="page-inline-note">Editing: {editing ? 'Enabled' : 'Locked'}</div>
+
+        {activeTab === 'information' ? (
+          <ClientInformationTab
+            client={activeForm}
+            editing={editing}
+            lookupQuery={lookupQuery}
+            lookupScope={lookupScope}
+            lookupLoading={lookupLoading}
+            lookupMessage={lookupMessage}
+            lookupSelectionId={lookupSelectionId}
+            visibleLookupResults={visibleLookupResults}
+            isLookupFallbackVisible={visibleLookupResults.length > 0 && lookupScope !== 'all'}
+            onLookupQueryChange={setLookupQuery}
+            onLookupScopeChange={setLookupScope}
+            onRunBusinessLookup={handleBusinessLookup}
+            onUseLookup={handleUseLookup}
+            updateField={updateField}
+            updateData={updateData}
+            updateContact={updateContact}
+            addContact={addContact}
+            removeContact={removeContact}
+            updateSite={updateSite}
+            addSite={addSite}
+            removeSite={removeSite}
+          />
+        ) : null}
+
+        {activeTab === 'services' ? (
+          <ClientWorkTab
+            workItems={workItems}
+            onDuplicate={handleDuplicateWorkItem}
+            onArchiveToggle={handleArchiveWorkItem}
+            onTogglePortalVisibility={handleToggleWorkItemPortalVisibility}
+            onLinkToInvoice={handleLinkWorkItemToInvoice}
+            onNewServiceJob={handleRequestNewQuote}
+          />
+        ) : null}
+
+        {activeTab === 'portal' ? (
+          <ClientPortalTab
+            portal={activeForm.data.portal}
+            editing={editing}
+            portalLink={portalLink}
+            publishing={publishingPortal}
+            categoryControls={portalCategoryControls}
+            sharedItems={sharedItems}
+            onToggleEnabled={(enabled) => {
+              setEditing(true);
+              updatePortalField('enabled', enabled);
+            }}
+            onUpdateTextField={(key, value) => {
+              setEditing(true);
+              updatePortalField(key, value);
+            }}
+            onToggleCategory={handleTogglePortalCategory}
+            onToggleSharedItem={handleToggleSharedItem}
+            onPublish={handlePublishPortal}
+            onCopyLink={async () => {
+              if (!portalLink) {
+                setMessage('Publish the portal first to generate a link.');
+                return;
+              }
+
+              try {
+                await navigator.clipboard.writeText(portalLink);
+                setMessage('Client portal link copied to clipboard.');
+              } catch {
+                setMessage(portalLink);
+              }
+            }}
+            onOpenPortal={handleOpenPortal}
+          />
+        ) : null}
+
+        {activeTab === 'pricing' ? (
+          <ClientPricingTab
+            client={activeForm}
+            editing={editing}
+            currentUserName={currentUserName}
+            selectedInvoiceId={selectedInvoiceId}
+            requestNewQuoteToken={requestNewQuoteToken}
+            externalQuoteToEditId={externalQuoteToEditId}
+            onPersistClientProfile={persistClientProfile}
+            onRequestNewQuote={handleRequestNewQuote}
+            onRequestNewInvoice={() => handleRequestNewInvoice()}
+            onEditQuote={(quoteId) => {
+              setExternalQuoteToEditId(quoteId);
+              setRequestNewQuoteToken(0);
+            }}
+            onDuplicateQuote={handleDuplicateQuote}
+            onArchiveQuote={handleArchiveQuote}
+            onCreateInvoiceFromQuote={handleCreateInvoiceFromQuote}
+            onToggleQuotePortalVisibility={handleToggleQuotePortalVisibility}
+            onSelectInvoice={setSelectedInvoiceId}
+            onUpdateInvoiceField={updateInvoiceField}
+            onUpdateInvoiceLine={updateInvoiceLine}
+            onAddInvoiceLine={addInvoiceLine}
+            onRemoveInvoiceLine={removeInvoiceLine}
+            onDuplicateInvoice={handleDuplicateInvoice}
+            onMarkInvoicePaid={handleMarkInvoicePaid}
+            onToggleInvoicePortalVisibility={handleToggleInvoicePortalVisibility}
+            onExportInvoicePdf={exportInvoicePdf}
+          />
+        ) : null}
       </div>
-
-      <nav className="client-section-nav" aria-label="Client CRM sections">
-        <Link
-          className={`client-section-link ${activeSection === null ? 'active' : ''}`}
-          to={`/clients/${client.id}`}
-        >
-          CRM hub
-        </Link>
-        {sectionCards.map((item) => (
-          <Link
-            key={item.key}
-            className={`client-section-link ${activeSection === item.key ? 'active' : ''}`}
-            to={`/clients/${client.id}/${item.key}`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      <section className="stats-grid">
-        <StatCard label="Contacts" value={String(stats.contacts)} hint="Key people" />
-        <StatCard
-          label="Sites"
-          value={String(Math.max(stats.sites, form.data.siteCountEstimate || 0))}
-          hint="Locations and venues"
-        />
-        <StatCard label="Open tasks" value={String(stats.tasksOpen)} hint="Follow-up actions" />
-        <StatCard
-          label="Open deals"
-          value={String(stats.deals)}
-          hint="Pipeline opportunities in play"
-        />
-      </section>
-
-      {activeSection === null ? (
-        <section className="section-stack">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>CRM sections</h3>
-                <p className="muted-copy">
-                  Use the client hub as the control point, then open the exact CRM area you need.
-                </p>
-              </div>
-            </div>
-            <div className="panel-body">
-              <div className="card-grid two-columns client-hub-grid">
-                {sectionCards.map((item) => (
-                  <article className="feature-card client-hub-card" key={item.key}>
-                    <div className="feature-top">
-                      <div>
-                        <h3>{item.label}</h3>
-                        <p>{item.description}</p>
-                      </div>
-                      <span className="soft-pill">{item.value}</span>
-                    </div>
-                    <div className="client-hub-meta">
-                      <span>{item.meta}</span>
-                    </div>
-                    <div className="header-actions">
-                      <Link className="button button-primary" to={`/clients/${client.id}/${item.key}`}>
-                        Open section
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <section className="workspace-grid client-workspace">
-            <div className="workspace-main section-stack">
-              <div className="card-grid two-columns">
-                <article className="feature-card">
-                  <div className="feature-top">
-                    <div>
-                      <h3>Relationship snapshot</h3>
-                      <p>The main contact and current account position at a glance.</p>
-                    </div>
-                  </div>
-                  <div className="client-summary-list">
-                    <div className="client-summary-row">
-                      <span>Primary contact</span>
-                      <strong>{form.contactName || primaryContact?.name || 'Not set'}</strong>
-                    </div>
-                    <div className="client-summary-row">
-                      <span>Email</span>
-                      <strong>{form.contactEmail || primaryContact?.email || 'Not set'}</strong>
-                    </div>
-                    <div className="client-summary-row">
-                      <span>Website</span>
-                      <strong>{form.website || 'Not set'}</strong>
-                    </div>
-                    <div className="client-summary-row">
-                      <span>Account owner</span>
-                      <strong>{form.data.accountOwner || 'Not set'}</strong>
-                    </div>
-                  </div>
-                </article>
-
-                <article className="feature-card">
-                  <div className="feature-top">
-                    <div>
-                      <h3>Commercial position</h3>
-                      <p>Pipeline, invoices, and review status before you open a deeper section.</p>
-                    </div>
-                  </div>
-                  <div className="mini-grid">
-                    <div className="mini-box">
-                      <span>Pipeline</span>
-                      <strong>{fmtCurrency(pipelineValue)}</strong>
-                    </div>
-                    <div className="mini-box">
-                      <span>Outstanding</span>
-                      <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
-                    </div>
-                    <div className="mini-box">
-                      <span>Review</span>
-                      <strong>{reviewLabel(form.nextReviewDate)}</strong>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <aside className="workspace-side section-stack">
-              {renderLinkedWorkPanels()}
-            </aside>
-          </section>
-        </section>
-      ) : (
-        <section className="section-stack">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>{activeSectionCard?.label}</h3>
-                <p className="muted-copy">{activeSectionCard?.description}</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              {activeSection === 'profile' ? (
-                <div className="section-stack">
-                  <article className="feature-card">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Core profile</h3>
-                        <p>Primary business information for this client.</p>
-                      </div>
-                    </div>
-
-                    <section className="crm-lookup-shell">
-                      <div className="crm-lookup-top">
-                        <div>
-                          <h4>Business finder</h4>
-                          <p className="muted-copy">
-                            Search by trading name, venue, or registered company, then refresh
-                            the account with the strongest matched record.
-                          </p>
-                        </div>
-                        <span className="soft-pill">Brand + legal lookup</span>
-                      </div>
-
-                      <div className="crm-lookup-bar">
-                        <label className="field">
-                          <span>Business search</span>
-                          <input
-                            className="input"
-                            disabled={!editing}
-                            placeholder="Search by trading name, venue, company name, or company number"
-                            value={lookupQuery}
-                            onChange={(e) => setLookupQuery(e.target.value)}
-                          />
-                        </label>
-                        <label className="field">
-                          <span>Show results for</span>
-                          <select
-                            className="input"
-                            disabled={!editing}
-                            value={lookupScope}
-                            onChange={(event) =>
-                              setLookupScope(event.target.value as LookupScopeFilter)
-                            }
-                          >
-                            <option value="group">Groups and head office</option>
-                            <option value="site">Single sites</option>
-                            <option value="all">All UK matches</option>
-                          </select>
-                        </label>
-                        <button
-                          className="button button-secondary self-end"
-                          disabled={!editing || lookupLoading}
-                          onClick={handleBusinessLookup}
-                          type="button"
-                        >
-                          {lookupLoading ? 'Searching...' : 'Find business'}
-                        </button>
-                      </div>
-
-                      <p className="muted-copy">{lookupMessage}</p>
-
-                      {visibleLookupResults.length ? (
-                        <div className="crm-lookup-results">
-                          {visibleLookupResults.map((result) => (
-                            <article className="crm-lookup-card" key={result.id}>
-                              <div className="crm-lookup-card-top">
-                                <div className="crm-lookup-logo-shell">
-                                  {result.logoUrl ? (
-                                    <img
-                                      alt={`${result.name} logo`}
-                                      className="crm-lookup-logo"
-                                      src={result.logoUrl}
-                                    />
-                                  ) : (
-                                    <span className="crm-lookup-logo-fallback">
-                                      {result.name.slice(0, 2).toUpperCase()}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="stack gap-12">
-                                  <div>
-                                    <strong>{result.name}</strong>
-                                    <p className="crm-lookup-description">
-                                      {result.description || 'Public business profile recognised.'}
-                                    </p>
-                                  </div>
-
-                                  <div className="crm-lookup-meta-row">
-                                    <span className="crm-lookup-confidence">{result.confidenceLabel}</span>
-                                    <span className="crm-alert-chip">
-                                      {result.resultType === 'group' ? 'Group match' : 'Site match'}
-                                    </span>
-                                    <span className="crm-alert-chip">{result.accountScope}</span>
-                                    <span className="crm-alert-chip">UK</span>
-                                    <span className="crm-alert-chip">{result.sourceLabel}</span>
-                                    {result.phone ? (
-                                      <span className="crm-alert-chip">{result.phone}</span>
-                                    ) : null}
-                                  </div>
-
-                                  <div className="crm-alert-row">
-                                    {result.industry ? (
-                                      <span className="crm-alert-chip is-stable">{result.industry}</span>
-                                    ) : null}
-                                    {result.location ? (
-                                      <span className="crm-alert-chip is-warning">{result.location}</span>
-                                    ) : null}
-                                    {result.website ? (
-                                      <span className="crm-alert-chip">
-                                        {result.website.replace(/^https?:\/\//, '')}
-                                      </span>
-                                    ) : null}
-                                    {result.email ? (
-                                      <span className="crm-alert-chip">{result.email}</span>
-                                    ) : null}
-                                    {result.siteCountEstimate > 1 ? (
-                                      <span className="crm-alert-chip is-stable">
-                                        {result.siteCountEstimate} known sites
-                                      </span>
-                                    ) : null}
-                                    {result.companyNumber ? (
-                                      <span className="crm-alert-chip">Co. {result.companyNumber}</span>
-                                    ) : null}
-                                  </div>
-
-                                  {result.signals.length ? (
-                                    <p className="crm-lookup-note">{result.signals.join(' • ')}</p>
-                                  ) : null}
-
-                                  {result.registeredAddress || result.addressLine ? (
-                                    <p className="crm-lookup-note">
-                                      {result.registeredAddress || result.addressLine}
-                                    </p>
-                                  ) : null}
-
-                                  {result.sites.length ? (
-                                    <div className="crm-lookup-site-list">
-                                      {result.sites.slice(0, 4).map((site) => (
-                                        <div className="crm-lookup-site-item" key={`${result.id}-${site.name}`}>
-                                          <strong>{site.name}</strong>
-                                          <span>{site.address || 'UK site address not captured yet'}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-
-                              <div className="saved-actions">
-                                <button
-                                  className="button button-primary"
-                                  disabled={!editing || lookupLoading}
-                                  onClick={() => handleUseLookup(result)}
-                                  type="button"
-                                >
-                                  {lookupSelectionId === result.id && lookupLoading ? 'Loading...' : 'Apply match'}
-                                </button>
-                                <a
-                                  className="button button-ghost"
-                                  href={result.sourceUrl}
-                                  rel="noreferrer"
-                                  target="_blank"
-                                >
-                                  Source
-                                </a>
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {isLookupFallbackVisible ? (
-                        <p className="muted-copy">
-                          No exact {lookupScope === 'group' ? 'group' : 'site'} matches were returned, so the closest UK hospitality results are being shown instead.
-                        </p>
-                      ) : null}
-                    </section>
-
-                    <div className="form-grid two-columns">
-                      <label className="field">
-                        <span>Company name</span>
-                        <input
-                          className="input"
-                          value={form.companyName}
-                          onChange={(e) => updateField('companyName', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Industry</span>
-                        <input
-                          className="input"
-                          value={form.industry}
-                          onChange={(e) => updateField('industry', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Status</span>
-                        <select
-                          className="input"
-                          value={form.status}
-                          onChange={(e) => updateField('status', e.target.value)}
-                          disabled={!editing}
-                        >
-                          <option>Active</option>
-                          <option>Prospect</option>
-                          <option>Onboarding</option>
-                          <option>Paused</option>
-                          <option>Completed</option>
-                        </select>
-                      </label>
-                      <label className="field">
-                        <span>Tier</span>
-                        <select
-                          className="input"
-                          value={form.tier}
-                          onChange={(e) => updateField('tier', e.target.value)}
-                          disabled={!editing}
-                        >
-                          <option>Standard</option>
-                          <option>Growth</option>
-                          <option>Premium</option>
-                          <option>Enterprise</option>
-                        </select>
-                      </label>
-                      <label className="field">
-                        <span>Account scope</span>
-                        <select
-                          className="input"
-                          value={form.data.accountScope}
-                          onChange={(e) =>
-                            updateData(
-                              'accountScope',
-                              e.target.value as ClientProfileData['accountScope']
-                            )
-                          }
-                          disabled={!editing}
-                        >
-                          <option>Single site</option>
-                          <option>Multi-site group</option>
-                          <option>Group / head office</option>
-                        </select>
-                      </label>
-                      <label className="field">
-                        <span>Website</span>
-                        <input
-                          className="input"
-                          value={form.website}
-                          onChange={(e) => updateField('website', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Next review date</span>
-                        <input
-                          className="input"
-                          type="date"
-                          value={form.nextReviewDate}
-                          onChange={(e) => updateField('nextReviewDate', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Operating country</span>
-                        <input
-                          className="input"
-                          value={form.data.operatingCountry}
-                          onChange={(e) => updateData('operatingCountry', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Logo image URL</span>
-                        <input
-                          className="input"
-                          value={form.logoUrl}
-                          onChange={(e) => updateField('logoUrl', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Cover image URL</span>
-                        <input
-                          className="input"
-                          value={form.coverUrl}
-                          onChange={(e) => updateField('coverUrl', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                    </div>
-
-                    <label className="field">
-                      <span>Profile summary</span>
-                      <textarea
-                        className="input textarea"
-                        value={form.data.profileSummary}
-                        onChange={(e) => updateData('profileSummary', e.target.value)}
-                        disabled={!editing}
-                      />
-                    </label>
-                  </article>
-
-                  <article className="feature-card">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Main relationship details</h3>
-                        <p>The core contact details you use most often.</p>
-                      </div>
-                    </div>
-
-                    <div className="form-grid two-columns">
-                      <label className="field">
-                        <span>Main contact</span>
-                        <input
-                          className="input"
-                          value={form.contactName}
-                          onChange={(e) => updateField('contactName', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Email</span>
-                        <input
-                          className="input"
-                          value={form.contactEmail}
-                          onChange={(e) => updateField('contactEmail', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Phone</span>
-                        <input
-                          className="input"
-                          value={form.contactPhone}
-                          onChange={(e) => updateField('contactPhone', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Location</span>
-                        <input
-                          className="input"
-                          value={form.location}
-                          onChange={(e) => updateField('location', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                    </div>
-
-                    <label className="field">
-                      <span>Tags (one per line)</span>
-                      <textarea
-                        className="input textarea"
-                        value={joinLines(form.tags)}
-                        onChange={(e) => updateField('tags', splitLines(e.target.value))}
-                        disabled={!editing}
-                      />
-                    </label>
-                  </article>
-                </div>
-              ) : null}
-
-              {activeSection === 'contacts' ? (
-                <article className="feature-card">
-                  <div className="feature-top">
-                    <div>
-                      <h3>Contact information</h3>
-                      <p>Keep more than one decision-maker on the profile.</p>
-                    </div>
-                    {editing ? (
-                      <button
-                        className="button button-secondary"
-                        onClick={() => updateData('contacts', [...form.data.contacts, blankContact()])}
-                      >
-                        Add contact
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="stack gap-12">
-                    {form.data.contacts.length === 0 ? (
-                      <div className="dashboard-empty">No contacts recorded yet.</div>
-                    ) : null}
-
-                    {form.data.contacts.map((contact) => (
-                      <div className="repeat-card" key={contact.id}>
-                        <div className="form-grid two-columns">
-                          <label className="field">
-                            <span>Name</span>
-                            <input
-                              className="input"
-                              value={contact.name}
-                              onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Role</span>
-                            <input
-                              className="input"
-                              value={contact.role}
-                              onChange={(e) => updateContact(contact.id, 'role', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Email</span>
-                            <input
-                              className="input"
-                              value={contact.email}
-                              onChange={(e) => updateContact(contact.id, 'email', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Phone</span>
-                            <input
-                              className="input"
-                              value={contact.phone}
-                              onChange={(e) => updateContact(contact.id, 'phone', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                        </div>
-                        <label className="checkbox-row">
-                          <input
-                            checked={contact.isPrimary}
-                            type="checkbox"
-                            onChange={(e) => updateContact(contact.id, 'isPrimary', e.target.checked)}
-                            disabled={!editing}
-                          />
-                          <span>Primary contact</span>
-                        </label>
-                        <label className="field">
-                          <span>Notes</span>
-                          <textarea
-                            className="input textarea"
-                            value={contact.notes}
-                            onChange={(e) => updateContact(contact.id, 'notes', e.target.value)}
-                            disabled={!editing}
-                          />
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-
-              {activeSection === 'sites' ? (
-                <article className="feature-card">
-                  <div className="feature-top">
-                    <div>
-                      <h3>Locations and sites</h3>
-                      <p>Useful when one client has multiple venues or kitchens.</p>
-                    </div>
-                    {editing ? (
-                      <button
-                        className="button button-secondary"
-                        onClick={() => updateData('sites', [...form.data.sites, blankSite()])}
-                      >
-                        Add site
-                      </button>
-                    ) : null}
-                  </div>
-
-                  <div className="stack gap-12">
-                    {form.data.sites.length === 0 ? (
-                      <div className="dashboard-empty">No site records added yet.</div>
-                    ) : null}
-
-                    {form.data.sites.map((site) => (
-                      <div className="repeat-card" key={site.id}>
-                        <div className="saved-actions">
-                          <span className="soft-pill">{site.status || 'Active'}</span>
-                          {editing ? (
-                            <button
-                              className="button button-ghost danger-text"
-                              onClick={() => removeSite(site.id)}
-                              type="button"
-                            >
-                              Remove
-                            </button>
-                          ) : null}
-                        </div>
-                        <div className="form-grid two-columns">
-                          <label className="field">
-                            <span>Site name</span>
-                            <input
-                              className="input"
-                              value={site.name}
-                              onChange={(e) => updateSite(site.id, 'name', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Status</span>
-                            <input
-                              className="input"
-                              value={site.status}
-                              onChange={(e) => updateSite(site.id, 'status', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Website</span>
-                            <input
-                              className="input"
-                              value={site.website}
-                              onChange={(e) => updateSite(site.id, 'website', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                        </div>
-                        <label className="field">
-                          <span>Address</span>
-                          <input
-                            className="input"
-                            value={site.address}
-                            onChange={(e) => updateSite(site.id, 'address', e.target.value)}
-                            disabled={!editing}
-                          />
-                        </label>
-                        <label className="field">
-                          <span>Notes</span>
-                          <textarea
-                            className="input textarea"
-                            value={site.notes}
-                            onChange={(e) => updateSite(site.id, 'notes', e.target.value)}
-                            disabled={!editing}
-                          />
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ) : null}
-
-              {activeSection === 'commercial' ? (
-                <div className="section-stack">
-                  <article className="feature-card">
-                    <div className="feature-top">
-                      <div>
-                        <h3>CRM and billing controls</h3>
-                        <p>
-                          Use this client record for account ownership, billing data, value
-                          tracking, and relationship health.
-                        </p>
-                      </div>
-                      <span className={relationshipTone(form.data.relationshipHealth)}>
-                        {form.data.relationshipHealth}
-                      </span>
-                    </div>
-
-                    <div className="form-grid three-balance">
-                      <label className="field">
-                        <span>Account owner</span>
-                        <input
-                          className="input"
-                          value={form.data.accountOwner}
-                          onChange={(e) => updateData('accountOwner', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Lead source</span>
-                        <input
-                          className="input"
-                          value={form.data.leadSource}
-                          onChange={(e) => updateData('leadSource', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Relationship health</span>
-                        <select
-                          className="input"
-                          value={form.data.relationshipHealth}
-                          onChange={(e) =>
-                            updateData(
-                              'relationshipHealth',
-                              e.target.value as ClientProfileData['relationshipHealth']
-                            )
-                          }
-                          disabled={!editing}
-                        >
-                          <option>Strong</option>
-                          <option>Watch</option>
-                          <option>At Risk</option>
-                        </select>
-                      </label>
-                      <label className="field">
-                        <span>Estimated monthly value</span>
-                        <input
-                          className="input"
-                          type="number"
-                          min="0"
-                          value={form.data.estimatedMonthlyValue}
-                          onChange={(e) => updateData('estimatedMonthlyValue', Number(e.target.value))}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Estimated site count</span>
-                        <input
-                          className="input"
-                          type="number"
-                          min="0"
-                          value={form.data.siteCountEstimate}
-                          onChange={(e) => updateData('siteCountEstimate', Number(e.target.value))}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Registered name</span>
-                        <input
-                          className="input"
-                          value={form.data.registeredName}
-                          onChange={(e) => updateData('registeredName', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Billing name</span>
-                        <input
-                          className="input"
-                          value={form.data.billingName}
-                          onChange={(e) => updateData('billingName', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Billing email</span>
-                        <input
-                          className="input"
-                          value={form.data.billingEmail}
-                          onChange={(e) => updateData('billingEmail', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Payment terms (days)</span>
-                        <input
-                          className="input"
-                          type="number"
-                          min="0"
-                          value={form.data.paymentTermsDays}
-                          onChange={(e) => updateData('paymentTermsDays', Number(e.target.value))}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>VAT number</span>
-                        <input
-                          className="input"
-                          value={form.data.vatNumber}
-                          onChange={(e) => updateData('vatNumber', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>Company number</span>
-                        <input
-                          className="input"
-                          value={form.data.companyNumber}
-                          onChange={(e) => updateData('companyNumber', e.target.value)}
-                          disabled={!editing}
-                        />
-                      </label>
-                    </div>
-
-                    <label className="field">
-                      <span>Registered address</span>
-                      <textarea
-                        className="input textarea"
-                        value={form.data.registeredAddress}
-                        onChange={(e) => updateData('registeredAddress', e.target.value)}
-                        disabled={!editing}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Billing address</span>
-                      <textarea
-                        className="input textarea"
-                        value={form.data.billingAddress}
-                        onChange={(e) => updateData('billingAddress', e.target.value)}
-                        disabled={!editing}
-                      />
-                    </label>
-                  </article>
-
-                  <article className="feature-card" id="client-deals">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Pipeline and CRM deals</h3>
-                        <p>Track proposals, negotiations, renewals, and new opportunities from the same client record.</p>
-                      </div>
-                      {editing ? (
-                        <button
-                          className="button button-secondary"
-                          onClick={() => updateData('deals', [...form.data.deals, blankDeal()])}
-                        >
-                          Add deal
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="stack gap-12">
-                      {form.data.deals.length === 0 ? (
-                        <div className="dashboard-empty">No opportunities tracked yet.</div>
-                      ) : null}
-
-                      {form.data.deals.map((deal) => (
-                        <div className="repeat-card crm-deal-card" key={deal.id}>
-                          <div className="crm-deal-top">
-                            <strong>{deal.title || 'Untitled deal'}</strong>
-                            <div className="invoice-card-actions">
-                              <span className={stageTone(deal.stage)}>{deal.stage}</span>
-                              {editing ? (
-                                <button
-                                  className="button button-ghost danger-text"
-                                  onClick={() =>
-                                    updateData(
-                                      'deals',
-                                      form.data.deals.filter((item) => item.id !== deal.id)
-                                    )
-                                  }
-                                >
-                                  Delete
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-
-                          <div className="form-grid three-balance">
-                            <label className="field">
-                              <span>Deal title</span>
-                              <input
-                                className="input"
-                                value={deal.title}
-                                onChange={(e) => updateDeal(deal.id, 'title', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Stage</span>
-                              <select
-                                className="input"
-                                value={deal.stage}
-                                onChange={(e) => updateDeal(deal.id, 'stage', e.target.value)}
-                                disabled={!editing}
-                              >
-                                <option>Lead</option>
-                                <option>Qualified</option>
-                                <option>Proposal</option>
-                                <option>Negotiation</option>
-                                <option>Won</option>
-                                <option>Lost</option>
-                              </select>
-                            </label>
-                            <label className="field">
-                              <span>Value</span>
-                              <input
-                                className="input"
-                                type="number"
-                                min="0"
-                                value={deal.value}
-                                onChange={(e) => updateDeal(deal.id, 'value', Number(e.target.value))}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Target close date</span>
-                              <input
-                                className="input"
-                                type="date"
-                                value={deal.closeDate}
-                                onChange={(e) => updateDeal(deal.id, 'closeDate', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Owner</span>
-                              <input
-                                className="input"
-                                value={deal.owner}
-                                onChange={(e) => updateDeal(deal.id, 'owner', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <div className="crm-inline-stat">
-                              <span>Deal value</span>
-                              <strong>{fmtCurrency(num(deal.value))}</strong>
-                            </div>
-                          </div>
-
-                          <label className="field">
-                            <span>Notes</span>
-                            <textarea
-                              className="input textarea"
-                              value={deal.notes}
-                              onChange={(e) => updateDeal(deal.id, 'notes', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-
-                  <QuoteCalculatorModule
-                    client={form}
-                    currentUserName={currentUserName}
-                    onPersistClientProfile={persistClientProfile}
-                  />
-
-                  <article className="feature-card" id="client-invoices">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Invoices and billing exports</h3>
-                        <p>Create invoice drafts inside the client record and export them as printable PDF documents.</p>
-                      </div>
-                      {editing ? (
-                        <button
-                          className="button button-secondary"
-                          onClick={() =>
-                            updateData('invoices', [
-                              ...form.data.invoices,
-                              blankInvoice(form.data.invoices.length, form.data.paymentTermsDays)
-                            ])
-                          }
-                        >
-                          Add invoice
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="stack gap-12">
-                      <div className="mini-grid">
-                        <div className="mini-box">
-                          <span>Outstanding</span>
-                          <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
-                        </div>
-                        <div className="mini-box">
-                          <span>Overdue</span>
-                          <strong>
-                            {invoiceSnapshot.overdueCount
-                              ? `${invoiceSnapshot.overdueCount} • ${fmtCurrency(invoiceSnapshot.overdueValue)}`
-                              : 'None'}
-                          </strong>
-                        </div>
-                        <div className="mini-box">
-                          <span>Paid to date</span>
-                          <strong>{fmtCurrency(invoiceSnapshot.paidValue)}</strong>
-                        </div>
-                      </div>
-
-                      {form.data.invoices.length === 0 ? (
-                        <div className="dashboard-empty">No invoices drafted yet.</div>
-                      ) : null}
-
-                      {form.data.invoices.map((invoice) => (
-                        <div className="repeat-card invoice-card" key={invoice.id}>
-                          <div className="invoice-card-top">
-                            <div>
-                              <strong>{invoice.number || 'Draft invoice'}</strong>
-                              <div className="saved-meta">
-                                {invoice.title || 'Consultancy services'} • {fmtCurrency(invoiceTotal(invoice))}
-                              </div>
-                              {invoice.sourceQuoteId ? (
-                                <div className="saved-meta">
-                                  Quote reference {invoice.quoteReference || invoice.sourceQuoteId}
-                                </div>
-                              ) : null}
-                            </div>
-                            <div className="invoice-card-actions">
-                              <span className={invoiceTone(invoice.status)}>{invoice.status}</span>
-                              <button
-                                className="button button-ghost"
-                                onClick={() => exportInvoicePdf(invoice)}
-                              >
-                                PDF
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="form-grid three-balance">
-                            <label className="field">
-                              <span>Invoice number</span>
-                              <input
-                                className="input"
-                                value={invoice.number}
-                                onChange={(e) => updateInvoice(invoice.id, 'number', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Issue date</span>
-                              <input
-                                className="input"
-                                type="date"
-                                value={invoice.issueDate}
-                                onChange={(e) => updateInvoice(invoice.id, 'issueDate', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Due date</span>
-                              <input
-                                className="input"
-                                type="date"
-                                value={invoice.dueDate}
-                                onChange={(e) => updateInvoice(invoice.id, 'dueDate', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Invoice title</span>
-                              <input
-                                className="input"
-                                value={invoice.title}
-                                onChange={(e) => updateInvoice(invoice.id, 'title', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Status</span>
-                              <select
-                                className="input"
-                                value={invoice.status}
-                                onChange={(e) =>
-                                  updateInvoice(
-                                    invoice.id,
-                                    'status',
-                                    e.target.value as ClientInvoice['status']
-                                  )
-                                }
-                                disabled={!editing}
-                              >
-                                <option>Draft</option>
-                                <option>Sent</option>
-                                <option>Paid</option>
-                                <option>Overdue</option>
-                                <option>Cancelled</option>
-                              </select>
-                            </label>
-                            <label className="field">
-                              <span>VAT / tax</span>
-                              <select
-                                className="input"
-                                value={invoice.taxEnabled ? 'enabled' : 'disabled'}
-                                onChange={(e) =>
-                                  updateInvoice(
-                                    invoice.id,
-                                    'taxEnabled',
-                                    e.target.value === 'enabled'
-                                  )
-                                }
-                                disabled={!editing}
-                              >
-                                <option value="disabled">Disabled</option>
-                                <option value="enabled">Enabled</option>
-                              </select>
-                            </label>
-                            <label className="field">
-                              <span>Tax rate (%)</span>
-                              <input
-                                className="input"
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                value={invoice.taxRate ?? 0}
-                                onChange={(e) =>
-                                  updateInvoice(invoice.id, 'taxRate', Number(e.target.value))
-                                }
-                                disabled={!editing}
-                              />
-                            </label>
-                            <div className="crm-inline-stat">
-                              <span>Total due</span>
-                              <strong>{fmtCurrency(invoiceTotal(invoice))}</strong>
-                            </div>
-                          </div>
-
-                          <label className="field">
-                            <span>Invoice notes</span>
-                            <textarea
-                              className="input textarea"
-                              value={invoice.notes}
-                              onChange={(e) => updateInvoice(invoice.id, 'notes', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-
-                          <div className="stack gap-12">
-                            {invoice.lines.map((line) => (
-                              <div className="invoice-line-grid" key={line.id}>
-                                <label className="field">
-                                  <span>Description</span>
-                                  <input
-                                    className="input"
-                                    value={line.description}
-                                    onChange={(e) =>
-                                      updateInvoiceLine(invoice.id, line.id, 'description', e.target.value)
-                                    }
-                                    disabled={!editing}
-                                  />
-                                </label>
-                                <label className="field">
-                                  <span>Qty</span>
-                                  <input
-                                    className="input"
-                                    type="number"
-                                    min="0"
-                                    value={line.quantity}
-                                    onChange={(e) =>
-                                      updateInvoiceLine(invoice.id, line.id, 'quantity', Number(e.target.value))
-                                    }
-                                    disabled={!editing}
-                                  />
-                                </label>
-                                <label className="field">
-                                  <span>Unit price</span>
-                                  <input
-                                    className="input"
-                                    type="number"
-                                    min="0"
-                                    value={line.unitPrice}
-                                    onChange={(e) =>
-                                      updateInvoiceLine(invoice.id, line.id, 'unitPrice', Number(e.target.value))
-                                    }
-                                    disabled={!editing}
-                                  />
-                                </label>
-                                <div className="crm-inline-stat">
-                                  <span>Line total</span>
-                                  <strong>{fmtCurrency(num(line.quantity) * num(line.unitPrice))}</strong>
-                                </div>
-                                {editing ? (
-                                  <button
-                                    className="button button-ghost danger-text self-end"
-                                    onClick={() => removeInvoiceLine(invoice.id, line.id)}
-                                  >
-                                    Remove line
-                                  </button>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-
-                          {editing ? (
-                            <div className="saved-actions">
-                              <button
-                                className="button button-secondary"
-                                onClick={() => addInvoiceLine(invoice.id)}
-                              >
-                                Add line
-                              </button>
-                              <button
-                                className="button button-ghost danger-text"
-                                onClick={() => removeInvoice(invoice.id)}
-                              >
-                                Delete invoice
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                </div>
-              ) : null}
-
-              {activeSection === 'strategy' ? (
-                <article className="feature-card">
-                  <div className="client-inline-summary">
-                    <div className="client-inline-summary-item">
-                      <span>Status</span>
-                      <strong>{form.status}</strong>
-                    </div>
-                    <div className="client-inline-summary-item">
-                      <span>Tier</span>
-                      <strong>{form.tier}</strong>
-                    </div>
-                    <div className="client-inline-summary-item">
-                      <span>Last updated</span>
-                      <strong>{formatShortDate(form.updatedAt)}</strong>
-                    </div>
-                  </div>
-
-                  <div className="feature-top">
-                    <div>
-                      <h3>Goals, risks and opportunities</h3>
-                      <p>This turns the client profile into a real account strategy view.</p>
-                    </div>
-                  </div>
-
-                  <div className="form-grid two-columns">
-                    <label className="field">
-                      <span>Goals</span>
-                      <textarea
-                        className="input textarea"
-                        value={joinLines(form.data.goals)}
-                        onChange={(e) => updateData('goals', splitLines(e.target.value))}
-                        disabled={!editing}
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Risks</span>
-                      <textarea
-                        className="input textarea"
-                        value={joinLines(form.data.risks)}
-                        onChange={(e) => updateData('risks', splitLines(e.target.value))}
-                        disabled={!editing}
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Opportunities</span>
-                      <textarea
-                        className="input textarea"
-                        value={joinLines(form.data.opportunities)}
-                        onChange={(e) => updateData('opportunities', splitLines(e.target.value))}
-                        disabled={!editing}
-                      />
-                    </label>
-                    <label className="field">
-                      <span>Internal notes</span>
-                      <textarea
-                        className="input textarea"
-                        value={form.data.internalNotes}
-                        onChange={(e) => updateData('internalNotes', e.target.value)}
-                        disabled={!editing}
-                      />
-                    </label>
-                  </div>
-                </article>
-              ) : null}
-
-              {activeSection === 'activity' ? (
-                <div className="section-stack">
-                  <article className="feature-card">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Timeline</h3>
-                        <p>A live history of visits, reviews, calls, milestones and notes.</p>
-                      </div>
-                      {editing ? (
-                        <button
-                          className="button button-secondary"
-                          onClick={() => updateData('timeline', [...form.data.timeline, blankTimeline()])}
-                        >
-                          Add event
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="stack gap-12">
-                      {form.data.timeline.length === 0 ? (
-                        <div className="dashboard-empty">No timeline items recorded yet.</div>
-                      ) : null}
-
-                      {form.data.timeline.map((item) => (
-                        <div className="repeat-card" key={item.id}>
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Date</span>
-                              <input
-                                className="input"
-                                type="date"
-                                value={item.date}
-                                onChange={(e) => updateTimeline(item.id, 'date', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Type</span>
-                              <select
-                                className="input"
-                                value={item.type}
-                                onChange={(e) => updateTimeline(item.id, 'type', e.target.value)}
-                                disabled={!editing}
-                              >
-                                <option>Visit</option>
-                                <option>Audit</option>
-                                <option>Menu Review</option>
-                                <option>Call</option>
-                                <option>Email</option>
-                                <option>Task</option>
-                                <option>Note</option>
-                              </select>
-                            </label>
-                          </div>
-                          <label className="field">
-                            <span>Title</span>
-                            <input
-                              className="input"
-                              value={item.title}
-                              onChange={(e) => updateTimeline(item.id, 'title', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                          <label className="field">
-                            <span>Summary</span>
-                            <textarea
-                              className="input textarea"
-                              value={item.summary}
-                              onChange={(e) => updateTimeline(item.id, 'summary', e.target.value)}
-                              disabled={!editing}
-                            />
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-
-                  <article className="feature-card">
-                    <div className="feature-top">
-                      <div>
-                        <h3>Tasks and follow-up</h3>
-                        <p>Keep recommendations and revisit actions visible.</p>
-                      </div>
-                      {editing ? (
-                        <button
-                          className="button button-secondary"
-                          onClick={() => updateData('tasks', [...form.data.tasks, blankTask()])}
-                        >
-                          Add task
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <div className="stack gap-12">
-                      {form.data.tasks.length === 0 ? (
-                        <div className="dashboard-empty">No tasks recorded yet.</div>
-                      ) : null}
-
-                      {form.data.tasks.map((task) => (
-                        <div className="repeat-card" key={task.id}>
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Task</span>
-                              <input
-                                className="input"
-                                value={task.title}
-                                onChange={(e) => updateTask(task.id, 'title', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Owner</span>
-                              <input
-                                className="input"
-                                value={task.owner}
-                                onChange={(e) => updateTask(task.id, 'owner', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Due date</span>
-                              <input
-                                className="input"
-                                type="date"
-                                value={task.dueDate}
-                                onChange={(e) => updateTask(task.id, 'dueDate', e.target.value)}
-                                disabled={!editing}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Status</span>
-                              <select
-                                className="input"
-                                value={task.status}
-                                onChange={(e) => updateTask(task.id, 'status', e.target.value)}
-                                disabled={!editing}
-                              >
-                                <option>Open</option>
-                                <option>In Progress</option>
-                                <option>Done</option>
-                              </select>
-                            </label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-
-                  <section className="workspace-grid client-workspace">
-                    <div className="workspace-main section-stack">
-                      <div className="panel">
-                        <div className="panel-header">
-                          <div>
-                            <h3>Account snapshot</h3>
-                            <p className="muted-copy">
-                              A quick relationship view before you dive into linked work.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="panel-body stack gap-12">
-                          <div className="client-summary-list">
-                            <div className="client-summary-row">
-                              <span>Primary contact</span>
-                              <strong>{form.contactName || primaryContact?.name || 'Not set'}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Email</span>
-                              <strong>{form.contactEmail || primaryContact?.email || 'Not set'}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Website</span>
-                              <strong>{form.website || 'Not set'}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Next review</span>
-                              <strong>{reviewLabel(form.nextReviewDate)}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Review status</span>
-                              <strong>
-                                {nextReviewState === null
-                                  ? 'Review date missing'
-                                  : nextReviewState < 0
-                                    ? 'Attention needed'
-                                    : nextReviewState <= 14
-                                      ? 'Coming up soon'
-                                      : 'On track'}
-                              </strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Account owner</span>
-                              <strong>{form.data.accountOwner || 'Not set'}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Pipeline value</span>
-                              <strong>{fmtCurrency(pipelineValue)}</strong>
-                            </div>
-                            <div className="client-summary-row">
-                              <span>Outstanding invoices</span>
-                              <strong>{fmtCurrency(outstandingInvoiceValue)}</strong>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <aside className="workspace-side section-stack">
-                      {renderLinkedWorkPanels()}
-                    </aside>
-                  </section>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </section>
-      )}
-    </div>
+    </main>
   );
 }

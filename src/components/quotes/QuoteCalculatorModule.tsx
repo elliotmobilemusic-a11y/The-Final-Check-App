@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fmtCurrency, num, safe, uid } from '../../lib/utils';
 import type {
   ClientProfile,
@@ -42,6 +42,9 @@ type QuoteCalculatorModuleProps = {
     nextClient: ClientProfile,
     options: PersistProfileOptions
   ) => Promise<ClientProfile>;
+  requestNewQuoteToken?: number;
+  externalQuoteToEditId?: string | null;
+  showSavedQuotesList?: boolean;
 };
 
 function labelForService(serviceType: ClientQuote['serviceType'] | QuoteInputAnswers['serviceType']) {
@@ -138,7 +141,10 @@ function buildHistoryEntry(options: {
 export function QuoteCalculatorModule({
   client,
   currentUserName,
-  onPersistClientProfile
+  onPersistClientProfile,
+  requestNewQuoteToken,
+  externalQuoteToEditId,
+  showSavedQuotesList = true
 }: QuoteCalculatorModuleProps) {
   const [composer, setComposer] = useState<QuoteComposerState | null>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(
@@ -155,6 +161,21 @@ export function QuoteCalculatorModule({
   );
 
   const quotes = useMemo(() => sortedQuotes(client.data.quotes ?? []), [client.data.quotes]);
+
+  useEffect(() => {
+    if (!requestNewQuoteToken) return;
+    openNewQuote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestNewQuoteToken]);
+
+  useEffect(() => {
+    if (!externalQuoteToEditId) return;
+    const targetQuote = quotes.find((quote) => quote.quoteId === externalQuoteToEditId);
+    if (targetQuote) {
+      openExistingQuote(targetQuote);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalQuoteToEditId, quotes]);
 
   function openNewQuote(seedId?: string) {
     const base = createEmptyQuoteInput(client, currentUserName);
@@ -1004,7 +1025,7 @@ export function QuoteCalculatorModule({
         </div>
       ) : null}
 
-      <div className="stack gap-12">
+      {showSavedQuotesList ? <div className="stack gap-12">
         {quotes.length === 0 ? (
           <div className="dashboard-empty">No saved quotes for this client yet.</div>
         ) : null}
@@ -1097,7 +1118,7 @@ export function QuoteCalculatorModule({
             </div>
           </details>
         ))}
-      </div>
+      </div> : null}
     </article>
   );
 }

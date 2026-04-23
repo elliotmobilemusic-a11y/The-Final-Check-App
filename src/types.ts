@@ -309,13 +309,17 @@ export type ClientPortalSettings = {
   hiddenFoodSafetyIds: string[];
   hiddenMysteryShopIds: string[];
   hiddenMenuIds: string[];
+  hiddenQuoteIds: string[];
+  hiddenInvoiceIds: string[];
+  showReports: boolean;
+  showActionPlans: boolean;
   lastPublishedAt: string;
 };
 
 export type ClientPortalResource = {
   id: string;
   title: string;
-  kind: 'audit' | 'food_safety' | 'mystery_shop' | 'menu';
+  kind: 'audit' | 'food_safety' | 'mystery_shop' | 'menu' | 'quote' | 'invoice' | 'report' | 'action_plan';
   subtitle: string;
   reviewDate: string | null;
   url: string | null;
@@ -398,6 +402,7 @@ export type ClientContact = {
   role: string;
   email: string;
   phone: string;
+  category?: 'Primary' | 'Finance' | 'Operations' | 'General';
   isPrimary: boolean;
   notes: string;
 };
@@ -407,6 +412,7 @@ export type ClientSite = {
   name: string;
   address: string;
   website: string;
+  managerName?: string;
   status: string;
   notes: string;
 };
@@ -679,6 +685,7 @@ export type ClientQuote = {
   renderedSummary: QuoteRenderedSummary;
   history: QuoteAuditEntry[];
   linkedInvoiceId?: string | null;
+  archivedAt?: string | null;
 };
 
 export type ClientInvoiceLine = {
@@ -705,14 +712,23 @@ export type ClientInvoice = {
   sourceQuoteId?: string | null;
   sourceQuoteTitle?: string;
   quoteReference?: string;
+  archivedAt?: string | null;
 };
 
 export type ClientProfileData = {
   profileSummary: string;
+  tradingName: string;
+  businessType: string;
   goals: string[];
   risks: string[];
   opportunities: string[];
   internalNotes: string;
+  clientBackground: string;
+  clientContext: string;
+  painPoints: string;
+  priorWorkHistory: string;
+  importantNotes: string;
+  internalRelationshipNotes: string;
   contacts: ClientContact[];
   sites: ClientSite[];
   timeline: ClientTimelineItem[];
@@ -735,6 +751,7 @@ export type ClientProfileData = {
   deals: ClientDeal[];
   quotes: ClientQuote[];
   invoices: ClientInvoice[];
+  archivedWorkItemIds: string[];
   portal: ClientPortalSettings;
 };
 
