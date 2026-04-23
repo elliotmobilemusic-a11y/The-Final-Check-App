@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 interface NumericInputProps {
   value: number | string | null;
@@ -32,15 +32,31 @@ export function NumericInput({
     return String(value);
   });
 
+  // Sync display value when external prop changes
+  useEffect(() => {
+    if (value === null || value === undefined || value === '') {
+      setDisplayValue('');
+    } else {
+      setDisplayValue(String(value));
+    }
+  }, [value]);
+
   const parseValue = useCallback((input: string): number | null => {
+    // Allow users to type partial values without immediately clearing
+    if (input === '' || input === '-' || input === '.' || input === '-.') return null;
+    
     let clean = input.replace(/[^0-9.\-]/g, '');
+    
+    // Handle multiple decimal points
+    const decimalParts = clean.split('.');
+    if (decimalParts.length > 2) {
+      clean = decimalParts[0] + '.' + decimalParts.slice(1).join('');
+    }
     
     if (!allowNegative && clean.startsWith('-')) {
       clean = clean.slice(1);
     }
 
-    if (clean === '' || clean === '-' || clean === '.') return null;
-    
     const parsed = parseFloat(clean);
     
     if (Number.isNaN(parsed)) return null;
