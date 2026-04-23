@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 interface NumericInputProps {
   value: number | string | null;
@@ -28,29 +28,30 @@ export function NumericInput({
   inputMode = 'numeric'
 }: NumericInputProps) {
   const [displayValue, setDisplayValue] = useState<string>(() => {
-    if (value === null || value === undefined || value === '') return '';
+    if (value === null || value === undefined || value === '') return '0';
     return String(value);
   });
+  
+  const isEditingRef = useRef(false);
 
-  // Sync display value when external prop changes
+  // Sync display value when external prop changes ONLY IF NOT actively editing
   useEffect(() => {
+    if (isEditingRef.current) return;
+    
     if (value === null || value === undefined || value === '') {
-      setDisplayValue('');
-    } else if (typeof value === 'number') {
-      // Preserve 0 value instead of treating as empty
-      setDisplayValue(String(value));
+      setDisplayValue('0');
     } else {
       setDisplayValue(String(value));
     }
   }, [value]);
 
   const parseValue = useCallback((input: string): number | null => {
-    // Allow users to type partial values without immediately clearing
+    // Allow partial values during editing - these return null while typing
     if (input === '' || input === '-' || input === '.' || input === '-.') return null;
     
     let clean = input.replace(/[^0-9.\-]/g, '');
     
-    // Handle multiple decimal points
+    // Handle multiple decimal points safely
     const decimalParts = clean.split('.');
     if (decimalParts.length > 2) {
       clean = decimalParts[0] + '.' + decimalParts.slice(1).join('');
@@ -75,20 +76,14 @@ export function NumericInput({
   }, [min, max, decimalPlaces, allowNegative]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    isEditingRef.current = true;
     let raw = e.target.value;
     
-    // ✅ When field was exactly 0 and user types another number, replace the 0
+    // Auto replace 0 when first digit is typed
     if (displayValue === '0' && raw.length === 2 && raw[0] === '0' && /[0-9]/.test(raw[1])) {
       raw = raw[1];
     }
-    
-    // ✅ When user deletes everything, set to 0
-    if (raw === '') {
-      setDisplayValue('0');
-      onChange(0);
-      return;
-    }
-    
+
     setDisplayValue(raw);
     
     const parsed = parseValue(raw);
@@ -96,26 +91,35 @@ export function NumericInput({
   };
 
   const handleBlur = () => {
-    if (value === null || value === undefined) {
-      setDisplayValue('');
+    isEditingRef.current = false;
+    
+    // Only on blur: if empty, reset to 0
+    if (displayValue === '' || displayValue === '-' || displayValue === '.') {
+      setDisplayValue('0');
+      onChange(0);
       return;
     }
     
-    // Properly handle 0 value
-    if (value === 0) {
-      if (decimalPlaces !== undefined) {
-        setDisplayValue(Number(0).toFixed(decimalPlaces));
-      } else {
-        setDisplayValue('0');
-      }
+    // Format on blur
+    const parsed = parseValue(displayValue);
+    
+    if (parsed === null) {
+      setDisplayValue('0');
+      onChange(0);
       return;
     }
     
     if (decimalPlaces !== undefined) {
-      setDisplayValue(Number(value).toFixed(decimalPlaces));
+      setDisplayValue(Number(parsed).toFixed(decimalPlaces));
     } else {
-      setDisplayValue(String(value));
+      setDisplayValue(String(parsed));
     }
+    
+    onChange(parsed);
+  };
+
+  const handleFocus = () => {
+    isEditingRef.current = true;
   };
 
   return (
@@ -126,6 +130,7 @@ export function NumericInput({
       value={displayValue}
       onChange={handleChange}
       onBlur={handleBlur}
+      onFocus={handleFocus}
       placeholder={placeholder}
       disabled={disabled}
       className={`input ${className}`}
