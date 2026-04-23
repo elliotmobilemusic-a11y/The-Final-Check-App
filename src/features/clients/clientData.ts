@@ -1,6 +1,7 @@
 import type {
   ClientContact,
   ClientDeal,
+  ClientQuote,
   ClientInvoice,
   ClientInvoiceLine,
   ClientProfile,
@@ -34,6 +35,77 @@ function normalizeDeals(value: ClientDeal[] | undefined) {
   return value ?? [];
 }
 
+function normalizeQuoteLineItems(value: ClientQuote['lineItems'] | undefined) {
+  return (value ?? []).map((line) => ({
+    ...line,
+    quantity: Number(line.quantity ?? 0) || 0,
+    unitPrice: Number(line.unitPrice ?? 0) || 0,
+    total: Number(line.total ?? 0) || 0
+  }));
+}
+
+function normalizeQuotes(value: ClientQuote[] | undefined): ClientQuote[] {
+  return (value ?? []).map((quote) => ({
+    ...quote,
+    location: quote.location ?? '',
+    scopeSummary: quote.scopeSummary ?? '',
+    internalNotes: quote.internalNotes ?? '',
+    clientFacingNotes: quote.clientFacingNotes ?? '',
+    lineItems: normalizeQuoteLineItems(quote.lineItems),
+    renderedSummary: {
+      headline: quote.renderedSummary?.headline ?? quote.quoteTitle ?? 'Quote summary',
+      scopeSummary: quote.renderedSummary?.scopeSummary ?? quote.scopeSummary ?? '',
+      pricingSummary: quote.renderedSummary?.pricingSummary ?? '',
+      lineItemSummary: quote.renderedSummary?.lineItemSummary ?? [],
+      externalPriceLabel: quote.renderedSummary?.externalPriceLabel ?? '',
+      generatedAt: quote.renderedSummary?.generatedAt ?? quote.updatedAt ?? quote.createdAt ?? ''
+    },
+    history: (quote.history ?? []).map((entry) => ({
+      ...entry,
+      previousTotal:
+        entry.previousTotal === null || entry.previousTotal === undefined
+          ? null
+          : Number(entry.previousTotal) || 0,
+      nextTotal:
+        entry.nextTotal === null || entry.nextTotal === undefined
+          ? null
+          : Number(entry.nextTotal) || 0,
+      addedLineLabels: entry.addedLineLabels ?? [],
+      removedLineLabels: entry.removedLineLabels ?? []
+    })),
+    calculation: {
+      ...quote.calculation,
+      basePrice: Number(quote.calculation?.basePrice ?? 0) || 0,
+      multipliersUsed: quote.calculation?.multipliersUsed ?? [],
+      allInputAnswers: quote.calculation?.allInputAnswers,
+      generatedLineItems: normalizeQuoteLineItems(quote.calculation?.generatedLineItems),
+      manualLineItems: normalizeQuoteLineItems(quote.calculation?.manualLineItems),
+      hiddenAutoLineItemKeys: quote.calculation?.hiddenAutoLineItemKeys ?? [],
+      autoLineItemOverrides: quote.calculation?.autoLineItemOverrides ?? {},
+      addOns: normalizeQuoteLineItems(quote.calculation?.addOns),
+      discountAmount: Number(quote.calculation?.discountAmount ?? 0) || 0,
+      discountPercentage: Number(quote.calculation?.discountPercentage ?? 0) || 0,
+      appliedDiscountAmount: Number(quote.calculation?.appliedDiscountAmount ?? 0) || 0,
+      adjustmentAmount: Number(quote.calculation?.adjustmentAmount ?? 0) || 0,
+      suggestedSubtotal: Number(quote.calculation?.suggestedSubtotal ?? 0) || 0,
+      suggestedTotal: Number(quote.calculation?.suggestedTotal ?? 0) || 0,
+      overrideTotal:
+        quote.calculation?.overrideTotal === null || quote.calculation?.overrideTotal === undefined
+          ? null
+          : Number(quote.calculation.overrideTotal) || 0,
+      finalTotal: Number(quote.calculation?.finalTotal ?? 0) || 0,
+      finalPriceHidden: Boolean(quote.calculation?.finalPriceHidden),
+      validationErrors: quote.calculation?.validationErrors ?? [],
+      taxEnabled: Boolean(quote.calculation?.taxEnabled),
+      taxRate: Number(quote.calculation?.taxRate ?? 0) || 0,
+      taxAmount: Number(quote.calculation?.taxAmount ?? 0) || 0,
+      totalWithTax: Number(quote.calculation?.totalWithTax ?? 0) || 0,
+      calculationVersion: Number(quote.calculation?.calculationVersion ?? 1) || 1,
+      finalLineItems: normalizeQuoteLineItems(quote.calculation?.finalLineItems)
+    }
+  }));
+}
+
 function normalizeInvoiceLines(value: ClientInvoiceLine[] | undefined) {
   return value ?? [];
 }
@@ -64,7 +136,13 @@ function normalizeInvoices(value: ClientInvoice[] | undefined): ClientInvoice[] 
       isPastDue(invoice.dueDate)
         ? 'Overdue'
         : invoice.status,
-    lines: normalizeInvoiceLines(invoice.lines)
+    lines: normalizeInvoiceLines(invoice.lines),
+    taxEnabled: Boolean(invoice.taxEnabled),
+    taxRate: Number(invoice.taxRate ?? 0) || 0,
+    paymentTermsDays: Number(invoice.paymentTermsDays ?? 0) || 0,
+    sourceQuoteId: invoice.sourceQuoteId ?? null,
+    sourceQuoteTitle: invoice.sourceQuoteTitle ?? '',
+    quoteReference: invoice.quoteReference ?? ''
   }));
 }
 
@@ -95,6 +173,7 @@ export function createEmptyClientData(): ClientProfileData {
     vatNumber: '',
     companyNumber: '',
     deals: [],
+    quotes: [],
     invoices: [],
     portal: {
       enabled: true,
@@ -130,6 +209,7 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
     siteCountEstimate: Number(data?.siteCountEstimate ?? empty.siteCountEstimate) || 0,
     paymentTermsDays: Number(data?.paymentTermsDays ?? empty.paymentTermsDays) || 30,
     deals: normalizeDeals(data?.deals),
+    quotes: normalizeQuotes(data?.quotes),
     invoices: normalizeInvoices(data?.invoices),
     portal: {
       ...empty.portal,

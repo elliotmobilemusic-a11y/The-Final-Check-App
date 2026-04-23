@@ -437,11 +437,257 @@ export type ClientDeal = {
   notes: string;
 };
 
+export type QuoteServiceType =
+  | 'operationalAudit'
+  | 'menuRebuild'
+  | 'trainingMentoring'
+  | 'kitchenLayout'
+  | 'procurementSupport'
+  | 'complianceFoodSafety'
+  | 'mysteryShop'
+  | 'newOpenings'
+  | 'recruitmentSupport';
+
+export type QuoteStatus = 'draft' | 'saved' | 'sent' | 'accepted' | 'rejected' | 'invoiced';
+
+export type QuoteClientRelationship = 'new' | 'existing';
+
+export type QuoteBusinessType =
+  | 'pub'
+  | 'restaurant'
+  | 'hotel'
+  | 'gastroPub'
+  | 'cafe'
+  | 'qsrTakeaway'
+  | 'leisureHolidayPark'
+  | 'multiSiteGroup'
+  | 'other';
+
+export type QuoteServiceStyle = 'fullService' | 'quickService' | 'mixed';
+
+export type QuoteVenueSize = 'small' | 'medium' | 'large';
+
+export type QuoteRevenueStream =
+  | 'foodOnly'
+  | 'foodWet'
+  | 'rooms'
+  | 'events'
+  | 'deliveryTakeaway'
+  | 'multipleStreams';
+
+export type QuoteTurnaround = 'standard' | 'fast' | 'urgent';
+
+export type QuoteComplexity = 'low' | 'medium' | 'high';
+
+export type QuoteMysteryVisitMode = 'visitOnly' | 'visitReportDebrief';
+
+export type QuoteMenuProjectScope = 'refresh' | 'fullRebuild';
+
+export type QuoteTrainingFormat =
+  | 'twoHourSession'
+  | 'halfDay'
+  | 'fullDay'
+  | 'multiSessionPackage'
+  | 'monthlyMentoring';
+
+export type QuoteDeliveryMode = 'onSite' | 'remote' | 'hybrid';
+
+export type QuoteOpeningStage =
+  | 'earlyConcept'
+  | 'planning'
+  | 'preOpening'
+  | 'launchSupport'
+  | 'postOpeningStabilisation';
+
+export type QuoteLineItemType = 'auto' | 'manual' | 'adjustment' | 'discount';
+
+export type QuoteLineItem = {
+  id: string;
+  key?: string;
+  label: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  type: QuoteLineItemType;
+  source?: string;
+};
+
+export type QuoteLineItemOverride = {
+  label?: string;
+  description?: string;
+  quantity?: number;
+  unitPrice?: number;
+};
+
+export type QuoteInputAnswers = {
+  clientName: string;
+  quoteTitle: string;
+  serviceType: QuoteServiceType | '';
+  quoteDate: string;
+  validUntil: string;
+  consultantName: string;
+  location: string;
+  accountScope: 'singleSite' | 'multiSite';
+  numberOfSites: number;
+  clientRelationship: QuoteClientRelationship;
+  projectBrief: string;
+  businessType: QuoteBusinessType | '';
+  serviceStyle: QuoteServiceStyle | '';
+  venueSize: QuoteVenueSize | '';
+  estimatedWeeklyCovers: number;
+  averageSpendPerHead: number;
+  monthlyTurnover: number;
+  annualTurnover: number;
+  kitchenTeamSize: number;
+  frontOfHouseTeamSize: number;
+  menuSectionCount: number;
+  tradingDays: number;
+  revenueStreams: QuoteRevenueStream[];
+  isUrgent: boolean;
+  requiredTurnaround: QuoteTurnaround;
+  complexityLevel: QuoteComplexity;
+  requiresOnSiteVisit: boolean;
+  onSiteVisitDays: number;
+  requiresRemoteReviewTime: boolean;
+  remoteHours: number;
+  includesWrittenReport: boolean;
+  includesActionPlan: boolean;
+  includesImplementationSupport: boolean;
+  includesTeamTraining: boolean;
+  includesFollowUpSessions: boolean;
+  followUpSessionCount: number;
+  includesDocumentCreation: boolean;
+  includesAllergenWork: boolean;
+  includesRecipeCosting: boolean;
+  includesSpecSheets: boolean;
+  includesSupplierReview: boolean;
+  includesRecruitmentSupport: boolean;
+  includesPreOpeningSupport: boolean;
+  mysteryVisitMode: QuoteMysteryVisitMode;
+  menuCount: number;
+  dishItemCount: number;
+  recipesNeedingCosting: number;
+  allergenSheetsNeeded: number;
+  specSheetsNeeded: number;
+  menuProjectScope: QuoteMenuProjectScope;
+  menuImplementationSupportNeeded: boolean;
+  menuTrainingNeededAfterBuild: boolean;
+  trainingFormat: QuoteTrainingFormat | '';
+  attendeeCount: number;
+  trainingSessionCount: number;
+  trainingDeliveryMode: QuoteDeliveryMode | '';
+  tailoredMaterialsRequired: boolean;
+  followUpCoachingRequired: boolean;
+  openingDate: string;
+  conceptStage: QuoteOpeningStage | '';
+  departmentsInvolved: number;
+  projectOnSiteDays: number;
+  includesSuppliersProcurement: boolean;
+  includesTeamHiring: boolean;
+  includesMenuDevelopment: boolean;
+  includesComplianceSetup: boolean;
+  discountAmount: number;
+  discountPercentage: number;
+  manualAdjustmentAmount: number;
+  optionalRushFee: number;
+  travelFee: number;
+  accommodationFee: number;
+  taxEnabled: boolean;
+  taxRate: number;
+  internalNotes: string;
+  clientFacingNotes: string;
+  manualOverrideEnabled: boolean;
+  overrideTotal: number;
+  finalPriceHidden: boolean;
+};
+
+export type QuoteCalculationMultiplier = {
+  key: string;
+  label: string;
+  value: number;
+  reason: string;
+};
+
+export type QuoteRenderedSummary = {
+  headline: string;
+  scopeSummary: string;
+  pricingSummary: string;
+  lineItemSummary: string[];
+  externalPriceLabel: string;
+  generatedAt: string;
+};
+
+export type QuoteAuditEntry = {
+  id: string;
+  action: 'created' | 'updated' | 'status_changed' | 'invoice_draft_created';
+  actor: string;
+  at: string;
+  previousTotal: number | null;
+  nextTotal: number | null;
+  manualOverrideUsed: boolean;
+  addedLineLabels: string[];
+  removedLineLabels: string[];
+  note: string;
+};
+
+export type QuoteCalculationSnapshot = {
+  basePrice: number;
+  multipliersUsed: QuoteCalculationMultiplier[];
+  allInputAnswers: QuoteInputAnswers;
+  generatedLineItems: QuoteLineItem[];
+  manualLineItems: QuoteLineItem[];
+  hiddenAutoLineItemKeys: string[];
+  autoLineItemOverrides: Record<string, QuoteLineItemOverride>;
+  addOns: QuoteLineItem[];
+  discountAmount: number;
+  discountPercentage: number;
+  appliedDiscountAmount: number;
+  adjustmentAmount: number;
+  suggestedSubtotal: number;
+  suggestedTotal: number;
+  overrideTotal: number | null;
+  finalTotal: number;
+  finalPriceHidden: boolean;
+  validationErrors: string[];
+  taxEnabled: boolean;
+  taxRate: number;
+  taxAmount: number;
+  totalWithTax: number;
+  calculationVersion: number;
+  finalLineItems: QuoteLineItem[];
+};
+
+export type ClientQuote = {
+  quoteId: string;
+  clientId: string;
+  clientName: string;
+  quoteTitle: string;
+  serviceType: QuoteServiceType;
+  status: QuoteStatus;
+  createdAt: string;
+  updatedAt: string;
+  consultantName: string;
+  quoteDate: string;
+  validUntil: string;
+  location: string;
+  scopeSummary: string;
+  internalNotes: string;
+  clientFacingNotes: string;
+  calculation: QuoteCalculationSnapshot;
+  lineItems: QuoteLineItem[];
+  renderedSummary: QuoteRenderedSummary;
+  history: QuoteAuditEntry[];
+  linkedInvoiceId?: string | null;
+};
+
 export type ClientInvoiceLine = {
   id: string;
   description: string;
   quantity: number;
   unitPrice: number;
+  sourceQuoteLineItemId?: string;
+  type?: 'service' | 'discount' | 'adjustment';
 };
 
 export type ClientInvoice = {
@@ -453,6 +699,12 @@ export type ClientInvoice = {
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
   notes: string;
   lines: ClientInvoiceLine[];
+  taxEnabled?: boolean;
+  taxRate?: number;
+  paymentTermsDays?: number;
+  sourceQuoteId?: string | null;
+  sourceQuoteTitle?: string;
+  quoteReference?: string;
 };
 
 export type ClientProfileData = {
@@ -481,6 +733,7 @@ export type ClientProfileData = {
   vatNumber: string;
   companyNumber: string;
   deals: ClientDeal[];
+  quotes: ClientQuote[];
   invoices: ClientInvoice[];
   portal: ClientPortalSettings;
 };

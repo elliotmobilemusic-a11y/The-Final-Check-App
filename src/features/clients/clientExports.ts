@@ -29,10 +29,13 @@ function formatDate(value?: string | null) {
 }
 
 export function invoiceTotal(invoice: ClientInvoice) {
-  return invoice.lines.reduce(
+  const subtotal = invoice.lines.reduce(
     (sum, line) => sum + num(line.quantity) * num(line.unitPrice),
     0
   );
+
+  if (!invoice.taxEnabled) return subtotal;
+  return subtotal + subtotal * (num(invoice.taxRate) / 100);
 }
 
 function listMarkup(title: string, items: string[]) {
@@ -1572,6 +1575,11 @@ export function buildClientPdfHtml(
 }
 
 export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoice) {
+  const subtotal = invoice.lines.reduce(
+    (sum, line) => sum + num(line.quantity) * num(line.unitPrice),
+    0
+  );
+  const taxAmount = invoice.taxEnabled ? subtotal * (num(invoice.taxRate) / 100) : 0;
   const total = invoiceTotal(invoice);
   const linesHtml = invoice.lines.length
     ? invoiceTable(invoice).replace('<table>', '<table class="report-table report-table-compact">')
@@ -1585,7 +1593,7 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
       description: 'Billing summary and charge breakdown prepared for finance issue and PDF handover.',
       chips: [
         invoice.status,
-        `${client.data.paymentTermsDays} day terms`,
+        `${invoice.paymentTermsDays || client.data.paymentTermsDays} day terms`,
         formatDate(invoice.dueDate)
       ],
       cards: [
@@ -1611,10 +1619,15 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
     <div class="meta-grid">
       <div class="meta-card"><span>Status</span><strong>${escapeHtml(invoice.status)}</strong></div>
       <div class="meta-card"><span>Billing email</span><strong>${escapeHtml(client.data.billingEmail || client.contactEmail || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Payment terms</span><strong>${client.data.paymentTermsDays} days</strong></div>
+      <div class="meta-card"><span>Payment terms</span><strong>${invoice.paymentTermsDays || client.data.paymentTermsDays} days</strong></div>
       <div class="meta-card"><span>Billing address</span><strong>${escapeHtml(client.data.billingAddress || 'Not recorded')}</strong></div>
       <div class="meta-card"><span>Client contact</span><strong>${escapeHtml(client.contactName || 'Not recorded')}</strong></div>
       <div class="meta-card"><span>Finance contact</span><strong>${escapeHtml(client.data.billingName || client.companyName || 'Client')}</strong></div>
+      ${
+        invoice.sourceQuoteId
+          ? `<div class="meta-card"><span>Quote reference</span><strong>${escapeHtml(invoice.quoteReference || invoice.sourceQuoteId)}</strong></div>`
+          : ''
+      }
     </div>
 
     <section>
@@ -1641,6 +1654,9 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
       <p class="report-section-lead">Commercial summary for issue, approval, and accounts follow-up.</p>
       <div class="report-grid columns-4">
         <div><strong>Invoice number</strong><br />${escapeHtml(invoice.number || 'Draft')}</div>
+        <div><strong>Quote reference</strong><br />${escapeHtml(invoice.quoteReference || invoice.sourceQuoteId || 'Not linked')}</div>
+        <div><strong>Subtotal</strong><br />${escapeHtml(fmtCurrency(subtotal))}</div>
+        <div><strong>VAT / tax</strong><br />${escapeHtml(fmtCurrency(taxAmount))}</div>
         <div><strong>Total due</strong><br />${escapeHtml(fmtCurrency(total))}</div>
         <div><strong>Issue date</strong><br />${escapeHtml(formatDate(invoice.issueDate))}</div>
         <div><strong>Due date</strong><br />${escapeHtml(formatDate(invoice.dueDate))}</div>
@@ -1652,6 +1668,12 @@ export function buildInvoicePdfHtml(client: ClientProfile, invoice: ClientInvoic
       <p class="report-section-lead">Charge breakdown prepared for client issue and PDF handover.</p>
       ${linesHtml}
       <div class="totals">
+        <strong>Subtotal: ${escapeHtml(fmtCurrency(subtotal))}</strong>
+        ${
+          invoice.taxEnabled
+            ? `<strong>VAT (${num(invoice.taxRate)}%): ${escapeHtml(fmtCurrency(taxAmount))}</strong>`
+            : ''
+        }
         <strong>Total due: ${escapeHtml(fmtCurrency(total))}</strong>
       </div>
     </section>

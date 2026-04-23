@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
+import { useAuth } from '../../context/AuthContext';
 import { StatCard } from '../../components/ui/StatCard';
+import { QuoteCalculatorModule } from '../../components/quotes/QuoteCalculatorModule';
 import { buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
@@ -202,6 +204,11 @@ function blankInvoice(existingCount: number, paymentTermsDays: number): ClientIn
   };
 }
 
+function deriveUserDisplayName(email?: string | null) {
+  if (!email) return 'The Final Check';
+  return email.split('@')[0].replace(/[._-]+/g, ' ');
+}
+
 function stageTone(stage: ClientDeal['stage']) {
   if (stage === 'Won') return 'status-pill status-success';
   if (stage === 'Lost') return 'status-pill status-danger';
@@ -277,6 +284,7 @@ const MYSTERY_SHOP_STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
   const { runWithActivity } = useActivityOverlay();
+  const { session } = useAuth();
 
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [editing, setEditing] = useState(false);
@@ -415,6 +423,13 @@ export function ClientProfilePage() {
     [form?.data.sites]
   );
   const linkedClientId = client?.id ?? clientId;
+  const currentUserName =
+    (typeof session?.user.user_metadata?.display_name === 'string'
+      ? session.user.user_metadata.display_name
+      : '') ||
+    deriveUserDisplayName(session?.user.email) ||
+    form?.data.accountOwner ||
+    'The Final Check';
 
   if (!client || !form) {
     return (
@@ -605,7 +620,7 @@ function updateDeal(id: string, key: keyof ClientDeal, value: string | number) {
 function updateInvoice(
   id: string,
   key: keyof Omit<ClientInvoice, 'lines'>,
-  value: string
+  value: string | number | boolean | null
 ) {
   setForm((current) =>
     current
@@ -706,28 +721,45 @@ function removeInvoice(invoiceId: string) {
   );
 }
 
+  async function persistClientProfile(
+    nextProfile: ClientProfile,
+    options: {
+      successMessage: string;
+      activity: {
+        kicker: string;
+        title: string;
+        detail: string;
+      };
+    }
+  ) {
+    if (!client?.id) throw new Error('Client not found.');
+
+    const activeClientId = client.id;
+    const updated = await runWithActivity(options.activity, async () =>
+      updateClient(activeClientId, nextProfile)
+    );
+    const next = clientRecordToProfile(updated);
+    clearDraft(clientDraftKey(activeClientId));
+    setClient(next);
+    setForm(next);
+    setEditing(false);
+    setMessage(options.successMessage);
+    return next;
+  }
+
   async function handleSave() {
   if (!client?.id || !form) return;
-  const activeClientId = client.id;
 
   try {
     setSaving(true);
-    await runWithActivity(
-      {
+    await persistClientProfile(form, {
+      successMessage: 'Client profile updated.',
+      activity: {
         kicker: 'Updating account',
         title: 'Saving client profile',
         detail: 'Writing the latest client details back to the CRM and tidying the working draft.'
       },
-      async () => {
-        const updated = await updateClient(activeClientId, form);
-        const next = clientRecordToProfile(updated);
-        clearDraft(clientDraftKey(activeClientId));
-        setClient(next);
-        setForm(next);
-        setEditing(false);
-        setMessage('Client profile updated.');
-      }
-    );
+    });
   } catch (error) {
     setMessage(error instanceof Error ? error.message : 'Could not save client.');
   } finally {
@@ -2574,6 +2606,12 @@ function removeInvoice(invoiceId: string) {
                     </div>
                   </article>
 
+                  <QuoteCalculatorModule
+                    client={form}
+                    currentUserName={currentUserName}
+                    onPersistClientProfile={persistClientProfile}
+                  />
+
                   <article className="feature-card" id="client-invoices">
                     <div className="feature-top">
                       <div>
@@ -2627,6 +2665,11 @@ function removeInvoice(invoiceId: string) {
                               <div className="saved-meta">
                                 {invoice.title || 'Consultancy services'} • {fmtCurrency(invoiceTotal(invoice))}
                               </div>
+                              {invoice.sourceQuoteId ? (
+                                <div className="saved-meta">
+                                  Quote reference {invoice.quoteReference || invoice.sourceQuoteId}
+                                </div>
+                              ) : null}
                             </div>
                             <div className="invoice-card-actions">
                               <span className={invoiceTone(invoice.status)}>{invoice.status}</span>
@@ -2698,6 +2741,38 @@ function removeInvoice(invoiceId: string) {
                                 <option>Overdue</option>
                                 <option>Cancelled</option>
                               </select>
+                            </label>
+                            <label className="field">
+                              <span>VAT / tax</span>
+                              <select
+                                className="input"
+                                value={invoice.taxEnabled ? 'enabled' : 'disabled'}
+                                onChange={(e) =>
+                                  updateInvoice(
+                                    invoice.id,
+                                    'taxEnabled',
+                                    e.target.value === 'enabled'
+                                  )
+                                }
+                                disabled={!editing}
+                              >
+                                <option value="disabled">Disabled</option>
+                                <option value="enabled">Enabled</option>
+                              </select>
+                            </label>
+                            <label className="field">
+                              <span>Tax rate (%)</span>
+                              <input
+                                className="input"
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={invoice.taxRate ?? 0}
+                                onChange={(e) =>
+                                  updateInvoice(invoice.id, 'taxRate', Number(e.target.value))
+                                }
+                                disabled={!editing}
+                              />
                             </label>
                             <div className="crm-inline-stat">
                               <span>Total due</span>
