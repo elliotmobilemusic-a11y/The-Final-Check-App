@@ -337,9 +337,12 @@ export function ClientProfilePage() {
     form?.data.accountOwner ||
     'The Final Check';
 
+  const pendingForm = form;
+  const pendingClient = client;
+
   const siteNameById = useMemo(
-    () => new Map((form?.data.sites ?? []).map((site) => [site.id, site.name || 'Unnamed site'])),
-    [form?.data.sites]
+    () => new Map((pendingForm?.data.sites ?? []).map((site) => [site.id, site.name || 'Unnamed site'])),
+    [pendingForm?.data.sites]
   );
 
   const visibleLookupResults = useMemo(() => {
@@ -350,29 +353,8 @@ export function ClientProfilePage() {
     return scoped.length ? scoped : lookupResults;
   }, [lookupResults, lookupScope]);
 
-  if (!client || !form) {
-    return (
-      <div className="screen-center">
-        <div className="loading-card">
-          <h2>Loading client profile...</h2>
-          <p>{message}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const loadedClient = client;
-  const activeForm = form;
-
-  const portalLink = activeForm.data.portal.token
-    ? `${window.location.origin}/#/portal/client/${activeForm.data.portal.token}`
-    : '';
-  const mainContact =
-    activeForm.data.contacts.find((contact) => contact.isPrimary) ?? activeForm.data.contacts[0];
-  const siteCount = activeForm.data.sites.length || activeForm.data.siteCountEstimate || 0;
-  const outstandingBalance = activeForm.data.invoices
-    .filter((invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled')
-    .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+  const activeForm = pendingForm as ClientProfile;
+  const loadedClient = pendingClient as ClientProfile;
 
   function updateField<K extends keyof ClientProfile>(key: K, value: ClientProfile[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
@@ -1053,6 +1035,7 @@ export function ClientProfilePage() {
   }
 
   const workItems = useMemo<ClientWorkItem[]>(() => {
+    if (!activeForm) return [];
     const archivedIds = new Set(activeForm.data.archivedWorkItemIds);
 
     const operationalItems = audits.map((audit) => ({
@@ -1148,13 +1131,13 @@ export function ClientProfilePage() {
       ...serviceQuoteItems
     ].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   }, [
-    activeForm.data.archivedWorkItemIds,
-    activeForm.data.portal.hiddenAuditIds,
-    activeForm.data.portal.hiddenFoodSafetyIds,
-    activeForm.data.portal.hiddenMenuIds,
-    activeForm.data.portal.hiddenMysteryShopIds,
-    activeForm.data.portal.hiddenQuoteIds,
-    activeForm.data.quotes,
+    activeForm?.data.archivedWorkItemIds,
+    activeForm?.data.portal.hiddenAuditIds,
+    activeForm?.data.portal.hiddenFoodSafetyIds,
+    activeForm?.data.portal.hiddenMenuIds,
+    activeForm?.data.portal.hiddenMysteryShopIds,
+    activeForm?.data.portal.hiddenQuoteIds,
+    activeForm?.data.quotes,
     audits,
     clientId,
     foodSafetyAudits,
@@ -1164,6 +1147,7 @@ export function ClientProfilePage() {
   ]);
 
   const sharedItems = useMemo<ClientPortalSharedItem[]>(() => {
+    if (!activeForm) return [];
     return [
       ...audits.map((audit) => ({
         id: `audit:${audit.id}`,
@@ -1209,14 +1193,14 @@ export function ClientProfilePage() {
       }))
     ].sort((left, right) => right.releaseDate.localeCompare(left.releaseDate));
   }, [
-    activeForm.data.invoices,
-    activeForm.data.portal.hiddenAuditIds,
-    activeForm.data.portal.hiddenFoodSafetyIds,
-    activeForm.data.portal.hiddenInvoiceIds,
-    activeForm.data.portal.hiddenMenuIds,
-    activeForm.data.portal.hiddenMysteryShopIds,
-    activeForm.data.portal.hiddenQuoteIds,
-    activeForm.data.quotes,
+    activeForm?.data.invoices,
+    activeForm?.data.portal.hiddenAuditIds,
+    activeForm?.data.portal.hiddenFoodSafetyIds,
+    activeForm?.data.portal.hiddenInvoiceIds,
+    activeForm?.data.portal.hiddenMenuIds,
+    activeForm?.data.portal.hiddenMysteryShopIds,
+    activeForm?.data.portal.hiddenQuoteIds,
+    activeForm?.data.quotes,
     audits,
     foodSafetyAudits,
     menus,
@@ -1224,79 +1208,104 @@ export function ClientProfilePage() {
   ]);
 
   const portalCategoryControls = useMemo<ClientPortalCategoryControl[]>(
-    () => [
-      {
-        key: 'audits',
-        label: 'Audits visible',
-        description: 'Operational audits released to the portal.',
-        enabled: activeForm.data.portal.hiddenAuditIds.length < audits.length,
-        count: audits.length
-      },
-      {
-        key: 'foodSafety',
-        label: 'Food safety visible',
-        description: 'Food safety audits released to the portal.',
-        enabled: activeForm.data.portal.hiddenFoodSafetyIds.length < foodSafetyAudits.length,
-        count: foodSafetyAudits.length
-      },
-      {
-        key: 'mysteryShops',
-        label: 'Mystery shops visible',
-        description: 'Mystery visit reports available to the client.',
-        enabled: activeForm.data.portal.hiddenMysteryShopIds.length < mysteryShopAudits.length,
-        count: mysteryShopAudits.length
-      },
-      {
-        key: 'menuProjects',
-        label: 'Menu projects visible',
-        description: 'Menu rebuild work and menu deliverables.',
-        enabled: activeForm.data.portal.hiddenMenuIds.length < menus.length,
-        count: menus.length
-      },
-      {
-        key: 'quotes',
-        label: 'Quotes visible',
-        description: 'Saved quotes included in the client-facing view.',
-        enabled: activeForm.data.portal.hiddenQuoteIds.length < activeForm.data.quotes.length,
-        count: activeForm.data.quotes.length
-      },
-      {
-        key: 'invoices',
-        label: 'Invoices visible',
-        description: 'Invoice records included in the portal.',
-        enabled: activeForm.data.portal.hiddenInvoiceIds.length < activeForm.data.invoices.length,
-        count: activeForm.data.invoices.length
-      },
-      {
-        key: 'reports',
-        label: 'Reports visible',
-        description: 'Future report releases can be controlled from here.',
-        enabled: activeForm.data.portal.showReports
-      },
-      {
-        key: 'actionPlans',
-        label: 'Action plans visible',
-        description: 'Future action plan releases can be controlled from here.',
-        enabled: activeForm.data.portal.showActionPlans
-      }
-    ],
+    () => {
+      if (!activeForm) return [];
+
+      return [
+        {
+          key: 'audits',
+          label: 'Audits visible',
+          description: 'Operational audits released to the portal.',
+          enabled: activeForm.data.portal.hiddenAuditIds.length < audits.length,
+          count: audits.length
+        },
+        {
+          key: 'foodSafety',
+          label: 'Food safety visible',
+          description: 'Food safety audits released to the portal.',
+          enabled: activeForm.data.portal.hiddenFoodSafetyIds.length < foodSafetyAudits.length,
+          count: foodSafetyAudits.length
+        },
+        {
+          key: 'mysteryShops',
+          label: 'Mystery shops visible',
+          description: 'Mystery visit reports available to the client.',
+          enabled: activeForm.data.portal.hiddenMysteryShopIds.length < mysteryShopAudits.length,
+          count: mysteryShopAudits.length
+        },
+        {
+          key: 'menuProjects',
+          label: 'Menu projects visible',
+          description: 'Menu rebuild work and menu deliverables.',
+          enabled: activeForm.data.portal.hiddenMenuIds.length < menus.length,
+          count: menus.length
+        },
+        {
+          key: 'quotes',
+          label: 'Quotes visible',
+          description: 'Saved quotes included in the client-facing view.',
+          enabled: activeForm.data.portal.hiddenQuoteIds.length < activeForm.data.quotes.length,
+          count: activeForm.data.quotes.length
+        },
+        {
+          key: 'invoices',
+          label: 'Invoices visible',
+          description: 'Invoice records included in the portal.',
+          enabled: activeForm.data.portal.hiddenInvoiceIds.length < activeForm.data.invoices.length,
+          count: activeForm.data.invoices.length
+        },
+        {
+          key: 'reports',
+          label: 'Reports visible',
+          description: 'Future report releases can be controlled from here.',
+          enabled: activeForm.data.portal.showReports
+        },
+        {
+          key: 'actionPlans',
+          label: 'Action plans visible',
+          description: 'Future action plan releases can be controlled from here.',
+          enabled: activeForm.data.portal.showActionPlans
+        }
+      ];
+    },
     [
-      activeForm.data.invoices.length,
-      activeForm.data.portal.hiddenAuditIds.length,
-      activeForm.data.portal.hiddenFoodSafetyIds.length,
-      activeForm.data.portal.hiddenInvoiceIds.length,
-      activeForm.data.portal.hiddenMenuIds.length,
-      activeForm.data.portal.hiddenMysteryShopIds.length,
-      activeForm.data.portal.hiddenQuoteIds.length,
-      activeForm.data.portal.showActionPlans,
-      activeForm.data.portal.showReports,
-      activeForm.data.quotes.length,
+      activeForm?.data.invoices.length,
+      activeForm?.data.portal.hiddenAuditIds.length,
+      activeForm?.data.portal.hiddenFoodSafetyIds.length,
+      activeForm?.data.portal.hiddenInvoiceIds.length,
+      activeForm?.data.portal.hiddenMenuIds.length,
+      activeForm?.data.portal.hiddenMysteryShopIds.length,
+      activeForm?.data.portal.hiddenQuoteIds.length,
+      activeForm?.data.portal.showActionPlans,
+      activeForm?.data.portal.showReports,
+      activeForm?.data.quotes.length,
       audits.length,
       foodSafetyAudits.length,
       menus.length,
       mysteryShopAudits.length
     ]
   );
+
+  if (!loadedClient || !activeForm) {
+    return (
+      <div className="screen-center">
+        <div className="loading-card">
+          <h2>Loading client profile...</h2>
+          <p>{message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const portalLink = activeForm.data.portal.token
+    ? `${window.location.origin}/#/portal/client/${activeForm.data.portal.token}`
+    : '';
+  const mainContact =
+    activeForm.data.contacts.find((contact) => contact.isPrimary) ?? activeForm.data.contacts[0];
+  const siteCount = activeForm.data.sites.length || activeForm.data.siteCountEstimate || 0;
+  const outstandingBalance = activeForm.data.invoices
+    .filter((invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled')
+    .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
 
   async function refreshServiceLists() {
     const [auditRows, menuRows] = await Promise.all([listAudits(clientId), listMenuProjects(clientId)]);
