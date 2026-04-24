@@ -81,6 +81,12 @@ function quotePortalVisible(client: ClientProfile, quoteId: string) {
   return !client.data.portal.hiddenQuoteIds.includes(quoteId);
 }
 
+function parseNumericValue(value: string) {
+  if (!value.trim()) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function ClientPricingTab({
   client,
   editing,
@@ -350,12 +356,12 @@ export function ClientPricingTab({
               <input
                 className="input"
                 disabled={!editing}
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
                 value={selectedInvoice.taxRate ?? 0}
                 onChange={(event) =>
-                  onUpdateInvoiceField(selectedInvoice.id, 'taxRate', Number(event.target.value))
+                  onUpdateInvoiceField(selectedInvoice.id, 'taxRate', parseNumericValue(event.target.value))
                 }
               />
             </label>
@@ -389,12 +395,17 @@ export function ClientPricingTab({
                   <input
                     className="input"
                     disabled={!editing}
-                    type="number"
-                    min="0"
-                    step="0.5"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
                     value={line.quantity}
                     onChange={(event) =>
-                      onUpdateInvoiceLine(selectedInvoice.id, line.id, 'quantity', Number(event.target.value))
+                      onUpdateInvoiceLine(
+                        selectedInvoice.id,
+                        line.id,
+                        'quantity',
+                        parseNumericValue(event.target.value)
+                      )
                     }
                   />
                 </label>
@@ -403,12 +414,17 @@ export function ClientPricingTab({
                   <input
                     className="input"
                     disabled={!editing}
-                    type="number"
-                    min="-999999"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="-?[0-9]*[.,]?[0-9]*"
                     value={line.unitPrice}
                     onChange={(event) =>
-                      onUpdateInvoiceLine(selectedInvoice.id, line.id, 'unitPrice', Number(event.target.value))
+                      onUpdateInvoiceLine(
+                        selectedInvoice.id,
+                        line.id,
+                        'unitPrice',
+                        parseNumericValue(event.target.value)
+                      )
                     }
                   />
                 </label>

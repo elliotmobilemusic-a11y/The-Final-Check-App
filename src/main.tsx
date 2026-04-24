@@ -1,10 +1,27 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './styles.css';
 import './tablet-responsive.css';
+import './native-android.css';
 import './report-new.css';
+
+const applyNativeShellClasses = () => {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+
+  const platform = Capacitor.getPlatform();
+  const classNames = ['native-shell', `platform-${platform}`];
+
+  document.documentElement.classList.add(...classNames);
+  document.body.classList.add(...classNames);
+  document.body.dataset.nativePlatform = platform;
+};
+
+applyNativeShellClasses();
 
 // Suppress known browser extension errors that leak into unhandled rejections
 window.addEventListener('unhandledrejection', (event) => {

@@ -223,13 +223,17 @@ export function NewClientPage() {
                 <span>Estimated monthly value</span>
                 <input
                   className="input"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.,]?[0-9]*"
                   value={form.data.estimatedMonthlyValue}
                   onChange={(event) =>
                     setForm({
                       ...form,
-                      data: { ...form.data, estimatedMonthlyValue: Number(event.target.value) }
+                      data: {
+                        ...form.data,
+                        estimatedMonthlyValue: Number(event.target.value || 0)
+                      }
                     })
                   }
                 />
@@ -340,13 +344,14 @@ export function NewClientPage() {
                 <span>Estimated site count</span>
                 <input
                   className="input"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.data.siteCountEstimate}
                   onChange={(event) =>
                     setForm({
                       ...form,
-                      data: { ...form.data, siteCountEstimate: Number(event.target.value) }
+                      data: { ...form.data, siteCountEstimate: Number(event.target.value || 0) }
                     })
                   }
                 />

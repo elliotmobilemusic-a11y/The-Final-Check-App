@@ -107,6 +107,12 @@ function lineLabelKey(line: QuoteLineItem) {
   return `${line.label}|${line.total.toFixed(2)}`;
 }
 
+function parseNumericValue(value: string) {
+  if (!value.trim()) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function buildHistoryEntry(options: {
   previousQuote?: ClientQuote | null;
   nextLineItems: QuoteLineItem[];
@@ -660,12 +666,15 @@ export function QuoteCalculatorModule({
           <span>{field.label}</span>
           <input
             className="input"
-            type="number"
-            min={field.min}
-            step={field.step ?? 'any'}
+            type="text"
+            inputMode={field.type === 'currency' || field.step === 0.01 ? 'decimal' : 'numeric'}
+            pattern={field.type === 'currency' || field.step === 0.01 ? '[0-9]*[.,]?[0-9]*' : '[0-9]*'}
             value={String(num(value))}
             onChange={(event) =>
-              updateValue(field.key, Number(event.target.value) as QuoteInputAnswers[typeof field.key])
+              updateValue(
+                field.key,
+                parseNumericValue(event.target.value) as QuoteInputAnswers[typeof field.key]
+              )
             }
           />
         </label>
@@ -808,15 +817,15 @@ export function QuoteCalculatorModule({
                           <span>Qty</span>
                           <input
                             className="input"
-                            type="number"
-                            min="0"
-                            step="0.5"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="[0-9]*[.,]?[0-9]*"
                             value={override.quantity ?? line.quantity}
                             onChange={(event) =>
                               updateAutoLineOverride(
                                 line.key || '',
                                 'quantity',
-                                Number(event.target.value)
+                                parseNumericValue(event.target.value)
                               )
                             }
                           />
@@ -825,15 +834,15 @@ export function QuoteCalculatorModule({
                           <span>Unit price</span>
                           <input
                             className="input"
-                            type="number"
-                            min="-999999"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="-?[0-9]*[.,]?[0-9]*"
                             value={override.unitPrice ?? line.unitPrice}
                             onChange={(event) =>
                               updateAutoLineOverride(
                                 line.key || '',
                                 'unitPrice',
-                                Number(event.target.value)
+                                parseNumericValue(event.target.value)
                               )
                             }
                           />
@@ -880,12 +889,16 @@ export function QuoteCalculatorModule({
                           <span>Qty</span>
                           <input
                             className="input"
-                            type="number"
-                            min="0"
-                            step="0.5"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="[0-9]*[.,]?[0-9]*"
                             value={line.quantity}
                             onChange={(event) =>
-                              updateManualLineItem(line.id, 'quantity', Number(event.target.value))
+                              updateManualLineItem(
+                                line.id,
+                                'quantity',
+                                parseNumericValue(event.target.value)
+                              )
                             }
                           />
                         </label>
@@ -893,12 +906,16 @@ export function QuoteCalculatorModule({
                           <span>Unit price</span>
                           <input
                             className="input"
-                            type="number"
-                            min="-999999"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="-?[0-9]*[.,]?[0-9]*"
                             value={line.unitPrice}
                             onChange={(event) =>
-                              updateManualLineItem(line.id, 'unitPrice', Number(event.target.value))
+                              updateManualLineItem(
+                                line.id,
+                                'unitPrice',
+                                parseNumericValue(event.target.value)
+                              )
                             }
                           />
                         </label>

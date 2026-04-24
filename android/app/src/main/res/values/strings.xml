@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">The Final Check</string>
+    <string name="title_activity_main">The Final Check</string>
+    <string name="package_name">uk.thefinalcheck.portal</string>
+    <string name="custom_url_scheme">uk.thefinalcheck.portal</string>
+</resources>

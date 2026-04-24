@@ -182,10 +182,11 @@ export function ClientInformationTab({
             <input
               className="input"
               disabled={!editing}
-              type="number"
-              min="0"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={client.data.siteCountEstimate}
-              onChange={(event) => updateData('siteCountEstimate', Number(event.target.value))}
+              onChange={(event) => updateData('siteCountEstimate', Number(event.target.value || 0))}
             />
           </label>
         </div>

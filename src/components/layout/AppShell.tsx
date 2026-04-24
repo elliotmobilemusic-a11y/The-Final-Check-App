@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
@@ -90,7 +91,8 @@ export function AppShell() {
   const [navHeight, setNavHeight] = useState(108);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
-  const disableAutoHideNav = location.pathname.startsWith('/settings');
+  const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+  const disableAutoHideNav = location.pathname.startsWith('/settings') || isNativeAndroid;
 
   useEffect(() => {
     const navElement = navRef.current;
