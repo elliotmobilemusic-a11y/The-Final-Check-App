@@ -4,7 +4,10 @@ import { downloadText } from '../../lib/utils';
 
 type SharedReportFrameProps = {
   bodyHtml: string;
+  eyebrow?: string;
+  loadingTitle?: string;
   message: string;
+  missingTitle?: string;
   ready: boolean;
   status: 'loading' | 'ready' | 'missing' | 'error';
   title: string;
@@ -12,7 +15,10 @@ type SharedReportFrameProps = {
 
 export function SharedReportFrame({
   bodyHtml,
+  eyebrow = 'Shared Report',
+  loadingTitle = 'Opening report',
   message,
+  missingTitle = 'Report unavailable',
   ready,
   status,
   title
@@ -60,7 +66,7 @@ export function SharedReportFrame({
             The Final Check
           </p>
           <h1 style={{ margin: '12px 0 10px', fontSize: '32px', color: '#2d2b31' }}>
-            {status === 'loading' ? 'Opening report' : 'Report unavailable'}
+            {status === 'loading' ? loadingTitle : missingTitle}
           </h1>
           <p style={{ margin: 0, color: '#5c5752', lineHeight: 1.6 }}>{message}</p>
           <div style={{ marginTop: '22px' }}>
@@ -101,7 +107,7 @@ export function SharedReportFrame({
               fontWeight: 700
             }}
           >
-            Shared Report
+            {eyebrow}
           </p>
           <strong style={{ color: '#2d2b31' }}>{title}</strong>
         </div>

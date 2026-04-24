@@ -14,7 +14,14 @@ type ReportShareType =
   | 'kitchen_audit'
   | 'food_safety_audit'
   | 'mystery_shop_audit'
-  | 'menu_project';
+  | 'menu_project'
+  | 'dish_spec_report'
+  | 'recipe_costing_report';
+
+type HtmlReportPayload = {
+  html?: string;
+  title?: string;
+};
 
 type CreateShareOptions<T> = {
   path: string;
@@ -159,6 +166,40 @@ export async function createHtmlReportShare(sourceRecordId: string | null, title
 
 export async function getReportShareByToken(token: string) {
   return getPublicShareByToken<Record<string, unknown>>(token, 'generic_report');
+}
+
+export async function createDishSpecShare(sourceRecordId: string | null, title: string, html: string) {
+  return createShareRecord<HtmlReportPayload>({
+    path: '/share/dish-spec',
+    payload: {
+      title,
+      html
+    },
+    reportType: 'dish_spec_report',
+    sourceRecordId,
+    title
+  });
+}
+
+export async function getDishSpecShareByToken(token: string) {
+  return getPublicShareByToken<HtmlReportPayload>(token, 'dish_spec_report');
+}
+
+export async function createRecipeCostingShare(sourceRecordId: string | null, title: string, html: string) {
+  return createShareRecord<HtmlReportPayload>({
+    path: '/share/recipe-costing',
+    payload: {
+      title,
+      html
+    },
+    reportType: 'recipe_costing_report',
+    sourceRecordId,
+    title
+  });
+}
+
+export async function getRecipeCostingShareByToken(token: string) {
+  return getPublicShareByToken<HtmlReportPayload>(token, 'recipe_costing_report');
 }
 
 export async function createClientPortalShare(clientId: string, payload: ClientPortalSharePayload) {

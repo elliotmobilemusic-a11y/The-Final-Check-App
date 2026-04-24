@@ -10,7 +10,7 @@ import {
   QuantityInput
 } from '../../components/ui/NumericInput';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
-import { selectableSitesForClient } from '../../features/clients/clientData';
+import { createEmptyClientData, selectableSitesForClient } from '../../features/clients/clientData';
 import {
   blankDishImage,
   blankIngredient,
@@ -20,6 +20,11 @@ import {
   normalizeIngredient,
   syncDishLinkedRecords
 } from '../../features/menu-engine/dishRecords';
+import {
+  buildDishSpecReportHtml,
+  buildRecipeCostingReportHtml
+} from '../../features/menu-engine/reports';
+import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import {
   buildPdfDocumentHtml,
   buildReportCoverHtml,
@@ -34,10 +39,22 @@ import {
   saveMenuProject
 } from '../../services/menus';
 import { listClients } from '../../services/clients';
-import type { ClientRecord, DishIngredient, MeasurementUnit, MenuDish, MenuProjectState } from '../../types';
+import type {
+  ClientProfile,
+  ClientRecord,
+  DishIngredient,
+  MeasurementUnit,
+  MenuDish,
+  MenuProjectState,
+  SupabaseRecord
+} from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
-import { createMenuShare } from '../../services/reportShares';
+import {
+  createDishSpecShare,
+  createMenuShare,
+  createRecipeCostingShare
+} from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
@@ -52,6 +69,47 @@ import {
 } from '../../features/profit/menuProfit';
 
 const MENU_BUILDER_DRAFT_KEY = 'menu-builder-draft-v1';
+
+function buildReportClientProfile(client: ClientRecord | null, project: MenuProjectState): ClientProfile {
+  return {
+    id: client?.id,
+    companyName: client?.company_name || project.siteName || 'Client not linked',
+    contactName: client?.contact_name || '',
+    contactEmail: client?.contact_email || '',
+    contactPhone: client?.contact_phone || '',
+    location: client?.location || project.siteName || '',
+    notes: client?.notes || '',
+    logoUrl: client?.logo_url || '',
+    coverUrl: client?.cover_url || '',
+    status: client?.status || 'Active',
+    tier: client?.tier || '',
+    industry: client?.industry || 'Hospitality',
+    website: client?.website || '',
+    nextReviewDate: client?.next_review_date || project.reviewDate,
+    tags: client?.tags || [],
+    data: createEmptyClientData(),
+    createdAt: client?.created_at,
+    updatedAt: client?.updated_at
+  };
+}
+
+function buildReportMenuRecord(project: MenuProjectState): SupabaseRecord<MenuProjectState> {
+  const timestamp = project.updatedAt || new Date().toISOString();
+
+  return {
+    id: project.id || 'draft-menu',
+    user_id: 'local-menu-builder',
+    client_id: project.clientId ?? null,
+    client_site_id: project.clientSiteId ?? null,
+    title: project.menuName || 'Menu project',
+    site_name: project.siteName || null,
+    location: project.siteName || null,
+    review_date: project.reviewDate || null,
+    data: project,
+    created_at: project.createdAt || timestamp,
+    updated_at: timestamp
+  };
+}
 
 function normalizeMenuProject(project: MenuProjectState): MenuProjectState {
   return {
@@ -491,8 +549,10 @@ export function MenuBuilderPage() {
   const [dishEditorTab, setDishEditorTab] = useState<DishEditorTab>('overview');
   const [sectionNameDraft, setSectionNameDraft] = useState('Starters');
   const [message, setMessage] = useState('Menu draft ready.');
+  const [dishShareUrl, setDishShareUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isDishSharing, setIsDishSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
   const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
@@ -532,6 +592,11 @@ export function MenuBuilderPage() {
     () => selectableSitesForClient(activeClient),
     [activeClient]
   );
+  const reportClient = useMemo(
+    () => buildReportClientProfile(activeClient, project),
+    [activeClient, project]
+  );
+  const reportMenuRecord = useMemo(() => buildReportMenuRecord(project), [project]);
 
   useBodyScrollLock(controlModalOpen || Boolean(dishDraft));
 
@@ -798,6 +863,7 @@ export function MenuBuilderPage() {
   function closeDishEditor() {
     setEditingDishId(null);
     setDishEditorTab('overview');
+    setDishShareUrl('');
     setDishDraft(null);
   }
 
@@ -989,6 +1055,93 @@ export function MenuBuilderPage() {
 
     closeDishEditor();
     setMessage('Dish updated.');
+  }
+
+  function exportDishReport(kind: 'spec' | 'recipe') {
+    if (!dishDraft) return;
+
+    const sectionName = selectedSection?.name || 'Menu section';
+    const title =
+      kind === 'spec'
+        ? `${dishDraft.name || 'Dish'} spec sheet`
+        : `${dishDraft.name || 'Dish'} recipe costing`;
+    const html =
+      kind === 'spec'
+        ? buildDishSpecReportHtml({
+            client: reportClient,
+            menuRecord: reportMenuRecord,
+            dish: dishDraft,
+            sectionName,
+            preparedBy: 'Jason Wardill / The Final Check'
+          })
+        : buildRecipeCostingReportHtml({
+            client: reportClient,
+            menuRecord: reportMenuRecord,
+            dish: dishDraft,
+            sectionName,
+            preparedBy: 'Jason Wardill / The Final Check'
+          });
+
+    openPrintableHtmlDocument(title, html);
+    setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} export opened.`);
+  }
+
+  async function createDishReportShare(kind: 'spec' | 'recipe') {
+    if (!dishDraft) return;
+
+    const sectionName = selectedSection?.name || 'Menu section';
+    const title =
+      kind === 'spec'
+        ? `${dishDraft.name || 'Dish'} spec sheet`
+        : `${dishDraft.name || 'Dish'} recipe costing`;
+    const html =
+      kind === 'spec'
+        ? buildDishSpecReportHtml({
+            client: reportClient,
+            menuRecord: reportMenuRecord,
+            dish: dishDraft,
+            sectionName,
+            preparedBy: 'Jason Wardill / The Final Check'
+          })
+        : buildRecipeCostingReportHtml({
+            client: reportClient,
+            menuRecord: reportMenuRecord,
+            dish: dishDraft,
+            sectionName,
+            preparedBy: 'Jason Wardill / The Final Check'
+          });
+
+    try {
+      setIsDishSharing(true);
+      const share = await runWithActivity(
+        {
+          kicker: kind === 'spec' ? 'Dish spec' : 'Recipe costing',
+          title: kind === 'spec' ? 'Creating dish spec link' : 'Creating recipe costing link',
+          detail: 'Publishing a public link for this dish-level document.'
+        },
+        () =>
+          kind === 'spec'
+            ? createDishSpecShare(`dish-spec:${project.id || 'draft'}:${dishDraft.id}`, title, html)
+            : createRecipeCostingShare(
+                `recipe-costing:${project.id || 'draft'}:${dishDraft.id}`,
+                title,
+                html
+              ),
+        700
+      );
+
+      setDishShareUrl(share.url);
+      try {
+        await navigator.clipboard.writeText(share.url);
+        setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} link created and copied.`);
+      } catch {
+        setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} link created: ${share.url}`);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not create the dish share link.');
+    } finally {
+      setIsDishSharing(false);
+    }
   }
 
   function deleteDish(dishId: string) {
@@ -1664,9 +1817,25 @@ export function MenuBuilderPage() {
                       Build each dish from ingredients, selling price, target GP, and weekly sales volume so the profit opportunity is explicit.
                     </p>
                   </div>
-                  <button className="button button-ghost" onClick={closeDishEditor}>
-                    Close
-                  </button>
+                  <div className="dish-modal-header-actions">
+                    <button
+                      className="button button-secondary"
+                      onClick={() => exportDishReport('spec')}
+                      type="button"
+                    >
+                      Export spec PDF
+                    </button>
+                    <button
+                      className="button button-secondary"
+                      onClick={() => exportDishReport('recipe')}
+                      type="button"
+                    >
+                      Export recipe PDF
+                    </button>
+                    <button className="button button-ghost" onClick={closeDishEditor} type="button">
+                      Close
+                    </button>
+                  </div>
                 </div>
 
                 <div className="panel-body stack gap-20 dish-modal-body">
@@ -2199,7 +2368,7 @@ export function MenuBuilderPage() {
                           <div>
                             <h4>Dish record readiness</h4>
                             <p className="muted-copy">
-                              Phase 1 establishes the dish workspace that later phases will surface in client profile, PDFs, and portal sharing.
+                              This dish record now feeds the linked recipe costing sheet, dish spec sheet, client-profile documents, and shareable exports.
                             </p>
                           </div>
                         </div>
@@ -2223,6 +2392,78 @@ export function MenuBuilderPage() {
                             </span>
                           </div>
                         </div>
+                      </section>
+
+                      <section className="sub-panel">
+                        <div className="sub-panel-header">
+                          <div>
+                            <h4>Dish exports</h4>
+                            <p className="muted-copy">
+                              Export or share this individual dish record straight from the Menu Builder.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="dish-export-actions">
+                          <button
+                            className="button button-secondary"
+                            onClick={() => exportDishReport('spec')}
+                            type="button"
+                          >
+                            Export spec PDF
+                          </button>
+                          <button
+                            className="button button-secondary"
+                            onClick={() => exportDishReport('recipe')}
+                            type="button"
+                          >
+                            Export recipe PDF
+                          </button>
+                          <button
+                            className="button button-secondary"
+                            disabled={isDishSharing}
+                            onClick={() => createDishReportShare('spec')}
+                            type="button"
+                          >
+                            {isDishSharing ? 'Creating link...' : 'Create spec link'}
+                          </button>
+                          <button
+                            className="button button-secondary"
+                            disabled={isDishSharing}
+                            onClick={() => createDishReportShare('recipe')}
+                            type="button"
+                          >
+                            {isDishSharing ? 'Creating link...' : 'Create recipe link'}
+                          </button>
+                        </div>
+
+                        {dishShareUrl ? (
+                          <div className="share-link-row dish-share-row">
+                            <input
+                              className="input"
+                              readOnly
+                              value={dishShareUrl}
+                              onFocus={(event) => event.currentTarget.select()}
+                            />
+                            <button
+                              className="button button-secondary"
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(dishShareUrl);
+                                  setMessage('Dish share link copied to clipboard.');
+                                } catch {
+                                  setMessage('Copy failed. You can still copy the dish link manually.');
+                                }
+                              }}
+                            >
+                              Copy link
+                            </button>
+                            <a className="button button-primary" href={dishShareUrl} rel="noreferrer" target="_blank">
+                              Open link
+                            </a>
+                          </div>
+                        ) : null}
                       </section>
                     </aside>
                   </div>

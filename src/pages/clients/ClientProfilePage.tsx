@@ -37,12 +37,13 @@ import {
   saveLocalToolRecord
 } from '../../services/localToolStore';
 import {
-  createHtmlReportShare,
   createClientPortalShare,
+  createDishSpecShare,
   createFoodSafetyShare,
   createKitchenAuditShare,
   createMenuShare,
-  createMysteryShopShare
+  createMysteryShopShare,
+  createRecipeCostingShare
 } from '../../services/reportShares';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import type {
@@ -1043,7 +1044,7 @@ export function ClientProfilePage() {
               const record = visibleDishSpecs.find((entry) => entry.specWorkId === resource.id);
               if (!record) return resource;
 
-              const share = await createHtmlReportShare(
+              const share = await createDishSpecShare(
                 resource.id,
                 resource.title,
                 buildDishSpecReportHtml({
@@ -1059,7 +1060,7 @@ export function ClientProfilePage() {
                 ...resource,
                 url: share.url,
                 shareToken: share.token,
-                sharePath: '/share/report'
+                sharePath: '/share/dish-spec'
               };
             })
           );
@@ -1081,7 +1082,7 @@ export function ClientProfilePage() {
               }
 
               const title = `${record.dish.name} recipe costing`;
-              const share = await createHtmlReportShare(
+              const share = await createRecipeCostingShare(
                 record.recipeWorkId,
                 title,
                 buildRecipeCostingReportHtml({
@@ -1101,7 +1102,7 @@ export function ClientProfilePage() {
                 reviewDate: record.menu.updated_at,
                 url: share.url,
                 shareToken: share.token,
-                sharePath: '/share/report',
+                sharePath: '/share/recipe-costing',
                 locked: false,
                 lockReason: ''
               };

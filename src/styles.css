@@ -5376,6 +5376,13 @@ body[data-theme="midnight"] .control-drawer-panel {
   backdrop-filter: blur(14px);
 }
 
+.dish-modal-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .dish-modal-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -5419,6 +5426,16 @@ body[data-theme="midnight"] .dish-modal-header {
 
 .dish-editor-stat-grid .stat-card {
   min-height: 0;
+}
+
+.dish-export-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dish-share-row {
+  margin-top: 14px;
 }
 
 .menu-dish-tab-row {

@@ -218,6 +218,16 @@ body.native-shell.platform-android input[type='number'] {
     gap: 14px;
   }
 
+  body.native-shell.platform-android .dish-export-actions {
+    grid-template-columns: 1fr;
+  }
+
+  body.native-shell.platform-android .dish-modal-header-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
   body.native-shell.platform-android .client-data-table {
     min-width: 940px;
   }

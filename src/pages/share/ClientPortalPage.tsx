@@ -33,7 +33,9 @@ function getDefaultSharePath(kind: ClientPortalResource['kind']) {
   if (kind === 'audit') return '/share/kitchen-audit';
   if (kind === 'food_safety') return '/share/food-safety';
   if (kind === 'mystery_shop') return '/share/mystery-shop';
-  if (kind === 'dish_spec' || kind === 'recipe_costing' || kind === 'report') return '/share/report';
+  if (kind === 'dish_spec') return '/share/dish-spec';
+  if (kind === 'recipe_costing') return '/share/recipe-costing';
+  if (kind === 'report') return '/share/report';
   return '/share/menu';
 }
 
@@ -58,7 +60,9 @@ function resolvePortalResourceUrl(resource: ClientPortalResource) {
     const parsed = new URL(resource.url, window.location.origin);
     const hash = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash;
     const candidate = hash || parsed.pathname;
-    const match = candidate.match(/(\/share\/(?:kitchen-audit|food-safety|mystery-shop|menu))\/([^/?#]+)/);
+    const match = candidate.match(
+      /(\/share\/(?:kitchen-audit|food-safety|mystery-shop|menu|dish-spec|recipe-costing|report))\/([^/?#]+)/
+    );
 
     if (match) {
       return buildCurrentShareUrl(match[1], match[2]);

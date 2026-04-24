@@ -68,6 +68,14 @@ const SharedMenuPage = lazy(() =>
 const SharedReportPage = lazy(() =>
   import('./pages/share/SharedReportPage').then((module) => ({ default: module.SharedReportPage }))
 );
+const SharedDishSpecPage = lazy(() =>
+  import('./pages/share/SharedDishSpecPage').then((module) => ({ default: module.SharedDishSpecPage }))
+);
+const SharedRecipeCostingPage = lazy(() =>
+  import('./pages/share/SharedRecipeCostingPage').then((module) => ({
+    default: module.SharedRecipeCostingPage
+  }))
+);
 const ClientIntakePage = lazy(() =>
   import('./pages/share/ClientIntakePage').then((module) => ({ default: module.ClientIntakePage }))
 );
@@ -105,6 +113,8 @@ export default function App() {
         <Route path="/share/mystery-shop/:token" element={<SharedMysteryShopAuditPage />} />
         <Route path="/share/menu/:token" element={<SharedMenuPage />} />
         <Route path="/share/report/:token" element={<SharedReportPage />} />
+        <Route path="/share/dish-spec/:token" element={<SharedDishSpecPage />} />
+        <Route path="/share/recipe-costing/:token" element={<SharedRecipeCostingPage />} />
          <Route path="/intake/client/:token" element={<ClientIntakePage />} />
          <Route path="/contact" element={<ClientIntakePage />} />
          <Route path="/portal/client/:token" element={<ClientPortalPage />} />
