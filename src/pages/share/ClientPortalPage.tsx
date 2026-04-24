@@ -20,6 +20,8 @@ function resourceKindLabel(kind: ClientPortalResource['kind']) {
   if (kind === 'audit') return 'Kitchen audit';
   if (kind === 'food_safety') return 'Food safety audit';
   if (kind === 'mystery_shop') return 'Mystery shop';
+  if (kind === 'dish_spec') return 'Dish spec';
+  if (kind === 'recipe_costing') return 'Recipe costing';
   if (kind === 'quote') return 'Quote';
   if (kind === 'invoice') return 'Invoice';
   if (kind === 'report') return 'Report';
@@ -31,6 +33,7 @@ function getDefaultSharePath(kind: ClientPortalResource['kind']) {
   if (kind === 'audit') return '/share/kitchen-audit';
   if (kind === 'food_safety') return '/share/food-safety';
   if (kind === 'mystery_shop') return '/share/mystery-shop';
+  if (kind === 'dish_spec' || kind === 'recipe_costing' || kind === 'report') return '/share/report';
   return '/share/menu';
 }
 

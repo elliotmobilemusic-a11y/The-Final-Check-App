@@ -360,6 +360,8 @@ export type ClientPortalSettings = {
   hiddenFoodSafetyIds: string[];
   hiddenMysteryShopIds: string[];
   hiddenMenuIds: string[];
+  hiddenDishSpecIds: string[];
+  hiddenRecipeCostingIds: string[];
   hiddenQuoteIds: string[];
   hiddenInvoiceIds: string[];
   showReports: boolean;
@@ -370,7 +372,17 @@ export type ClientPortalSettings = {
 export type ClientPortalResource = {
   id: string;
   title: string;
-  kind: 'audit' | 'food_safety' | 'mystery_shop' | 'menu' | 'quote' | 'invoice' | 'report' | 'action_plan';
+  kind:
+    | 'audit'
+    | 'food_safety'
+    | 'mystery_shop'
+    | 'menu'
+    | 'dish_spec'
+    | 'recipe_costing'
+    | 'quote'
+    | 'invoice'
+    | 'report'
+    | 'action_plan';
   subtitle: string;
   reviewDate: string | null;
   url: string | null;

@@ -144,6 +144,19 @@ export async function createReportShare(clientId: string | null, reportData: Rec
   });
 }
 
+export async function createHtmlReportShare(sourceRecordId: string | null, title: string, html: string) {
+  return createShareRecord({
+    path: '/share/report',
+    payload: {
+      title,
+      html
+    },
+    reportType: 'generic_report',
+    sourceRecordId,
+    title
+  });
+}
+
 export async function getReportShareByToken(token: string) {
   return getPublicShareByToken<Record<string, unknown>>(token, 'generic_report');
 }

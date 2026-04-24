@@ -65,6 +65,9 @@ const SharedMysteryShopAuditPage = lazy(() =>
 const SharedMenuPage = lazy(() =>
   import('./pages/share/SharedMenuPage').then((module) => ({ default: module.SharedMenuPage }))
 );
+const SharedReportPage = lazy(() =>
+  import('./pages/share/SharedReportPage').then((module) => ({ default: module.SharedReportPage }))
+);
 const ClientIntakePage = lazy(() =>
   import('./pages/share/ClientIntakePage').then((module) => ({ default: module.ClientIntakePage }))
 );
@@ -101,6 +104,7 @@ export default function App() {
         <Route path="/share/food-safety/:token" element={<SharedFoodSafetyAuditPage />} />
         <Route path="/share/mystery-shop/:token" element={<SharedMysteryShopAuditPage />} />
         <Route path="/share/menu/:token" element={<SharedMenuPage />} />
+        <Route path="/share/report/:token" element={<SharedReportPage />} />
          <Route path="/intake/client/:token" element={<ClientIntakePage />} />
          <Route path="/contact" element={<ClientIntakePage />} />
          <Route path="/portal/client/:token" element={<ClientPortalPage />} />

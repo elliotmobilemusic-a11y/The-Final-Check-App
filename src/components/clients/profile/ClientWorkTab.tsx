@@ -8,6 +8,8 @@ export type ClientWorkItem = {
     | 'foodSafety'
     | 'mysteryShop'
     | 'menuProject'
+    | 'dishSpec'
+    | 'recipeCosting'
     | 'training'
     | 'newOpenings'
     | 'other';
@@ -29,6 +31,7 @@ type ClientWorkTabProps = {
   onDuplicate: (item: ClientWorkItem) => void;
   onArchiveToggle: (item: ClientWorkItem) => void;
   onTogglePortalVisibility: (item: ClientWorkItem, visible: boolean) => void;
+  onExport: (item: ClientWorkItem) => void;
   onLinkToInvoice: (item: ClientWorkItem) => void;
   onNewServiceJob: () => void;
 };
@@ -51,6 +54,8 @@ const filterOptions: Array<{ key: ClientWorkItem['itemType'] | 'all'; label: str
   { key: 'foodSafety', label: 'Food safety' },
   { key: 'mysteryShop', label: 'Mystery shops' },
   { key: 'menuProject', label: 'Menu projects' },
+  { key: 'dishSpec', label: 'Dish specs' },
+  { key: 'recipeCosting', label: 'Recipe costings' },
   { key: 'training', label: 'Training' },
   { key: 'newOpenings', label: 'New openings' },
   { key: 'other', label: 'Other services' }
@@ -61,6 +66,7 @@ export function ClientWorkTab({
   onDuplicate,
   onArchiveToggle,
   onTogglePortalVisibility,
+  onExport,
   onLinkToInvoice,
   onNewServiceJob
 }: ClientWorkTabProps) {
@@ -76,7 +82,7 @@ export function ClientWorkTab({
         <div className="client-tab-section-heading">
           <div>
             <h2>Work & services</h2>
-            <p>One delivery view for active audits, compliance, mystery shops, menu work, and service jobs.</p>
+            <p>One delivery view for active audits, compliance, mystery shops, menu projects, dish specs, recipe costings, and service jobs.</p>
           </div>
         </div>
 
@@ -151,6 +157,9 @@ export function ClientWorkTab({
                     ) : null}
                     <button className="button button-ghost" onClick={() => onDuplicate(item)} type="button">
                       Duplicate
+                    </button>
+                    <button className="button button-ghost" onClick={() => onExport(item)} type="button">
+                      Export PDF
                     </button>
                     <button className="button button-ghost" onClick={() => onArchiveToggle(item)} type="button">
                       {item.archived ? 'Restore' : 'Archive'}

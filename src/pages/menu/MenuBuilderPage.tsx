@@ -475,6 +475,8 @@ export function MenuBuilderPage() {
   const [searchParams] = useSearchParams();
   const queryClientId = searchParams.get('client') || null;
   const queryLoadId = searchParams.get('load');
+  const queryDishId = searchParams.get('dish');
+  const queryDishTab = searchParams.get('dishTab');
 
   const [project, setProject] = useState<MenuProjectState>(() =>
     queryLoadId
@@ -494,6 +496,7 @@ export function MenuBuilderPage() {
   const [shareUrl, setShareUrl] = useState('');
   const [controlModalOpen, setControlModalOpen] = useState(false);
   const controlDrawerBodyRef = useRef<HTMLDivElement>(null);
+  const openedLinkedDishRef = useRef<string | null>(null);
 
   const selectedSection = useMemo(
     () => project.sections.find((section) => section.id === project.selectedSectionId) ?? null,
@@ -1021,6 +1024,35 @@ export function MenuBuilderPage() {
       )
     }));
   }
+
+  useEffect(() => {
+    if (!queryDishId) return;
+
+    const matchedSection = project.sections.find((section) =>
+      section.dishes.some((dish) => dish.id === queryDishId)
+    );
+    if (!matchedSection) return;
+
+    const matchedDish = matchedSection.dishes.find((dish) => dish.id === queryDishId);
+    if (!matchedDish) return;
+
+    const requestedTab: DishEditorTab =
+      queryDishTab === 'recipe' || queryDishTab === 'spec' || queryDishTab === 'allergens' || queryDishTab === 'images'
+        ? queryDishTab
+        : 'overview';
+    const nextKey = `${project.id || 'draft'}:${queryDishId}:${requestedTab}`;
+    if (openedLinkedDishRef.current === nextKey) return;
+    openedLinkedDishRef.current = nextKey;
+
+    setProject((current) =>
+      current.selectedSectionId === matchedSection.id
+        ? current
+        : { ...current, selectedSectionId: matchedSection.id }
+    );
+    setEditingDishId(matchedDish.id);
+    setDishEditorTab(requestedTab);
+    setDishDraft(normalizeDish(JSON.parse(JSON.stringify(matchedDish)) as MenuDish));
+  }, [project.id, project.sections, queryDishId, queryDishTab]);
 
   async function handleSaveProject() {
     try {

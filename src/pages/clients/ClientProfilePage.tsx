@@ -4,6 +4,11 @@ import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import { buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
+import { normalizeDish } from '../../features/menu-engine/dishRecords';
+import {
+  buildDishSpecReportHtml,
+  buildRecipeCostingReportHtml
+} from '../../features/menu-engine/reports';
 import {
   getBusinessProfile,
   searchBusinessProfiles,
@@ -32,6 +37,7 @@ import {
   saveLocalToolRecord
 } from '../../services/localToolStore';
 import {
+  createHtmlReportShare,
   createClientPortalShare,
   createFoodSafetyShare,
   createKitchenAuditShare,
@@ -53,6 +59,7 @@ import type {
   ClientSite,
   FoodSafetyAuditState,
   LocalToolRecord,
+  MenuDish,
   MenuProjectState,
   MysteryShopAuditState,
   QuoteLineItem,
@@ -226,11 +233,81 @@ function workstreamSiteLabel(
   return record.site_name || 'Account level';
 }
 
+type MenuLinkedDishRecord = {
+  menu: SupabaseRecord<MenuProjectState>;
+  dish: MenuDish;
+  sectionId: string;
+  sectionName: string;
+  workId: string;
+  specWorkId: string;
+  recipeWorkId: string;
+};
+
+function buildMenuLinkedDishRecords(
+  menus: SupabaseRecord<MenuProjectState>[]
+): MenuLinkedDishRecord[] {
+  return menus.flatMap((menu) =>
+    (menu.data.sections ?? []).flatMap((section) =>
+      (section.dishes ?? []).map((dish) => {
+        const normalizedDish = normalizeDish(dish);
+        return {
+          menu,
+          dish: normalizedDish,
+          sectionId: section.id,
+          sectionName: section.name,
+          workId: `menu-dish:${menu.id}:${normalizedDish.id}`,
+          specWorkId: `dish-spec:${menu.id}:${normalizedDish.id}`,
+          recipeWorkId: `recipe-costing:${menu.id}:${normalizedDish.id}`
+        };
+      })
+    )
+  );
+}
+
 function cloneQuoteLineItem(line: QuoteLineItem): QuoteLineItem {
   return {
     ...line,
     id: uid('quote-line')
   };
+}
+
+function cloneMenuDishRecord(sourceDish: MenuDish, copyName?: string) {
+  const nextDish = normalizeDish(JSON.parse(JSON.stringify(sourceDish)) as MenuDish);
+  const nextDishId = uid('dish');
+
+  return {
+    ...nextDish,
+    id: nextDishId,
+    name: copyName || `${nextDish.name} copy`,
+    ingredients: nextDish.ingredients.map((ingredient) => ({
+      ...ingredient,
+      id: uid('ing')
+    })),
+    dishImages: nextDish.dishImages.map((image, index) => ({
+      ...image,
+      id: uid('dish-image'),
+      isPrimary: index === 0
+    })),
+    recipeCosting: {
+      ...nextDish.recipeCosting,
+      id: uid('dish-costing'),
+      linkedDishId: nextDishId
+    },
+    specSheet: {
+      ...nextDish.specSheet,
+      id: uid('dish-spec'),
+      linkedDishId: nextDishId
+    }
+  };
+}
+
+function buildDishWorkOpenPath(
+  clientId: string,
+  menuId: string,
+  dishId: string,
+  tab: 'spec' | 'recipe'
+) {
+  return `/menu?client=${clientId}&load=${menuId}&dish=${dishId}&dishTab=${tab}`;
 }
 
 function createQuoteHistoryEntry(
@@ -724,6 +801,8 @@ export function ClientProfilePage() {
       | 'hiddenFoodSafetyIds'
       | 'hiddenMysteryShopIds'
       | 'hiddenMenuIds'
+      | 'hiddenDishSpecIds'
+      | 'hiddenRecipeCostingIds'
       | 'hiddenQuoteIds'
       | 'hiddenInvoiceIds',
     ids: string[],
@@ -748,6 +827,10 @@ export function ClientProfilePage() {
     if (kind === 'food-safety') setPortalListVisibility('hiddenFoodSafetyIds', [entityId], visible);
     if (kind === 'mystery-shop') setPortalListVisibility('hiddenMysteryShopIds', [entityId], visible);
     if (kind === 'menu') setPortalListVisibility('hiddenMenuIds', [entityId], visible);
+    if (kind === 'dish-spec') setPortalListVisibility('hiddenDishSpecIds', [resourceId], visible);
+    if (kind === 'recipe-costing') {
+      setPortalListVisibility('hiddenRecipeCostingIds', [resourceId], visible);
+    }
     if (kind === 'quote') setPortalListVisibility('hiddenQuoteIds', [entityId], visible);
     if (kind === 'invoice') setPortalListVisibility('hiddenInvoiceIds', [entityId], visible);
   }
@@ -771,6 +854,20 @@ export function ClientProfilePage() {
       );
     }
     if (key === 'menuProjects') setPortalListVisibility('hiddenMenuIds', menus.map((menu) => menu.id), enabled);
+    if (key === 'dishSpecs') {
+      setPortalListVisibility(
+        'hiddenDishSpecIds',
+        menuLinkedDishRecords.map((record) => record.specWorkId),
+        enabled
+      );
+    }
+    if (key === 'recipeCostings') {
+      setPortalListVisibility(
+        'hiddenRecipeCostingIds',
+        menuLinkedDishRecords.map((record) => record.recipeWorkId),
+        enabled
+      );
+    }
     if (key === 'quotes') {
       setPortalListVisibility(
         'hiddenQuoteIds',
@@ -814,6 +911,13 @@ export function ClientProfilePage() {
           );
           const visibleMenus = menus.filter(
             (menu) => !activeForm.data.portal.hiddenMenuIds.includes(menu.id)
+          );
+          const visibleDishSpecs = menuLinkedDishRecords.filter(
+            (record) => !activeForm.data.portal.hiddenDishSpecIds.includes(record.specWorkId)
+          );
+          const visibleRecipeCostings = menuLinkedDishRecords.filter(
+            (record) =>
+              !activeForm.data.portal.hiddenRecipeCostingIds.includes(record.recipeWorkId)
           );
           const visibleQuotes = activeForm.data.quotes.filter(
             (quote) => !activeForm.data.portal.hiddenQuoteIds.includes(quote.quoteId)
@@ -922,6 +1026,88 @@ export function ClientProfilePage() {
             })
           );
 
+          const dishSpecResources: ClientPortalResource[] = visibleDishSpecs.map((record) => ({
+            id: record.specWorkId,
+            title: `${record.dish.name} spec sheet`,
+            kind: 'dish_spec',
+            subtitle: `${record.menu.title} • ${record.sectionName}`,
+            reviewDate: record.menu.updated_at,
+            url: null,
+            locked: paymentLockActive,
+            lockReason: paymentLockActive ? 'This resource will unlock once the account is paid.' : ''
+          }));
+
+          const unlockedDishSpecResources = await Promise.all(
+            dishSpecResources.map(async (resource) => {
+              if (resource.locked) return resource;
+              const record = visibleDishSpecs.find((entry) => entry.specWorkId === resource.id);
+              if (!record) return resource;
+
+              const share = await createHtmlReportShare(
+                resource.id,
+                resource.title,
+                buildDishSpecReportHtml({
+                  client: activeForm,
+                  menuRecord: record.menu,
+                  dish: record.dish,
+                  sectionName: record.sectionName,
+                  preparedBy: currentUserName
+                })
+              );
+
+              return {
+                ...resource,
+                url: share.url,
+                shareToken: share.token,
+                sharePath: '/share/report'
+              };
+            })
+          );
+
+          const recipeCostingResources = await Promise.all(
+            visibleRecipeCostings.map(async (record) => {
+              const locked = paymentLockActive;
+              if (locked) {
+                return {
+                  id: record.recipeWorkId,
+                  title: `${record.dish.name} recipe costing`,
+                  kind: 'recipe_costing' as const,
+                  subtitle: `${record.menu.title} • ${fmtCurrency(record.dish.sellPrice)}`,
+                  reviewDate: record.menu.updated_at,
+                  url: null,
+                  locked,
+                  lockReason: 'This resource will unlock once the account is paid.'
+                };
+              }
+
+              const title = `${record.dish.name} recipe costing`;
+              const share = await createHtmlReportShare(
+                record.recipeWorkId,
+                title,
+                buildRecipeCostingReportHtml({
+                  client: activeForm,
+                  menuRecord: record.menu,
+                  dish: record.dish,
+                  sectionName: record.sectionName,
+                  preparedBy: currentUserName
+                })
+              );
+
+              return {
+                id: record.recipeWorkId,
+                title,
+                kind: 'recipe_costing' as const,
+                subtitle: `${record.menu.title} • ${fmtCurrency(record.dish.sellPrice)}`,
+                reviewDate: record.menu.updated_at,
+                url: share.url,
+                shareToken: share.token,
+                sharePath: '/share/report',
+                locked: false,
+                lockReason: ''
+              };
+            })
+          );
+
           const quoteResources: ClientPortalResource[] = visibleQuotes.map((quote) => ({
             id: `quote:${quote.quoteId}`,
             title: quote.quoteTitle,
@@ -979,6 +1165,8 @@ export function ClientProfilePage() {
               ...foodSafetyResources,
               ...mysteryResources,
               ...menuResources,
+              ...unlockedDishSpecResources,
+              ...recipeCostingResources,
               ...quoteResources,
               ...invoiceResources
             ].sort((left, right) => (right.reviewDate || '').localeCompare(left.reviewDate || '')),
@@ -1033,6 +1221,8 @@ export function ClientProfilePage() {
 
     return null;
   }
+
+  const menuLinkedDishRecords = useMemo(() => buildMenuLinkedDishRecords(menus), [menus]);
 
   const workItems = useMemo<ClientWorkItem[]>(() => {
     if (!activeForm) return [];
@@ -1098,6 +1288,41 @@ export function ClientProfilePage() {
       openPath: `/menu?client=${clientId}&load=${menu.id}`
     }));
 
+    const dishSpecItems = menuLinkedDishRecords.map((record) => ({
+      id: record.specWorkId,
+      itemType: 'dishSpec' as const,
+      label: 'Dish spec',
+      title: `${record.dish.name} spec sheet`,
+      site: workstreamSiteLabel(record.menu, siteNameById),
+      status: 'Linked to menu',
+      createdAt: record.menu.created_at,
+      updatedAt: record.menu.updated_at,
+      portalVisible: !activeForm.data.portal.hiddenDishSpecIds.includes(record.specWorkId),
+      valueLabel: record.dish.sellPrice > 0 ? fmtCurrency(record.dish.sellPrice) : 'No sell price',
+      value: record.dish.sellPrice,
+      archived: archivedIds.has(record.specWorkId),
+      openPath: buildDishWorkOpenPath(clientId, record.menu.id, record.dish.id, 'spec')
+    }));
+
+    const recipeCostingItems = menuLinkedDishRecords.map((record) => ({
+      id: record.recipeWorkId,
+      itemType: 'recipeCosting' as const,
+      label: 'Recipe costing',
+      title: `${record.dish.name} recipe costing`,
+      site: workstreamSiteLabel(record.menu, siteNameById),
+      status: 'Linked to dish',
+      createdAt: record.menu.created_at,
+      updatedAt: record.menu.updated_at,
+      portalVisible: !activeForm.data.portal.hiddenRecipeCostingIds.includes(record.recipeWorkId),
+      valueLabel:
+        record.dish.recipeCosting.suggestedSellingPrice > 0
+          ? `Target ${fmtCurrency(record.dish.recipeCosting.suggestedSellingPrice)}`
+          : fmtCurrency(record.dish.sellPrice),
+      value: record.dish.sellPrice,
+      archived: archivedIds.has(record.recipeWorkId),
+      openPath: buildDishWorkOpenPath(clientId, record.menu.id, record.dish.id, 'recipe')
+    }));
+
     const serviceQuoteItems = activeForm.data.quotes.reduce<ClientWorkItem[]>((items, quote) => {
       const itemType = serviceQuoteWorkType(quote);
       if (!itemType) return items;
@@ -1128,19 +1353,24 @@ export function ClientProfilePage() {
       ...foodSafetyItems,
       ...mysteryItems,
       ...menuItems,
+      ...dishSpecItems,
+      ...recipeCostingItems,
       ...serviceQuoteItems
     ].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
   }, [
     activeForm?.data.archivedWorkItemIds,
     activeForm?.data.portal.hiddenAuditIds,
+    activeForm?.data.portal.hiddenDishSpecIds,
     activeForm?.data.portal.hiddenFoodSafetyIds,
     activeForm?.data.portal.hiddenMenuIds,
     activeForm?.data.portal.hiddenMysteryShopIds,
     activeForm?.data.portal.hiddenQuoteIds,
+    activeForm?.data.portal.hiddenRecipeCostingIds,
     activeForm?.data.quotes,
     audits,
     clientId,
     foodSafetyAudits,
+    menuLinkedDishRecords,
     menus,
     mysteryShopAudits,
     siteNameById
@@ -1177,6 +1407,20 @@ export function ClientProfilePage() {
         visible: !activeForm.data.portal.hiddenMenuIds.includes(menu.id),
         releaseDate: formatShortDate(menu.review_date || menu.updated_at)
       })),
+      ...menuLinkedDishRecords.map((record) => ({
+        id: record.specWorkId,
+        title: `${record.dish.name} spec sheet`,
+        typeLabel: 'Dish spec',
+        visible: !activeForm.data.portal.hiddenDishSpecIds.includes(record.specWorkId),
+        releaseDate: formatShortDate(record.menu.updated_at)
+      })),
+      ...menuLinkedDishRecords.map((record) => ({
+        id: record.recipeWorkId,
+        title: `${record.dish.name} recipe costing`,
+        typeLabel: 'Recipe costing',
+        visible: !activeForm.data.portal.hiddenRecipeCostingIds.includes(record.recipeWorkId),
+        releaseDate: formatShortDate(record.menu.updated_at)
+      })),
       ...activeForm.data.quotes.map((quote) => ({
         id: `quote:${quote.quoteId}`,
         title: quote.quoteTitle,
@@ -1195,14 +1439,17 @@ export function ClientProfilePage() {
   }, [
     activeForm?.data.invoices,
     activeForm?.data.portal.hiddenAuditIds,
+    activeForm?.data.portal.hiddenDishSpecIds,
     activeForm?.data.portal.hiddenFoodSafetyIds,
     activeForm?.data.portal.hiddenInvoiceIds,
     activeForm?.data.portal.hiddenMenuIds,
     activeForm?.data.portal.hiddenMysteryShopIds,
     activeForm?.data.portal.hiddenQuoteIds,
+    activeForm?.data.portal.hiddenRecipeCostingIds,
     activeForm?.data.quotes,
     audits,
     foodSafetyAudits,
+    menuLinkedDishRecords,
     menus,
     mysteryShopAudits
   ]);
@@ -1241,6 +1488,22 @@ export function ClientProfilePage() {
           count: menus.length
         },
         {
+          key: 'dishSpecs',
+          label: 'Dish specs visible',
+          description: 'Dish specification sheets shared from the menu engine.',
+          enabled:
+            activeForm.data.portal.hiddenDishSpecIds.length < menuLinkedDishRecords.length,
+          count: menuLinkedDishRecords.length
+        },
+        {
+          key: 'recipeCostings',
+          label: 'Recipe costings visible',
+          description: 'Recipe costing sheets shared from linked dish records.',
+          enabled:
+            activeForm.data.portal.hiddenRecipeCostingIds.length < menuLinkedDishRecords.length,
+          count: menuLinkedDishRecords.length
+        },
+        {
           key: 'quotes',
           label: 'Quotes visible',
           description: 'Saved quotes included in the client-facing view.',
@@ -1271,16 +1534,19 @@ export function ClientProfilePage() {
     [
       activeForm?.data.invoices.length,
       activeForm?.data.portal.hiddenAuditIds.length,
+      activeForm?.data.portal.hiddenDishSpecIds.length,
       activeForm?.data.portal.hiddenFoodSafetyIds.length,
       activeForm?.data.portal.hiddenInvoiceIds.length,
       activeForm?.data.portal.hiddenMenuIds.length,
       activeForm?.data.portal.hiddenMysteryShopIds.length,
       activeForm?.data.portal.hiddenQuoteIds.length,
+      activeForm?.data.portal.hiddenRecipeCostingIds.length,
       activeForm?.data.portal.showActionPlans,
       activeForm?.data.portal.showReports,
       activeForm?.data.quotes.length,
       audits.length,
       foodSafetyAudits.length,
+      menuLinkedDishRecords.length,
       menus.length,
       mysteryShopAudits.length
     ]
@@ -1521,6 +1787,62 @@ export function ClientProfilePage() {
     openPrintableHtmlDocument(`${invoice.number} invoice export`, buildInvoicePdfHtml(activeForm, invoice));
   }
 
+  function handleExportWorkItem(item: ClientWorkItem) {
+    if (item.id.startsWith('dish-spec:')) {
+      const record = menuLinkedDishRecords.find((entry) => entry.specWorkId === item.id);
+      if (!record) {
+        setMessage('Dish spec record not found.');
+        return;
+      }
+
+      openPrintableHtmlDocument(
+        `${record.dish.name} spec sheet`,
+        buildDishSpecReportHtml({
+          client: activeForm,
+          menuRecord: record.menu,
+          dish: record.dish,
+          sectionName: record.sectionName,
+          preparedBy: currentUserName
+        })
+      );
+      return;
+    }
+
+    if (item.id.startsWith('recipe-costing:')) {
+      const record = menuLinkedDishRecords.find((entry) => entry.recipeWorkId === item.id);
+      if (!record) {
+        setMessage('Recipe costing record not found.');
+        return;
+      }
+
+      openPrintableHtmlDocument(
+        `${record.dish.name} recipe costing`,
+        buildRecipeCostingReportHtml({
+          client: activeForm,
+          menuRecord: record.menu,
+          dish: record.dish,
+          sectionName: record.sectionName,
+          preparedBy: currentUserName
+        })
+      );
+      return;
+    }
+
+    if (item.id.startsWith('menu:')) {
+      const menu = menus.find((entry) => `menu:${entry.id}` === item.id);
+      if (!menu) {
+        setMessage('Menu project not found.');
+        return;
+      }
+
+      navigate(`/menu?client=${clientId}&load=${menu.id}`);
+      setMessage('Open the menu project and use its PDF export for the full menu report.');
+      return;
+    }
+
+    setMessage('PDF export is currently available for dish specs, recipe costings, and invoices.');
+  }
+
   async function handleDuplicateWorkItem(item: ClientWorkItem) {
     try {
       if (item.id.startsWith('audit:')) {
@@ -1540,6 +1862,24 @@ export function ClientProfilePage() {
           ...source.data,
           id: undefined,
           menuName: `${source.title} copy`
+        });
+      } else if (item.id.startsWith('dish-spec:') || item.id.startsWith('recipe-costing:')) {
+        const source = menuLinkedDishRecords.find(
+          (record) => record.specWorkId === item.id || record.recipeWorkId === item.id
+        );
+        if (!source) return;
+
+        await saveMenuProject({
+          ...source.menu.data,
+          id: source.menu.id,
+          sections: source.menu.data.sections.map((section) =>
+            section.id === source.sectionId
+              ? {
+                  ...section,
+                  dishes: [...section.dishes, cloneMenuDishRecord(source.dish)]
+                }
+              : section
+          )
         });
       } else if (item.id.startsWith('food-safety:')) {
         const source = foodSafetyAudits.find((audit) => `food-safety:${audit.id}` === item.id);
@@ -1702,6 +2042,7 @@ export function ClientProfilePage() {
             onDuplicate={handleDuplicateWorkItem}
             onArchiveToggle={handleArchiveWorkItem}
             onTogglePortalVisibility={handleToggleWorkItemPortalVisibility}
+            onExport={handleExportWorkItem}
             onLinkToInvoice={handleLinkWorkItemToInvoice}
             onNewServiceJob={handleRequestNewQuote}
           />

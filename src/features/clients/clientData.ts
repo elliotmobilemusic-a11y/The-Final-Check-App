@@ -202,6 +202,8 @@ export function createEmptyClientData(): ClientProfileData {
       hiddenFoodSafetyIds: [],
       hiddenMysteryShopIds: [],
       hiddenMenuIds: [],
+      hiddenDishSpecIds: [],
+      hiddenRecipeCostingIds: [],
       hiddenQuoteIds: [],
       hiddenInvoiceIds: [],
       showReports: true,
@@ -238,6 +240,8 @@ export function normalizeClientData(data?: Partial<ClientProfileData> | null): C
       hiddenFoodSafetyIds: data?.portal?.hiddenFoodSafetyIds ?? [],
       hiddenMysteryShopIds: data?.portal?.hiddenMysteryShopIds ?? [],
       hiddenMenuIds: data?.portal?.hiddenMenuIds ?? [],
+      hiddenDishSpecIds: data?.portal?.hiddenDishSpecIds ?? [],
+      hiddenRecipeCostingIds: data?.portal?.hiddenRecipeCostingIds ?? [],
       hiddenQuoteIds: data?.portal?.hiddenQuoteIds ?? [],
       hiddenInvoiceIds: data?.portal?.hiddenInvoiceIds ?? []
     },
