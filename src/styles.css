@@ -5421,6 +5421,72 @@ body[data-theme="midnight"] .dish-modal-header {
   min-height: 0;
 }
 
+.menu-dish-tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.menu-dish-tab {
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(86, 81, 91, 0.12);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.menu-dish-tab:hover,
+.menu-dish-tab.active {
+  border-color: rgba(201, 168, 97, 0.32);
+  background: rgba(201, 168, 97, 0.14);
+  color: var(--text);
+}
+
+.menu-dish-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.menu-dish-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.menu-dish-image-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(86, 81, 91, 0.08);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.menu-dish-image-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  background: rgba(16, 20, 27, 0.06);
+}
+
+.menu-dish-image-meta {
+  display: grid;
+  gap: 8px;
+}
+
+.menu-dish-image-meta strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
 .ingredient-card {
   display: grid;
   gap: 14px;

@@ -89,7 +89,8 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .shell-primary-nav,
   body.native-shell.platform-android .shell-secondary-nav,
   body.native-shell.platform-android .client-tab-nav,
-  body.native-shell.platform-android .client-filter-row {
+  body.native-shell.platform-android .client-filter-row,
+  body.native-shell.platform-android .menu-dish-tab-row {
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
@@ -101,14 +102,16 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .shell-primary-nav::-webkit-scrollbar,
   body.native-shell.platform-android .shell-secondary-nav::-webkit-scrollbar,
   body.native-shell.platform-android .client-tab-nav::-webkit-scrollbar,
-  body.native-shell.platform-android .client-filter-row::-webkit-scrollbar {
+  body.native-shell.platform-android .client-filter-row::-webkit-scrollbar,
+  body.native-shell.platform-android .menu-dish-tab-row::-webkit-scrollbar {
     display: none;
   }
 
   body.native-shell.platform-android .shell-primary-link,
   body.native-shell.platform-android .shell-secondary-nav > *,
   body.native-shell.platform-android .client-tab-link,
-  body.native-shell.platform-android .client-filter-chip {
+  body.native-shell.platform-android .client-filter-chip,
+  body.native-shell.platform-android .menu-dish-tab {
     flex: 0 0 auto;
     white-space: nowrap;
   }
@@ -200,7 +203,8 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .invoice-line-grid,
   body.native-shell.platform-android .quote-line-grid,
   body.native-shell.platform-android .client-portal-clean-stats,
-  body.native-shell.platform-android .client-portal-main-clean {
+  body.native-shell.platform-android .client-portal-main-clean,
+  body.native-shell.platform-android .menu-dish-image-grid {
     grid-template-columns: 1fr;
   }
 

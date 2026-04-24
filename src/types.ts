@@ -234,18 +234,69 @@ export interface DishIngredient {
   packQty: number;
   packUnit: MeasurementUnit;
   packCost: number;
+  supplier: string;
+}
+
+export interface MenuDishImage {
+  id: string;
+  label: string;
+  imageDataUrl: string;
+  isPrimary: boolean;
+}
+
+export interface MenuDishRecipeCosting {
+  id: string;
+  linkedDishId: string;
+  portionSize: string;
+  numberOfPortions: number;
+  targetGpPercentage: number;
+  actualGpPercentage: number;
+  suggestedSellingPrice: number;
+  vatEnabled: boolean;
+  notes: string;
+  portalVisible: boolean;
+}
+
+export interface MenuDishSpecSheet {
+  id: string;
+  linkedDishId: string;
+  portionSize: string;
+  recipeMethod: string;
+  platingInstructions: string;
+  prepNotes: string;
+  serviceNotes: string;
+  holdingStorageNotes: string;
+  equipmentRequired: string;
+  internalNotes: string;
+  clientFacingNotes: string;
+  portalVisible: boolean;
 }
 
 export interface MenuDish {
   id: string;
   name: string;
+  description: string;
   sellPrice: number;
   targetGp: number;
   mix: number;
   salesMixPercent: number;
   weeklySalesVolume: number;
+  portionSize: string;
+  allergenInformation: string;
+  dietaryTags: string[];
+  recipeMethod: string;
+  platingInstructions: string;
+  prepNotes: string;
+  serviceNotes: string;
+  holdingStorageNotes: string;
+  equipmentRequired: string;
+  internalNotes: string;
+  clientFacingNotes: string;
   notes: string;
   ingredients: DishIngredient[];
+  dishImages: MenuDishImage[];
+  recipeCosting: MenuDishRecipeCosting;
+  specSheet: MenuDishSpecSheet;
 }
 
 export interface MenuSection {
