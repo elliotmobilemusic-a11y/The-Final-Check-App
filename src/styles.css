@@ -1533,6 +1533,93 @@ input[type="radio"]:checked {
   flex-wrap: wrap;
 }
 
+.shell-notification-wrap {
+  position: relative;
+}
+
+.shell-notification-trigger {
+  position: relative;
+  min-height: 46px;
+}
+
+.shell-notification-trigger.has-unread {
+  border-color: rgba(198, 161, 97, 0.34);
+}
+
+.shell-notification-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d5a85e 0%, #a67838 100%);
+  color: #111722;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.shell-notification-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-strong);
+  display: grid;
+  gap: 12px;
+}
+
+.shell-notification-panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.shell-notification-panel-top strong,
+.shell-notification-item strong {
+  color: var(--text);
+}
+
+.shell-notification-panel-top small,
+.shell-notification-item span,
+.shell-notification-item small,
+.shell-notification-empty {
+  color: var(--muted);
+}
+
+.shell-notification-list {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.shell-notification-item {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+}
+
+.shell-notification-item.unread {
+  border-color: rgba(198, 161, 97, 0.28);
+  background: rgba(213, 168, 94, 0.08);
+}
+
+.shell-notification-empty {
+  padding: 8px 2px 2px;
+}
+
 .shell-primary-nav {
   display: flex;
   flex-wrap: wrap;
@@ -6557,6 +6644,11 @@ body[data-theme="midnight"] .dish-modal-header {
     flex-wrap: wrap;
   }
 
+  .shell-notification-panel {
+    left: 0;
+    right: auto;
+  }
+
   .stats-grid,
   .stats-grid.compact,
   .card-grid.two-columns,
@@ -6748,7 +6840,18 @@ body[data-theme="midnight"] .dish-modal-header {
   }
 
   .shell-signout,
-  .shell-profile-link {
+  .shell-profile-link,
+  .shell-notification-wrap {
+    width: 100%;
+  }
+
+  .shell-notification-trigger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .shell-notification-panel {
+    position: static;
     width: 100%;
   }
 

@@ -6,6 +6,15 @@ import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { resetSupabaseAuthState } from '../../lib/authStorage';
 import { supabase } from '../../lib/supabase';
+import { sendEnquiryDeviceNotification } from '../../services/deviceNotifications';
+import {
+  getEnquiryAlertPreference,
+  getEnquiryAlertSnapshot,
+  markAllEnquiryAlertsRead,
+  markEnquiryAlertRead,
+  scanForNewEnquiryAlerts,
+  type EnquiryAlert
+} from '../../services/enquiryAlerts';
 import { disablePushNotifications } from '../../services/pushNotifications';
 import { CookingLoader } from './CookingLoader';
 
@@ -89,6 +98,9 @@ export function AppShell() {
   const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
   const [navHeight, setNavHeight] = useState(108);
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [enquiryAlerts, setEnquiryAlerts] = useState<EnquiryAlert[]>([]);
+  const [unreadEnquiryCount, setUnreadEnquiryCount] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
@@ -229,6 +241,78 @@ export function AppShell() {
     document.documentElement.style.setProperty('--nav-peek', peekHeight);
   }, [navExpanded, navHeight]);
 
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId) {
+      setEnquiryAlerts([]);
+      setUnreadEnquiryCount(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    const applySnapshot = () => {
+      const snapshot = getEnquiryAlertSnapshot(userId);
+      if (cancelled) return;
+      setEnquiryAlerts(snapshot.alerts);
+      setUnreadEnquiryCount(snapshot.unreadCount);
+    };
+
+    const runScan = async () => {
+      try {
+        const next = await scanForNewEnquiryAlerts(userId);
+        if (cancelled) return;
+
+        setEnquiryAlerts(next.alerts);
+        setUnreadEnquiryCount(next.unreadCount);
+
+        if (next.newAlerts.length > 0 && getEnquiryAlertPreference(userId)) {
+          await sendEnquiryDeviceNotification(next.newAlerts);
+        }
+      } catch {
+        applySnapshot();
+      }
+    };
+
+    applySnapshot();
+    void runScan();
+
+    const intervalId = window.setInterval(() => {
+      void runScan();
+    }, 45000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void runScan();
+      }
+    };
+
+    window.addEventListener('focus', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [session?.user.id]);
+
+  function handleMarkAllEnquiriesRead() {
+    if (!session?.user.id) return;
+    const snapshot = markAllEnquiryAlertsRead(session.user.id);
+    setEnquiryAlerts(snapshot.alerts);
+    setUnreadEnquiryCount(snapshot.unreadCount);
+  }
+
+  function handleOpenEnquiry(alertId: string) {
+    if (!session?.user.id) return;
+    const snapshot = markEnquiryAlertRead(session.user.id, alertId);
+    setEnquiryAlerts(snapshot.alerts);
+    setUnreadEnquiryCount(snapshot.unreadCount);
+    setNotificationPanelOpen(false);
+  }
+
   return (
     <div className="app-shell">
       <div className="app-shell-frame">
@@ -273,6 +357,53 @@ export function AppShell() {
              </div>
 
              <div className="shell-toolbar-actions">
+               <div className="shell-notification-wrap">
+                 <button
+                   aria-expanded={notificationPanelOpen}
+                   className={`button button-secondary shell-notification-trigger ${unreadEnquiryCount > 0 ? 'has-unread' : ''}`}
+                   onClick={() => setNotificationPanelOpen((current) => !current)}
+                   type="button"
+                 >
+                   Alerts
+                   {unreadEnquiryCount > 0 ? (
+                     <span className="shell-notification-badge">{unreadEnquiryCount}</span>
+                   ) : null}
+                 </button>
+
+                 {notificationPanelOpen ? (
+                   <div className="shell-notification-panel">
+                     <div className="shell-notification-panel-top">
+                       <div>
+                         <strong>New enquiries</strong>
+                         <small>{unreadEnquiryCount > 0 ? `${unreadEnquiryCount} unread` : 'All caught up'}</small>
+                       </div>
+                       <button className="button button-ghost" onClick={handleMarkAllEnquiriesRead} type="button">
+                         Mark all read
+                       </button>
+                     </div>
+
+                     {!enquiryAlerts.length ? (
+                       <div className="shell-notification-empty">No new enquiries yet.</div>
+                     ) : (
+                       <div className="shell-notification-list">
+                         {enquiryAlerts.map((alert) => (
+                           <Link
+                             className={`shell-notification-item ${alert.readAt ? '' : 'unread'}`}
+                             key={alert.id}
+                             onClick={() => handleOpenEnquiry(alert.id)}
+                             to={`/clients/${alert.clientId}`}
+                           >
+                             <strong>{alert.companyName}</strong>
+                             <span>{alert.contactName || 'New client enquiry'}</span>
+                             <small>{alert.location || 'Location not set'}</small>
+                           </Link>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                 ) : null}
+               </div>
+
                <Link className="user-chip shell-profile-link" to="/settings/profile">
                  {avatarUrl ? (
                    <img

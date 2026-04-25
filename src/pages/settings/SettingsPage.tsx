@@ -10,6 +10,13 @@ import {
 } from '../../context/PreferencesContext';
 import { getRememberPreference, setRememberPreference } from '../../lib/authStorage';
 import {
+  getAndroidAppInfo,
+  getLatestAndroidRelease,
+  openAndroidReleaseDownload,
+  type AndroidAppInfo,
+  type AndroidReleaseManifest
+} from '../../lib/androidApp';
+import {
   checkForDesktopUpdates,
   getDesktopAppInfo,
   installDesktopUpdate,
@@ -19,6 +26,11 @@ import {
 } from '../../lib/desktop';
 import { supabase } from '../../lib/supabase';
 import { saveAvatarUrl, uploadAvatar, updateProfile } from '../../services/profiles';
+import { ensureDeviceNotificationPermission } from '../../services/deviceNotifications';
+import {
+  getEnquiryAlertPreference,
+  setEnquiryAlertPreference
+} from '../../services/enquiryAlerts';
 import {
   disablePushNotifications,
   enablePushNotifications,
@@ -140,7 +152,14 @@ export function SettingsPage() {
     subscribed: false,
     permission: 'unsupported'
   });
+  const [enquiryAlertsEnabled, setEnquiryAlertsEnabled] = useState(true);
   const [pushBusy, setPushBusy] = useState(false);
+  const [androidInfo, setAndroidInfo] = useState<AndroidAppInfo>({
+    isNativeAndroid: false,
+    platform: 'web'
+  });
+  const [androidRelease, setAndroidRelease] = useState<AndroidReleaseManifest | null>(null);
+  const [androidReleaseBusy, setAndroidReleaseBusy] = useState(false);
 
   useEffect(() => {
     setDisplayName(preferences.displayName);
@@ -182,6 +201,26 @@ export function SettingsPage() {
   useEffect(() => {
     let cancelled = false;
 
+    getAndroidAppInfo().then((info) => {
+      if (!cancelled) {
+        setAndroidInfo(info);
+      }
+    });
+
+    getLatestAndroidRelease().then((release) => {
+      if (!cancelled) {
+        setAndroidRelease(release);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     getPushDeviceStatus()
       .then((status) => {
         if (!cancelled) {
@@ -201,6 +240,11 @@ export function SettingsPage() {
     return () => {
       cancelled = true;
     };
+  }, [session?.user.id]);
+
+  useEffect(() => {
+    if (!session?.user.id) return;
+    setEnquiryAlertsEnabled(getEnquiryAlertPreference(session.user.id));
   }, [session?.user.id]);
 
   useEffect(() => {
@@ -412,6 +456,76 @@ export function SettingsPage() {
     } finally {
       setPushBusy(false);
     }
+  }
+
+  async function handleToggleEnquiryAlerts(enabled: boolean) {
+    if (!session?.user.id) {
+      setMessage('You must be signed in before device enquiry alerts can be changed.');
+      return;
+    }
+
+    if (enabled) {
+      const granted = await ensureDeviceNotificationPermission();
+      if (!granted) {
+        setMessage('Notification permission was not granted on this device.');
+        return;
+      }
+    }
+
+    setEnquiryAlertPreference(session.user.id, enabled);
+    setEnquiryAlertsEnabled(enabled);
+    setMessage(
+      enabled
+        ? 'Device enquiry alerts are enabled for this signed-in device.'
+        : 'Device enquiry alerts are disabled for this signed-in device.'
+    );
+  }
+
+  async function handleRefreshAndroidRelease() {
+    try {
+      setAndroidReleaseBusy(true);
+      const release = await getLatestAndroidRelease();
+      setAndroidRelease(release);
+
+      if (!release) {
+        setMessage('No hosted Android APK is available yet.');
+        return;
+      }
+
+      setMessage(
+        androidInfo.isNativeAndroid
+          ? `Latest Android build available: ${release.versionName}.`
+          : `APK ready to download: ${release.versionName}.`
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not check the Android app build.');
+    } finally {
+      setAndroidReleaseBusy(false);
+    }
+  }
+
+  async function handleDownloadAndroidRelease() {
+    if (!androidRelease) {
+      setMessage('No hosted Android APK is available yet.');
+      return;
+    }
+
+    try {
+      await openAndroidReleaseDownload(androidRelease);
+      setMessage(
+        androidInfo.isNativeAndroid
+          ? `Opening The Final Check ${androidRelease.versionName} so you can update the tablet app.`
+          : `Opening The Final Check ${androidRelease.versionName} download.`
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not open the Android app download.');
+    }
+  }
+
+  function formatFileSize(bytes?: number) {
+    if (!bytes || bytes <= 0) return 'Unknown';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   return (
@@ -715,6 +829,37 @@ export function SettingsPage() {
 
                   <section className="sub-panel">
                     <div className="sub-panel-header">
+                      <h4>Enquiry alerts</h4>
+                      <span className="soft-pill">
+                        {enquiryAlertsEnabled ? 'Enabled on this device' : 'Disabled on this device'}
+                      </span>
+                    </div>
+
+                    <div className="settings-toggle-grid">
+                      <label className="settings-toggle-card">
+                        <div>
+                          <strong>New enquiry notifications</strong>
+                          <p>
+                            Alert this signed-in device when a new client enquiry form creates a new prospect. On the Android app this uses local device notifications.
+                          </p>
+                        </div>
+                        <input
+                          checked={enquiryAlertsEnabled}
+                          type="checkbox"
+                          onChange={(event) => {
+                            void handleToggleEnquiryAlerts(event.target.checked);
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <p className="muted-copy">
+                      This works in the installed APK without changing the desktop layout. Full background push later would need Firebase setup, but device alerts work now while the app is installed and signed in.
+                    </p>
+                  </section>
+
+                  <section className="sub-panel">
+                    <div className="sub-panel-header">
                       <h4>Browser notifications</h4>
                       <span className="soft-pill">
                         {pushStatus.supported
@@ -835,6 +980,93 @@ export function SettingsPage() {
                           Install update
                         </button>
                       ) : null}
+                    </div>
+                  </section>
+
+                  <section className="sub-panel">
+                    <div className="sub-panel-header">
+                      <h4>Android tablet app</h4>
+                      <span className="soft-pill">
+                        {androidInfo.isNativeAndroid
+                          ? 'Installed on this tablet'
+                          : androidRelease
+                            ? 'APK download ready'
+                            : 'No hosted APK'}
+                      </span>
+                    </div>
+
+                    <div className="form-grid two-columns">
+                      <label className="field">
+                        <span>Installed version</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={
+                            androidInfo.isNativeAndroid
+                              ? 'Installed APK on this tablet'
+                              : 'Not running inside the Android app'
+                          }
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>Latest hosted APK</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={
+                            androidRelease
+                              ? `${androidRelease.versionName} (build ${androidRelease.versionCode})`
+                              : 'No APK published'
+                          }
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>Channel</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={androidRelease ? androidRelease.channel : 'Unavailable'}
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>APK size</span>
+                        <input
+                          className="input"
+                          disabled
+                          value={androidRelease ? formatFileSize(androidRelease.apkSizeBytes) : 'Unavailable'}
+                        />
+                      </label>
+                    </div>
+
+                    <p className="muted-copy">
+                      {androidRelease
+                        ? androidInfo.isNativeAndroid
+                          ? 'Open the latest APK and install it over the current app to update this tablet.'
+                          : 'Download the hosted APK here when you want to install or share the latest tablet build.'
+                        : 'Publish a debug or release APK to make Android downloads available here.'}
+                    </p>
+
+                    <div className="button-row">
+                      <button
+                        className="button button-secondary"
+                        disabled={androidReleaseBusy}
+                        onClick={handleRefreshAndroidRelease}
+                        type="button"
+                      >
+                        {androidReleaseBusy ? 'Checking...' : 'Check latest APK'}
+                      </button>
+
+                      <button
+                        className="button"
+                        disabled={!androidRelease}
+                        onClick={handleDownloadAndroidRelease}
+                        type="button"
+                      >
+                        {androidInfo.isNativeAndroid ? 'Update app' : 'Download APK'}
+                      </button>
                     </div>
                   </section>
                 </>

@@ -24,7 +24,7 @@ import {
   type ClientPortalSharedItem
 } from '../../components/clients/profile/ClientPortalTab';
 import { ClientPricingTab } from '../../components/clients/profile/ClientPricingTab';
-import { getClientById, updateClient } from '../../services/clients';
+import { deleteClient, getClientById, updateClient } from '../../services/clients';
 import { listAudits, saveAudit } from '../../services/audits';
 import { listMenuProjects, saveMenuProject } from '../../services/menus';
 import {
@@ -120,6 +120,8 @@ export function ClientProfilePage() {
   const [requestNewQuoteToken, setRequestNewQuoteToken] = useState(0);
   const [externalQuoteToEditId, setExternalQuoteToEditId] = useState<string | null>(null);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingClient, setDeletingClient] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -1470,9 +1472,26 @@ export function ClientProfilePage() {
     );
   }
 
+  async function handleDeleteClient() {
+    if (!clientId) return;
+
+    try {
+      setDeletingClient(true);
+      await deleteClient(clientId);
+      clearDraft(clientDraftKey(clientId));
+      navigate('/clients');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not delete client.');
+    } finally {
+      setDeletingClient(false);
+      setConfirmDeleteOpen(false);
+    }
+  }
+
   return (
-    <main className="client-profile-page-simplified">
-      <div className="client-profile-shell">
+    <>
+      <main className="client-profile-page-simplified">
+        <div className="client-profile-shell">
         <ClientProfileHeader
           client={activeForm}
           mainContact={mainContact?.name || activeForm.contactName || 'No main contact set'}
@@ -1487,6 +1506,7 @@ export function ClientProfilePage() {
           onNewInvoice={() => handleRequestNewInvoice()}
           onNewAudit={() => navigate(`/audit?client=${clientId}`)}
           onOpenPortal={handleOpenPortal}
+          onDeleteClient={() => setConfirmDeleteOpen(true)}
         />
 
         <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
@@ -1596,7 +1616,43 @@ export function ClientProfilePage() {
             onExportInvoicePdf={exportInvoicePdf}
           />
         ) : null}
-      </div>
-    </main>
+        </div>
+      </main>
+
+      {confirmDeleteOpen ? (
+        <div className="confirm-modal-overlay" role="presentation">
+          <div
+            aria-labelledby="delete-client-profile-title"
+            aria-modal="true"
+            className="confirm-modal-card"
+            role="dialog"
+          >
+            <p className="confirm-modal-kicker">Delete client</p>
+            <h3 id="delete-client-profile-title">Delete {activeForm.companyName || 'this client'}?</h3>
+            <p className="confirm-modal-body">
+              This removes the client profile from your CRM. Saved linked records may remain in their own stores, but the client record itself cannot be restored.
+            </p>
+            <div className="confirm-modal-actions">
+              <button
+                className="button button-secondary"
+                disabled={deletingClient}
+                onClick={() => setConfirmDeleteOpen(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="button button-ghost danger-text"
+                disabled={deletingClient}
+                onClick={() => void handleDeleteClient()}
+                type="button"
+              >
+                {deletingClient ? 'Deleting...' : 'Delete client'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
