@@ -1,12 +1,17 @@
 import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { AppShell } from './components/layout/AppShell';
-import { SupportHub } from './components/support/SupportHub';
 import { ActivityOverlayProvider } from './context/ActivityOverlayContext';
 import { usePreferences } from './context/PreferencesContext';
 import { AuthProvider } from './context/AuthContext';
 import { PreferencesProvider } from './context/PreferencesContext';
+
+const AppShell = lazy(() =>
+  import('./components/layout/AppShell').then((module) => ({ default: module.AppShell }))
+);
+const SupportHub = lazy(() =>
+  import('./components/support/SupportHub').then((module) => ({ default: module.SupportHub }))
+);
 
 const DashboardPage = lazy(() =>
   import('./pages/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage }))

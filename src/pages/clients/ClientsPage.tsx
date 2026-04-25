@@ -47,13 +47,6 @@ function statusTone(status?: string | null) {
   return 'status-pill status-danger';
 }
 
-function relationshipTone(health?: string | null) {
-  const normalized = (health ?? '').toLowerCase();
-  if (normalized === 'strong') return 'status-pill status-success';
-  if (normalized === 'watch') return 'status-pill status-warning';
-  return 'status-pill status-danger';
-}
-
 function buildClientSignals(client: ClientRecord) {
   const data = client.data ?? createEmptyClientData();
   const overdueInvoices = data.invoices.filter((invoice) => invoice.status === 'Overdue').length;

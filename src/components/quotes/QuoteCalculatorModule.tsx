@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { fmtCurrency, num, safe, uid } from '../../lib/utils';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { fmtCurrency, num, uid } from '../../lib/utils';
 import type {
   ClientProfile,
   ClientQuote,
@@ -168,22 +168,7 @@ export function QuoteCalculatorModule({
 
   const quotes = useMemo(() => sortedQuotes(client.data.quotes ?? []), [client.data.quotes]);
 
-  useEffect(() => {
-    if (!requestNewQuoteToken) return;
-    openNewQuote();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestNewQuoteToken]);
-
-  useEffect(() => {
-    if (!externalQuoteToEditId) return;
-    const targetQuote = quotes.find((quote) => quote.quoteId === externalQuoteToEditId);
-    if (targetQuote) {
-      openExistingQuote(targetQuote);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [externalQuoteToEditId, quotes]);
-
-  function openNewQuote(seedId?: string) {
+  const openNewQuote = useCallback((seedId?: string) => {
     const base = createEmptyQuoteInput(client, currentUserName);
     const seed = quoteSeedTemplates.find((template) => template.id === seedId);
 
@@ -200,9 +185,9 @@ export function QuoteCalculatorModule({
         ? `Loaded the ${seed.label.toLowerCase()} seeded quote.`
         : 'New quote draft opened.'
     );
-  }
+  }, [client, currentUserName]);
 
-  function openExistingQuote(quote: ClientQuote) {
+  const openExistingQuote = useCallback((quote: ClientQuote) => {
     setComposer({
       editingQuoteId: quote.quoteId,
       values: quote.calculation.allInputAnswers,
@@ -212,7 +197,20 @@ export function QuoteCalculatorModule({
     });
     setCollapsedSections(buildCollapsedState());
     setMessage(`Loaded quote "${quote.quoteTitle}" for editing.`);
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!requestNewQuoteToken) return;
+    openNewQuote();
+  }, [openNewQuote, requestNewQuoteToken]);
+
+  useEffect(() => {
+    if (!externalQuoteToEditId) return;
+    const targetQuote = quotes.find((quote) => quote.quoteId === externalQuoteToEditId);
+    if (targetQuote) {
+      openExistingQuote(targetQuote);
+    }
+  }, [externalQuoteToEditId, openExistingQuote, quotes]);
 
   function closeComposer() {
     setComposer(null);

@@ -13,10 +13,7 @@ export function buildPdfDocumentHtml(
   options: PdfDocumentOptions = {}
 ): string {
   const safeTitle = escapeHtml(title);
-  const pageSize = options.landscape ? 'A4 landscape' : 'A4';
-  const showCloseButton = options.showCloseButton ?? true;
   const autoPrint = options.autoPrint ?? false;
-  const formatLabel = options.formatLabel ?? 'Client-ready PDF';
 
   return `<!doctype html>
 <html lang="en">

@@ -8,8 +8,6 @@ import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildPdfDocumentHtml,
   buildReportCoverHtml,
-  buildChapterHtml,
-  buildSectionHtml,
   openPdfDocument,
   humanizeSentence,
   humanizeTitle,

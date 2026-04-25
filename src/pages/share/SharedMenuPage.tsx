@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SharedReportFrame } from '../../components/share/SharedReportFrame';
-import { buildMenuReport } from '../menu/MenuBuilderPage';
+import { buildMenuReport } from '../../features/menu-engine/menuBuilderHelpers';
 import { getMenuShareByToken } from '../../services/reportShares';
 import type { MenuProjectState } from '../../types';
 

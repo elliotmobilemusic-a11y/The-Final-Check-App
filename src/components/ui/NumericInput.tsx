@@ -7,7 +7,6 @@ interface NumericInputProps {
   disabled?: boolean;
   min?: number;
   max?: number;
-  step?: number;
   decimalPlaces?: number;
   allowNegative?: boolean;
   className?: string;
@@ -21,7 +20,6 @@ export function NumericInput({
   disabled = false,
   min,
   max,
-  step = 1,
   decimalPlaces,
   allowNegative = false,
   className = '',
@@ -148,7 +146,6 @@ export function CurrencyInput(props: Omit<NumericInputProps, 'inputMode' | 'deci
       {...props}
       inputMode="decimal"
       decimalPlaces={2}
-      step={0.01}
       allowNegative={false}
     />
   );
@@ -162,7 +159,6 @@ export function PercentageInput(props: Omit<NumericInputProps, 'inputMode' | 'mi
       min={0}
       max={100}
       decimalPlaces={1}
-      step={0.1}
     />
   );
 }
@@ -173,7 +169,6 @@ export function QuantityInput(props: Omit<NumericInputProps, 'inputMode' | 'deci
       {...props}
       inputMode="numeric"
       decimalPlaces={0}
-      step={1}
       allowNegative={false}
     />
   );

@@ -1,28 +1,14 @@
 import type { ClientProfile, MenuDish, MenuProjectState, SupabaseRecord } from '../../types';
 import { fmtCurrency, fmtPercent, num } from '../../lib/utils';
-import { buildReportHeroHtml } from '../clients/clientExports';
+import {
+  buildReportHeroHtml,
+  escapeReportHtml,
+  formatReportDate
+} from '../../reports/htmlDocument';
 import { dishActualGp, dishIngredientCost, dishRecommendedPrice } from '../profit/menuProfit';
 
-function escapeHtml(value: unknown) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return 'Not set';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'Not set';
-
-  return new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  }).format(parsed);
-}
+const escapeHtml = escapeReportHtml;
+const formatDate = formatReportDate;
 
 function yesNo(value: boolean) {
   return value ? 'Yes' : 'No';

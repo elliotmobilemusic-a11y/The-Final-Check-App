@@ -6,13 +6,8 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
-  buildPdfDocumentHtml,
   buildReportCoverHtml,
-  buildChapterHtml,
-  buildSectionHtml,
   openPdfDocument,
-  humanizeTitle,
-  formatCurrencyShort
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
 import {
