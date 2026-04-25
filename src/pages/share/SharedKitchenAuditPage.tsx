@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SharedReportFrame } from '../../components/share/SharedReportFrame';
-import { buildKitchenAuditReportHtml } from '../audit/KitchenAuditPage';
+import { buildKitchenAuditReportHtml } from '../../features/audits/kitchenAuditReport';
 import { getKitchenAuditShareByToken } from '../../services/reportShares';
 import type { AuditFormState } from '../../types';
 

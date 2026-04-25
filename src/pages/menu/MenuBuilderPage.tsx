@@ -1,21 +1,17 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import {
-  CurrencyInput,
-  NumericInput,
-  PercentageInput,
-  QuantityInput
-} from '../../components/ui/NumericInput';
+  MenuBuilderControlsPanel,
+  MenuBuilderWorkspaceSection,
+  MenuDishEditorModal
+} from '../../components/menu-builder/MenuBuilderSections';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   blankDishImage,
   blankIngredient,
-  defaultDietaryTagOptions,
-  ingredientUnitOptions,
   normalizeDish,
   normalizeIngredient,
   syncDishLinkedRecords
@@ -31,15 +27,10 @@ import {
   buildReportMenuRecord,
   completionSummary,
   createDefaultMenu,
-  dishMixCost,
-  dishProfit,
   dishTheoGp,
-  dishUnitCost,
-  gpClass,
   MENU_BUILDER_DRAFT_KEY,
   normalizeMenuProject,
   readFileAsDataUrl,
-  toneClass,
   type DishEditorTab
 } from '../../features/menu-engine/menuBuilderHelpers';
 import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
@@ -52,7 +43,6 @@ import { listClients } from '../../services/clients';
 import type {
   ClientRecord,
   DishIngredient,
-  MeasurementUnit,
   MenuDish,
   MenuProjectState
 } from '../../types';
@@ -67,9 +57,6 @@ import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   buildMenuProfitSummary,
-  dishPriceGap,
-  dishRecommendedPrice,
-  dishWeeklyOpportunity,
   dishWeeklyProfit
 } from '../../features/profit/menuProfit';
 
@@ -690,6 +677,17 @@ export function MenuBuilderPage() {
     }
   }
 
+  async function copyDishShareLink() {
+    if (!dishShareUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(dishShareUrl);
+      setMessage('Dish share link copied to clipboard.');
+    } catch {
+      setMessage('Copy failed. You can still copy the dish link manually.');
+    }
+  }
+
   function deleteDish(dishId: string) {
     if (!selectedSection || !window.confirm('Delete this dish?')) return;
 
@@ -938,1096 +936,56 @@ export function MenuBuilderPage() {
         />
       </section>
 
-      <section>
-        <div>
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Menu Profit Engine</h3>
-                <p className="muted-copy">
-                  Control costing, pricing, mix, and weekly contribution from one commercial view.
-                </p>
-              </div>
-            </div>
+      <MenuBuilderWorkspaceSection
+        availableClientSites={availableClientSites}
+        clients={clients}
+        menuSummary={menuSummary}
+        onAddSection={addSection}
+        onClientSelection={handleClientSelection}
+        onClientSiteSelection={handleClientSiteSelection}
+        onDeleteDish={deleteDish}
+        onDeleteSection={deleteSection}
+        onOpenDishEditor={openDishEditor}
+        onRenameSection={renameSection}
+        onSectionNameDraftChange={setSectionNameDraft}
+        onUpdateDishInline={updateDishInline}
+        onUpdateProject={updateProject}
+        project={project}
+        riskDishCount={riskDishCount}
+        sectionNameDraft={sectionNameDraft}
+        selectedSection={selectedSection}
+        selectedSectionSummary={selectedSectionSummary}
+        strongDishCount={strongDishCount}
+        watchDishCount={watchDishCount}
+        weightedGp={weightedGp}
+      />
 
-            <div className="panel-body stack gap-20">
-              <section className="sub-panel menu-nav-panel">
-                <div className="sub-panel-header">
-                  <h4>Menu section navigation</h4>
-                  <span className="soft-pill">Quick access</span>
-                </div>
-
-                <div className="menu-section-nav">
-                  {project.sections.map((section) => (
-                    <button
-                      className={`menu-section-link ${project.selectedSectionId === section.id ? 'active' : ''}`}
-                      key={section.id}
-                      type="button"
-                      onClick={() => updateProject('selectedSectionId', section.id)}
-                    >
-                      {section.name}
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <section className="sub-panel">
-                <h4>Menu information</h4>
-                <div className="form-grid">
-                  <label className="field">
-                    <span>Menu name</span>
-                    <input
-                      className="input"
-                      value={project.menuName}
-                      onChange={(e) => updateProject('menuName', e.target.value)}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Site / location</span>
-                    <input
-                      className="input"
-                      value={project.siteName}
-                      onChange={(e) => updateProject('siteName', e.target.value)}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Review date</span>
-                    <input
-                      className="input"
-                      type="date"
-                      value={project.reviewDate}
-                      onChange={(e) => updateProject('reviewDate', e.target.value)}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Default target GP %</span>
-                    <PercentageInput
-                      value={project.defaultTargetGp}
-                      onChange={(value) => updateProject('defaultTargetGp', num(value))}
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Client profile</span>
-                    <select
-                      className="input"
-                      value={project.clientId || ''}
-                      onChange={(e) => handleClientSelection(e.target.value || null)}
-                    >
-                      <option value="">Select a client</option>
-                      {clients.map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.company_name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  {availableClientSites.length > 1 ? (
-                    <label className="field">
-                      <span>Client site</span>
-                      <select
-                        className="input"
-                        value={project.clientSiteId || ''}
-                        onChange={(e) => handleClientSiteSelection(e.target.value || null)}
-                      >
-                        <option value="">Select a site</option>
-                        {availableClientSites.map((site) => (
-                          <option key={site.id} value={site.id}>
-                            {site.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-                </div>
-
-                {availableClientSites.length > 1 ? (
-                  <p className="muted-copy">
-                    This client has more than one site. Choose the location you are pricing so the
-                    menu review stays tied to the right trading site.
-                  </p>
-                ) : null}
-
-                {project.clientId ? (
-                  <div className="header-actions">
-                    <Link className="button button-ghost" to={`/clients/${project.clientId}`}>
-                      Open client profile
-                    </Link>
-                  </div>
-                ) : null}
-              </section>
-
-              <section className="sub-panel">
-                <div className="sub-panel-header">
-                  <h4>Commercial overview</h4>
-                  <span className="soft-pill">Live performance</span>
-                </div>
-
-                <div className="menu-chip-row">
-                  <div className="menu-chip">
-                    <strong>Default target GP</strong>
-                    <span>{fmtPercent(project.defaultTargetGp)}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Current actual GP</strong>
-                    <span>{fmtPercent(weightedGp)}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Weekly opportunity</strong>
-                    <span>{fmtCurrency(menuSummary.totalOpportunity)}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Strong dishes</strong>
-                    <span>{strongDishCount}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Watch dishes</strong>
-                    <span>{watchDishCount}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>At-risk dishes</strong>
-                    <span>{riskDishCount}</span>
-                  </div>
-                  <div className="menu-chip">
-                    <strong>Total sections</strong>
-                    <span>{project.sections.length}</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="sub-panel">
-                <div className="sub-panel-header">
-                  <h4>Section management</h4>
-                  <div className="header-actions">
-                    <button className="button button-secondary" onClick={addSection}>
-                      Add section
-                    </button>
-                    <button
-                      className="button button-secondary"
-                      onClick={renameSection}
-                      disabled={!selectedSection}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      className="button button-ghost danger-text"
-                      onClick={deleteSection}
-                      disabled={!selectedSection}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                <div className="form-grid two-columns">
-                  <label className="field">
-                    <span>Section name</span>
-                    <input
-                      className="input"
-                      placeholder="For example: Starters, Grill, Desserts"
-                      value={sectionNameDraft}
-                      onChange={(event) => setSectionNameDraft(event.target.value)}
-                    />
-                  </label>
-                </div>
-
-                <div className="section-list">
-                  {project.sections.map((section) => {
-                    const count = section.dishes.length;
-                    const avgGp =
-                      count > 0
-                        ? section.dishes.reduce((sum, dish) => sum + dishTheoGp(dish), 0) /
-                          count
-                        : 0;
-
-                    return (
-                      <button
-                        className={`section-button ${project.selectedSectionId === section.id ? 'active' : ''}`}
-                        key={section.id}
-                        onClick={() => updateProject('selectedSectionId', section.id)}
-                        type="button"
-                      >
-                        <div>
-                          <strong>{section.name}</strong>
-                          <div className="saved-meta">
-                            {count} dish{count === 1 ? '' : 'es'} • Avg GP{' '}
-                            {fmtPercent(avgGp)}
-                          </div>
-                        </div>
-                        <span className="soft-pill">{count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="sub-panel">
-                <div className="sub-panel-header">
-                  <h4>Selected section</h4>
-                  <button
-                    className="button button-primary"
-                    disabled={!selectedSection}
-                    onClick={() => openDishEditor()}
-                  >
-                    Add dish
-                  </button>
-                </div>
-
-                <div className="menu-performance-grid">
-                  <div className="menu-performance-card">
-                    <span>Dishes</span>
-                    <strong>{selectedSectionSummary.dishCount}</strong>
-                  </div>
-                  <div className="menu-performance-card">
-                    <span>Revenue</span>
-                    <strong>{fmtCurrency(selectedSectionSummary.revenue)}</strong>
-                  </div>
-                  <div className="menu-performance-card">
-                    <span>Profit</span>
-                    <strong>{fmtCurrency(selectedSectionSummary.profit)}</strong>
-                  </div>
-                  <div className="menu-performance-card">
-                    <span>Average GP</span>
-                    <strong>{fmtPercent(selectedSectionSummary.avgGp)}</strong>
-                  </div>
-                </div>
-
-                {!selectedSection ? (
-                  <div className="muted-copy">Create a section to start building dishes.</div>
-                ) : (
-                  <div className="table-shell">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Dish</th>
-                          <th>Ingredient cost</th>
-                          <th>Weekly cost</th>
-                          <th>Sell</th>
-                          <th>Profit / sale</th>
-                          <th>Target GP</th>
-                          <th>Actual GP</th>
-                          <th>Target sell</th>
-                          <th>Move</th>
-                          <th>Sales mix %</th>
-                          <th>Weekly volume</th>
-                          <th>Weekly profit</th>
-                          <th>Opportunity</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {!selectedSection.dishes.length ? (
-                          <tr>
-                            <td colSpan={14} className="empty-cell">
-                              No dishes in this section yet.
-                            </td>
-                          </tr>
-                        ) : (
-                          selectedSection.dishes.map((dish) => (
-                            <tr key={dish.id}>
-                              <td>
-                                <div className="dish-name">{dish.name}</div>
-                                <div className="saved-meta">
-                                  {safe(dish.notes) || 'No notes added.'}
-                                </div>
-                              </td>
-                              <td>{fmtCurrency(dishUnitCost(dish))}</td>
-                              <td>{fmtCurrency(dishMixCost(dish))}</td>
-                              <td>
-                                <CurrencyInput
-                                  className="compact-input"
-                                  value={dish.sellPrice}
-                                  onChange={(value) =>
-                                    updateDishInline(
-                                      selectedSection.id,
-                                      dish.id,
-                                      'sellPrice',
-                                      num(value)
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td>{fmtCurrency(dishProfit(dish))}</td>
-                              <td>
-                                <PercentageInput
-                                  className="compact-input"
-                                  value={dish.targetGp}
-                                  onChange={(value) =>
-                                    updateDishInline(
-                                      selectedSection.id,
-                                      dish.id,
-                                      'targetGp',
-                                      num(value)
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <span className={gpClass(dish)}>
-                                  {fmtPercent(dishTheoGp(dish))}
-                                </span>
-                              </td>
-                              <td>{fmtCurrency(dishRecommendedPrice(dish))}</td>
-                              <td>
-                                <span
-                                  className={
-                                    dishPriceGap(dish) > 0
-                                      ? 'status-pill status-warning'
-                                      : 'status-pill status-success'
-                                  }
-                                >
-                                  {dishPriceGap(dish) > 0 ? '+' : ''}
-                                  {fmtCurrency(dishPriceGap(dish))}
-                                </span>
-                              </td>
-                              <td>
-                                <PercentageInput
-                                  className="compact-input"
-                                  value={dish.salesMixPercent}
-                                  onChange={(value) =>
-                                    updateDishInline(
-                                      selectedSection.id,
-                                      dish.id,
-                                      'salesMixPercent',
-                                      num(value)
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <QuantityInput
-                                  className="compact-input"
-                                  value={dish.weeklySalesVolume}
-                                  onChange={(value) =>
-                                    updateDishInline(
-                                      selectedSection.id,
-                                      dish.id,
-                                      'weeklySalesVolume',
-                                      num(value)
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td>{fmtCurrency(dishWeeklyProfit(dish))}</td>
-                              <td>{fmtCurrency(dishWeeklyOpportunity(dish))}</td>
-                              <td>
-                                <div className="saved-actions">
-                                  <button
-                                    className="button button-ghost"
-                                    onClick={() => openDishEditor(dish.id)}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="button button-ghost danger-text"
-                                    onClick={() => deleteDish(dish.id)}
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {dishDraft && typeof document !== 'undefined'
-        ? createPortal(
-            <div
-              className="drawer-backdrop dish-modal-backdrop"
-              onClick={closeDishEditor}
-            >
-              <div
-                aria-modal="true"
-                className="drawer-panel dish-modal-panel"
-                role="dialog"
-                aria-label={editingDishId ? 'Edit dish' : 'Add dish'}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className="panel-header dish-modal-header">
-                  <div>
-                    <h3>{editingDishId ? 'Edit dish' : 'Add dish'}</h3>
-                    <p className="muted-copy">
-                      Build each dish from ingredients, selling price, target GP, and weekly sales volume so the profit opportunity is explicit.
-                    </p>
-                  </div>
-                  <div className="dish-modal-header-actions">
-                    <button
-                      className="button button-secondary"
-                      onClick={() => exportDishReport('spec')}
-                      type="button"
-                    >
-                      Export spec PDF
-                    </button>
-                    <button
-                      className="button button-secondary"
-                      onClick={() => exportDishReport('recipe')}
-                      type="button"
-                    >
-                      Export recipe PDF
-                    </button>
-                    <button className="button button-ghost" onClick={closeDishEditor} type="button">
-                      Close
-                    </button>
-                  </div>
-                </div>
-
-                <div className="panel-body stack gap-20 dish-modal-body">
-                  <div className="menu-dish-tab-row" role="tablist" aria-label="Dish workspace">
-                    {[
-                      { key: 'overview', label: 'Overview' },
-                      { key: 'recipe', label: 'Recipe costing' },
-                      { key: 'spec', label: 'Spec sheet' },
-                      { key: 'allergens', label: 'Allergens & notes' },
-                      { key: 'images', label: 'Images' }
-                    ].map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        role="tab"
-                        aria-selected={dishEditorTab === tab.key}
-                        className={`menu-dish-tab ${dishEditorTab === tab.key ? 'active' : ''}`}
-                        onClick={() => setDishEditorTab(tab.key as DishEditorTab)}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="dish-editor-layout">
-                    <div className="dish-editor-main">
-                      {dishEditorTab === 'overview' ? (
-                        <section className="sub-panel">
-                          <div className="sub-panel-header">
-                            <div>
-                              <h4>Dish overview</h4>
-                              <p className="muted-copy">
-                                This is now the central dish record for menu, pricing, specs, allergens, and images.
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Dish name</span>
-                              <input
-                                className="input"
-                                value={dishDraft.name}
-                                onChange={(e) => updateDish('name', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Portion size</span>
-                              <input
-                                className="input"
-                                value={dishDraft.portionSize}
-                                onChange={(e) => updateDish('portionSize', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Selling price (£)</span>
-                              <CurrencyInput
-                                value={dishDraft.sellPrice}
-                                onChange={(value) => updateDish('sellPrice', num(value))}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Target GP %</span>
-                              <PercentageInput
-                                value={dishDraft.targetGp}
-                                onChange={(value) => updateDish('targetGp', num(value))}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Sales mix %</span>
-                              <PercentageInput
-                                value={dishDraft.salesMixPercent}
-                                onChange={(value) => updateDish('salesMixPercent', num(value))}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Weekly sales volume</span>
-                              <QuantityInput
-                                value={dishDraft.weeklySalesVolume}
-                                onChange={(value) => updateDish('weeklySalesVolume', num(value))}
-                              />
-                            </label>
-                          </div>
-
-                          <label className="field">
-                            <span>Dish description</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.description}
-                              onChange={(e) => updateDish('description', e.target.value)}
-                            />
-                          </label>
-
-                          <label className="field">
-                            <span>Commercial notes</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.notes}
-                              onChange={(e) => updateDish('notes', e.target.value)}
-                            />
-                          </label>
-                        </section>
-                      ) : null}
-
-                      {dishEditorTab === 'recipe' ? (
-                        <section className="sub-panel">
-                          <div className="sub-panel-header">
-                            <div>
-                              <h4>Recipe costing</h4>
-                              <p className="muted-copy">
-                                Ingredient lines stay as the costing engine. This dish record will become the linked recipe costing sheet.
-                              </p>
-                            </div>
-                            <button className="button button-secondary" onClick={addIngredient}>
-                              Add ingredient
-                            </button>
-                          </div>
-
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Costing portion size</span>
-                              <input
-                                className="input"
-                                value={dishDraft.recipeCosting.portionSize}
-                                onChange={(e) => updateRecipeCosting('portionSize', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Number of portions</span>
-                              <QuantityInput
-                                value={dishDraft.recipeCosting.numberOfPortions}
-                                onChange={(value) =>
-                                  updateRecipeCosting('numberOfPortions', Math.max(1, num(value) || 1))
-                                }
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Target GP %</span>
-                              <PercentageInput
-                                value={dishDraft.recipeCosting.targetGpPercentage}
-                                onChange={(value) =>
-                                  updateRecipeCosting('targetGpPercentage', num(value))
-                                }
-                              />
-                            </label>
-                            <label className="field checkbox-field">
-                              <span>VAT included in selling price</span>
-                              <input
-                                checked={dishDraft.recipeCosting.vatEnabled}
-                                onChange={(e) => updateRecipeCosting('vatEnabled', e.target.checked)}
-                                type="checkbox"
-                              />
-                            </label>
-                          </div>
-
-                          <label className="field">
-                            <span>Recipe costing notes</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.recipeCosting.notes}
-                              onChange={(e) => updateRecipeCosting('notes', e.target.value)}
-                            />
-                          </label>
-
-                          <div className="ingredient-list">
-                            {dishDraft.ingredients.map((ingredient, index) => (
-                              <div className="ingredient-card" key={ingredient.id}>
-                                <div className="ingredient-card-header">
-                                  <div className="ingredient-card-title">
-                                    <strong>{ingredient.name || `Ingredient ${index + 1}`}</strong>
-                                    <span className="muted-copy">
-                                      Used to build the live dish cost and GP calculation.
-                                    </span>
-                                  </div>
-                                  <button
-                                    className="button button-ghost danger-text"
-                                    onClick={() => removeIngredient(ingredient.id)}
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-
-                                <div className="ingredient-card-grid">
-                                  <label className="field ingredient-field ingredient-field-name">
-                                    <span>Ingredient</span>
-                                    <input
-                                      className="input"
-                                      value={ingredient.name}
-                                      onChange={(e) =>
-                                        updateIngredient(ingredient.id, 'name', e.target.value)
-                                      }
-                                    />
-                                  </label>
-                                  <label className="field ingredient-field">
-                                    <span>Supplier</span>
-                                    <input
-                                      className="input"
-                                      value={ingredient.supplier}
-                                      onChange={(e) =>
-                                        updateIngredient(ingredient.id, 'supplier', e.target.value)
-                                      }
-                                    />
-                                  </label>
-                                  <label className="field ingredient-field ingredient-field-qty">
-                                    <span>Qty used</span>
-                                    <div className="unit-input-row">
-                                      <NumericInput
-                                        value={ingredient.qtyUsed}
-                                        className=""
-                                        inputMode="decimal"
-                                        decimalPlaces={2}
-                                        onChange={(value) =>
-                                          updateIngredient(ingredient.id, 'qtyUsed', num(value))
-                                        }
-                                      />
-                                      <select
-                                        className="input unit-select"
-                                        value={ingredient.qtyUnit}
-                                        onChange={(e) =>
-                                          updateIngredient(
-                                            ingredient.id,
-                                            'qtyUnit',
-                                            e.target.value as MeasurementUnit
-                                          )
-                                        }
-                                      >
-                                        {ingredientUnitOptions.map((option) => (
-                                          <option key={option.value} value={option.value}>
-                                            {option.label}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </label>
-                                  <label className="field ingredient-field ingredient-field-pack">
-                                    <span>Pack size</span>
-                                    <div className="unit-input-row">
-                                      <NumericInput
-                                        value={ingredient.packQty}
-                                        inputMode="decimal"
-                                        decimalPlaces={2}
-                                        onChange={(value) =>
-                                          updateIngredient(
-                                            ingredient.id,
-                                            'packQty',
-                                            Math.max(1, num(value) || 1)
-                                          )
-                                        }
-                                      />
-                                      <select
-                                        className="input unit-select"
-                                        value={ingredient.packUnit}
-                                        onChange={(e) =>
-                                          updateIngredient(
-                                            ingredient.id,
-                                            'packUnit',
-                                            e.target.value as MeasurementUnit
-                                          )
-                                        }
-                                      >
-                                        {ingredientUnitOptions.map((option) => (
-                                          <option key={option.value} value={option.value}>
-                                            {option.label}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                  </label>
-                                  <label className="field ingredient-field ingredient-field-cost">
-                                    <span>Pack cost (£)</span>
-                                    <CurrencyInput
-                                      value={ingredient.packCost}
-                                      onChange={(value) =>
-                                        updateIngredient(ingredient.id, 'packCost', num(value))
-                                      }
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {dishEditorTab === 'spec' ? (
-                        <section className="sub-panel">
-                          <div className="sub-panel-header">
-                            <div>
-                              <h4>Dish spec sheet</h4>
-                              <p className="muted-copy">
-                                This stays linked to the dish record so it can later be exported from Menu Builder, client profile, and portal.
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Spec portion size</span>
-                              <input
-                                className="input"
-                                value={dishDraft.specSheet.portionSize}
-                                onChange={(e) => updateSpecSheet('portionSize', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Equipment required</span>
-                              <input
-                                className="input"
-                                value={dishDraft.specSheet.equipmentRequired}
-                                onChange={(e) => updateSpecSheet('equipmentRequired', e.target.value)}
-                              />
-                            </label>
-                          </div>
-
-                          <label className="field">
-                            <span>Recipe method</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.specSheet.recipeMethod}
-                              onChange={(e) => updateSpecSheet('recipeMethod', e.target.value)}
-                            />
-                          </label>
-
-                          <label className="field">
-                            <span>Plating instructions</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.specSheet.platingInstructions}
-                              onChange={(e) =>
-                                updateSpecSheet('platingInstructions', e.target.value)
-                              }
-                            />
-                          </label>
-
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Prep notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.specSheet.prepNotes}
-                                onChange={(e) => updateSpecSheet('prepNotes', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Service notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.specSheet.serviceNotes}
-                                onChange={(e) => updateSpecSheet('serviceNotes', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Holding / storage notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.specSheet.holdingStorageNotes}
-                                onChange={(e) =>
-                                  updateSpecSheet('holdingStorageNotes', e.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Client-facing notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.specSheet.clientFacingNotes}
-                                onChange={(e) =>
-                                  updateSpecSheet('clientFacingNotes', e.target.value)
-                                }
-                              />
-                            </label>
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {dishEditorTab === 'allergens' ? (
-                        <section className="sub-panel">
-                          <div className="sub-panel-header">
-                            <div>
-                              <h4>Allergens, dietary tags, and notes</h4>
-                              <p className="muted-copy">
-                                Keep compliance, prep guidance, and internal notes on the same dish record.
-                              </p>
-                            </div>
-                          </div>
-
-                          <label className="field">
-                            <span>Allergen information</span>
-                            <textarea
-                              className="input textarea"
-                              value={dishDraft.allergenInformation}
-                              onChange={(e) => updateDish('allergenInformation', e.target.value)}
-                            />
-                          </label>
-
-                          <div className="field">
-                            <span>Dietary tags</span>
-                            <div className="menu-dish-tag-row">
-                              {defaultDietaryTagOptions.map((tag) => (
-                                <button
-                                  key={tag}
-                                  type="button"
-                                  className={`client-filter-chip ${dishDraft.dietaryTags.includes(tag) ? 'active' : ''}`}
-                                  onClick={() => toggleDietaryTag(tag)}
-                                >
-                                  {tag}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="form-grid two-columns">
-                            <label className="field">
-                              <span>Prep notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.prepNotes}
-                                onChange={(e) => updateDish('prepNotes', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Service notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.serviceNotes}
-                                onChange={(e) => updateDish('serviceNotes', e.target.value)}
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Holding / storage notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.holdingStorageNotes}
-                                onChange={(e) =>
-                                  updateDish('holdingStorageNotes', e.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="field">
-                              <span>Internal notes</span>
-                              <textarea
-                                className="input textarea"
-                                value={dishDraft.internalNotes}
-                                onChange={(e) => updateDish('internalNotes', e.target.value)}
-                              />
-                            </label>
-                          </div>
-                        </section>
-                      ) : null}
-
-                      {dishEditorTab === 'images' ? (
-                        <section className="sub-panel">
-                          <div className="sub-panel-header">
-                            <div>
-                              <h4>Dish images</h4>
-                              <p className="muted-copy">
-                                Add one or more dish images so the menu engine can later feed spec PDFs and client-facing exports.
-                              </p>
-                            </div>
-                            <label className="button button-secondary inline-file-button">
-                              Upload image
-                              <input accept="image/*" hidden multiple type="file" onChange={addDishImages} />
-                            </label>
-                          </div>
-
-                          {!dishDraft.dishImages.length ? (
-                            <div className="dashboard-empty">
-                              No dish images uploaded yet.
-                            </div>
-                          ) : (
-                            <div className="menu-dish-image-grid">
-                              {dishDraft.dishImages.map((image) => (
-                                <div className="menu-dish-image-card" key={image.id}>
-                                  <img alt={image.label || dishDraft.name || 'Dish image'} src={image.imageDataUrl} />
-                                  <div className="menu-dish-image-meta">
-                                    <strong>{image.label || 'Dish image'}</strong>
-                                    <div className="saved-actions">
-                                      <button
-                                        className="button button-ghost"
-                                        type="button"
-                                        onClick={() => setPrimaryDishImage(image.id)}
-                                      >
-                                        {image.isPrimary ? 'Primary image' : 'Set primary'}
-                                      </button>
-                                      <button
-                                        className="button button-ghost danger-text"
-                                        type="button"
-                                        onClick={() => removeDishImage(image.id)}
-                                      >
-                                        Remove
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </section>
-                      ) : null}
-                    </div>
-
-                    <aside className="dish-editor-side">
-                      <section className="sub-panel">
-                        <div className="sub-panel-header">
-                          <div>
-                            <h4>Profit snapshot</h4>
-                            <p className="muted-copy">
-                              Live costing updates as ingredients, pack sizes, pricing, and weekly volume are added.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="dish-editor-stat-grid">
-                          <StatCard label="Ingredient cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
-                          <StatCard label="Actual GP" value={fmtPercent(dishTheoGp(dishDraft))} />
-                          <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
-                          <StatCard label="Weekly profit" value={fmtCurrency(dishWeeklyProfit(dishDraft))} />
-                          <StatCard
-                            label="Target sell"
-                            value={fmtCurrency(dishRecommendedPrice(dishDraft))}
-                          />
-                          <StatCard
-                            label="Opportunity"
-                            value={fmtCurrency(dishWeeklyOpportunity(dishDraft))}
-                          />
-                        </div>
-                      </section>
-
-                      <section className="sub-panel">
-                        <div className="sub-panel-header">
-                          <div>
-                            <h4>Dish record readiness</h4>
-                            <p className="muted-copy">
-                              This dish record now feeds the linked recipe costing sheet, dish spec sheet, client-profile documents, and shareable exports.
-                            </p>
-                          </div>
-                        </div>
-                        <div className="menu-chip-row menu-chip-row-vertical">
-                          <div className="menu-chip">
-                            <strong>Images</strong>
-                            <span>{dishDraft.dishImages.length}</span>
-                          </div>
-                          <div className="menu-chip">
-                            <strong>Dietary tags</strong>
-                            <span>{dishDraft.dietaryTags.length}</span>
-                          </div>
-                          <div className="menu-chip">
-                            <strong>Spec linked</strong>
-                            <span>{safe(dishDraft.specSheet.id) ? 'Ready' : 'Pending'}</span>
-                          </div>
-                          <div className="menu-chip">
-                            <strong>Recipe costing</strong>
-                            <span>
-                              {dishDraft.ingredients.filter((ingredient) => safe(ingredient.name)).length} lines
-                            </span>
-                          </div>
-                        </div>
-                      </section>
-
-                      <section className="sub-panel">
-                        <div className="sub-panel-header">
-                          <div>
-                            <h4>Dish exports</h4>
-                            <p className="muted-copy">
-                              Export or share this individual dish record straight from the Menu Builder.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="dish-export-actions">
-                          <button
-                            className="button button-secondary"
-                            onClick={() => exportDishReport('spec')}
-                            type="button"
-                          >
-                            Export spec PDF
-                          </button>
-                          <button
-                            className="button button-secondary"
-                            onClick={() => exportDishReport('recipe')}
-                            type="button"
-                          >
-                            Export recipe PDF
-                          </button>
-                          <button
-                            className="button button-secondary"
-                            disabled={isDishSharing}
-                            onClick={() => createDishReportShare('spec')}
-                            type="button"
-                          >
-                            {isDishSharing ? 'Creating link...' : 'Create spec link'}
-                          </button>
-                          <button
-                            className="button button-secondary"
-                            disabled={isDishSharing}
-                            onClick={() => createDishReportShare('recipe')}
-                            type="button"
-                          >
-                            {isDishSharing ? 'Creating link...' : 'Create recipe link'}
-                          </button>
-                        </div>
-
-                        {dishShareUrl ? (
-                          <div className="share-link-row dish-share-row">
-                            <input
-                              className="input"
-                              readOnly
-                              value={dishShareUrl}
-                              onFocus={(event) => event.currentTarget.select()}
-                            />
-                            <button
-                              className="button button-secondary"
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(dishShareUrl);
-                                  setMessage('Dish share link copied to clipboard.');
-                                } catch {
-                                  setMessage('Copy failed. You can still copy the dish link manually.');
-                                }
-                              }}
-                            >
-                              Copy link
-                            </button>
-                            <a className="button button-primary" href={dishShareUrl} rel="noreferrer" target="_blank">
-                              Open link
-                            </a>
-                          </div>
-                        ) : null}
-                      </section>
-                    </aside>
-                  </div>
-
-                  <div className="header-actions">
-                    <button className="button button-primary" onClick={saveDish}>
-                      Save dish
-                    </button>
-                    <button className="button button-secondary" onClick={closeDishEditor}>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      <MenuDishEditorModal
+        dishDraft={dishDraft}
+        dishEditorTab={dishEditorTab}
+        dishShareUrl={dishShareUrl}
+        editingDishId={editingDishId}
+        isDishSharing={isDishSharing}
+        onAddDishImages={addDishImages}
+        onAddIngredient={addIngredient}
+        onClose={closeDishEditor}
+        onCopyDishShareLink={copyDishShareLink}
+        onCreateDishReportShare={(kind) => {
+          void createDishReportShare(kind);
+        }}
+        onExportDishReport={exportDishReport}
+        onRemoveDishImage={removeDishImage}
+        onRemoveIngredient={removeIngredient}
+        onSaveDish={saveDish}
+        onSetDishEditorTab={setDishEditorTab}
+        onSetPrimaryDishImage={setPrimaryDishImage}
+        onToggleDietaryTag={toggleDietaryTag}
+        onUpdateDish={updateDish}
+        onUpdateIngredient={updateIngredient}
+        onUpdateRecipeCosting={updateRecipeCosting}
+        onUpdateSpecSheet={updateSpecSheet}
+        open={Boolean(dishDraft)}
+      />
 
       <ControlPanelModal
         bodyRef={controlDrawerBodyRef}
@@ -2035,85 +993,19 @@ export function MenuBuilderPage() {
         open={controlModalOpen}
         title="Menu Profit Controls"
       >
-
-              <div className="audit-side-block">
-                <div className="audit-side-title-row">
-                  <h4>Completion</h4>
-                  <span className="soft-pill">{completion.percent}% complete</span>
-                </div>
-                <div className="audit-progress-track">
-                  <div
-                    className="audit-progress-fill"
-                    style={{ width: `${completion.percent}%` }}
-                  />
-                </div>
-                <div className="audit-side-meta">
-                  {completion.complete} of {completion.total} key checkpoints completed
-                </div>
-              </div>
-
-              <div className="audit-side-block" style={{marginTop: '24px'}}>
-                <div className="audit-side-title-row">
-                  <h4>Menu insights</h4>
-                  <span className="soft-pill">{insights.length}</span>
-                </div>
-                <div className="audit-insight-list">
-                  {insights.map((insight, index) => (
-                    <div className="audit-insight-card" key={`${insight.title}-${index}`}>
-                      <div className="audit-insight-top">
-                        <strong>{insight.title}</strong>
-                        <span className={toneClass(insight.tone)}>{insight.tone}</span>
-                      </div>
-                      <p>{insight.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="audit-side-block" style={{marginTop: '24px'}}>
-                <div className="audit-side-title-row">
-                  <h4>Profit snapshot</h4>
-                </div>
-                <div className="audit-chip-row audit-chip-row-vertical">
-                  <div className="audit-chip">
-                    <strong>Weighted GP</strong>
-                    <span>{fmtPercent(weightedGp)}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Total dishes</strong>
-                    <span>{allDishes.length}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Strong dishes</strong>
-                    <span>{strongDishCount}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Watch dishes</strong>
-                    <span>{watchDishCount}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>At risk dishes</strong>
-                    <span>{riskDishCount}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Weekly revenue</strong>
-                    <span>{fmtCurrency(totalRevenue)}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Weekly profit</strong>
-                    <span>{fmtCurrency(totalProfit)}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Weekly opportunity</strong>
-                    <span>{fmtCurrency(menuSummary.totalOpportunity)}</span>
-                  </div>
-                  <div className="audit-chip">
-                    <strong>Total sections</strong>
-                    <span>{project.sections.length}</span>
-                  </div>
-                </div>
-              </div>
-
+        <MenuBuilderControlsPanel
+          completion={completion}
+          dishCount={allDishes.length}
+          insights={insights}
+          riskDishCount={riskDishCount}
+          sectionCount={project.sections.length}
+          strongDishCount={strongDishCount}
+          totalOpportunity={menuSummary.totalOpportunity}
+          totalProfit={totalProfit}
+          totalRevenue={totalRevenue}
+          watchDishCount={watchDishCount}
+          weightedGp={weightedGp}
+        />
       </ControlPanelModal>
 
       <div className="page-floating-controls">
