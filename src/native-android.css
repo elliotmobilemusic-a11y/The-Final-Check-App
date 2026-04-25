@@ -19,6 +19,12 @@ body.native-shell.platform-android #root {
   min-height: 100dvh;
 }
 
+body.native-shell.platform-android,
+body.native-shell.platform-android * {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body.native-shell.platform-android::before,
 body.native-shell.platform-android .app-shell::before,
 body.native-shell.platform-android .app-shell::after {
@@ -36,6 +42,47 @@ body.native-shell.platform-android input[type='number'] {
   -moz-appearance: textfield;
 }
 
+body.native-shell.platform-android .app-content,
+body.native-shell.platform-android .workspace-transition-shell,
+body.native-shell.platform-android .page-stack,
+body.native-shell.platform-android .workspace-grid,
+body.native-shell.platform-android .workspace-main,
+body.native-shell.platform-android .workspace-side,
+body.native-shell.platform-android .desktop-main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.native-shell.platform-android .page-stack {
+  gap: 16px;
+  padding-bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
+}
+
+body.native-shell.platform-android .page-stack > * {
+  min-width: 0;
+}
+
+body.native-shell.platform-android .panel,
+body.native-shell.platform-android .feature-card,
+body.native-shell.platform-android .stat-card,
+body.native-shell.platform-android .sub-panel,
+body.native-shell.platform-android .repeat-card,
+body.native-shell.platform-android .dashboard-record,
+body.native-shell.platform-android .dashboard-command-card,
+body.native-shell.platform-android .dashboard-client-item,
+body.native-shell.platform-android .dashboard-activity-item,
+body.native-shell.platform-android .dashboard-step,
+body.native-shell.platform-android .dashboard-check-row,
+body.native-shell.platform-android .crm-client-row,
+body.native-shell.platform-android .crm-lookup-card,
+body.native-shell.platform-android .crm-deal-card,
+body.native-shell.platform-android .invoice-card,
+body.native-shell.platform-android .client-stat-card,
+body.native-shell.platform-android .auth-stat-card,
+body.native-shell.platform-android .ingredient-card {
+  animation: none;
+}
+
 @media (max-width: 1280px) {
   html.native-shell.platform-android {
     scroll-padding-top: max(env(safe-area-inset-top), 16px);
@@ -45,6 +92,10 @@ body.native-shell.platform-android input[type='number'] {
     min-height: 100dvh;
     padding-top: max(12px, calc(env(safe-area-inset-top) + 8px));
     padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
+  }
+
+  body.native-shell.platform-android .app-content {
+    padding-top: 14px;
   }
 
   body.native-shell.platform-android .app-shell-frame,
@@ -61,6 +112,28 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .panel,
   body.native-shell.platform-android .table-shell,
   body.native-shell.platform-android .client-data-table-shell {
+    max-width: 100%;
+  }
+
+  body.native-shell.platform-android .workspace-grid,
+  body.native-shell.platform-android .quote-builder-layout,
+  body.native-shell.platform-android .dashboard-hero-grid,
+  body.native-shell.platform-android .dashboard-hero-chip-row,
+  body.native-shell.platform-android .crm-highlight-grid,
+  body.native-shell.platform-android .crm-client-metrics,
+  body.native-shell.platform-android .audit-score-grid,
+  body.native-shell.platform-android .audit-control-grid,
+  body.native-shell.platform-android .audit-section-nav,
+  body.native-shell.platform-android .menu-summary-grid,
+  body.native-shell.platform-android .menu-hero-grid,
+  body.native-shell.platform-android .dish-editor-layout,
+  body.native-shell.platform-android .dish-editor-stat-grid,
+  body.native-shell.platform-android .support-drawer-layout,
+  body.native-shell.platform-android .support-field-grid,
+  body.native-shell.platform-android .settings-theme-grid,
+  body.native-shell.platform-android .settings-theme-detail-grid,
+  body.native-shell.platform-android .settings-toggle-grid {
+    min-width: 0;
     max-width: 100%;
   }
 
@@ -132,9 +205,17 @@ body.native-shell.platform-android input[type='number'] {
     scrollbar-gutter: auto;
   }
 
+  body.native-shell.platform-android .shell-notification-panel {
+    width: min(420px, calc(100vw - 24px));
+    max-height: min(70dvh, 560px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   body.native-shell.platform-android .drawer-panel,
   body.native-shell.platform-android .control-drawer-panel,
   body.native-shell.platform-android .support-drawer {
+    width: min(100%, 700px);
     max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
   }
 
@@ -149,7 +230,34 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .modal-content,
   body.native-shell.platform-android .client-data-table-shell,
   body.native-shell.platform-android .table-shell {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
+  }
+
+  body.native-shell.platform-android .confirm-modal-overlay {
+    padding:
+      max(14px, calc(env(safe-area-inset-top) + 8px))
+      12px
+      max(14px, calc(env(safe-area-inset-bottom) + 8px));
+  }
+
+  body.native-shell.platform-android .confirm-modal-card,
+  body.native-shell.platform-android .dish-modal-panel {
+    width: min(100%, 760px);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+    overflow: hidden;
+  }
+
+  body.native-shell.platform-android .dish-modal-backdrop {
+    padding:
+      max(10px, calc(env(safe-area-inset-top) + 4px))
+      8px
+      max(10px, calc(env(safe-area-inset-bottom) + 4px));
+  }
+
+  body.native-shell.platform-android .dish-modal-body,
+  body.native-shell.platform-android .confirm-modal-card {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   body.native-shell.platform-android input,
@@ -244,6 +352,21 @@ body.native-shell.platform-android input[type='number'] {
     flex-direction: column;
     align-items: stretch;
   }
+
+  body.native-shell.platform-android .workspace-grid,
+  body.native-shell.platform-android .dashboard-hero-grid,
+  body.native-shell.platform-android .audit-score-grid,
+  body.native-shell.platform-android .crm-highlight-grid,
+  body.native-shell.platform-android .crm-client-metrics,
+  body.native-shell.platform-android .menu-summary-grid,
+  body.native-shell.platform-android .dish-editor-stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.native-shell.platform-android .workspace-side {
+    position: static !important;
+    top: auto !important;
+  }
 }
 
 @media (max-width: 820px) {
@@ -280,6 +403,27 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .shell-toolbar-actions .button {
     width: 100%;
   }
+
+  body.native-shell.platform-android .workspace-grid,
+  body.native-shell.platform-android .dashboard-hero-grid,
+  body.native-shell.platform-android .dashboard-hero-chip-row,
+  body.native-shell.platform-android .audit-score-grid,
+  body.native-shell.platform-android .audit-control-grid,
+  body.native-shell.platform-android .menu-summary-grid,
+  body.native-shell.platform-android .crm-highlight-grid,
+  body.native-shell.platform-android .crm-client-metrics,
+  body.native-shell.platform-android .dish-editor-layout,
+  body.native-shell.platform-android .dish-editor-stat-grid,
+  body.native-shell.platform-android .support-drawer-layout,
+  body.native-shell.platform-android .support-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.native-shell.platform-android .shell-notification-panel {
+    left: 0;
+    right: auto;
+    width: min(100vw - 24px, 420px);
+  }
 }
 
 @media (max-width: 680px) {
@@ -296,5 +440,63 @@ body.native-shell.platform-android input[type='number'] {
   body.native-shell.platform-android .client-tab-link,
   body.native-shell.platform-android .shell-primary-link {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  body.native-shell.platform-android .app-shell {
+    padding-inline: 10px;
+  }
+
+  body.native-shell.platform-android .page-intro,
+  body.native-shell.platform-android .panel,
+  body.native-shell.platform-android .sub-panel,
+  body.native-shell.platform-android .feature-card,
+  body.native-shell.platform-android .client-ops-header,
+  body.native-shell.platform-android .client-tab-section {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  body.native-shell.platform-android .shell-toolbar,
+  body.native-shell.platform-android .shell-toolbar-main,
+  body.native-shell.platform-android .shell-toolbar-actions {
+    gap: 10px;
+  }
+
+  body.native-shell.platform-android .shell-notification-wrap,
+  body.native-shell.platform-android .shell-profile-link,
+  body.native-shell.platform-android .shell-signout {
+    width: 100%;
+  }
+
+  body.native-shell.platform-android .shell-notification-trigger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.native-shell.platform-android .client-data-table,
+  body.native-shell.platform-android .client-pricing-table,
+  body.native-shell.platform-android .client-work-table,
+  body.native-shell.platform-android .data-table,
+  body.native-shell.platform-android .client-shared-table {
+    min-width: 720px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1280px) and (orientation: landscape) {
+  body.native-shell.platform-android .workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.native-shell.platform-android .workspace-side {
+    position: static !important;
+  }
+
+  body.native-shell.platform-android .dashboard-hero-grid,
+  body.native-shell.platform-android .crm-highlight-grid,
+  body.native-shell.platform-android .audit-score-grid,
+  body.native-shell.platform-android .menu-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -4,7 +4,6 @@ import { Capacitor } from '@capacitor/core';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './styles.css';
-import './tablet-responsive.css';
 import './native-android.css';
 import './report-new.css';
 

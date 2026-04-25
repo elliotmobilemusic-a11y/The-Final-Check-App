@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendPushNotificationToUser } from './_push.js';
 
 const GEMINI_ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -330,6 +331,15 @@ export default async function handler(request, response) {
         }
       })
       .eq('id', share.id);
+
+    await sendPushNotificationToUser(share.user_id, {
+      title: 'New client enquiry',
+      body: `${createdClient.company_name} has submitted a new enquiry form.`,
+      tag: `client-enquiry:${createdClient.id}`,
+      url: '/#/clients?status=Prospect',
+      icon: '/the-final-check-logo.png',
+      badge: '/the-final-check-favicon.png'
+    }).catch(() => {});
 
     response.status(200).json({
       ok: true,

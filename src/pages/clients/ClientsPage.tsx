@@ -459,6 +459,13 @@ export function ClientsPage() {
                           <Link className="button button-small button-primary" to={`/clients/${client.id}`}>
                             Open client profile
                           </Link>
+                          <button
+                            className="button button-small button-ghost danger-text"
+                            onClick={() => setClientPendingDelete(client)}
+                            type="button"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </article>
                     );

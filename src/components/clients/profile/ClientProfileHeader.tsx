@@ -14,6 +14,7 @@ type ClientProfileHeaderProps = {
   onNewInvoice: () => void;
   onNewAudit: () => void;
   onOpenPortal: () => void;
+  onDeleteClient: () => void;
 };
 
 export function ClientProfileHeader({
@@ -29,7 +30,8 @@ export function ClientProfileHeader({
   onNewQuote,
   onNewInvoice,
   onNewAudit,
-  onOpenPortal
+  onOpenPortal,
+  onDeleteClient
 }: ClientProfileHeaderProps) {
   return (
     <header className="client-ops-header">
@@ -65,6 +67,9 @@ export function ClientProfileHeader({
           </button>
           <button className="button button-secondary" onClick={onOpenPortal} type="button">
             Open portal
+          </button>
+          <button className="button button-ghost danger-text" onClick={onDeleteClient} type="button">
+            Delete client
           </button>
           <button
             className="button button-primary"
