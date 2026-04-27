@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SectionCard, SectionHeader, ActionRow, EmptyState, StatusBadge, DataTable } from '../../ui';
 
 export type ClientWorkItem = {
   id: string;
@@ -78,15 +79,18 @@ export function ClientWorkTab({
 
   return (
     <div className="client-tab-layout">
-      <section className="client-tab-section">
-        <div className="client-tab-section-heading">
-          <div>
-            <h2>Work & services</h2>
-            <p>One delivery view for active audits, compliance, mystery shops, menu projects, dish specs, recipe costings, and service jobs.</p>
-          </div>
-        </div>
+      <SectionCard>
+        <SectionHeader
+          title="Work & services"
+          description="One delivery view for active audits, compliance, mystery shops, menu projects, dish specs, recipe costings, and service jobs."
+          action={
+            <button className="button button-primary" onClick={onNewServiceJob} type="button">
+              New service job
+            </button>
+          }
+        />
 
-        <div className="client-top-action-row">
+        <ActionRow align="start" gap="default">
           <Link className="button button-secondary" to={`/audit`}>
             New operational audit
           </Link>
@@ -99,16 +103,13 @@ export function ClientWorkTab({
           <Link className="button button-secondary" to={`/menu`}>
             New menu project
           </Link>
-          <button className="button button-secondary" onClick={onNewServiceJob} type="button">
-            New service job
-          </button>
-        </div>
+        </ActionRow>
 
-        <div className="client-filter-row">
+        <div className="tab-filter-bar">
           {filterOptions.map((option) => (
             <button
               key={option.key}
-              className={`client-filter-chip ${filter === option.key ? 'active' : ''}`}
+              className={`tab-filter-button ${filter === option.key ? 'active' : ''}`}
               onClick={() => setFilter(option.key)}
               type="button"
             >
@@ -117,74 +118,83 @@ export function ClientWorkTab({
           ))}
         </div>
 
-        <div className="client-data-table-shell">
-          <div className="client-data-table client-work-table">
-            <div className="client-data-table-head">
-              <span>Service type</span>
-              <span>Title</span>
-              <span>Site</span>
-              <span>Status</span>
-              <span>Date created</span>
-              <span>Last updated</span>
-              <span>Portal</span>
-              <span>Value</span>
-              <span>Actions</span>
-            </div>
-
-            {visibleItems.length === 0 ? (
-              <div className="dashboard-empty">No work items match the current filter.</div>
-            ) : (
-              visibleItems.map((item) => (
-                <div className={`client-data-row ${item.archived ? 'is-muted' : ''}`} key={item.id}>
-                  <span>{item.label}</span>
-                  <strong>{item.title}</strong>
-                  <span>{item.site}</span>
-                  <span>{item.archived ? 'Archived' : item.status}</span>
-                  <span>{formatShortDate(item.createdAt)}</span>
-                  <span>{formatShortDate(item.updatedAt)}</span>
-                  <span>{item.portalVisible ? 'Visible' : 'Hidden'}</span>
-                  <span>{item.valueLabel}</span>
-                  <div className="client-row-actions">
-                    {item.openPath ? (
-                      <Link className="button button-ghost" to={item.openPath}>
-                        Open
-                      </Link>
-                    ) : null}
-                    {item.openPath ? (
-                      <Link className="button button-ghost" to={item.openPath}>
-                        Edit
-                      </Link>
-                    ) : null}
-                    <button className="button button-ghost" onClick={() => onDuplicate(item)} type="button">
-                      Duplicate
-                    </button>
-                    <button className="button button-ghost" onClick={() => onExport(item)} type="button">
-                      Export PDF
-                    </button>
-                    <button className="button button-ghost" onClick={() => onArchiveToggle(item)} type="button">
-                      {item.archived ? 'Restore' : 'Archive'}
-                    </button>
-                    <button
-                      className="button button-ghost"
-                      onClick={() => onTogglePortalVisibility(item, !item.portalVisible)}
-                      type="button"
-                    >
-                      {item.portalVisible ? 'Remove from portal' : 'Send to portal'}
-                    </button>
-                    <button
-                      className="button button-ghost"
-                      onClick={() => onLinkToInvoice(item)}
-                      type="button"
-                    >
-                      Link to invoice
-                    </button>
-                  </div>
+        <DataTable<ClientWorkItem>
+          columns={[
+            {
+              key: 'itemType',
+              header: 'Type',
+              width: '120px',
+              render: (item) => <span className="muted">{item.label}</span>
+            },
+            {
+              key: 'title',
+              header: 'Title',
+              render: (item) => <strong>{item.title}</strong>
+            },
+            {
+              key: 'site',
+              header: 'Site',
+              width: '120px',
+              render: (item) => item.site
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              width: '100px',
+              render: (item) => {
+                if (item.archived) return <StatusBadge variant="archived">Archived</StatusBadge>;
+                const statusVariant = item.status.toLowerCase().replace(' ', '-') as any;
+                return <StatusBadge variant={statusVariant || 'neutral'}>{item.status}</StatusBadge>;
+              }
+            },
+            {
+              key: 'createdAt',
+              header: 'Created',
+              width: '100px',
+              hideOnMobile: true,
+              render: (item) => formatShortDate(item.createdAt)
+            },
+            {
+              key: 'updatedAt',
+              header: 'Updated',
+              width: '100px',
+              hideOnMobile: true,
+              render: (item) => formatShortDate(item.updatedAt)
+            },
+            {
+              key: 'portalVisible',
+              header: 'Portal',
+              width: '80px',
+              render: (item) => item.portalVisible ? 
+                <StatusBadge variant="visible">Visible</StatusBadge> : 
+                <StatusBadge variant="hidden">Hidden</StatusBadge>
+            },
+            {
+              key: 'valueLabel',
+              header: 'Value',
+              width: '100px',
+              render: (item) => item.valueLabel
+            },
+            {
+              key: 'actions',
+              header: 'Actions',
+              width: '80px',
+              hideOnMobile: false,
+              render: (item) => (
+                <div className="table-row-actions">
+                  {item.openPath && (
+                    <Link className="button button-ghost small" to={item.openPath}>Open</Link>
+                  )}
+                  <button className="button button-ghost small" onClick={() => onExport(item)} type="button">Export</button>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+              )
+            }
+          ]}
+          data={visibleItems}
+          keyExtractor={(item) => item.id}
+          emptyMessage="No work items match the current filter"
+        />
+      </SectionCard>
     </div>
   );
 }
