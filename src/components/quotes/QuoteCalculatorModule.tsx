@@ -20,7 +20,6 @@ import {
   type QuoteFieldDefinition
 } from '../../features/quotes/formSchema';
 import { createInvoiceDraftFromQuote } from '../../features/quotes/invoices';
-import { quoteSeedTemplates } from '../../features/quotes/seeds';
 
 type PersistProfileOptions = {
   successMessage: string;
@@ -168,23 +167,18 @@ export function QuoteCalculatorModule({
 
   const quotes = useMemo(() => sortedQuotes(client.data.quotes ?? []), [client.data.quotes]);
 
-  const openNewQuote = useCallback((seedId?: string) => {
+  const openNewQuote = useCallback(() => {
     const base = createEmptyQuoteInput(client, currentUserName);
-    const seed = quoteSeedTemplates.find((template) => template.id === seedId);
 
     setComposer({
       editingQuoteId: null,
-      values: seed ? { ...base, ...seed.values } : base,
-      manualLineItems: seed?.manualLineItems ?? [],
+      values: base,
+      manualLineItems: [],
       hiddenAutoLineItemKeys: [],
       autoLineItemOverrides: {}
     });
     setCollapsedSections(buildCollapsedState());
-    setMessage(
-      seed
-        ? `Loaded the ${seed.label.toLowerCase()} seeded quote.`
-        : 'New quote draft opened.'
-    );
+    setMessage('New quote draft opened.');
   }, [client, currentUserName]);
 
   const openExistingQuote = useCallback((quote: ClientQuote) => {
@@ -718,21 +712,7 @@ export function QuoteCalculatorModule({
 
       <div className="page-inline-note">{message}</div>
 
-      {!composer ? (
-        <div className="quote-seed-strip">
-          {quoteSeedTemplates.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              className="quote-seed-button"
-              onClick={() => openNewQuote(template.id)}
-            >
-              <strong>{template.label}</strong>
-              <span>{template.description}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+
 
       {composer && preview ? (
         <div className="quote-builder-layout">

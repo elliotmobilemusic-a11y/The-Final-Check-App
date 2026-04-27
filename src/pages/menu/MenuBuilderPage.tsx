@@ -1,7 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import {
   MenuBuilderControlsPanel,
   MenuBuilderWorkspaceSection,
@@ -48,6 +46,8 @@ import type {
 } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, uid } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
 import {
   createDishSpecShare,
   createMenuShare,

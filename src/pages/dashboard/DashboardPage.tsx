@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import type { ClientRecord } from '../../types';
@@ -11,6 +9,8 @@ import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
