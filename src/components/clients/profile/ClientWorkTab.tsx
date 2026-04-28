@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SectionCard, SectionHeader, ActionRow, EmptyState, StatusBadge, DataTable } from '../../ui';
+import { SectionCard, SectionHeader, ActionRow, StatusBadge, DataTable } from '../../ui';
 
 export type ClientWorkItem = {
   id: string;
@@ -49,6 +49,20 @@ function formatShortDate(value?: string | null) {
   }).format(parsed);
 }
 
+function getWorkStatusVariant(status: string): 'draft' | 'in-progress' | 'completed' | 'sent' | 'neutral' {
+  const normalized = status.toLowerCase().replace(/\s+/g, '-');
+
+  switch (normalized) {
+    case 'draft':
+    case 'in-progress':
+    case 'completed':
+    case 'sent':
+      return normalized;
+    default:
+      return 'neutral';
+  }
+}
+
 const filterOptions: Array<{ key: ClientWorkItem['itemType'] | 'all'; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'operationalAudit', label: 'Operational audits' },
@@ -64,11 +78,7 @@ const filterOptions: Array<{ key: ClientWorkItem['itemType'] | 'all'; label: str
 
 export function ClientWorkTab({
   workItems,
-  onDuplicate,
-  onArchiveToggle,
-  onTogglePortalVisibility,
   onExport,
-  onLinkToInvoice,
   onNewServiceJob
 }: ClientWorkTabProps) {
   const [filter, setFilter] = useState<ClientWorkItem['itemType'] | 'all'>('all');
@@ -143,7 +153,7 @@ export function ClientWorkTab({
               width: '100px',
               render: (item) => {
                 if (item.archived) return <StatusBadge variant="archived">Archived</StatusBadge>;
-                const statusVariant = item.status.toLowerCase().replace(' ', '-') as any;
+                const statusVariant = getWorkStatusVariant(item.status);
                 return <StatusBadge variant={statusVariant || 'neutral'}>{item.status}</StatusBadge>;
               }
             },
