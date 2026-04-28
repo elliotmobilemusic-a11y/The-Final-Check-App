@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
-import { buildInvoicePdfHtml, invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
   buildDishSpecReportHtml,
@@ -83,6 +83,11 @@ import type {
   SupabaseRecord
 } from '../../types';
 import { fmtCurrency, todayIso, uid } from '../../lib/utils';
+import {
+  buildInvoicePdfTemplate,
+  buildQuotePdfTemplate,
+  exportPdfDocument
+} from '../../lib/pdf';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 
@@ -120,6 +125,7 @@ export function ClientProfilePage() {
   const [requestNewQuoteToken, setRequestNewQuoteToken] = useState(0);
   const [externalQuoteToEditId, setExternalQuoteToEditId] = useState<string | null>(null);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [exportingPdfKey, setExportingPdfKey] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingClient, setDeletingClient] = useState(false);
 
@@ -1267,8 +1273,72 @@ export function ClientProfilePage() {
     setPortalListVisibility('hiddenInvoiceIds', [invoiceId], visible);
   }
 
-  function exportInvoicePdf(invoice: ClientInvoice) {
-    openPrintableHtmlDocument(`${invoice.number} invoice export`, buildInvoicePdfHtml(activeForm, invoice));
+  async function exportInvoicePdf(invoice: ClientInvoice) {
+    const exportKey = `invoice:${invoice.id}`;
+    setExportingPdfKey(exportKey);
+
+    try {
+      const result = await runWithActivity(
+        {
+          kicker: 'Preparing export',
+          title: 'Building invoice PDF',
+          detail: 'Creating a client-ready invoice PDF from the saved invoice record.'
+        },
+        async () =>
+          exportPdfDocument(
+            buildInvoicePdfTemplate({
+              client: activeForm,
+              invoice,
+              preparedBy: 'Jason Wardill / The Final Check'
+            })
+          ),
+        700
+      );
+
+      setMessage(
+        result.openedFallback
+          ? `${result.filename} opened for review.`
+          : `${result.filename} downloaded.`
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not export invoice PDF.');
+    } finally {
+      setExportingPdfKey((current) => (current === exportKey ? null : current));
+    }
+  }
+
+  async function exportQuotePdf(quote: ClientQuote) {
+    const exportKey = `quote:${quote.quoteId}`;
+    setExportingPdfKey(exportKey);
+
+    try {
+      const result = await runWithActivity(
+        {
+          kicker: 'Preparing export',
+          title: 'Building quote PDF',
+          detail: 'Creating a client-ready quote PDF from the saved quote snapshot.'
+        },
+        async () =>
+          exportPdfDocument(
+            buildQuotePdfTemplate({
+              client: activeForm,
+              quote,
+              preparedBy: 'Jason Wardill / The Final Check'
+            })
+          ),
+        700
+      );
+
+      setMessage(
+        result.openedFallback
+          ? `${result.filename} opened for review.`
+          : `${result.filename} downloaded.`
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not export quote PDF.');
+    } finally {
+      setExportingPdfKey((current) => (current === exportKey ? null : current));
+    }
   }
 
   function handleExportWorkItem(item: ClientWorkItem) {
@@ -1594,6 +1664,12 @@ export function ClientProfilePage() {
             selectedInvoiceId={selectedInvoiceId}
             requestNewQuoteToken={requestNewQuoteToken}
             externalQuoteToEditId={externalQuoteToEditId}
+            exportingInvoiceId={
+              exportingPdfKey?.startsWith('invoice:') ? exportingPdfKey.replace('invoice:', '') : null
+            }
+            exportingQuoteId={
+              exportingPdfKey?.startsWith('quote:') ? exportingPdfKey.replace('quote:', '') : null
+            }
             onPersistClientProfile={persistClientProfile}
             onRequestNewQuote={handleRequestNewQuote}
             onRequestNewInvoice={() => handleRequestNewInvoice()}
@@ -1614,6 +1690,7 @@ export function ClientProfilePage() {
             onMarkInvoicePaid={handleMarkInvoicePaid}
             onToggleInvoicePortalVisibility={handleToggleInvoicePortalVisibility}
             onExportInvoicePdf={exportInvoicePdf}
+            onExportQuotePdf={exportQuotePdf}
           />
         ) : null}
         </div>

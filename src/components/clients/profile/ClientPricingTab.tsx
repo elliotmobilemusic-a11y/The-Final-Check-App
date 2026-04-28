@@ -29,6 +29,8 @@ type ClientPricingTabProps = {
   selectedInvoiceId: string | null;
   requestNewQuoteToken: number;
   externalQuoteToEditId: string | null;
+  exportingInvoiceId?: string | null;
+  exportingQuoteId?: string | null;
   onPersistClientProfile: (
     nextClient: ClientProfile,
     options: PersistProfileOptions
@@ -58,6 +60,7 @@ type ClientPricingTabProps = {
   onMarkInvoicePaid: (invoice: ClientInvoice) => void;
   onToggleInvoicePortalVisibility: (invoiceId: string, visible: boolean) => void;
   onExportInvoicePdf: (invoice: ClientInvoice) => void;
+  onExportQuotePdf: (quote: ClientQuote) => void;
 };
 
 function formatShortDate(value?: string | null) {
@@ -124,6 +127,8 @@ export function ClientPricingTab({
   selectedInvoiceId,
   requestNewQuoteToken,
   externalQuoteToEditId,
+  exportingInvoiceId = null,
+  exportingQuoteId = null,
   onPersistClientProfile,
   onRequestNewQuote,
   onRequestNewInvoice,
@@ -140,7 +145,8 @@ export function ClientPricingTab({
   onDuplicateInvoice,
   onMarkInvoicePaid,
   onToggleInvoicePortalVisibility,
-  onExportInvoicePdf
+  onExportInvoicePdf,
+  onExportQuotePdf
 }: ClientPricingTabProps) {
   const quotes = [...client.data.quotes].sort((l, r) => r.updatedAt.localeCompare(l.updatedAt));
   const invoices = [...client.data.invoices].sort((l, r) => r.issueDate.localeCompare(l.issueDate));
@@ -245,6 +251,14 @@ export function ClientPricingTab({
           </button>
           <button
             className="button button-ghost"
+            disabled={exportingQuoteId === q.quoteId}
+            onClick={() => onExportQuotePdf(q)}
+            type="button"
+          >
+            {exportingQuoteId === q.quoteId ? 'Exporting...' : 'Export PDF'}
+          </button>
+          <button
+            className="button button-ghost"
             disabled={Boolean(q.linkedInvoiceId)}
             onClick={() => onCreateInvoiceFromQuote(q)}
             type="button"
@@ -342,10 +356,11 @@ export function ClientPricingTab({
           </button>
           <button
             className="button button-ghost"
+            disabled={exportingInvoiceId === inv.id}
             onClick={() => onExportInvoicePdf(inv)}
             type="button"
           >
-            Export PDF
+            {exportingInvoiceId === inv.id ? 'Exporting...' : 'Export PDF'}
           </button>
         </div>
       )
@@ -650,10 +665,11 @@ export function ClientPricingTab({
               </button>
               <button
                 className="button button-ghost"
+                disabled={exportingInvoiceId === selectedInvoice.id}
                 onClick={() => onExportInvoicePdf(selectedInvoice)}
                 type="button"
               >
-                Export PDF
+                {exportingInvoiceId === selectedInvoice.id ? 'Exporting...' : 'Export PDF'}
               </button>
             </ActionRow>
           </div>
