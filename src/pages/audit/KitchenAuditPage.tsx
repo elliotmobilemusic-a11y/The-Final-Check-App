@@ -48,6 +48,7 @@ import {
   buildKitchenAuditReportHtml,
   buildStandaloneKitchenAuditReportHtml
 } from '../../features/audits/kitchenAuditReport';
+import { buildKitchenAuditPdfTemplate, exportPdfDocument } from '../../lib/pdf';
 
 export function KitchenAuditPage() {
   const { runWithActivity } = useActivityOverlay();
@@ -616,6 +617,19 @@ export function KitchenAuditPage() {
       </ControlPanelModal>
 
       <div className="page-floating-controls">
+        <button 
+          className="button button-secondary control-dock-button"
+          onClick={async () => {
+            try {
+              await exportPdfDocument(buildKitchenAuditPdfTemplate({ audit: form }));
+            } catch (error) {
+              console.error('PDF export failed', error);
+            }
+          }}
+          style={{ marginRight: '12px' }}
+        >
+          Export PDF
+        </button>
         <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
           Profit Controls
         </button>
