@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import { QuantityInput, CurrencyInput } from '../../components/ui/NumericInput';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
@@ -18,8 +16,10 @@ import {
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
-import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
+import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import type {
   AuditActionItem,
   AuditAreaSummary,
