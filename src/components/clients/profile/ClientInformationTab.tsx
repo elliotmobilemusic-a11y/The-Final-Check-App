@@ -1,6 +1,6 @@
 import type { BusinessLookupResult } from '../../../features/clients/businessLookup';
 import type { ClientContact, ClientProfile, ClientProfileData, ClientSite } from '../../../types';
-import { SectionCard, SectionHeader, FieldGroup, EmptyState, ActionRow } from '../../ui';
+import { SectionCard, SectionHeader, FieldGroup } from '../../ui';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 

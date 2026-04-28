@@ -12,3 +12,13 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .vercel
+
+node_modules/
+dist/
+.DS_Store
+.env
+.env.local
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
