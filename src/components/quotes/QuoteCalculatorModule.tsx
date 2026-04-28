@@ -758,10 +758,11 @@ export function QuoteCalculatorModule({
             })}
 
             <SectionCard header={
-              <SectionHeader
-                title="Line items"
-                description="Edit auto-generated lines, remove any you do not want to include, and add custom items before saving."
-              >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div>
+                  <h4>Line items</h4>
+                  <p className="muted-copy">Edit auto-generated lines, remove any you do not want to include, and add custom items before saving.</p>
+                </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button
                     type="button"
@@ -778,7 +779,7 @@ export function QuoteCalculatorModule({
                     Add manual line
                   </button>
                 </div>
-              </SectionHeader>
+              </div>
             }>
 
               {!collapsedSections['line-items'] ? (
@@ -1013,7 +1014,7 @@ export function QuoteCalculatorModule({
                   </div>
                 )}
               </div>
-              <ActionRow align="right" stackOnTablet>
+              <ActionRow align="end" stackOnTablet>
                 <button type="button" className="button button-ghost" onClick={closeComposer}>
                   Cancel
                 </button>
