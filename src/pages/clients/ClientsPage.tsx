@@ -1,10 +1,10 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
 import { createEmptyClientData } from '../../features/clients/clientData';
 import { createClientIntakeShare } from '../../services/clientIntakeShares';
 import { deleteClient, listClients } from '../../services/clients';
 import type { ClientRecord } from '../../types';
+import { PageIntro } from '../../components/layout/PageIntro';
 
 type SortMode = 'attention' | 'updated' | 'review' | 'value' | 'company';
 

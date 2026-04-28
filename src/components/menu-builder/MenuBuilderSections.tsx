@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { StatCard } from '../ui/StatCard';
 import {
   CurrencyInput,
   NumericInput,
@@ -1078,12 +1077,30 @@ export function MenuDishEditorModal({
                   </div>
                 </div>
                 <div className="dish-editor-stat-grid">
-                  <StatCard label="Ingredient cost" value={fmtCurrency(dishUnitCost(dishDraft))} />
-                  <StatCard label="Actual GP" value={fmtPercent(dishTheoGp(dishDraft))} />
-                  <StatCard label="Profit / sale" value={fmtCurrency(dishProfit(dishDraft))} />
-                  <StatCard label="Weekly profit" value={fmtCurrency(dishWeeklyProfit(dishDraft))} />
-                  <StatCard label="Target sell" value={fmtCurrency(dishRecommendedPrice(dishDraft))} />
-                  <StatCard label="Opportunity" value={fmtCurrency(dishWeeklyOpportunity(dishDraft))} />
+                  <div className="mini-box">
+                    <span>Ingredient cost</span>
+                    <strong>{fmtCurrency(dishUnitCost(dishDraft))}</strong>
+                  </div>
+                  <div className="mini-box">
+                    <span>Actual GP</span>
+                    <strong>{fmtPercent(dishTheoGp(dishDraft))}</strong>
+                  </div>
+                  <div className="mini-box">
+                    <span>Profit / sale</span>
+                    <strong>{fmtCurrency(dishProfit(dishDraft))}</strong>
+                  </div>
+                  <div className="mini-box">
+                    <span>Weekly profit</span>
+                    <strong>{fmtCurrency(dishWeeklyProfit(dishDraft))}</strong>
+                  </div>
+                  <div className="mini-box">
+                    <span>Target sell</span>
+                    <strong>{fmtCurrency(dishRecommendedPrice(dishDraft))}</strong>
+                  </div>
+                  <div className="mini-box">
+                    <span>Opportunity</span>
+                    <strong>{fmtCurrency(dishWeeklyOpportunity(dishDraft))}</strong>
+                  </div>
                 </div>
               </section>
 

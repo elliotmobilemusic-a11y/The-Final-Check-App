@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { StatCard } from '../../components/ui/StatCard';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   KitchenAuditControlsPanel,
@@ -27,6 +25,8 @@ import { downloadText, fmtCurrency, fmtPercent, safe } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
+import { PageIntro } from '../../components/layout/PageIntro';
+import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import {
   ArrayKeys,

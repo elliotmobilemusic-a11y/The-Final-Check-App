@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
+import { useVisitMode } from '../../lib/useVisitMode';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
@@ -18,7 +19,6 @@ import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createFoodSafetyShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
-import { useVisitMode } from '../../lib/useVisitMode';
 import type {
   AuditActionItem,
   AuditAreaSummary,

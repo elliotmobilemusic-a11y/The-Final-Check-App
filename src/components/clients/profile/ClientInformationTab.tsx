@@ -1,5 +1,6 @@
 import type { BusinessLookupResult } from '../../../features/clients/businessLookup';
 import type { ClientContact, ClientProfile, ClientProfileData, ClientSite } from '../../../types';
+import { SectionCard, SectionHeader, FieldGroup } from '../../ui';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 
@@ -64,44 +65,38 @@ export function ClientInformationTab({
 
   return (
     <div className="client-tab-layout">
-      <section className="client-tab-section">
-        <div className="client-tab-section-heading">
-          <div>
-            <h2>Business overview</h2>
-            <p>The master record for who this client is, how they operate, and how billing is set up.</p>
-          </div>
-        </div>
+      <SectionCard>
+        <SectionHeader
+          title="Business overview"
+          description="The master record for who this client is, how they operate, and how billing is set up."
+        />
 
         <div className="client-form-grid client-form-grid-wide">
-          <label className="field">
-            <span>Business name</span>
+          <FieldGroup label="Business name">
             <input
               className="input"
               disabled={!editing}
               value={client.companyName}
               onChange={(event) => updateField('companyName', event.target.value)}
             />
-          </label>
-          <label className="field">
-            <span>Trading name</span>
+          </FieldGroup>
+          <FieldGroup label="Trading name">
             <input
               className="input"
               disabled={!editing}
               value={client.data.tradingName}
               onChange={(event) => updateData('tradingName', event.target.value)}
             />
-          </label>
-          <label className="field">
-            <span>Business type</span>
+          </FieldGroup>
+          <FieldGroup label="Business type">
             <input
               className="input"
               disabled={!editing}
               value={client.data.businessType}
               onChange={(event) => updateData('businessType', event.target.value)}
             />
-          </label>
-          <label className="field">
-            <span>Client status</span>
+          </FieldGroup>
+          <FieldGroup label="Client status">
             <select
               className="input"
               disabled={!editing}
@@ -114,36 +109,32 @@ export function ClientInformationTab({
               <option>Paused</option>
               <option>Completed</option>
             </select>
-          </label>
-          <label className="field">
-            <span>Account owner</span>
+          </FieldGroup>
+          <FieldGroup label="Account owner">
             <input
               className="input"
               disabled={!editing}
               value={client.data.accountOwner}
               onChange={(event) => updateData('accountOwner', event.target.value)}
             />
-          </label>
-          <label className="field">
-            <span>Website</span>
+          </FieldGroup>
+          <FieldGroup label="Website">
             <input
               className="input"
               disabled={!editing}
               value={client.website}
               onChange={(event) => updateField('website', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Main address</span>
+          </FieldGroup>
+          <FieldGroup label="Main address" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.registeredAddress}
               onChange={(event) => updateData('registeredAddress', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Billing details</span>
+          </FieldGroup>
+          <FieldGroup label="Billing details" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
@@ -161,9 +152,8 @@ export function ClientInformationTab({
                 updateData('billingAddress', addressLines.join('\n'));
               }}
             />
-          </label>
-          <label className="field">
-            <span>Account structure</span>
+          </FieldGroup>
+          <FieldGroup label="Account structure">
             <select
               className="input"
               disabled={!editing}
@@ -176,9 +166,8 @@ export function ClientInformationTab({
               <option>Multi-site group</option>
               <option>Group / head office</option>
             </select>
-          </label>
-          <label className="field">
-            <span>Number of sites</span>
+          </FieldGroup>
+          <FieldGroup label="Number of sites">
             <input
               className="input"
               disabled={!editing}
@@ -188,7 +177,7 @@ export function ClientInformationTab({
               value={client.data.siteCountEstimate}
               onChange={(event) => updateData('siteCountEstimate', Number(event.target.value || 0))}
             />
-          </label>
+          </FieldGroup>
         </div>
 
         <details className="client-inline-disclosure">
@@ -257,62 +246,56 @@ export function ClientInformationTab({
             ) : null}
           </div>
         </details>
-      </section>
+      </SectionCard>
 
-      <section className="client-tab-section">
-        <div className="client-tab-section-heading">
-          <div>
-            <h2>Contacts</h2>
-            <p>The people Jason needs to reach quickly: primary, finance, operations, then everyone else.</p>
-          </div>
-          {editing ? (
+      <SectionCard>
+        <SectionHeader
+          title="Contacts"
+          description="The people Jason needs to reach quickly: primary, finance, operations, then everyone else."
+          action={editing ? (
             <button className="button button-secondary" onClick={addContact} type="button">
               Add contact
             </button>
           ) : null}
-        </div>
+        />
 
         <div className="client-relationship-grid">
           <article className="client-info-block">
             <h3>Primary contact</h3>
             {primaryContact ? (
               <div className="client-form-grid">
-                <label className="field">
-                  <span>Name</span>
+                <FieldGroup label="Name">
                   <input
                     className="input"
                     disabled={!editing}
                     value={primaryContact.name}
                     onChange={(event) => updateContact(primaryContact.id, 'name', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Role</span>
+                </FieldGroup>
+                <FieldGroup label="Role">
                   <input
                     className="input"
                     disabled={!editing}
                     value={primaryContact.role}
                     onChange={(event) => updateContact(primaryContact.id, 'role', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Phone</span>
+                </FieldGroup>
+                <FieldGroup label="Phone">
                   <input
                     className="input"
                     disabled={!editing}
                     value={primaryContact.phone}
                     onChange={(event) => updateContact(primaryContact.id, 'phone', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Email</span>
+                </FieldGroup>
+                <FieldGroup label="Email">
                   <input
                     className="input"
                     disabled={!editing}
                     value={primaryContact.email}
                     onChange={(event) => updateContact(primaryContact.id, 'email', event.target.value)}
                   />
-                </label>
+                </FieldGroup>
               </div>
             ) : (
               <div className="dashboard-empty">No primary contact recorded yet.</div>
@@ -356,44 +339,39 @@ export function ClientInformationTab({
           {additionalContacts.map((contact) => (
             <div className="client-inline-record" key={contact.id}>
               <div className="client-form-grid">
-                <label className="field">
-                  <span>Name</span>
+                <FieldGroup label="Name">
                   <input
                     className="input"
                     disabled={!editing}
                     value={contact.name}
                     onChange={(event) => updateContact(contact.id, 'name', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Role</span>
+                </FieldGroup>
+                <FieldGroup label="Role">
                   <input
                     className="input"
                     disabled={!editing}
                     value={contact.role}
                     onChange={(event) => updateContact(contact.id, 'role', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Phone</span>
+                </FieldGroup>
+                <FieldGroup label="Phone">
                   <input
                     className="input"
                     disabled={!editing}
                     value={contact.phone}
                     onChange={(event) => updateContact(contact.id, 'phone', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Email</span>
+                </FieldGroup>
+                <FieldGroup label="Email">
                   <input
                     className="input"
                     disabled={!editing}
                     value={contact.email}
                     onChange={(event) => updateContact(contact.id, 'email', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Type</span>
+                </FieldGroup>
+                <FieldGroup label="Type">
                   <select
                     className="input"
                     disabled={!editing}
@@ -406,7 +384,7 @@ export function ClientInformationTab({
                     <option>Finance</option>
                     <option>Operations</option>
                   </select>
-                </label>
+                </FieldGroup>
                 <div className="client-inline-actions">
                   <button
                     className="button button-ghost danger-text"
@@ -424,20 +402,18 @@ export function ClientInformationTab({
             <div className="dashboard-empty">No additional contacts recorded yet.</div>
           ) : null}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="client-tab-section">
-        <div className="client-tab-section-heading">
-          <div>
-            <h2>Sites / locations</h2>
-            <p>Sites stay together here so the work tab can stay focused on delivery and value.</p>
-          </div>
-          {editing ? (
+      <SectionCard>
+        <SectionHeader
+          title="Sites / locations"
+          description="Sites stay together here so the work tab can stay focused on delivery and value."
+          action={editing ? (
             <button className="button button-secondary" onClick={addSite} type="button">
               Add site
             </button>
           ) : null}
-        </div>
+        />
 
         <div className="stack gap-12">
           {client.data.sites.map((site) => (
@@ -463,60 +439,54 @@ export function ClientInformationTab({
                 </div>
               </div>
               <div className="client-form-grid">
-                <label className="field">
-                  <span>Site name</span>
+                <FieldGroup label="Site name">
                   <input
                     className="input"
                     disabled={!editing}
                     value={site.name}
                     onChange={(event) => updateSite(site.id, 'name', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Site manager</span>
+                </FieldGroup>
+                <FieldGroup label="Site manager">
                   <input
                     className="input"
                     disabled={!editing}
                     value={site.managerName ?? ''}
                     onChange={(event) => updateSite(site.id, 'managerName', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Site status</span>
+                </FieldGroup>
+                <FieldGroup label="Site status">
                   <input
                     className="input"
                     disabled={!editing}
                     value={site.status}
                     onChange={(event) => updateSite(site.id, 'status', event.target.value)}
                   />
-                </label>
-                <label className="field">
-                  <span>Website</span>
+                </FieldGroup>
+                <FieldGroup label="Website">
                   <input
                     className="input"
                     disabled={!editing}
                     value={site.website}
                     onChange={(event) => updateSite(site.id, 'website', event.target.value)}
                   />
-                </label>
-                <label className="field client-field-span-2">
-                  <span>Site address</span>
+                </FieldGroup>
+                <FieldGroup label="Site address" className="client-field-span-2">
                   <textarea
                     className="input textarea"
                     disabled={!editing}
                     value={site.address}
                     onChange={(event) => updateSite(site.id, 'address', event.target.value)}
                   />
-                </label>
-                <label className="field client-field-span-2">
-                  <span>Notes</span>
+                </FieldGroup>
+                <FieldGroup label="Notes" className="client-field-span-2">
                   <textarea
                     className="input textarea"
                     disabled={!editing}
                     value={site.notes}
                     onChange={(event) => updateSite(site.id, 'notes', event.target.value)}
                   />
-                </label>
+                </FieldGroup>
               </div>
             </article>
           ))}
@@ -524,73 +494,65 @@ export function ClientInformationTab({
             <div className="dashboard-empty">No site records added yet.</div>
           ) : null}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="client-tab-section">
-        <div className="client-tab-section-heading">
-          <div>
-            <h2>Background / account notes</h2>
-            <p>Operational context, pain points, history, and internal relationship notes in one place.</p>
-          </div>
-        </div>
+      <SectionCard>
+        <SectionHeader
+          title="Background / account notes"
+          description="Operational context, pain points, history, and internal relationship notes in one place."
+        />
 
         <div className="client-form-grid client-form-grid-wide">
-          <label className="field client-field-span-2">
-            <span>Client background</span>
+          <FieldGroup label="Client background" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.clientBackground}
               onChange={(event) => updateData('clientBackground', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Context</span>
+          </FieldGroup>
+          <FieldGroup label="Context" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.clientContext}
               onChange={(event) => updateData('clientContext', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Pain points</span>
+          </FieldGroup>
+          <FieldGroup label="Pain points" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.painPoints}
               onChange={(event) => updateData('painPoints', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Prior work history</span>
+          </FieldGroup>
+          <FieldGroup label="Prior work history" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.priorWorkHistory}
               onChange={(event) => updateData('priorWorkHistory', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Important notes</span>
+          </FieldGroup>
+          <FieldGroup label="Important notes" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.importantNotes}
               onChange={(event) => updateData('importantNotes', event.target.value)}
             />
-          </label>
-          <label className="field client-field-span-2">
-            <span>Internal relationship notes</span>
+          </FieldGroup>
+          <FieldGroup label="Internal relationship notes" className="client-field-span-2">
             <textarea
               className="input textarea"
               disabled={!editing}
               value={client.data.internalRelationshipNotes}
               onChange={(event) => updateData('internalRelationshipNotes', event.target.value)}
             />
-          </label>
+          </FieldGroup>
         </div>
-      </section>
+      </SectionCard>
     </div>
   );
 }
