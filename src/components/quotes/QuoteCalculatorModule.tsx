@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fmtCurrency, num, uid } from '../../lib/utils';
+import {
+  SectionCard,
+  SectionHeader,
+  ActionRow,
+  FieldGroup,
+  FormSection,
+  StatusBadge,
+  EmptyState,
+  LoadingState,
+  NumericInput,
+  CurrencyInput,
+  PercentageInput
+} from '../ui';
 import type {
   ClientProfile,
   ClientQuote,
@@ -556,12 +569,10 @@ export function QuoteCalculatorModule({
     if (field.condition && !field.condition(composer.values)) return null;
 
     const value = composer.values[field.key];
-    const fieldClassName = field.width === 'full' ? 'field quote-field-full' : 'field';
 
     if (field.type === 'toggle') {
       return (
-        <label className={`${fieldClassName} quote-toggle-field`} key={String(field.key)}>
-          <span>{field.label}</span>
+        <FieldGroup label={field.label} key={String(field.key)}>
           <button
             type="button"
             className={`quote-toggle-button ${value ? 'active' : ''}`}
@@ -569,7 +580,7 @@ export function QuoteCalculatorModule({
           >
             {value ? 'Included' : 'Not included'}
           </button>
-        </label>
+        </FieldGroup>
       );
     }
 
@@ -577,8 +588,7 @@ export function QuoteCalculatorModule({
       const selectedValues = (value as string[]) ?? [];
 
       return (
-        <label className={`${fieldClassName} quote-field-full`} key={String(field.key)}>
-          <span>{field.label}</span>
+        <FieldGroup label={field.label} key={String(field.key)}>
           <div className="quote-checkbox-grid">
             {(field.options ?? []).map((option) => (
               <label className="quote-checkbox" key={option.value}>
@@ -593,14 +603,13 @@ export function QuoteCalculatorModule({
               </label>
             ))}
           </div>
-        </label>
+        </FieldGroup>
       );
     }
 
     if (field.type === 'textarea') {
       return (
-        <label className={`${fieldClassName} quote-field-full`} key={String(field.key)}>
-          <span>{field.label}</span>
+        <FieldGroup label={field.label} key={String(field.key)}>
           <textarea
             className="input textarea"
             value={String(value ?? '')}
@@ -609,14 +618,13 @@ export function QuoteCalculatorModule({
               updateValue(field.key, event.target.value as QuoteInputAnswers[typeof field.key])
             }
           />
-        </label>
+        </FieldGroup>
       );
     }
 
     if (field.type === 'select') {
       return (
-        <label className={fieldClassName} key={String(field.key)}>
-          <span>{field.label}</span>
+        <FieldGroup label={field.label} key={String(field.key)}>
           <select
             className="input"
             value={String(value ?? '')}
@@ -631,14 +639,13 @@ export function QuoteCalculatorModule({
               </option>
             ))}
           </select>
-        </label>
+        </FieldGroup>
       );
     }
     
     if (field.type === 'text') {
       return (
-        <label className={fieldClassName} key={String(field.key)}>
-          <span>{field.label}</span>
+        <FieldGroup label={field.label} key={String(field.key)}>
           <input
             className="input"
             type="text"
@@ -648,35 +655,39 @@ export function QuoteCalculatorModule({
               updateValue(field.key, event.target.value as QuoteInputAnswers[typeof field.key])
             }
           />
-        </label>
+        </FieldGroup>
       );
     }
     
-    if (field.type === 'number' || field.type === 'currency') {
+    if (field.type === 'currency') {
       return (
-        <label className={fieldClassName} key={String(field.key)}>
-          <span>{field.label}</span>
-          <input
-            className="input"
-            type="text"
-            inputMode={field.type === 'currency' || field.step === 0.01 ? 'decimal' : 'numeric'}
-            pattern={field.type === 'currency' || field.step === 0.01 ? '[0-9]*[.,]?[0-9]*' : '[0-9]*'}
-            value={String(num(value))}
-            onChange={(event) =>
-              updateValue(
-                field.key,
-                parseNumericValue(event.target.value) as QuoteInputAnswers[typeof field.key]
-              )
+        <FieldGroup label={field.label} key={String(field.key)}>
+          <CurrencyInput
+            value={num(value)}
+            onChange={(newValue) =>
+              updateValue(field.key, newValue as QuoteInputAnswers[typeof field.key])
             }
           />
-        </label>
+        </FieldGroup>
+      );
+    }
+
+    if (field.type === 'number') {
+      return (
+        <FieldGroup label={field.label} key={String(field.key)}>
+          <NumericInput
+            value={num(value)}
+            onChange={(newValue) =>
+              updateValue(field.key, newValue as QuoteInputAnswers[typeof field.key])
+            }
+          />
+        </FieldGroup>
       );
     }
 
     // Fallback for safety - always render a plain text input
     return (
-      <label className={fieldClassName} key={String(field.key)}>
-        <span>{field.label}</span>
+      <FieldGroup label={field.label} key={String(field.key)}>
         <input
           className="input"
           type="text"
@@ -686,7 +697,7 @@ export function QuoteCalculatorModule({
             updateValue(field.key, event.target.value as QuoteInputAnswers[typeof field.key])
           }
         />
-      </label>
+      </FieldGroup>
     );
   }
 
@@ -746,23 +757,12 @@ export function QuoteCalculatorModule({
               );
             })}
 
-            <section className="sub-panel quote-sub-panel">
-              <div className="sub-panel-header">
-                <div>
-                  <h4>Line items</h4>
-                  <p className="muted-copy">
-                    Edit auto-generated lines, remove any you do not want to include, and add
-                    custom items before saving.
-                  </p>
-                </div>
-                <div className="invoice-card-actions">
-                  <button
-                    type="button"
-                    className="button button-secondary"
-                    onClick={addManualLineItem}
-                  >
-                    Add manual line
-                  </button>
+            <SectionCard header={
+              <SectionHeader
+                title="Line items"
+                description="Edit auto-generated lines, remove any you do not want to include, and add custom items before saving."
+              >
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button
                     type="button"
                     className="button button-ghost"
@@ -770,8 +770,16 @@ export function QuoteCalculatorModule({
                   >
                     {collapsedSections['line-items'] ? 'Expand' : 'Collapse'}
                   </button>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    onClick={addManualLineItem}
+                  >
+                    Add manual line
+                  </button>
                 </div>
-              </div>
+              </SectionHeader>
+            }>
 
               {!collapsedSections['line-items'] ? (
                 <div className="stack gap-12">
@@ -911,20 +919,11 @@ export function QuoteCalculatorModule({
                   )}
                 </div>
               ) : null}
-            </section>
+            </SectionCard>
           </div>
 
           <aside className="quote-builder-side">
-            <div className="panel quote-summary-panel">
-              <div className="panel-header">
-                <div>
-                  <h3>Live pricing summary</h3>
-                  <p className="muted-copy">
-                    Base price, multipliers, add-ons, discounts, and final output are all visible
-                    here before save.
-                  </p>
-                </div>
-              </div>
+            <SectionCard header={<SectionHeader title="Live pricing summary" description="Base price, multipliers, add-ons, discounts, and final output are all visible here before save." />}>
               <div className="panel-body stack gap-12">
                 <div className="mini-grid">
                   <div className="mini-box">
@@ -1014,38 +1013,36 @@ export function QuoteCalculatorModule({
                   </div>
                 )}
               </div>
-              <div className="panel-footer">
-                <button type="button" className="button button-secondary" onClick={closeComposer}>
+              <ActionRow align="right" stackOnTablet>
+                <button type="button" className="button button-ghost" onClick={closeComposer}>
                   Cancel
                 </button>
-                <div className="button-row">
-                  <button
-                    type="button"
-                    className="button button-ghost"
-                    disabled={saving}
-                    onClick={() => persistQuote('draft', false)}
-                  >
-                    Save quote only
-                  </button>
-                  <button
-                    type="button"
-                    className="button button-secondary"
-                    disabled={saving}
-                    onClick={() => persistQuote('saved', false)}
-                  >
-                    Save and attach
-                  </button>
-                  <button
-                    type="button"
-                    className="button button-primary"
-                    disabled={saving}
-                    onClick={() => persistQuote('saved', true)}
-                  >
-                    {saving ? 'Saving...' : 'Save and create invoice draft'}
-                  </button>
-                </div>
-              </div>
-            </div>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={saving}
+                  onClick={() => persistQuote('draft', false)}
+                >
+                  Save quote only
+                </button>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={saving}
+                  onClick={() => persistQuote('saved', false)}
+                >
+                  Save and attach
+                </button>
+                <button
+                  type="button"
+                  className="button button-primary"
+                  disabled={saving}
+                  onClick={() => persistQuote('saved', true)}
+                >
+                  {saving ? 'Saving...' : 'Save and create invoice draft'}
+                </button>
+              </ActionRow>
+            </SectionCard>
           </aside>
         </div>
       ) : null}
