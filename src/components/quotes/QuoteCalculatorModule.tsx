@@ -1014,7 +1014,7 @@ export function QuoteCalculatorModule({
                   </div>
                 )}
               </div>
-              <ActionRow align="end" stackOnTablet>
+              <ActionRow align="end">
                 <button type="button" className="button button-ghost" onClick={closeComposer}>
                   Cancel
                 </button>
