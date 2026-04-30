@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
+import { PageContainer, PageHeader } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
@@ -28,7 +28,7 @@ import type {
   FoodSafetyCheckItem,
   FoodSafetyTemperatureItem
 } from '../../types';
-import { safe, todayIso, uid } from '../../lib/utils';
+import { newUUID, safe, todayIso, uid } from '../../lib/utils';
 import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 
@@ -660,7 +660,7 @@ export function FoodSafetyAuditPage() {
         },
         async () => {
            const record = await saveFoodSafetyAudit({
-             id: form.id || uid('food-safety'),
+             id: form.id || newUUID(),
              client_id: form.clientId ?? null,
              client_site_id: form.clientSiteId ?? null,
              title: form.title || 'Food Safety Audit',

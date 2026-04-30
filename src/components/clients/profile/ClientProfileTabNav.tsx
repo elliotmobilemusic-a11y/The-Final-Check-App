@@ -22,7 +22,9 @@ export function ClientProfileTabNav({
         <NavLink
           key={tab.id}
           to={`/clients/${clientId}/${tab.id}`}
-          className={({ isActive }) => `client-profile-tab ${isActive ? 'active' : ''}`}
+          className={({ isActive }) =>
+            `client-profile-tab ${isActive || activeTab === tab.id ? 'active' : ''}`
+          }
         >
           {tab.label}
         </NavLink>

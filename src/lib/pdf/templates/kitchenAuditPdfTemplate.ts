@@ -14,14 +14,24 @@ import {
   labelValueGrid,
   paragraph,
   pdfTable,
-  sectionTitle,
-  twoColumnSection
+  sectionTitle
 } from '../pdfStyles';
 import type { PdfTemplateResult } from '../pdfTypes';
 
 type KitchenAuditPdfTemplateOptions = {
   audit: AuditFormState;
   preparedBy?: string;
+};
+
+const categoryLabels: Record<keyof AuditFormState['categoryScores'], string> = {
+  leadership: 'Leadership',
+  foodQuality: 'Food quality',
+  systems: 'Systems',
+  cleanliness: 'Cleanliness',
+  flow: 'Flow',
+  training: 'Training',
+  stock: 'Stock',
+  safety: 'Safety'
 };
 
 export function buildKitchenAuditPdfTemplate({
@@ -31,13 +41,16 @@ export function buildKitchenAuditPdfTemplate({
   const clientName = pdfText(audit.businessName, 'Client');
   const title = 'Kitchen Performance Audit';
 
-  const overallScore = Object.values(audit.categoryScores ?? {}).reduce((sum, cat: any) => sum + num(cat.score), 0) / Math.max(1, Object.keys(audit.categoryScores ?? {}).length);
+  const categoryEntries = Object.entries(audit.categoryScores ?? {}) as Array<
+    [keyof AuditFormState['categoryScores'], number]
+  >;
+  const overallScore = categoryEntries.reduce((sum, [, score]) => sum + num(score), 0) / Math.max(1, categoryEntries.length);
 
-  const categoryScoreRows = Object.entries(audit.categoryScores ?? {}).map(([key, cat]: [string, any]): TableCell[] => [
-    pdfText(cat.label || key, key),
-    { text: `${fmtPercent(cat.score || 0)}`, alignment: 'right' },
-    (cat.score || 0) >= 0.7 ? { text: 'Good', alignment: 'right', color: '#2e7d32' } :
-    (cat.score || 0) >= 0.5 ? { text: 'Moderate', alignment: 'right', color: '#ed6c02' } :
+  const categoryScoreRows = categoryEntries.map(([key, score]): TableCell[] => [
+    pdfText(categoryLabels[key], key),
+    { text: `${fmtPercent(score || 0)}`, alignment: 'right' },
+    (score || 0) >= 0.7 ? { text: 'Good', alignment: 'right', color: '#2e7d32' } :
+    (score || 0) >= 0.5 ? { text: 'Moderate', alignment: 'right', color: '#ed6c02' } :
     { text: 'Attention', alignment: 'right', color: '#d32f2f' }
   ]);
 
@@ -85,7 +98,7 @@ export function buildKitchenAuditPdfTemplate({
 
     sectionTitle('Priority Action Items'),
     audit.actionItems?.length
-      ? audit.actionItems.map((item: any, index) => paragraph(`${index + 1}. ${item.title || item.description || 'Action item'}${item.dueDate ? ` (Target: ${item.dueDate})` : ''}`))
+      ? audit.actionItems.map((item, index) => paragraph(`${index + 1}. ${item.title || 'Action item'}${item.dueDate ? ` (Target: ${item.dueDate})` : ''}`))
       : emptyParagraph('No priority action items recorded.'),
   ];
 

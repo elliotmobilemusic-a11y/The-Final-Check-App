@@ -5,6 +5,16 @@ export function uid(prefix = 'id') {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export function newUUID(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 export function safe(value: unknown) {
   return String(value ?? '').trim();
 }

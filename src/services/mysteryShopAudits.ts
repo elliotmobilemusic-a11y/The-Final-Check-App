@@ -2,10 +2,18 @@ import { supabase } from '../lib/supabase';
 import type { MysteryShopAuditState } from '../types';
 import {
   listLocalToolRecords,
-  deleteLocalToolRecord
+  deleteLocalToolRecord,
+  getMigratedIds,
+  addMigratedId
 } from './localToolStore';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(value: string | undefined): value is string {
+  return !!value && UUID_RE.test(value);
+}
+
 const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+const MIGRATION_MARKER_KEY = `${STORAGE_KEY}-migrated`;
 
 /**
  * Mystery Shop Audit Storage Service
@@ -34,10 +42,17 @@ export async function listMysteryShopAudits(): Promise<MysteryShopAuditRecord[]>
   const localRecords = listLocalToolRecords<MysteryShopAuditState>(STORAGE_KEY);
 
   if (localRecords.length > 0 && supabase) {
+    const migratedIds = getMigratedIds(MIGRATION_MARKER_KEY);
     for (const record of localRecords) {
+      if (migratedIds.has(record.id)) {
+        // Insert already succeeded in a previous run but the local delete was missed.
+        deleteLocalToolRecord(STORAGE_KEY, record.id);
+        continue;
+      }
       try {
+        // Local IDs use uid() prefix format (e.g. "mystery-shop-xxx") which are not valid
+        // UUIDs — omit the id so Supabase generates a proper UUID on insert.
         await saveMysteryShopAudit({
-          id: record.id,
           client_id: record.data.clientId ?? null,
           client_site_id: record.data.clientSiteId ?? null,
           title: record.data.title ?? 'Mystery Shop Audit',
@@ -46,6 +61,8 @@ export async function listMysteryShopAudits(): Promise<MysteryShopAuditRecord[]>
           review_date: record.data.visitDate ?? null,
           data: record.data
         });
+        // Write marker BEFORE deleting so a mid-step crash can't cause a re-import.
+        addMigratedId(MIGRATION_MARKER_KEY, record.id);
         deleteLocalToolRecord(STORAGE_KEY, record.id);
       } catch {
         // Continue with other records if one fails
@@ -91,13 +108,17 @@ export async function getMysteryShopAudit(id: string): Promise<MysteryShopAuditR
 }
 
 export async function saveMysteryShopAudit(
-  record: Omit<MysteryShopAuditRecord, 'user_id' | 'created_at' | 'updated_at'> & Partial<Pick<MysteryShopAuditRecord, 'created_at' | 'updated_at'>>
+  record: Omit<MysteryShopAuditRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> & { id?: string } & Partial<Pick<MysteryShopAuditRecord, 'created_at' | 'updated_at'>>
 ): Promise<MysteryShopAuditRecord> {
   if (!supabase) throw new Error('Not authenticated.');
 
+  // Strip non-UUID ids (e.g. legacy prefixed ids like "mystery-shop-xxx") so Supabase
+  // generates a valid UUID on insert rather than rejecting with a parse error.
+  const payload = isValidUUID(record.id) ? record : { ...record, id: undefined };
+
   const { data, error } = await supabase
     .from('mystery_shop_audits')
-    .upsert(record, { onConflict: 'id' })
+    .upsert(payload, { onConflict: 'id' })
     .select()
     .single();
 

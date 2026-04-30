@@ -21,15 +21,10 @@ export function SettingsSecuritySection({
   newPassword,
   confirmPassword,
   enquiryAlertsEnabled,
-  pushStatus,
-  pushBusy,
   onRememberMeChange,
   onNewPasswordChange,
   onConfirmPasswordChange,
-  onToggleEnquiryAlerts,
-  onEnablePush,
-  onDisablePush,
-  onSendTestPush
+  onToggleEnquiryAlerts
 }: SettingsSecuritySectionProps) {
   return (
     <>

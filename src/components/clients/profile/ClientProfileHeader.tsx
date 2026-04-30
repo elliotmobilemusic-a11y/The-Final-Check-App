@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router-dom';
-
 interface ClientProfileHeaderProps {
   companyName: string;
   contactName: string;
@@ -34,8 +32,7 @@ export function ClientProfileHeader({
   onNewQuote,
   onNewInvoice,
   onNewAudit,
-  onOpenPortal,
-  onDeleteClient
+  onOpenPortal
 }: ClientProfileHeaderProps) {
   return (
     <header className="client-profile-header">

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { LandingPage, ThemeMode } from '../../context/PreferencesContext';
 import type { Session } from '@supabase/supabase-js';
 
@@ -25,27 +24,15 @@ interface SettingsProfileSectionProps {
 
 export function SettingsProfileSection({
   displayName,
-  effectiveDisplayName,
   jobTitle,
   organisation,
   avatarUrl,
-  avatarPreview,
-  avatarPosition,
   session,
-  defaultLandingPage,
-  compactMode,
-  theme,
-  themeOptions,
-  landingPages,
   onDisplayNameChange,
   onJobTitleChange,
   onOrganisationChange,
-  onAvatarUrlChange,
-  onAvatarPreviewChange
+  onAvatarUrlChange
 }: SettingsProfileSectionProps) {
-  const currentAvatarSrc = avatarPreview || avatarUrl.trim();
-  const currentTheme = themeOptions.find((option) => option.value === theme) ?? themeOptions[0];
-
   return (
     <section className="sub-panel">
       <div className="sub-panel-header">

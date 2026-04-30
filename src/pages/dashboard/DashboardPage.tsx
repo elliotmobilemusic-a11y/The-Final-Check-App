@@ -5,11 +5,13 @@ import { usePreferences } from '../../context/PreferencesContext';
 import type { ClientRecord } from '../../types';
 import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
+import { listFoodSafetyAudits } from '../../services/foodSafetyAudits';
+import { listMysteryShopAudits } from '../../services/mysteryShopAudits';
 import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
-import { PageContainer, PageHeader, SectionWrapper } from '../../components/layout';
+import { PageContainer, PageHeader } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 
 type BeforeInstallPromptEvent = Event & {
@@ -20,6 +22,8 @@ type BeforeInstallPromptEvent = Event & {
 type AuditRows = Awaited<ReturnType<typeof listAudits>>;
 type ClientRows = Awaited<ReturnType<typeof listClients>>;
 type MenuRows = Awaited<ReturnType<typeof listMenuProjects>>;
+type FoodSafetyRows = Awaited<ReturnType<typeof listFoodSafetyAudits>>;
+type MysteryShopRows = Awaited<ReturnType<typeof listMysteryShopAudits>>;
 
 type PortfolioSummary = {
   client: ClientRecord;
@@ -108,6 +112,8 @@ export function DashboardPage() {
   const [clients, setClients] = useState<ClientRows>([]);
   const [audits, setAudits] = useState<AuditRows>([]);
   const [menus, setMenus] = useState<MenuRows>([]);
+  const [foodSafetyAudits, setFoodSafetyAudits] = useState<FoodSafetyRows>([]);
+  const [mysteryShopAudits, setMysteryShopAudits] = useState<MysteryShopRows>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Portfolio loaded.');
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
@@ -116,15 +122,19 @@ export function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [clientRows, auditRows, menuRows] = await Promise.all([
+        const [clientRows, auditRows, menuRows, foodSafetyRows, mysteryShopRows] = await Promise.all([
           listClients(),
           listAudits(),
-          listMenuProjects()
+          listMenuProjects(),
+          listFoodSafetyAudits(),
+          listMysteryShopAudits()
         ]);
 
         setClients(sortNewest(clientRows));
         setAudits(sortNewest(auditRows));
         setMenus(sortNewest(menuRows));
+        setFoodSafetyAudits(foodSafetyRows);
+        setMysteryShopAudits(mysteryShopRows);
         setMessage('Data up to date.');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'Could not load dashboard data.');
@@ -256,7 +266,7 @@ export function DashboardPage() {
   const [taskGroups, setTaskGroups] = useState<TaskGroup[]>(
     () => readDraft<TaskGroup[]>(DASHBOARD_TASKS_DRAFT_KEY) ?? defaultTaskGroups
   );
-  const [newTaskText, setNewTaskText] = useState('');
+  const [groupInputText, setGroupInputText] = useState<Record<string, string>>({});
 
   useEffect(() => {
     writeDraft(DASHBOARD_TASKS_DRAFT_KEY, taskGroups);
@@ -294,19 +304,20 @@ export function DashboardPage() {
   }
 
   function addTask(groupId: string) {
-    if (!newTaskText.trim()) return;
+    const text = (groupInputText[groupId] ?? '').trim();
+    if (!text) return;
     setTaskGroups(groups => groups.map(group => {
       if (group.id !== groupId) return group;
       return {
         ...group,
         tasks: [...group.tasks, {
           id: Date.now().toString(),
-          text: newTaskText.trim(),
+          text,
           completed: false
         }]
       };
     }));
-    setNewTaskText('');
+    setGroupInputText(prev => ({ ...prev, [groupId]: '' }));
   }
 
   function deleteTask(groupId: string, taskId: string) {
@@ -335,24 +346,53 @@ export function DashboardPage() {
     }]);
   }
 
-  function updateGroupTitle(groupId: string, title: string) {
-    setTaskGroups(groups => groups.map(group => {
-      if (group.id !== groupId) return group;
-      return { ...group, title };
-    }));
-  }
-
   function deleteGroup(groupId: string) {
     setTaskGroups(groups => groups.filter(group => group.id !== groupId));
   }
 
+  const totalTasks = taskGroups.reduce((sum, group) => sum + group.tasks.length, 0);
+  const completedTasks = taskGroups.reduce(
+    (sum, group) => sum + group.tasks.filter((task) => task.completed).length,
+    0
+  );
+  const openTasks = totalTasks - completedTasks;
+  const recentActivity = [
+    ...audits.map((audit) => ({
+      id: `audit-${audit.id}`,
+      title: audit.title || 'Kitchen Audit',
+      label: 'Kitchen audit',
+      date: audit.updated_at ?? audit.created_at
+    })),
+    ...menus.map((menu) => ({
+      id: `menu-${menu.id}`,
+      title: menu.title || 'Menu project',
+      label: 'Menu project',
+      date: menu.updated_at ?? menu.created_at
+    })),
+    ...foodSafetyAudits.map((audit) => ({
+      id: `fs-${audit.id}`,
+      title: audit.title || 'Food Safety Audit',
+      label: 'Food safety',
+      date: audit.updated_at ?? audit.created_at
+    })),
+    ...mysteryShopAudits.map((audit) => ({
+      id: `ms-${audit.id}`,
+      title: audit.title || 'Mystery Shop Audit',
+      label: 'Mystery shop',
+      date: audit.updated_at ?? audit.created_at
+    }))
+  ]
+    .filter((item) => !!item.date)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 6);
+
   return (
-    <PageContainer>
-      <div className="page-stack">
+    <PageContainer size="wide" className="dashboard-page">
+      <div className="page-stack dashboard-stack">
       {showInstallPrompt && installState !== 'installed' && (
         <div className="install-float-prompt">
           <div className="install-float-copy">
-            <span>📥 Install desktop app</span>
+            <span>Install desktop app</span>
           </div>
           <div className="install-float-actions">
             <button className="button button-small" onClick={handleInstallApp}>Download</button>
@@ -363,6 +403,7 @@ export function DashboardPage() {
 
        <PageHeader
          size="compact"
+         className="dashboard-intro"
          eyebrow="Command Centre"
          title={`Welcome, ${welcomeLabel}`}
          description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
@@ -381,75 +422,104 @@ export function DashboardPage() {
          }
        />
       
-      {message && <div className="page-inline-note mb-4">{message}</div>}
+      {message && <div className="page-inline-note dashboard-sync-note">{message}</div>}
+
+      <div className="stats-grid compact dashboard-stat-row">
+        <StatCard
+          size="compact"
+          label="Total opportunity identified"
+          value={fmtCurrency(totalOpportunityIdentified)}
+          hint="Based on the latest saved audit per client"
+        />
+        <StatCard
+          size="compact"
+          label="Active clients"
+          value={String(activeClients.length)}
+          hint={clients[0]?.company_name ?? 'No clients created yet'}
+        />
+        <StatCard
+          size="compact"
+          label="Sites needing attention"
+          value={String(sitesNeedingAttention)}
+          hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
+        />
+        <StatCard
+          size="compact"
+          label="Follow-ups due"
+          value={String(overdueReviews.length + dueSoonReviews.length)}
+          hint={
+            overdueReviews.length > 0
+              ? `${pluralize(overdueReviews.length, 'review')} overdue`
+              : dueSoonReviews.length > 0
+                ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
+                : 'No upcoming review pressure'
+          }
+        />
+      </div>
 
       <div className="dashboard-grid">
         <div className="dashboard-main-zone">
-          <div className="stats-grid compact">
-            <StatCard
-              size="compact"
-              label="Total opportunity identified"
-              value={fmtCurrency(totalOpportunityIdentified)}
-              hint="Based on the latest saved audit per client"
-            />
-            <StatCard
-              size="compact"
-              label="Active clients"
-              value={String(activeClients.length)}
-              hint={clients[0]?.company_name ?? 'No clients created yet'}
-            />
-            <StatCard
-              size="compact"
-              label="Sites needing attention"
-              value={String(sitesNeedingAttention)}
-              hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
-            />
-            <StatCard
-              size="compact"
-              label="Follow-ups due"
-              value={String(overdueReviews.length + dueSoonReviews.length)}
-              hint={
-                overdueReviews.length > 0
-                  ? `${pluralize(overdueReviews.length, 'review')} overdue`
-                  : dueSoonReviews.length > 0
-                    ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
-                    : 'No upcoming review pressure'
-              }
-            />
-          </div>
-
-          <div className="panel">
+          <div className="panel dashboard-task-panel">
             <div className="panel-header">
               <div>
                 <h3>Workstream Tasks</h3>
-                <p>Action items organised by list group</p>
+                <p>{openTasks > 0 ? `${openTasks} open actions across ${taskGroups.length} lists` : 'No open task pressure recorded'}</p>
               </div>
-              <button className="button button-small button-ghost" onClick={addNewGroup}>+ New list</button>
+              <button className="button button-small button-ghost" onClick={addNewGroup}>New list</button>
             </div>
             <div className="panel-body">
-              {taskGroups.map((group) => (
+              {taskGroups.length === 0 ? (
+                <div className="dashboard-empty-state">
+                  <strong>No task lists yet</strong>
+                  <span>Create a workstream list for follow-ups, client prep, or audit actions.</span>
+                  <button className="button button-small button-primary" onClick={addNewGroup}>Create list</button>
+                </div>
+              ) : taskGroups.map((group) => (
                 <div key={group.id} className="sub-panel">
                   <div className="sub-panel-header">
                     <div>
-                      <button onClick={() => toggleGroupCollapse(group.id)} className="button button-small button-icon">
-                        {group.collapsed ? '▶' : '▼'}
+                      <button
+                        aria-label={group.collapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
+                        onClick={() => toggleGroupCollapse(group.id)}
+                        className="button button-small button-icon"
+                      >
+                        {group.collapsed ? '+' : '-'}
                       </button>
                       <strong>{group.title}</strong>
+                      <span>{pluralize(group.tasks.filter((task) => !task.completed).length, 'open task')}</span>
                     </div>
-                    <button onClick={() => deleteGroup(group.id)} className="button button-small button-ghost">Delete</button>
+                    <button
+                      aria-label={`Remove ${group.title}`}
+                      onClick={() => deleteGroup(group.id)}
+                      className="button button-small button-ghost"
+                    >
+                      Remove
+                    </button>
                   </div>
 
                   {!group.collapsed && (
                     <div className="task-list">
-                      {group.tasks.map((task) => (
+                      {group.tasks.length === 0 ? (
+                        <div className="dashboard-empty-state compact">
+                          <strong>This list is clear</strong>
+                          <span>Add the next action to keep the workstream moving.</span>
+                        </div>
+                      ) : group.tasks.map((task) => (
                         <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
                           <input
+                            aria-label={`Mark ${task.text} ${task.completed ? 'incomplete' : 'complete'}`}
                             type="checkbox"
                             checked={task.completed}
                             onChange={() => toggleTaskComplete(group.id, task.id)}
                           />
                           <span>{task.text}</span>
-                          <button onClick={() => deleteTask(group.id, task.id)} className="button button-small button-icon">✕</button>
+                          <button
+                            aria-label={`Remove ${task.text}`}
+                            onClick={() => deleteTask(group.id, task.id)}
+                            className="button button-small button-ghost"
+                          >
+                            Remove
+                          </button>
                         </div>
                       ))}
 
@@ -457,8 +527,8 @@ export function DashboardPage() {
                         <input
                           type="text"
                           placeholder="Add task..."
-                          value={newTaskText}
-                          onChange={(e) => setNewTaskText(e.target.value)}
+                          value={groupInputText[group.id] ?? ''}
+                          onChange={(e) => setGroupInputText(prev => ({ ...prev, [group.id]: e.target.value }))}
                           onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
                         />
                         <button className="button button-small" onClick={() => addTask(group.id)}>Add</button>
@@ -476,22 +546,22 @@ export function DashboardPage() {
             <div className="panel-header">
               <div>
                 <h3>Quick Actions</h3>
-                <p>Start work immediately</p>
+                <p>Start the next client move</p>
               </div>
             </div>
             <div className="panel-body">
               <div className="action-list">
                 <Link className="button button-primary" to="/clients/new">
-                  ➕ Create new client
+                  Create new client
                 </Link>
                 <Link className="button button-secondary" to="/audit">
-                  📋 Start kitchen audit
+                  Start kitchen audit
                 </Link>
                 <Link className="button button-secondary" to="/menu">
-                  🍽️ Open menu builder
+                  Open menu builder
                 </Link>
                 <Link className="button button-secondary" to="/food-safety">
-                  🧪 Food safety check
+                  Food safety check
                 </Link>
               </div>
             </div>
@@ -507,7 +577,7 @@ export function DashboardPage() {
             <div className="panel-body">
               <div className="attention-item warning">
                 <strong>{overdueReviews.length} Overdue reviews</strong>
-                <span>Need to be followed up immediately</span>
+                <span>{overdueReviews.length > 0 ? 'Follow up immediately' : 'No overdue reviews'}</span>
               </div>
               <div className="attention-item">
                 <strong>{dueSoonReviews.length} Reviews due soon</strong>
@@ -529,16 +599,18 @@ export function DashboardPage() {
             </div>
             <div className="panel-body">
               <div className="activity-list">
-                {audits.slice(0, 3).map((audit) => (
-                  <div key={audit.id} className="activity-item">
-                    <strong>Kitchen Audit completed</strong>
-                    <span>{new Date(audit.created_at).toLocaleDateString()}</span>
+                {recentActivity.length === 0 ? (
+                  <div className="dashboard-empty-state compact">
+                    <strong>No recent activity yet</strong>
+                    <span>Saved audits and menu projects will appear here.</span>
                   </div>
-                ))}
-                {menus.slice(0, 2).map((menu) => (
-                  <div key={menu.id} className="activity-item">
-                    <strong>Menu project updated</strong>
-                    <span>{new Date(menu.updated_at).toLocaleDateString()}</span>
+                ) : recentActivity.map((item) => (
+                  <div key={item.id} className="activity-item">
+                    <div className="activity-item-copy">
+                      <strong>{item.title}</strong>
+                      <span className="activity-item-label">{item.label}</span>
+                    </div>
+                    <span>{new Date(item.date).toLocaleDateString()}</span>
                   </div>
                 ))}
               </div>

@@ -16,7 +16,7 @@ import {
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
-import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
+import { PageContainer, PageHeader } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
@@ -29,7 +29,7 @@ import type {
   MysteryShopObservation,
   MysteryShopScorecard
 } from '../../types';
-import { safe, todayIso, uid } from '../../lib/utils';
+import { newUUID, safe, todayIso, uid } from '../../lib/utils';
 import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 
@@ -605,7 +605,7 @@ export function MysteryShopAuditPage() {
       },
       async () => {
          const record = await saveMysteryShopAudit({
-           id: form.id || uid('mystery-shop'),
+           id: form.id || newUUID(),
            client_id: form.clientId ?? null,
            client_site_id: form.clientSiteId ?? null,
            title: form.title || 'Mystery Shop Audit',

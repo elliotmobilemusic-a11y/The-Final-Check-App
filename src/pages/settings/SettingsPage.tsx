@@ -109,11 +109,6 @@ function getInitials(name: string) {
   return pieces.map((piece) => piece[0]?.toUpperCase() ?? '').join('');
 }
 
-function prettyThemeName(value: ThemeMode) {
-  const selectedTheme = themeOptions.find((option) => option.value === value);
-  return selectedTheme?.label ?? value;
-}
-
 export function SettingsPage() {
   const { section } = useParams();
   const { session } = useAuth();

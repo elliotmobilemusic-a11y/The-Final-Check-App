@@ -72,3 +72,22 @@ export function deleteLocalToolRecord(storageKey: string, id: string) {
   const records = readRecords(storageKey).filter((record) => record.id !== id);
   writeRecords(storageKey, records);
 }
+
+export function getMigratedIds(markerKey: string): Set<string> {
+  if (!hasWindow()) return new Set();
+  try {
+    const raw = window.localStorage.getItem(markerKey);
+    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function addMigratedId(markerKey: string, id: string) {
+  if (!hasWindow()) return;
+  try {
+    const ids = getMigratedIds(markerKey);
+    ids.add(id);
+    window.localStorage.setItem(markerKey, JSON.stringify([...ids]));
+  } catch {}
+}

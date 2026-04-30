@@ -88,8 +88,8 @@ import type {
   MysteryShopAuditState,
   SupabaseRecord
 } from '../../types';
-import { fmtCurrency, todayIso, uid } from '../../lib/utils';
-import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
+import { fmtCurrency, newUUID, todayIso, uid } from '../../lib/utils';
+import { PageContainer } from '../../components/layout';
 import {
   buildInvoicePdfTemplate,
   buildQuotePdfTemplate,
@@ -1468,7 +1468,7 @@ export function ClientProfilePage() {
         if (!source) return;
 
         saveFoodSafetyAudit({
-          id: uid('food-safety'),
+          id: newUUID(),
           client_id: source.data.clientId ?? null,
           client_site_id: source.data.clientSiteId ?? null,
           title: `${source.title} copy`,
@@ -1486,7 +1486,7 @@ export function ClientProfilePage() {
         if (!source) return;
 
         saveMysteryShopAudit({
-          id: uid('mystery-shop'),
+          id: newUUID(),
           client_id: source.data.clientId ?? null,
           client_site_id: source.data.clientSiteId ?? null,
           title: `${source.title} copy`,
