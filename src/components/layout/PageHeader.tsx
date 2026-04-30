@@ -5,12 +5,13 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  size?: 'default' | 'compact';
   className?: string;
 }
 
-export function PageHeader({ eyebrow, title, description, actions, className = '' }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, description, actions, size = 'default', className = '' }: PageHeaderProps) {
   return (
-    <header className={`page-header py-6 md:py-8 ${className}`}>
+    <header className={`page-header ${size === 'compact' ? 'py-4 md:py-5' : 'py-6 md:py-8'} ${className}`}>
       <div className="page-header-inner flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8">
         <div className="page-header-content">
           {eyebrow && <div className="page-header-eyebrow text-sm font-semibold text-muted mb-1 uppercase tracking-wider">{eyebrow}</div>}

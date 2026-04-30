@@ -4727,6 +4727,24 @@ form.login-success {
 
 .stat-card {
   display: grid;
+  min-height: 96px;
+  padding: 16px 20px;
+}
+
+.stat-card-compact {
+  min-height: 64px;
+  padding: 12px 16px;
+}
+
+.stat-card-compact .stat-value {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.stat-card-compact .stat-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
   justify-items: center;
   align-content: center;
   gap: 10px;

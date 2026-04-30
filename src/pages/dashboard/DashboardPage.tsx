@@ -361,161 +361,191 @@ export function DashboardPage() {
         </div>
       )}
 
-      <PageHeader
-        eyebrow="Command Centre"
-        title={`Welcome, ${welcomeLabel}`}
-        description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
-        actions={
-          <>
-            <Link className="button button-primary" to="/clients">
-              Open clients
-            </Link>
-            <Link className="button button-secondary" to="/audit">
-              Start Kitchen Profit Audit
-            </Link>
-            <Link className="button button-secondary" to="/menu">
-              Open Menu Profit Engine
-            </Link>
-          </>
-        }
-      />
+       <PageHeader
+         size="compact"
+         eyebrow="Command Centre"
+         title={`Welcome, ${welcomeLabel}`}
+         description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
+         actions={
+           <>
+             <Link className="button button-primary" to="/clients">
+               Open clients
+             </Link>
+             <Link className="button button-secondary" to="/audit">
+               Start Kitchen Profit Audit
+             </Link>
+             <Link className="button button-secondary" to="/menu">
+               Open Menu Profit Engine
+             </Link>
+           </>
+         }
+       />
       
       {message && <div className="page-inline-note mb-4">{message}</div>}
 
-      <SectionWrapper>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            label="Total opportunity identified"
-            value={fmtCurrency(totalOpportunityIdentified)}
-            hint="Based on the latest saved audit per client"
-          />
-          <StatCard
-            label="Active clients"
-            value={String(activeClients.length)}
-            hint={clients[0]?.company_name ?? 'No clients created yet'}
-          />
-          <StatCard
-            label="Sites needing attention"
-            value={String(sitesNeedingAttention)}
-            hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
-          />
-          <StatCard
-            label="Follow-ups due"
-            value={String(overdueReviews.length + dueSoonReviews.length)}
-            hint={
-              overdueReviews.length > 0
-                ? `${pluralize(overdueReviews.length, 'review')} overdue`
-                : dueSoonReviews.length > 0
-                  ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
-                  : 'No upcoming review pressure'
-            }
-          />
-        </div>
-      </SectionWrapper>
-
-      <section className="card-grid two-columns">
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Tasks</h3>
-              <p>Organised check lists</p>
-            </div>
-            <button className="button button-small button-ghost" onClick={addNewGroup}>+ New list</button>
+      <div className="dashboard-grid">
+        <div className="dashboard-main-zone">
+          <div className="stats-grid compact">
+            <StatCard
+              size="compact"
+              label="Total opportunity identified"
+              value={fmtCurrency(totalOpportunityIdentified)}
+              hint="Based on the latest saved audit per client"
+            />
+            <StatCard
+              size="compact"
+              label="Active clients"
+              value={String(activeClients.length)}
+              hint={clients[0]?.company_name ?? 'No clients created yet'}
+            />
+            <StatCard
+              size="compact"
+              label="Sites needing attention"
+              value={String(sitesNeedingAttention)}
+              hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
+            />
+            <StatCard
+              size="compact"
+              label="Follow-ups due"
+              value={String(overdueReviews.length + dueSoonReviews.length)}
+              hint={
+                overdueReviews.length > 0
+                  ? `${pluralize(overdueReviews.length, 'review')} overdue`
+                  : dueSoonReviews.length > 0
+                    ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
+                    : 'No upcoming review pressure'
+              }
+            />
           </div>
 
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {taskGroups.map((group) => (
-              <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                    <button onClick={() => toggleGroupCollapse(group.id)} style={{ background: 'none', border: 0, cursor: 'pointer', padding: '4px' }}>
-                      {group.collapsed ? '▶' : '▼'}
-                    </button>
-                    <input
-                      type="text"
-                      value={group.title}
-                      onChange={(e) => updateGroupTitle(group.id, e.target.value)}
-                      style={{ border: 0, background: 'transparent', fontWeight: 600, fontSize: '15px', flex: 1 }}
-                    />
-                    <button onClick={() => deleteGroup(group.id)} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>×</button>
-                  </div>
-                </div>
-
-                {!group.collapsed && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '30px' }}>
-                    {group.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '6px 0',
-                          opacity: task.completed ? 0.5 : 1,
-                          transition: 'all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          transform: task.completed ? 'translateX(4px)' : 'translateX(0)'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={task.completed}
-                          onChange={() => toggleTaskComplete(group.id, task.id)}
-                          style={{ width: '16px', height: '16px', accentColor: 'var(--accent)' }}
-                        />
-                        <span style={{ flex: 1, textDecoration: task.completed ? 'line-through' : 'none', transition: 'all 0.22s ease' }}>
-                          {task.text}
-                        </span>
-                        <button onClick={() => deleteTask(group.id, task.id)} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', opacity: 0, transition: 'opacity 0.15s ease' }} onMouseEnter={(e) => e.currentTarget.style.opacity = '1'} onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}>×</button>
-                      </div>
-                    ))}
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                      <input
-                        type="text"
-                        placeholder="Add task..."
-                        value={newTaskText}
-                        onChange={(e) => setNewTaskText(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
-                        style={{
-                          flex: 1,
-                          padding: '8px 10px',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          fontSize: '13px'
-                        }}
-                      />
-                      <button className="button button-small" onClick={() => addTask(group.id)}>+</button>
-                    </div>
-                  </div>
-                )}
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Workstream Tasks</h3>
+                <p>Action items organised by list group</p>
               </div>
-            ))}
-          </div>
-        </article>
+              <button className="button button-small button-ghost" onClick={addNewGroup}>+ New list</button>
+            </div>
+            <div className="panel-body">
+              {taskGroups.map((group) => (
+                <div key={group.id} className="sub-panel">
+                  <div className="sub-panel-header">
+                    <div>
+                      <button onClick={() => toggleGroupCollapse(group.id)} className="button button-small button-icon">
+                        {group.collapsed ? '▶' : '▼'}
+                      </button>
+                      <strong>{group.title}</strong>
+                    </div>
+                    <button onClick={() => deleteGroup(group.id)} className="button button-small button-ghost">Delete</button>
+                  </div>
 
-        <article className="feature-card">
-          <div className="feature-top">
-            <div>
-              <h3>Quick actions</h3>
-              <p>Start work immediately</p>
+                  {!group.collapsed && (
+                    <div className="task-list">
+                      {group.tasks.map((task) => (
+                        <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={task.completed}
+                            onChange={() => toggleTaskComplete(group.id, task.id)}
+                          />
+                          <span>{task.text}</span>
+                          <button onClick={() => deleteTask(group.id, task.id)} className="button button-small button-icon">✕</button>
+                        </div>
+                      ))}
+
+                      <div className="task-add-row">
+                        <input
+                          type="text"
+                          placeholder="Add task..."
+                          value={newTaskText}
+                          onChange={(e) => setNewTaskText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
+                        />
+                        <button className="button button-small" onClick={() => addTask(group.id)}>Add</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <Link className="button button-primary" to="/clients/new" style={{ justifyContent: 'flex-start' }}>
-              ➕ Create new client
-            </Link>
-            <Link className="button button-secondary" to="/audit" style={{ justifyContent: 'flex-start' }}>
-              📋 Start kitchen audit
-            </Link>
-            <Link className="button button-secondary" to="/menu" style={{ justifyContent: 'flex-start' }}>
-              🍽️ Open menu builder
-            </Link>
-            <Link className="button button-secondary" to="/food-safety" style={{ justifyContent: 'flex-start' }}>
-              🧪 Food safety check
-            </Link>
+        </div>
+
+        <div className="dashboard-side-zone">
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Quick Actions</h3>
+                <p>Start work immediately</p>
+              </div>
+            </div>
+            <div className="panel-body">
+              <div className="action-list">
+                <Link className="button button-primary" to="/clients/new">
+                  ➕ Create new client
+                </Link>
+                <Link className="button button-secondary" to="/audit">
+                  📋 Start kitchen audit
+                </Link>
+                <Link className="button button-secondary" to="/menu">
+                  🍽️ Open menu builder
+                </Link>
+                <Link className="button button-secondary" to="/food-safety">
+                  🧪 Food safety check
+                </Link>
+              </div>
+            </div>
           </div>
-        </article>
-      </section>
+
+          <div className="panel attention-panel">
+            <div className="panel-header">
+              <div>
+                <h3>Attention Required</h3>
+                <p>Items needing immediate action</p>
+              </div>
+            </div>
+            <div className="panel-body">
+              <div className="attention-item warning">
+                <strong>{overdueReviews.length} Overdue reviews</strong>
+                <span>Need to be followed up immediately</span>
+              </div>
+              <div className="attention-item">
+                <strong>{dueSoonReviews.length} Reviews due soon</strong>
+                <span>Due in next 14 days</span>
+              </div>
+              <div className="attention-item success">
+                <strong>{audits.length} Total audits</strong>
+                <span>Completed across client portfolio</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Recent Activity</h3>
+                <p>Latest work across the portfolio</p>
+              </div>
+            </div>
+            <div className="panel-body">
+              <div className="activity-list">
+                {audits.slice(0, 3).map((audit) => (
+                  <div key={audit.id} className="activity-item">
+                    <strong>Kitchen Audit completed</strong>
+                    <span>{new Date(audit.created_at).toLocaleDateString()}</span>
+                  </div>
+                ))}
+                {menus.slice(0, 2).map((menu) => (
+                  <div key={menu.id} className="activity-item">
+                    <strong>Menu project updated</strong>
+                    <span>{new Date(menu.updated_at).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </PageContainer>
   );
