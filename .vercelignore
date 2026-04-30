@@ -2,5 +2,8 @@ release
 dist
 .git
 node_modules
+android/.gradle
+android/build
+android/app/build
 npm-debug.log
 *.local
