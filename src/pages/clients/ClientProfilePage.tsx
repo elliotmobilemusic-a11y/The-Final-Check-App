@@ -14,8 +14,10 @@ import {
   type BusinessLookupResult
 } from '../../features/clients/businessLookup';
 import { createInvoiceDraftFromQuote } from '../../features/quotes/invoices';
-import { ClientProfileHeader } from '../../components/clients/profile/ClientProfileHeader';
-import { ClientProfileTabNav } from '../../components/clients/profile/ClientProfileTabNav';
+import {
+  ClientProfileHeader,
+  ClientProfileTabNav
+} from '../../components/clients/profile';
 import { ClientInformationTab } from '../../components/clients/profile/ClientInformationTab';
 import { ClientWorkTab, type ClientWorkItem } from '../../components/clients/profile/ClientWorkTab';
 import {
@@ -28,9 +30,13 @@ import { deleteClient, getClientById, updateClient } from '../../services/client
 import { listAudits, saveAudit } from '../../services/audits';
 import { listMenuProjects, saveMenuProject } from '../../services/menus';
 import {
-  listLocalToolRecordsForClient,
-  saveLocalToolRecord
-} from '../../services/localToolStore';
+  listFoodSafetyAuditsForClient,
+  saveFoodSafetyAudit
+} from '../../services/foodSafetyAudits';
+import {
+  listMysteryShopAuditsForClient,
+  saveMysteryShopAudit
+} from '../../services/mysteryShopAudits';
 import {
   createClientPortalShare,
   createDishSpecShare,
@@ -83,6 +89,7 @@ import type {
   SupabaseRecord
 } from '../../types';
 import { fmtCurrency, todayIso, uid } from '../../lib/utils';
+import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
 import {
   buildInvoicePdfTemplate,
   buildQuotePdfTemplate,
@@ -91,8 +98,7 @@ import {
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 
-const FOOD_SAFETY_STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
-const MYSTERY_SHOP_STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+
 
 export function ClientProfilePage() {
   const { clientId = '', section } = useParams();
@@ -147,12 +153,25 @@ export function ClientProfilePage() {
       setForm(nextForm);
       setAudits(auditRows);
       setMenus(menuRows);
-      setFoodSafetyAudits(
-        listLocalToolRecordsForClient<FoodSafetyAuditState>(FOOD_SAFETY_STORAGE_KEY, clientId)
-      );
-      setMysteryShopAudits(
-        listLocalToolRecordsForClient<MysteryShopAuditState>(MYSTERY_SHOP_STORAGE_KEY, clientId)
-      );
+      listFoodSafetyAuditsForClient(clientId).then(records => {
+        setFoodSafetyAudits(records.map(r => ({
+          ...r,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+          siteName: r.site_name,
+          reviewDate: r.review_date ?? ''
+        })));
+      });
+
+      listMysteryShopAuditsForClient(clientId).then(records => {
+        setMysteryShopAudits(records.map(r => ({
+          ...r,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+          siteName: r.site_name,
+          reviewDate: r.review_date ?? ''
+        })));
+      });
       setSelectedInvoiceId(nextForm.data.invoices[0]?.id ?? null);
       if (draft) {
         setEditing(true);
@@ -1067,12 +1086,21 @@ export function ClientProfilePage() {
     const [auditRows, menuRows] = await Promise.all([listAudits(clientId), listMenuProjects(clientId)]);
     setAudits(auditRows);
     setMenus(menuRows);
-    setFoodSafetyAudits(
-      listLocalToolRecordsForClient<FoodSafetyAuditState>(FOOD_SAFETY_STORAGE_KEY, clientId)
-    );
-    setMysteryShopAudits(
-      listLocalToolRecordsForClient<MysteryShopAuditState>(MYSTERY_SHOP_STORAGE_KEY, clientId)
-    );
+    setFoodSafetyAudits((await listFoodSafetyAuditsForClient(clientId)).map(r => ({
+      ...r,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      siteName: r.site_name,
+      reviewDate: r.review_date ?? ''
+    })));
+
+    setMysteryShopAudits((await listMysteryShopAuditsForClient(clientId)).map(r => ({
+      ...r,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      siteName: r.site_name,
+      reviewDate: r.review_date ?? ''
+    })));
   }
 
   async function handleDuplicateQuote(quote: ClientQuote) {
@@ -1439,12 +1467,14 @@ export function ClientProfilePage() {
         const source = foodSafetyAudits.find((audit) => `food-safety:${audit.id}` === item.id);
         if (!source) return;
 
-        saveLocalToolRecord(FOOD_SAFETY_STORAGE_KEY, {
+        saveFoodSafetyAudit({
           id: uid('food-safety'),
+          client_id: source.data.clientId ?? null,
+          client_site_id: source.data.clientSiteId ?? null,
           title: `${source.title} copy`,
-          siteName: source.siteName,
+          site_name: source.siteName,
           location: source.location,
-          reviewDate: source.reviewDate,
+          review_date: source.data.auditDate,
           data: {
             ...source.data,
             id: undefined,
@@ -1455,12 +1485,14 @@ export function ClientProfilePage() {
         const source = mysteryShopAudits.find((audit) => `mystery-shop:${audit.id}` === item.id);
         if (!source) return;
 
-        saveLocalToolRecord(MYSTERY_SHOP_STORAGE_KEY, {
+        saveMysteryShopAudit({
           id: uid('mystery-shop'),
+          client_id: source.data.clientId ?? null,
+          client_site_id: source.data.clientSiteId ?? null,
           title: `${source.title} copy`,
-          siteName: source.siteName,
+          site_name: source.siteName,
           location: source.location,
-          reviewDate: source.reviewDate,
+          review_date: source.data.visitDate,
           data: {
             ...source.data,
             id: undefined,
@@ -1559,27 +1591,29 @@ export function ClientProfilePage() {
   }
 
   return (
-    <>
+    <PageContainer size="wide">
       <main className="client-profile-page-simplified">
         <div className="client-profile-shell">
-        <ClientProfileHeader
-          client={activeForm}
-          mainContact={mainContact?.name || activeForm.contactName || 'No main contact set'}
-          siteCount={siteCount}
-          outstandingBalance={fmtCurrency(outstandingBalance)}
-          lastReviewDate={formatShortDate(activeForm.nextReviewDate)}
-          editing={editing}
-          saving={saving}
-          onToggleEditing={toggleEditing}
-          onSave={handleSave}
-          onNewQuote={handleRequestNewQuote}
-          onNewInvoice={() => handleRequestNewInvoice()}
-          onNewAudit={() => navigate(`/audit?client=${clientId}`)}
-          onOpenPortal={handleOpenPortal}
-          onDeleteClient={() => setConfirmDeleteOpen(true)}
-        />
+          <ClientProfileHeader
+            companyName={activeForm.companyName}
+            contactName={mainContact?.name || activeForm.contactName || 'No main contact set'}
+            status={activeForm.status}
+            industry={activeForm.industry}
+            outstandingBalance={fmtCurrency(outstandingBalance)}
+            lastReviewDate={formatShortDate(activeForm.nextReviewDate)}
+            siteCount={siteCount}
+            editing={editing}
+            saving={saving}
+            onToggleEditing={toggleEditing}
+            onSave={handleSave}
+            onNewQuote={handleRequestNewQuote}
+            onNewInvoice={() => handleRequestNewInvoice()}
+            onNewAudit={() => navigate(`/audit?client=${clientId}`)}
+            onOpenPortal={handleOpenPortal}
+            onDeleteClient={() => setConfirmDeleteOpen(true)}
+          />
 
-        <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
+          <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
         <div className="page-inline-note">{message}</div>
 
         {activeTab === 'information' ? (
@@ -1730,6 +1764,6 @@ export function ClientProfilePage() {
           </div>
         </div>
       ) : null}
-    </>
+    </PageContainer>
   );
 }

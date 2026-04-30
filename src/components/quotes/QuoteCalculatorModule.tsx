@@ -5,13 +5,8 @@ import {
   SectionHeader,
   ActionRow,
   FieldGroup,
-  FormSection,
-  StatusBadge,
-  EmptyState,
-  LoadingState,
   NumericInput,
-  CurrencyInput,
-  PercentageInput
+  CurrencyInput
 } from '../ui';
 import type {
   ClientProfile,

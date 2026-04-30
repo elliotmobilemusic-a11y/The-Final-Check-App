@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
+import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
@@ -12,9 +12,9 @@ import {
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
 import {
-  getLocalToolRecord,
-  saveLocalToolRecord
-} from '../../services/localToolStore';
+  getFoodSafetyAudit,
+  saveFoodSafetyAudit
+} from '../../services/foodSafetyAudits';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createFoodSafetyShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
@@ -31,7 +31,7 @@ import type {
 import { safe, todayIso, uid } from '../../lib/utils';
 import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
-const STORAGE_KEY = 'the-final-check-food-safety-audits-v1';
+
 const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
 const foodSafetyPhotoSections = {
   overview: 'Audit overview',
@@ -512,16 +512,17 @@ export function FoodSafetyAuditPage() {
     const loadId = searchParams.get('load');
     if (!loadId) return;
 
-    const record = getLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, loadId);
-    if (!record) return;
+    getFoodSafetyAudit(loadId).then(record => {
+      if (!record) return;
 
-    setForm({
-      ...normalizeFoodSafetyAudit(record.data),
-      id: record.id,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt
+      setForm({
+        ...normalizeFoodSafetyAudit(record.data),
+        id: record.id,
+        createdAt: record.created_at,
+        updatedAt: record.updated_at
+      });
+      setMessage(`Loaded "${record.title}".`);
     });
-    setMessage(`Loaded "${record.title}".`);
   }, [searchParams]);
 
   useEffect(() => {
@@ -658,23 +659,25 @@ export function FoodSafetyAuditPage() {
           detail: 'Updating the latest compliance record and keeping the saved version ready to reopen.'
         },
         async () => {
-          const record = saveLocalToolRecord<FoodSafetyAuditState>(STORAGE_KEY, {
-            id: form.id || uid('food-safety'),
-            title: form.title || 'Food Safety Audit',
-            siteName: form.siteName || 'Unnamed site',
-            location: form.location || '',
-            reviewDate: form.auditDate || '',
-            data: form,
-            createdAt: form.createdAt,
-            updatedAt: form.updatedAt
-          });
+           const record = await saveFoodSafetyAudit({
+             id: form.id || uid('food-safety'),
+             client_id: form.clientId ?? null,
+             client_site_id: form.clientSiteId ?? null,
+             title: form.title || 'Food Safety Audit',
+             site_name: form.siteName || 'Unnamed site',
+             location: form.location || '',
+             review_date: form.auditDate || null,
+             data: form,
+             created_at: form.createdAt,
+             updated_at: form.updatedAt
+           });
 
-          setForm((current) => ({
-            ...current,
-            id: record.id,
-            createdAt: record.createdAt,
-            updatedAt: record.updatedAt
-          }));
+           setForm((current) => ({
+             ...current,
+             id: record.id,
+             createdAt: record.created_at,
+             updatedAt: record.updated_at
+           }));
           setMessage('Food safety audit saved.');
         },
         980
@@ -768,31 +771,32 @@ export function FoodSafetyAuditPage() {
   }
 
   return (
-    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
-      <PageIntro
-        eyebrow="Audit tool"
-        title="Food Safety Audit"
-        description="Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report."
-        actions={
-          <>
-            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
-              {visitMode ? 'Exit visit mode' : 'Visit mode'}
-            </button>
-            <button className="button button-secondary" onClick={newAudit}>
-              New audit
-            </button>
-            <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
-              {isSaving ? 'Saving...' : 'Save audit'}
-            </button>
-            <button className="button button-secondary" onClick={handleExportPrint}>
-              Export PDF
-            </button>
-            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
-              {isSharing ? 'Creating link...' : 'Create share link'}
-            </button>
-          </>
-        }
-      />
+    <PageContainer size="wide" className={visitMode ? 'visit-mode' : ''}>
+      <div className="page-stack">
+        <PageHeader
+          eyebrow="Audit tool"
+          title="Food Safety Audit"
+          description="Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report."
+          actions={
+            <>
+              <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+                {visitMode ? 'Exit visit mode' : 'Visit mode'}
+              </button>
+              <button className="button button-secondary" onClick={newAudit}>
+                New audit
+              </button>
+              <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+                {isSaving ? 'Saving...' : 'Save audit'}
+              </button>
+              <button className="button button-secondary" onClick={handleExportPrint}>
+                Export PDF
+              </button>
+              <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+                {isSharing ? 'Creating link...' : 'Create share link'}
+              </button>
+            </>
+          }
+        />
       {visitMode ? (
         <section className="panel visit-mode-toolbar">
           <div className="panel-body visit-mode-toolbar-body">
@@ -1233,12 +1237,13 @@ export function FoodSafetyAuditPage() {
 
       </ControlPanelModal>
 
-      <div className="page-floating-controls">
-        <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
-          📊 Audit Controls
-        </button>
-      </div>
+        <div className="page-floating-controls">
+          <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
+            📊 Audit Controls
+          </button>
+        </div>
 
-    </div>
+      </div>
+    </PageContainer>
   );
 }

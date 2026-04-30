@@ -10,13 +10,13 @@ import {
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
 import {
-  getLocalToolRecord,
-  saveLocalToolRecord
-} from '../../services/localToolStore';
+  getMysteryShopAudit,
+  saveMysteryShopAudit
+} from '../../services/mysteryShopAudits';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { createMysteryShopShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
-import { PageIntro } from '../../components/layout/PageIntro';
+import { PageContainer, PageHeader, SectionWrapper, ActionBar } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
@@ -32,7 +32,7 @@ import type {
 import { safe, todayIso, uid } from '../../lib/utils';
 import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
-const STORAGE_KEY = 'the-final-check-mystery-shop-audits-v1';
+
 const MYSTERY_SHOP_DRAFT_KEY = 'mystery-shop-audit-draft-v1';
 const mysteryPhotoSections = {
   visit: 'Visit details',
@@ -441,16 +441,17 @@ export function MysteryShopAuditPage() {
     const loadId = searchParams.get('load');
     if (!loadId) return;
 
-    const record = getLocalToolRecord<MysteryShopAuditState>(STORAGE_KEY, loadId);
-    if (!record) return;
+    getMysteryShopAudit(loadId).then(record => {
+      if (!record) return;
 
-    setForm({
-      ...normalizeMysteryShopAudit(record.data),
-      id: record.id,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt
+      setForm({
+        ...normalizeMysteryShopAudit(record.data),
+        id: record.id,
+        createdAt: record.created_at,
+        updatedAt: record.updated_at
+      });
+      setMessage(`Loaded "${record.title}".`);
     });
-    setMessage(`Loaded "${record.title}".`);
   }, [searchParams]);
 
   useEffect(() => {
@@ -603,23 +604,25 @@ export function MysteryShopAuditPage() {
         detail: 'Packing away the service review so it is ready for follow-up and reporting.'
       },
       async () => {
-        const record = saveLocalToolRecord<MysteryShopAuditState>(STORAGE_KEY, {
-          id: form.id || uid('mystery-shop'),
-          title: form.title || 'Mystery Shop Audit',
-          siteName: form.siteName || 'Unnamed site',
-          location: form.location || '',
-          reviewDate: form.visitDate || '',
-          data: form,
-          createdAt: form.createdAt,
-          updatedAt: form.updatedAt
-        });
+         const record = await saveMysteryShopAudit({
+           id: form.id || uid('mystery-shop'),
+           client_id: form.clientId ?? null,
+           client_site_id: form.clientSiteId ?? null,
+           title: form.title || 'Mystery Shop Audit',
+           site_name: form.siteName || 'Unnamed site',
+           location: form.location || '',
+           review_date: form.visitDate || null,
+           data: form,
+           created_at: form.createdAt,
+           updated_at: form.updatedAt
+         });
 
-        setForm((current) => ({
-          ...current,
-          id: record.id,
-          createdAt: record.createdAt,
-          updatedAt: record.updatedAt
-        }));
+         setForm((current) => ({
+           ...current,
+           id: record.id,
+           createdAt: record.created_at,
+           updatedAt: record.updated_at
+         }));
         setMessage('Mystery shop audit saved.');
       },
       980
@@ -672,28 +675,29 @@ export function MysteryShopAuditPage() {
   }
 
   return (
-    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
-      <PageIntro
-        eyebrow="Audit tool"
-        title="Mystery Shop Audit"
-        description="Capture the full guest journey, score the experience, and turn weak moments into clear service actions."
-        actions={
-          <>
-            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
-              {visitMode ? 'Exit visit mode' : 'Visit mode'}
-            </button>
-            <button className="button button-primary" onClick={handleSave}>
-              Save audit
-            </button>
-            <button className="button button-secondary" onClick={handleExportPrint}>
-              Export PDF
-            </button>
-            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
-              {isSharing ? 'Creating link...' : 'Create share link'}
-            </button>
-          </>
-        }
-      />
+    <PageContainer size="wide" className={visitMode ? 'visit-mode' : ''}>
+      <div className="page-stack">
+        <PageHeader
+          eyebrow="Audit tool"
+          title="Mystery Shop Audit"
+          description="Capture the full guest journey, score the experience, and turn weak moments into clear service actions."
+          actions={
+            <>
+              <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+                {visitMode ? 'Exit visit mode' : 'Visit mode'}
+              </button>
+              <button className="button button-primary" onClick={handleSave}>
+                Save audit
+              </button>
+              <button className="button button-secondary" onClick={handleExportPrint}>
+                Export PDF
+              </button>
+              <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+                {isSharing ? 'Creating link...' : 'Create share link'}
+              </button>
+            </>
+          }
+        />
       {visitMode ? (
         <section className="panel visit-mode-toolbar">
           <div className="panel-body visit-mode-toolbar-body">
@@ -1175,6 +1179,7 @@ export function MysteryShopAuditPage() {
         </button>
       </div>
 
-    </div>
+      </div>
+    </PageContainer>
   );
 }

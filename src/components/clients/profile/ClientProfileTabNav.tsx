@@ -1,34 +1,31 @@
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-export type ClientProfileTabKey =
-  | 'information'
-  | 'services'
-  | 'portal'
-  | 'pricing';
-
-type ClientProfileTabNavProps = {
+interface ClientProfileTabNavProps {
   clientId: string;
-  activeTab: ClientProfileTabKey;
-};
+  activeTab: string;
+}
 
-const tabs: Array<{ key: ClientProfileTabKey; label: string }> = [
-  { key: 'information', label: 'Client information' },
-  { key: 'services', label: 'Audits & services' },
-  { key: 'portal', label: 'Client portal' },
-  { key: 'pricing', label: 'Invoices & pricing' }
-];
+export function ClientProfileTabNav({
+  clientId,
+  activeTab
+}: ClientProfileTabNavProps) {
+  const tabs = [
+    { id: 'information', label: 'Information' },
+    { id: 'services', label: 'Work & services' },
+    { id: 'portal', label: 'Client portal' },
+    { id: 'pricing', label: 'Pricing' }
+  ];
 
-export function ClientProfileTabNav({ clientId, activeTab }: ClientProfileTabNavProps) {
   return (
-    <nav className="client-tab-nav" aria-label="Client profile tabs">
+    <nav className="client-profile-tab-nav" aria-label="Client profile sections">
       {tabs.map((tab) => (
-        <Link
-          key={tab.key}
-          className={`client-tab-link ${activeTab === tab.key ? 'active' : ''}`}
-          to={`/clients/${clientId}/${tab.key}`}
+        <NavLink
+          key={tab.id}
+          to={`/clients/${clientId}/${tab.id}`}
+          className={({ isActive }) => `client-profile-tab ${isActive ? 'active' : ''}`}
         >
           {tab.label}
-        </Link>
+        </NavLink>
       ))}
     </nav>
   );

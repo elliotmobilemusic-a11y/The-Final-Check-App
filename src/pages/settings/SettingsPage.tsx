@@ -39,6 +39,11 @@ import {
   syncPushNotifications,
   type PushDeviceStatus
 } from '../../services/pushNotifications';
+import {
+  SettingsProfileSection,
+  SettingsAppearanceSection,
+  SettingsSecuritySection
+} from '../../components/settings';
 
 type ThemePreview = {
   value: ThemeMode;
@@ -612,251 +617,64 @@ export function SettingsPage() {
             </div>
 
             <div className="panel-body stack gap-24">
-              {activeSection === 'profile' ? (
-                <section className="sub-panel">
-                  <div className="sub-panel-header">
-                    <h4>Account profile</h4>
-                    <span className="soft-pill">Visible in the app shell</span>
-                  </div>
+               {activeSection === 'profile' ? (
+                 <SettingsProfileSection
+                   displayName={displayName}
+                   effectiveDisplayName={effectiveDisplayName}
+                   jobTitle={jobTitle}
+                   organisation={organisation}
+                   avatarUrl={avatarUrl}
+                   avatarPreview={avatarPreview}
+                   avatarPosition={avatarPosition}
+                   session={session}
+                   defaultLandingPage={defaultLandingPage}
+                   compactMode={compactMode}
+                   theme={theme}
+                   themeOptions={themeOptions}
+                   landingPages={landingPages}
+                   onDisplayNameChange={setDisplayName}
+                   onJobTitleChange={setJobTitle}
+                   onOrganisationChange={setOrganisation}
+                   onAvatarUrlChange={setAvatarUrl}
+                   onAvatarPreviewChange={setAvatarPreview}
+                 />
+               ) : null}
 
-                  <div className="form-grid two-columns">
-                    <label className="field">
-                      <span>Display name</span>
-                      <input
-                        className="input"
-                        value={displayName}
-                        onChange={(event) => setDisplayName(event.target.value)}
-                      />
-                    </label>
+               {activeSection === 'appearance' ? (
+                 <SettingsAppearanceSection
+                   theme={theme}
+                   compactMode={compactMode}
+                   reducedMotion={reducedMotion}
+                   autoShowNav={autoShowNav}
+                   defaultLandingPage={defaultLandingPage}
+                   themeOptions={themeOptions}
+                   themePreviewClasses={themePreviewClasses}
+                   landingPages={landingPages}
+                   onThemeChange={setTheme}
+                   onCompactModeChange={setCompactMode}
+                   onReducedMotionChange={setReducedMotion}
+                   onAutoShowNavChange={setAutoShowNav}
+                   onDefaultLandingPageChange={setDefaultLandingPage}
+                 />
+               ) : null}
 
-                    <label className="field">
-                      <span>Account email</span>
-                      <input className="input" disabled value={session?.user.email ?? ''} />
-                    </label>
-
-                    <label className="field">
-                      <span>Job title</span>
-                      <input
-                        className="input"
-                        placeholder="e.g. Auditor, Manager"
-                        value={jobTitle}
-                        onChange={(event) => setJobTitle(event.target.value)}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Organisation</span>
-                      <input
-                        className="input"
-                        placeholder="Company name"
-                        value={organisation}
-                        onChange={(event) => setOrganisation(event.target.value)}
-                      />
-                    </label>
-
-                    <label className="field">
-                      <span>Profile photo URL</span>
-                      <input
-                        className="input"
-                        placeholder="Or leave blank and upload a photo above"
-                        value={avatarUrl}
-                        onChange={(event) => setAvatarUrl(event.target.value)}
-                      />
-                    </label>
-                  </div>
-                </section>
-              ) : null}
-
-              {activeSection === 'appearance' ? (
-                <>
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <h4>Visual themes</h4>
-                      <span className="soft-pill">Live preview</span>
-                    </div>
-
-                    <div className="settings-theme-grid">
-                      {themePreviewClasses.map((previewTheme) => {
-                        const option =
-                          themeOptions.find((item) => item.value === previewTheme.value) ??
-                          ({
-                            value: previewTheme.value,
-                            label: prettyThemeName(previewTheme.value),
-                            description: 'Available theme preset.',
-                            accentName: '',
-                            mood: 'Custom preset',
-                            bestFor: 'Available for workspace theming'
-                          } satisfies (typeof themeOptions)[number]);
-
-                        return (
-                          <button
-                            className={`settings-theme-card ${theme === option.value ? 'active' : ''}`}
-                            key={option.value}
-                            onClick={() => setTheme(option.value)}
-                            type="button"
-                          >
-                            <div className={`settings-theme-preview ${previewTheme.accentClass}`}>
-                              <span className="settings-theme-preview-bar" />
-                              <span className="settings-theme-preview-pane" />
-                            </div>
-                            <strong>{option.label}</strong>
-                            <p>{option.description}</p>
-                            <div className="settings-theme-card-meta">
-                              <span>{option.mood}</span>
-                              <small>{option.bestFor}</small>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <h4>Behaviour and accessibility</h4>
-                      <span className="soft-pill">Device defaults</span>
-                    </div>
-
-                    <div className="settings-toggle-grid">
-                      <label className="settings-toggle-card">
-                        <div>
-                          <strong>Compact layout</strong>
-                          <p>Tighten spacing across panels and forms when you want more on screen.</p>
-                        </div>
-                        <input
-                          checked={compactMode}
-                          type="checkbox"
-                          onChange={(event) => setCompactMode(event.target.checked)}
-                        />
-                      </label>
-
-                      <label className="settings-toggle-card">
-                        <div>
-                          <strong>Reduced motion</strong>
-                          <p>Calm down transitions and movement across the workspace.</p>
-                        </div>
-                        <input
-                          checked={reducedMotion}
-                          type="checkbox"
-                          onChange={(event) => setReducedMotion(event.target.checked)}
-                        />
-                      </label>
-
-                      <label className="settings-toggle-card">
-                        <div>
-                          <strong>Auto-show navigation</strong>
-                          <p>Keep the top navigation responsive to scrolling and activity.</p>
-                        </div>
-                        <input
-                          checked={autoShowNav}
-                          type="checkbox"
-                          onChange={(event) => setAutoShowNav(event.target.checked)}
-                        />
-                      </label>
-
-                      <label className="field">
-                        <span>Default landing page</span>
-                        <select
-                          className="input"
-                          value={defaultLandingPage}
-                          onChange={(event) => setDefaultLandingPage(event.target.value as LandingPage)}
-                        >
-                          {landingPages.map((item) => (
-                            <option key={item.value} value={item.value}>
-                              {item.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                  </section>
-                </>
-              ) : null}
-
-              {activeSection === 'security' ? (
-                <>
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <h4>Sign-in persistence</h4>
-                      <span className="soft-pill">Current device</span>
-                    </div>
-
-                    <div className="settings-toggle-grid">
-                      <label className="settings-toggle-card">
-                        <div>
-                          <strong>Remember me on this device</strong>
-                          <p>Keep your session in local storage so you stay signed in between visits.</p>
-                        </div>
-                        <input
-                          checked={rememberMe}
-                          type="checkbox"
-                          onChange={(event) => setRememberMe(event.target.checked)}
-                        />
-                      </label>
-                    </div>
-                  </section>
-
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <h4>Password update</h4>
-                      <span className="soft-pill">Optional</span>
-                    </div>
-
-                    <div className="form-grid two-columns">
-                      <label className="field">
-                        <span>New password</span>
-                        <input
-                          autoComplete="new-password"
-                          className="input"
-                          type="password"
-                          value={newPassword}
-                          onChange={(event) => setNewPassword(event.target.value)}
-                        />
-                      </label>
-
-                      <label className="field">
-                        <span>Confirm password</span>
-                        <input
-                          autoComplete="new-password"
-                          className="input"
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(event) => setConfirmPassword(event.target.value)}
-                        />
-                      </label>
-                    </div>
-                  </section>
-
-                  <section className="sub-panel">
-                    <div className="sub-panel-header">
-                      <h4>Enquiry alerts</h4>
-                      <span className="soft-pill">
-                        {enquiryAlertsEnabled ? 'Enabled on this device' : 'Disabled on this device'}
-                      </span>
-                    </div>
-
-                    <div className="settings-toggle-grid">
-                      <label className="settings-toggle-card">
-                        <div>
-                          <strong>New enquiry notifications</strong>
-                          <p>
-                            Alert this signed-in device when a new client enquiry form creates a new prospect. On the Android app this uses local device notifications.
-                          </p>
-                        </div>
-                        <input
-                          checked={enquiryAlertsEnabled}
-                          type="checkbox"
-                          onChange={(event) => {
-                            void handleToggleEnquiryAlerts(event.target.checked);
-                          }}
-                        />
-                      </label>
-                    </div>
-
-                    <p className="muted-copy">
-                      This works in the installed APK without changing the desktop layout. Full background push later would need Firebase setup, but device alerts work now while the app is installed and signed in.
-                    </p>
-                  </section>
+               {activeSection === 'security' ? (
+                 <>
+                   <SettingsSecuritySection
+                     rememberMe={rememberMe}
+                     newPassword={newPassword}
+                     confirmPassword={confirmPassword}
+                     enquiryAlertsEnabled={enquiryAlertsEnabled}
+                     pushStatus={pushStatus}
+                     pushBusy={pushBusy}
+                     onRememberMeChange={setRememberMe}
+                     onNewPasswordChange={setNewPassword}
+                     onConfirmPasswordChange={setConfirmPassword}
+                     onToggleEnquiryAlerts={handleToggleEnquiryAlerts}
+                     onEnablePush={handleEnablePush}
+                     onDisablePush={handleDisablePush}
+                     onSendTestPush={handleSendTestPush}
+                   />
 
                   <section className="sub-panel">
                     <div className="sub-panel-header">

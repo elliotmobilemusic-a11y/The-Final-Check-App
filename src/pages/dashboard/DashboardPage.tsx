@@ -9,7 +9,7 @@ import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
-import { PageIntro } from '../../components/layout/PageIntro';
+import { PageContainer, PageHeader, SectionWrapper } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 
 type BeforeInstallPromptEvent = Event & {
@@ -347,7 +347,8 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="page-stack">
+    <PageContainer>
+      <div className="page-stack">
       {showInstallPrompt && installState !== 'installed' && (
         <div className="install-float-prompt">
           <div className="install-float-copy">
@@ -360,7 +361,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <PageIntro
+      <PageHeader
         eyebrow="Command Centre"
         title={`Welcome, ${welcomeLabel}`}
         description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
@@ -377,38 +378,40 @@ export function DashboardPage() {
             </Link>
           </>
         }
-      >
-        <div className="page-inline-note">{message}</div>
-      </PageIntro>
+      />
+      
+      {message && <div className="page-inline-note mb-4">{message}</div>}
 
-      <section className="stats-grid">
-        <StatCard
-          label="Total opportunity identified"
-          value={fmtCurrency(totalOpportunityIdentified)}
-          hint="Based on the latest saved audit per client"
-        />
-        <StatCard
-          label="Active clients"
-          value={String(activeClients.length)}
-          hint={clients[0]?.company_name ?? 'No clients created yet'}
-        />
-        <StatCard
-          label="Sites needing attention"
-          value={String(sitesNeedingAttention)}
-          hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
-        />
-        <StatCard
-          label="Follow-ups due"
-          value={String(overdueReviews.length + dueSoonReviews.length)}
-          hint={
-            overdueReviews.length > 0
-              ? `${pluralize(overdueReviews.length, 'review')} overdue`
-              : dueSoonReviews.length > 0
-                ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
-                : 'No upcoming review pressure'
-          }
-        />
-      </section>
+      <SectionWrapper>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total opportunity identified"
+            value={fmtCurrency(totalOpportunityIdentified)}
+            hint="Based on the latest saved audit per client"
+          />
+          <StatCard
+            label="Active clients"
+            value={String(activeClients.length)}
+            hint={clients[0]?.company_name ?? 'No clients created yet'}
+          />
+          <StatCard
+            label="Sites needing attention"
+            value={String(sitesNeedingAttention)}
+            hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
+          />
+          <StatCard
+            label="Follow-ups due"
+            value={String(overdueReviews.length + dueSoonReviews.length)}
+            hint={
+              overdueReviews.length > 0
+                ? `${pluralize(overdueReviews.length, 'review')} overdue`
+                : dueSoonReviews.length > 0
+                  ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
+                  : 'No upcoming review pressure'
+            }
+          />
+        </div>
+      </SectionWrapper>
 
       <section className="card-grid two-columns">
         <article className="feature-card">
@@ -513,6 +516,7 @@ export function DashboardPage() {
           </div>
         </article>
       </section>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
