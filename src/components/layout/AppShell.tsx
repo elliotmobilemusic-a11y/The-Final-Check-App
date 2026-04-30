@@ -97,12 +97,14 @@ export function AppShell() {
   const { preferences } = usePreferences();
   const { activity } = useActivityOverlay();
   const [navExpanded, setNavExpanded] = useState(true);
-  const [navHeight, setNavHeight] = useState(108);
+  const [navHeight, setNavHeight] = useState(72);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [enquiryAlerts, setEnquiryAlerts] = useState<EnquiryAlert[]>([]);
   const [unreadEnquiryCount, setUnreadEnquiryCount] = useState(0);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
   const disableAutoHideNav = location.pathname.startsWith('/settings') || isNativeAndroid;
 
@@ -298,6 +300,17 @@ export function AppShell() {
     };
   }, [session?.user.id]);
 
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [profileMenuOpen]);
+
   function handleMarkAllEnquiriesRead() {
     if (!session?.user.id) return;
     const snapshot = markAllEnquiryAlertsRead(session.user.id);
@@ -404,31 +417,52 @@ export function AppShell() {
                  ) : null}
                </div>
 
-               <Link className="user-chip shell-profile-link" to="/settings/profile">
-                 {avatarUrl ? (
-                   <img
-                     alt={`${displayName} avatar`}
-                     className="user-chip-avatar"
-                     src={avatarUrl}
-                     style={{
-                       objectPosition: `${avatarPosition.x}% ${avatarPosition.y}%`,
-                       transform: `scale(${avatarPosition.scale})`
-                     }}
-                   />
-                ) : (
-                  <span className="user-chip-avatar user-chip-avatar-fallback">
-                    {getInitials(displayName)}
-                  </span>
-                )}
-                <span className="user-chip-copy">
-                  <strong>{displayName}</strong>
-                  <small>Profile and settings</small>
-                </span>
-              </Link>
-
-              <button className="button button-secondary shell-signout" onClick={handleSignOut}>
-                Sign out
-              </button>
+               <div className="shell-profile-wrap" ref={profileMenuRef}>
+                 <button
+                   aria-expanded={profileMenuOpen}
+                   className="user-chip shell-profile-trigger"
+                   onClick={() => setProfileMenuOpen((p) => !p)}
+                   type="button"
+                 >
+                   {avatarUrl ? (
+                     <img
+                       alt={`${displayName} avatar`}
+                       className="user-chip-avatar"
+                       src={avatarUrl}
+                       style={{
+                         objectPosition: `${avatarPosition.x}% ${avatarPosition.y}%`,
+                         transform: `scale(${avatarPosition.scale})`
+                       }}
+                     />
+                   ) : (
+                     <span className="user-chip-avatar user-chip-avatar-fallback">
+                       {getInitials(displayName)}
+                     </span>
+                   )}
+                   <span className="user-chip-copy">
+                     <strong>{displayName}</strong>
+                   </span>
+                   <span aria-hidden="true" className="shell-profile-chevron">▾</span>
+                 </button>
+                 {profileMenuOpen && (
+                   <div className="shell-profile-menu">
+                     <Link
+                       className="shell-profile-menu-item"
+                       onClick={() => setProfileMenuOpen(false)}
+                       to="/settings/profile"
+                     >
+                       Profile &amp; settings
+                     </Link>
+                     <button
+                       className="shell-profile-menu-item shell-profile-menu-signout"
+                       onClick={() => { setProfileMenuOpen(false); void handleSignOut(); }}
+                       type="button"
+                     >
+                       Sign out
+                     </button>
+                   </div>
+                 )}
+               </div>
             </div>
           </div>
         </header>
