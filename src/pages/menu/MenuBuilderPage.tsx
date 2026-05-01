@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   MenuBuilderControlsPanel,
   MenuBuilderWorkspaceSection,
@@ -63,6 +63,7 @@ import {
 
 export function MenuBuilderPage() {
   const { runWithActivity } = useActivityOverlay();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const queryClientId = searchParams.get('client') || null;
   const queryLoadId = searchParams.get('load');
@@ -193,6 +194,15 @@ export function MenuBuilderPage() {
   useEffect(() => {
     writeDraft(MENU_BUILDER_DRAFT_KEY, project);
   }, [project]);
+
+  useEffect(() => {
+    const state = location.state as { prefill?: Partial<MenuProjectState>; fromSubmissionId?: string } | null;
+    if (!state?.prefill) return;
+    setProject((current) => normalizeMenuProject({ ...current, ...state.prefill }));
+    setMessage('Menu project prefilled from pre-visit questionnaire.');
+    window.history.replaceState({}, '', window.location.href);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (queryClientId) {

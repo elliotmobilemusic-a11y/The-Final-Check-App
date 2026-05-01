@@ -38,6 +38,7 @@ export function QuestionnaireSubmissionsPage() {
   const [note, setNote] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const templates = getTemplateGroups();
 
@@ -69,12 +70,18 @@ export function QuestionnaireSubmissionsPage() {
 
   function copyLink() {
     if (generatedLink) {
-      navigator.clipboard.writeText(generatedLink).catch(() => {});
+      navigator.clipboard
+        .writeText(generatedLink)
+        .then(() => {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1800);
+        })
+        .catch(() => {});
     }
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack q-management-page">
       <PageIntro
         eyebrow="Pre-Visit Forms"
         title="Questionnaire Submissions"
@@ -83,21 +90,21 @@ export function QuestionnaireSubmissionsPage() {
         <div className="page-inline-note">{submissions.length} submission{submissions.length !== 1 ? 's' : ''}</div>
       </PageIntro>
 
-      <section className="panel">
+      <section className="panel q-management-panel q-generator-panel">
         <div className="panel-header">
           <div>
             <h3>Generate a questionnaire link</h3>
-            <p className="muted-copy">Create a client-ready form link for a specific visit.</p>
+            <p className="muted-copy">Prepare a polished one-time form link for a specific client visit.</p>
           </div>
         </div>
-        <div className="panel-body stack gap-16">
+        <div className="panel-body q-generator-body">
           {shareModalOpen ? (
             <div className="q-share-form">
               <div className="q-share-fields">
-                <label className="form-label-group">
-                  <span>Questionnaire template</span>
+                <label className="q-field q-field--template">
+                  <span className="q-field-label">Questionnaire template</span>
                   <select
-                    className="form-control"
+                    className="q-control q-select"
                     value={selectedTemplateId}
                     onChange={(e) => setSelectedTemplateId(e.target.value)}
                   >
@@ -106,20 +113,20 @@ export function QuestionnaireSubmissionsPage() {
                     ))}
                   </select>
                 </label>
-                <label className="form-label-group">
-                  <span>Client name <span className="form-label-optional">(optional)</span></span>
+                <label className="q-field q-field--client">
+                  <span className="q-field-label">Client name <span className="q-field-optional">(optional)</span></span>
                   <input
-                    className="form-control"
+                    className="q-control"
                     type="text"
                     placeholder="e.g. The Crown & Anchor"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
                   />
                 </label>
-                <label className="form-label-group" style={{ gridColumn: '1 / -1' }}>
-                  <span>Custom message <span className="form-label-optional">(optional — shown to client on form)</span></span>
+                <label className="q-field q-field--message">
+                  <span className="q-field-label">Custom message <span className="q-field-optional">(optional — shown to client on form)</span></span>
                   <textarea
-                    className="form-control"
+                    className="q-control q-textarea"
                     rows={3}
                     placeholder="Leave blank to use the default description."
                     value={note}
@@ -130,21 +137,27 @@ export function QuestionnaireSubmissionsPage() {
 
               {generatedLink ? (
                 <div className="q-link-result">
-                  <p className="q-link-label">Questionnaire link ready</p>
+                  <div className="q-link-result-head">
+                    <div>
+                      <p className="q-link-label">Questionnaire link ready</p>
+                      <p className="q-link-helper">Copy this URL and send it to the client before the visit.</p>
+                    </div>
+                  </div>
                   <div className="q-link-box">
                     <code className="q-link-url">{generatedLink}</code>
-                    <button className="button button-secondary" type="button" onClick={copyLink}>
-                      Copy
+                    <button className="button button-primary q-copy-button" type="button" onClick={copyLink}>
+                      {copied ? 'Copied' : 'Copy link'}
                     </button>
                   </div>
                   <button
-                    className="button button-ghost"
+                    className="button button-ghost q-generate-another"
                     type="button"
                     onClick={() => {
                       setGeneratedLink('');
                       setClientName('');
                       setNote('');
                       setSelectedTemplateId('profit_audit');
+                      setCopied(false);
                     }}
                   >
                     Generate another
@@ -192,7 +205,7 @@ export function QuestionnaireSubmissionsPage() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel q-management-panel q-submissions-panel">
         <div className="panel-header">
           <div>
             <h3>Received submissions</h3>

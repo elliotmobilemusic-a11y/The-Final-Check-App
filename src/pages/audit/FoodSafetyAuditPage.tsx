@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { PageContainer, PageHeader } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
@@ -468,6 +468,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 
 export function FoodSafetyAuditPage() {
   const { runWithActivity } = useActivityOverlay();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -507,6 +508,15 @@ export function FoodSafetyAuditPage() {
   useEffect(() => {
     writeDraft(FOOD_SAFETY_DRAFT_KEY, form);
   }, [form]);
+
+  useEffect(() => {
+    const state = location.state as { prefill?: Partial<FoodSafetyAuditState>; fromSubmissionId?: string } | null;
+    if (!state?.prefill) return;
+    setForm((current) => normalizeFoodSafetyAudit({ ...current, ...state.prefill }));
+    setMessage('Audit prefilled from pre-visit questionnaire.');
+    window.history.replaceState({}, '', window.location.href);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const loadId = searchParams.get('load');

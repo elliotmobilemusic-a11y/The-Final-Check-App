@@ -6,7 +6,13 @@ import {
   getQuestionnaireSubmission,
   updateSubmissionStatus
 } from '../../services/preVisitQuestionnaires';
-import type { AuditFormState, QuestionnaireSubmissionRecord } from '../../types';
+import type {
+  AuditFormState,
+  FoodSafetyAuditState,
+  MenuProjectState,
+  MysteryShopAuditState,
+  QuestionnaireSubmissionRecord
+} from '../../types';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -18,7 +24,7 @@ function fmtDate(iso: string) {
   });
 }
 
-function buildPrefillState(answers: Record<string, string>): Partial<AuditFormState> {
+function buildProfitAuditPrefill(answers: Record<string, string>): Partial<AuditFormState> {
   const challenges = answers.currentChallenges?.trim() ?? '';
   const goals = answers.goalsForVisit?.trim() ?? '';
   const summaryParts = [challenges, goals].filter(Boolean);
@@ -37,6 +43,59 @@ function buildPrefillState(answers: Record<string, string>): Partial<AuditFormSt
     summary: summaryParts.join('\n\n')
   };
 }
+
+function buildFoodSafetyPrefill(answers: Record<string, string>): Partial<FoodSafetyAuditState> {
+  return {
+    siteName: answers.siteName?.trim() || answers.businessName?.trim() || '',
+    location: answers.siteAddress?.trim() || '',
+    managerName: answers.contactName?.trim() || '',
+    hygieneRating: answers.hygieneRating?.trim() || '',
+    summary: answers.prioritiesForVisit?.trim() || ''
+  };
+}
+
+function buildMysteryShopPrefill(answers: Record<string, string>): Partial<MysteryShopAuditState> {
+  return {
+    siteName: answers.siteName?.trim() || answers.businessName?.trim() || '',
+    location: answers.siteAddress?.trim() || '',
+    overallSummary: answers.prioritiesForVisit?.trim() || ''
+  };
+}
+
+function buildMenuProfitPrefill(answers: Record<string, string>): Partial<MenuProjectState> {
+  return {
+    menuName: answers.businessName?.trim() || '',
+    siteName: answers.siteName?.trim() || answers.businessName?.trim() || '',
+    defaultTargetGp: parseFloat(answers.targetGp) || 65
+  };
+}
+
+const PREFILL_CONFIGS: Record<string, {
+  label: string;
+  route: string;
+  build: (answers: Record<string, string>) => Record<string, unknown>;
+}> = {
+  profit_audit: {
+    label: 'Open in Profit Audit',
+    route: '/audit',
+    build: buildProfitAuditPrefill as (answers: Record<string, string>) => Record<string, unknown>
+  },
+  food_safety: {
+    label: 'Open in Food Safety Audit',
+    route: '/food-safety',
+    build: buildFoodSafetyPrefill as (answers: Record<string, string>) => Record<string, unknown>
+  },
+  mystery_shop: {
+    label: 'Open in Mystery Shop',
+    route: '/mystery-shop',
+    build: buildMysteryShopPrefill as (answers: Record<string, string>) => Record<string, unknown>
+  },
+  menu_profit: {
+    label: 'Open in Menu Profit Engine',
+    route: '/menu',
+    build: buildMenuProfitPrefill as (answers: Record<string, string>) => Record<string, unknown>
+  }
+};
 
 function statusLabel(status: QuestionnaireSubmissionRecord['status']) {
   if (status === 'pending') return 'Pending review';
@@ -79,10 +138,12 @@ export function QuestionnaireSubmissionDetailPage() {
     }
   }
 
-  function handlePrefillAudit() {
+  function handleOpenInTool() {
     if (!submission) return;
-    const prefill = buildPrefillState(submission.answers);
-    navigate('/audit', { state: { prefill, fromSubmissionId: submission.id } });
+    const config = PREFILL_CONFIGS[submission.template_id];
+    if (!config) return;
+    const prefill = config.build(submission.answers);
+    navigate(config.route, { state: { prefill, fromSubmissionId: submission.id } });
   }
 
   if (loading) {
@@ -110,7 +171,7 @@ export function QuestionnaireSubmissionDetailPage() {
 
   const template = getQuestionnaireTemplate(submission.template_id);
   const businessName = submission.answers.businessName || submission.answers.contactName || 'Unknown business';
-  const canPrefillAudit = submission.template_id === 'profit_audit';
+  const prefillConfig = PREFILL_CONFIGS[submission.template_id] ?? null;
 
   return (
     <div className="page-stack">
@@ -148,13 +209,13 @@ export function QuestionnaireSubmissionDetailPage() {
               </div>
             </div>
             <div className="q-detail-actions">
-              {canPrefillAudit && (
+              {prefillConfig && (
                 <button
                   className="button button-primary"
                   type="button"
-                  onClick={handlePrefillAudit}
+                  onClick={handleOpenInTool}
                 >
-                  Open in Profit Audit
+                  {prefillConfig.label}
                 </button>
               )}
               {submission.status === 'pending' && (

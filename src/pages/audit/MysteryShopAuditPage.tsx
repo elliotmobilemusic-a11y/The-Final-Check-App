@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { QuantityInput, CurrencyInput } from '../../components/ui/NumericInput';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
@@ -398,6 +398,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
 
 export function MysteryShopAuditPage() {
   const { runWithActivity } = useActivityOverlay();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
@@ -436,6 +437,15 @@ export function MysteryShopAuditPage() {
   useEffect(() => {
     writeDraft(MYSTERY_SHOP_DRAFT_KEY, form);
   }, [form]);
+
+  useEffect(() => {
+    const state = location.state as { prefill?: Partial<MysteryShopAuditState>; fromSubmissionId?: string } | null;
+    if (!state?.prefill) return;
+    setForm((current) => normalizeMysteryShopAudit({ ...current, ...state.prefill }));
+    setMessage('Audit prefilled from pre-visit questionnaire.');
+    window.history.replaceState({}, '', window.location.href);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const loadId = searchParams.get('load');
