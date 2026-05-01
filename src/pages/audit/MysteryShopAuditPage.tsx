@@ -403,7 +403,7 @@ export function MysteryShopAuditPage() {
   const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<MysteryShopAuditState>(() =>
-    searchParams.get('load')
+    (searchParams.get('load') || searchParams.get('new'))
       ? createDefaultMysteryShopAudit()
       : normalizeMysteryShopAudit(readDraft<MysteryShopAuditState>(MYSTERY_SHOP_DRAFT_KEY))
   );

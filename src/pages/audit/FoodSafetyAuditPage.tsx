@@ -473,7 +473,7 @@ export function FoodSafetyAuditPage() {
   const { visitMode, toggleVisitMode } = useVisitMode();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [form, setForm] = useState<FoodSafetyAuditState>(() =>
-    searchParams.get('load')
+    (searchParams.get('load') || searchParams.get('new'))
       ? createDefaultFoodSafetyAudit()
       : normalizeFoodSafetyAudit(readDraft<FoodSafetyAuditState>(FOOD_SAFETY_DRAFT_KEY))
   );

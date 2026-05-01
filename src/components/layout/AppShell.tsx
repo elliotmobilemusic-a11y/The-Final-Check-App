@@ -22,8 +22,8 @@ const navItems = [
   { to: '/dashboard', label: 'Command Centre' },
   { to: '/clients', label: 'Clients' },
   { to: '/audit-hub', label: 'Profit Audit' },
-  { to: '/food-safety', label: 'Food Safety' },
-  { to: '/mystery-shop', label: 'Mystery Shop' },
+  { to: '/food-safety-hub', label: 'Food Safety' },
+  { to: '/mystery-shop-hub', label: 'Mystery Shop' },
   { to: '/menu', label: 'Menu Profit Engine' },
   { to: '/questionnaires', label: 'Pre-Visit Forms' }
 ];
@@ -56,13 +56,23 @@ const workspaceDetails = [
     detail: 'Quantify hidden profit, structure findings, and build a premium client-ready report.'
   },
   {
+    match: '/food-safety-hub',
+    label: 'Food Safety workspace',
+    detail: 'Choose a client, continue a recent audit, or start fresh from a pre-visit questionnaire.'
+  },
+  {
     match: '/food-safety',
-    label: 'Food safety workspace',
+    label: 'Food Safety Audit',
     detail: 'Run site compliance checks, temperature logging, and immediate action follow-up.'
   },
   {
+    match: '/mystery-shop-hub',
+    label: 'Mystery Shop workspace',
+    detail: 'Choose a client, continue a recent audit, or start fresh from a pre-visit questionnaire.'
+  },
+  {
     match: '/mystery-shop',
-    label: 'Mystery shop workspace',
+    label: 'Mystery Shop Audit',
     detail: 'Score the guest journey, capture service moments, and build a clean follow-up review.'
   },
   {

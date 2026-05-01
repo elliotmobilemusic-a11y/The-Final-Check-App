@@ -29,6 +29,16 @@ const ProfitAuditHubPage = lazy(() =>
     default: module.ProfitAuditHubPage
   }))
 );
+const FoodSafetyHubPage = lazy(() =>
+  import('./pages/audit/FoodSafetyHubPage').then((module) => ({
+    default: module.FoodSafetyHubPage
+  }))
+);
+const MysteryShopHubPage = lazy(() =>
+  import('./pages/audit/MysteryShopHubPage').then((module) => ({
+    default: module.MysteryShopHubPage
+  }))
+);
 const LoginPage = lazy(() =>
   import('./pages/system/LoginPage').then((module) => ({ default: module.LoginPage }))
 );
@@ -154,7 +164,9 @@ export default function App() {
           <Route path="clients/:clientId/:section" element={<ClientProfilePage />} />
           <Route path="audit-hub" element={<ProfitAuditHubPage />} />
           <Route path="audit" element={<KitchenAuditPage />} />
+          <Route path="food-safety-hub" element={<FoodSafetyHubPage />} />
           <Route path="food-safety" element={<FoodSafetyAuditPage />} />
+          <Route path="mystery-shop-hub" element={<MysteryShopHubPage />} />
           <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
           <Route path="questionnaires" element={<QuestionnaireSubmissionsPage />} />
