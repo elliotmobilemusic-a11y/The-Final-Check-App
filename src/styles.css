@@ -11069,15 +11069,36 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-intro-band {
+  position: relative;
   display: grid;
-  gap: 12px;
-  padding: 4px 0 0;
-  max-width: 640px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 32px;
+  padding: 20px 24px;
+  background: var(--surface-card-strong);
+  border: 1px solid var(--surface-shadow-line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+
+.dashboard-intro-band::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 88%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 52%, var(--text) 48%) 32%,
+    color-mix(in srgb, var(--accent) 8%, transparent 92%) 100%
+  );
 }
 
 .dashboard-intro-copy {
   display: grid;
-  gap: 5px;
+  gap: 3px;
 }
 
 .dashboard-intro-eyebrow {
@@ -11104,7 +11125,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 1px;
+  margin-top: 7px;
 }
 
 .dashboard-intro-support p {
@@ -11141,15 +11162,19 @@ body[data-theme="midnight"] .client-portal-launch-card {
 
 .dashboard-intro-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
-  align-items: center;
+  align-items: stretch;
+  flex-shrink: 0;
 }
 
 .dashboard-intro-actions .button {
-  min-height: 36px;
-  padding: 7px 13px;
+  min-height: 34px;
+  padding: 6px 14px;
   font-size: 12px;
+  white-space: nowrap;
+  text-align: center;
+  justify-content: center;
 }
 
 .dashboard-stat-row {
@@ -11501,7 +11526,8 @@ body[data-theme="midnight"] .client-portal-launch-card {
 
 @media (max-width: 1200px) {
   .dashboard-intro-band {
-    max-width: 580px;
+    gap: 14px 24px;
+    padding: 18px 20px;
   }
 }
 
@@ -11527,7 +11553,14 @@ body[data-theme="midnight"] .client-portal-launch-card {
 
 @media (max-width: 900px) {
   .dashboard-intro-band {
-    max-width: none;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-intro-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
   .dashboard-side-zone,
