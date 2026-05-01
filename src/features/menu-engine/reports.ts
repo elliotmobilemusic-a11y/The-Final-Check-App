@@ -1,49 +1,84 @@
 import type { ClientProfile, MenuDish, MenuProjectState, SupabaseRecord } from '../../types';
-import { fmtCurrency, fmtPercent, num } from '../../lib/utils';
+import { fmtCurrency, fmtPercent, num, safe } from '../../lib/utils';
 import {
-  buildReportHeroHtml,
-  escapeReportHtml,
-  formatReportDate
-} from '../../reports/htmlDocument';
+  buildChapterHtml,
+  buildDetailGridHtml,
+  buildReportBodyHtml,
+  buildReportCoverHtml,
+  buildSummaryGridHtml,
+  buildStoryCardsHtml,
+  escapeHtml,
+  hasReportContent
+} from '../../reports/pdf';
 import { dishActualGp, dishIngredientCost, dishRecommendedPrice } from '../profit/menuProfit';
-
-const escapeHtml = escapeReportHtml;
-const formatDate = formatReportDate;
 
 function yesNo(value: boolean) {
   return value ? 'Yes' : 'No';
 }
 
+function formatShortDate(value?: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).format(date);
+}
+
+function currencyIfPositive(value: number) {
+  return num(value) > 0 ? fmtCurrency(value) : '';
+}
+
+function percentIfUseful(value: number) {
+  return num(value) > 0 ? fmtPercent(value) : '';
+}
+
+function reportSiteLabel(client: ClientProfile, menuRecord: SupabaseRecord<MenuProjectState>) {
+  return safe(menuRecord.site_name || menuRecord.data.siteName || client.location);
+}
+
 function ingredientRows(dish: MenuDish) {
-  const rows = dish.ingredients.filter((ingredient) => ingredient.name.trim());
-  if (!rows.length) {
-    return '<p class="muted">No ingredient lines recorded.</p>';
-  }
+  const rows = dish.ingredients.filter((ingredient) => safe(ingredient.name));
+  if (!rows.length) return '';
+
+  const showSupplier = rows.some((ingredient) => safe(ingredient.supplier));
 
   return `
     <table class="report-table report-table-compact">
       <thead>
         <tr>
           <th>Ingredient</th>
-          <th>Supplier</th>
-          <th>Qty used</th>
-          <th>Pack size</th>
-          <th>Pack cost</th>
+          ${showSupplier ? '<th>Supplier</th>' : ''}
+          <th>Qty Used</th>
+          <th>Pack Size</th>
+          <th>Pack Cost</th>
         </tr>
       </thead>
       <tbody>
         ${rows
-          .map(
-            (ingredient) => `
+          .map((ingredient) => {
+            const qtyUsed =
+              num(ingredient.qtyUsed) > 0
+                ? `${num(ingredient.qtyUsed)} ${safe(ingredient.qtyUnit)}`
+                : '';
+            const packSize =
+              num(ingredient.packQty) > 0
+                ? `${num(ingredient.packQty)} ${safe(ingredient.packUnit)}`
+                : '';
+
+            return `
               <tr>
                 <td>${escapeHtml(ingredient.name)}</td>
-                <td>${escapeHtml(ingredient.supplier || 'Not recorded')}</td>
-                <td>${escapeHtml(`${num(ingredient.qtyUsed)} ${ingredient.qtyUnit}`)}</td>
-                <td>${escapeHtml(`${num(ingredient.packQty)} ${ingredient.packUnit}`)}</td>
-                <td>${escapeHtml(fmtCurrency(num(ingredient.packCost)))}</td>
+                ${showSupplier ? `<td>${escapeHtml(ingredient.supplier)}</td>` : ''}
+                <td>${escapeHtml(qtyUsed)}</td>
+                <td>${escapeHtml(packSize)}</td>
+                <td>${escapeHtml(currencyIfPositive(num(ingredient.packCost)))}</td>
               </tr>
-            `
-          )
+            `;
+          })
           .join('')}
       </tbody>
     </table>
@@ -57,70 +92,85 @@ export function buildDishSpecReportHtml(options: {
   sectionName: string;
   preparedBy?: string;
 }) {
-  const { client, menuRecord, dish, sectionName, preparedBy = 'Jason Wardill / The Final Check' } = options;
-  const siteLabel = menuRecord.site_name || menuRecord.data.siteName || client.location || 'Account level';
+  const { client, menuRecord, dish, sectionName, preparedBy = 'The Final Check' } = options;
+  const siteLabel = reportSiteLabel(client, menuRecord);
+  const portionSize = safe(dish.specSheet.portionSize || dish.portionSize);
+  const foodCost = dishIngredientCost(dish);
+  const actualGp = dishActualGp(dish);
+  const ingredientTable = ingredientRows(dish);
 
-  return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Dish spec sheet',
-      title: dish.name || 'Dish spec',
-      leadHtml: `<strong>${escapeHtml(client.companyName || 'Client')}</strong> • ${escapeHtml(
-        menuRecord.title || menuRecord.data.menuName || 'Menu'
-      )} • ${escapeHtml(sectionName || 'Menu section')}`,
-      description: 'Dish specification prepared from the linked menu-engine record for kitchen delivery, consistency, and client handover.',
-      chips: [siteLabel, dish.portionSize || 'Portion not set', preparedBy],
-      cards: [
-        { label: 'Selling price', value: fmtCurrency(dish.sellPrice) },
-        { label: 'Food cost', value: fmtCurrency(dishIngredientCost(dish)) },
-        { label: 'GP', value: fmtPercent(dishActualGp(dish)) },
-        { label: 'Prepared', value: formatDate(menuRecord.updated_at) }
-      ]
-    })}
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Dish Spec Sheet',
+    clientName: safe(dish.name) || safe(menuRecord.title) || 'Dish Handover',
+    preparedDate: formatShortDate(menuRecord.updated_at),
+    consultant: preparedBy,
+    summary:
+      'Kitchen-ready dish specification for consistent preparation, service delivery, allergen awareness, and client handover.',
+    metrics: [
+      { label: 'Selling price', value: currencyIfPositive(dish.sellPrice), primary: true },
+      { label: 'Food cost', value: currencyIfPositive(foodCost) },
+      { label: 'Actual GP', value: percentIfUseful(actualGp) }
+    ],
+    details: [
+      { label: 'Client', value: safe(client.companyName) },
+      { label: 'Site', value: siteLabel },
+      { label: 'Menu', value: safe(menuRecord.title || menuRecord.data.menuName) },
+      { label: 'Section', value: safe(sectionName) },
+      { label: 'Portion', value: portionSize }
+    ]
+  });
 
-    <div class="summary-grid">
-      <div class="meta-card"><span>Client</span><strong>${escapeHtml(client.companyName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Site</span><strong>${escapeHtml(siteLabel)}</strong></div>
-      <div class="meta-card"><span>Menu</span><strong>${escapeHtml(menuRecord.title || menuRecord.data.menuName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Section</span><strong>${escapeHtml(sectionName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Portion size</span><strong>${escapeHtml(dish.specSheet.portionSize || dish.portionSize || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Portal visible</span><strong>${yesNo(dish.specSheet.portalVisible)}</strong></div>
-    </div>
+  const overviewChapter = buildChapterHtml({
+    kicker: 'Operational Handover',
+    title: 'Dish Overview and Service Standard',
+    lead: 'Client-facing dish detail for kitchen delivery, service consistency, and handover.',
+    body: `
+      ${buildDetailGridHtml([
+        { label: 'Client', value: client.companyName },
+        { label: 'Site', value: siteLabel },
+        { label: 'Menu', value: menuRecord.title || menuRecord.data.menuName },
+        { label: 'Section', value: sectionName },
+        { label: 'Portion size', value: portionSize },
+        { label: 'Portal visible', value: dish.specSheet.portalVisible ? yesNo(dish.specSheet.portalVisible) : '' }
+      ])}
+      ${buildStoryCardsHtml([
+        { title: 'Dish description', body: dish.description || dish.notes },
+        { title: 'Dietary tags', body: dish.dietaryTags.join(', ') },
+        { title: 'Allergen information', body: dish.allergenInformation },
+        { title: 'Equipment required', body: dish.specSheet.equipmentRequired || dish.equipmentRequired }
+      ])}
+    `
+  });
 
-    <section>
-      <h2>Dish overview</h2>
-      <div class="report-grid columns-2">
-        <div><h3>Dish description</h3><p>${escapeHtml(dish.description || dish.notes || 'Not recorded')}</p></div>
-        <div><h3>Dietary tags</h3><p>${escapeHtml(dish.dietaryTags.join(', ') || 'Not recorded')}</p></div>
-      </div>
-      <div class="report-grid columns-2">
-        <div><h3>Allergen information</h3><p>${escapeHtml(dish.allergenInformation || 'Not recorded')}</p></div>
-        <div><h3>Equipment required</h3><p>${escapeHtml(dish.specSheet.equipmentRequired || dish.equipmentRequired || 'Not recorded')}</p></div>
-      </div>
-    </section>
+  const methodBody = buildStoryCardsHtml([
+    { title: 'Recipe method', body: dish.specSheet.recipeMethod || dish.recipeMethod },
+    { title: 'Plating instructions', body: dish.specSheet.platingInstructions || dish.platingInstructions },
+    { title: 'Prep notes', body: dish.specSheet.prepNotes || dish.prepNotes },
+    { title: 'Service notes', body: dish.specSheet.serviceNotes || dish.serviceNotes },
+    { title: 'Holding / storage notes', body: dish.specSheet.holdingStorageNotes || dish.holdingStorageNotes },
+    { title: 'Client-facing notes', body: dish.specSheet.clientFacingNotes || dish.clientFacingNotes }
+  ]);
 
-    <section>
-      <h2>Method and plating</h2>
-      <div class="report-grid columns-2">
-        <div><h3>Recipe method</h3><p>${escapeHtml(dish.specSheet.recipeMethod || dish.recipeMethod || 'Not recorded')}</p></div>
-        <div><h3>Plating instructions</h3><p>${escapeHtml(dish.specSheet.platingInstructions || dish.platingInstructions || 'Not recorded')}</p></div>
-      </div>
-    </section>
+  const methodChapter = methodBody
+    ? buildChapterHtml({
+      kicker: 'Kitchen Delivery',
+      title: 'Method, Plating and Service Notes',
+      lead: 'Operational guidance for the kitchen and service team.',
+      body: methodBody
+    })
+    : '';
 
-    <section>
-      <h2>Kitchen notes</h2>
-      <div class="report-grid columns-2">
-        <div><h3>Prep notes</h3><p>${escapeHtml(dish.specSheet.prepNotes || dish.prepNotes || 'Not recorded')}</p></div>
-        <div><h3>Service notes</h3><p>${escapeHtml(dish.specSheet.serviceNotes || dish.serviceNotes || 'Not recorded')}</p></div>
-        <div><h3>Holding / storage notes</h3><p>${escapeHtml(dish.specSheet.holdingStorageNotes || dish.holdingStorageNotes || 'Not recorded')}</p></div>
-        <div><h3>Client-facing notes</h3><p>${escapeHtml(dish.specSheet.clientFacingNotes || dish.clientFacingNotes || 'Not recorded')}</p></div>
-      </div>
-    </section>
+  const ingredientChapter =
+    hasReportContent(ingredientTable)
+      ? buildChapterHtml({
+        kicker: 'Appendix',
+        title: 'Ingredient Summary',
+        lead: 'Ingredient-level detail for production and handover.',
+        body: ingredientTable
+      })
+      : '';
 
-    <section>
-      <h2>Ingredient summary</h2>
-      ${ingredientRows(dish)}
-    </section>
-  `;
+  return `${coverHtml}${buildReportBodyHtml([overviewChapter, methodChapter, ingredientChapter])}`;
 }
 
 export function buildRecipeCostingReportHtml(options: {
@@ -130,67 +180,83 @@ export function buildRecipeCostingReportHtml(options: {
   sectionName: string;
   preparedBy?: string;
 }) {
-  const { client, menuRecord, dish, sectionName, preparedBy = 'Jason Wardill / The Final Check' } = options;
+  const { client, menuRecord, dish, sectionName, preparedBy = 'The Final Check' } = options;
   const totalRecipeCost = dishIngredientCost(dish);
-  const portions = Math.max(num(dish.recipeCosting.numberOfPortions), 1);
-  const costPerPortion = totalRecipeCost / portions;
+  const portions = Math.max(num(dish.recipeCosting.numberOfPortions), 0);
+  const costPerPortion = portions > 0 ? totalRecipeCost / portions : 0;
   const actualGp = dishActualGp(dish);
   const suggestedSell = dishRecommendedPrice(dish);
-  const siteLabel = menuRecord.site_name || menuRecord.data.siteName || client.location || 'Account level';
+  const siteLabel = reportSiteLabel(client, menuRecord);
+  const portionSize = safe(dish.recipeCosting.portionSize || dish.portionSize);
+  const ingredientTable = ingredientRows(dish);
 
-  return `
-    ${buildReportHeroHtml({
-      eyebrow: 'Recipe costing sheet',
-      title: dish.name || 'Recipe costing',
-      leadHtml: `<strong>${escapeHtml(client.companyName || 'Client')}</strong> • ${escapeHtml(
-        menuRecord.title || menuRecord.data.menuName || 'Menu'
-      )} • ${escapeHtml(sectionName || 'Menu section')}`,
-      description: 'Recipe costing prepared from the linked menu-engine dish record for pricing, GP discipline, and operational control.',
-      chips: [siteLabel, dish.recipeCosting.portionSize || dish.portionSize || 'Portion not set', preparedBy],
-      cards: [
-        { label: 'Total recipe cost', value: fmtCurrency(totalRecipeCost) },
-        { label: 'Cost / portion', value: fmtCurrency(costPerPortion) },
-        { label: 'Actual GP', value: fmtPercent(actualGp) },
-        { label: 'Suggested sell', value: fmtCurrency(suggestedSell) }
-      ]
-    })}
+  const coverHtml = buildReportCoverHtml({
+    reportType: 'Recipe Costing Sheet',
+    clientName: safe(dish.name) || safe(menuRecord.title) || 'Recipe Costing',
+    preparedDate: formatShortDate(menuRecord.updated_at),
+    consultant: preparedBy,
+    summary:
+      'Commercial recipe costing for GP discipline, pricing review, and operational cost control.',
+    metrics: [
+      { label: 'Total recipe cost', value: currencyIfPositive(totalRecipeCost), primary: true },
+      { label: 'Cost / portion', value: currencyIfPositive(costPerPortion) },
+      { label: 'Suggested sell', value: currencyIfPositive(suggestedSell) }
+    ],
+    details: [
+      { label: 'Client', value: safe(client.companyName) },
+      { label: 'Site', value: siteLabel },
+      { label: 'Menu', value: safe(menuRecord.title || menuRecord.data.menuName) },
+      { label: 'Section', value: safe(sectionName) },
+      { label: 'Portion', value: portionSize }
+    ]
+  });
 
-    <div class="summary-grid">
-      <div class="meta-card"><span>Client</span><strong>${escapeHtml(client.companyName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Site</span><strong>${escapeHtml(siteLabel)}</strong></div>
-      <div class="meta-card"><span>Menu</span><strong>${escapeHtml(menuRecord.title || menuRecord.data.menuName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Section</span><strong>${escapeHtml(sectionName || 'Not set')}</strong></div>
-      <div class="meta-card"><span>Target GP</span><strong>${escapeHtml(fmtPercent(dish.recipeCosting.targetGpPercentage || dish.targetGp))}</strong></div>
-      <div class="meta-card"><span>VAT included</span><strong>${yesNo(dish.recipeCosting.vatEnabled)}</strong></div>
-    </div>
+  const costingChapter = buildChapterHtml({
+    kicker: 'Commercial Summary',
+    title: 'Recipe Cost and GP Position',
+    lead: 'Client-facing costing summary for pricing decisions and margin protection.',
+    body: `
+      ${buildSummaryGridHtml([
+        { label: 'Selling price', value: currencyIfPositive(dish.sellPrice) },
+        { label: 'Recipe portions', value: portions > 0 ? String(portions) : '' },
+        { label: 'Total recipe cost', value: currencyIfPositive(totalRecipeCost) },
+        { label: 'Cost per portion', value: currencyIfPositive(costPerPortion) },
+        { label: 'Actual GP', value: percentIfUseful(actualGp) },
+        { label: 'Target GP', value: percentIfUseful(dish.recipeCosting.targetGpPercentage || dish.targetGp) },
+        { label: 'Suggested sell price', value: currencyIfPositive(suggestedSell) },
+        { label: 'Prepared', value: formatShortDate(menuRecord.updated_at) }
+      ])}
+      ${buildDetailGridHtml([
+        { label: 'Client', value: client.companyName },
+        { label: 'Site', value: siteLabel },
+        { label: 'Menu', value: menuRecord.title || menuRecord.data.menuName },
+        { label: 'Section', value: sectionName },
+        { label: 'VAT included', value: dish.recipeCosting.vatEnabled ? yesNo(dish.recipeCosting.vatEnabled) : '' }
+      ])}
+    `
+  });
 
-    <section>
-      <h2>Commercial costing summary</h2>
-      <div class="report-grid columns-4">
-        <div><h3>Selling price</h3><p>${escapeHtml(fmtCurrency(dish.sellPrice))}</p></div>
-        <div><h3>Recipe portions</h3><p>${escapeHtml(String(portions))}</p></div>
-        <div><h3>Total recipe cost</h3><p>${escapeHtml(fmtCurrency(totalRecipeCost))}</p></div>
-        <div><h3>Cost per portion</h3><p>${escapeHtml(fmtCurrency(costPerPortion))}</p></div>
-      </div>
-      <div class="report-grid columns-4">
-        <div><h3>Actual GP</h3><p>${escapeHtml(fmtPercent(actualGp))}</p></div>
-        <div><h3>Target GP</h3><p>${escapeHtml(fmtPercent(dish.recipeCosting.targetGpPercentage || dish.targetGp))}</p></div>
-        <div><h3>Suggested sell price</h3><p>${escapeHtml(fmtCurrency(suggestedSell))}</p></div>
-        <div><h3>Prepared</h3><p>${escapeHtml(formatDate(menuRecord.updated_at))}</p></div>
-      </div>
-    </section>
+  const ingredientChapter = ingredientTable
+    ? buildChapterHtml({
+      kicker: 'Costing Detail',
+      title: 'Ingredient Costing',
+      lead: 'Ingredient-level costing detail for kitchen management and price review.',
+      body: ingredientTable
+    })
+    : '';
 
-    <section>
-      <h2>Ingredient costing</h2>
-      ${ingredientRows(dish)}
-    </section>
+  const notesBody = buildStoryCardsHtml([
+    { title: 'Recipe costing notes', body: dish.recipeCosting.notes },
+    { title: 'Method / production notes', body: dish.recipeMethod || dish.specSheet.recipeMethod }
+  ]);
 
-    <section>
-      <h2>Costing notes</h2>
-      <div class="report-grid columns-2">
-        <div><h3>Recipe costing notes</h3><p>${escapeHtml(dish.recipeCosting.notes || 'Not recorded')}</p></div>
-        <div><h3>Method / production notes</h3><p>${escapeHtml(dish.recipeMethod || dish.specSheet.recipeMethod || 'Not recorded')}</p></div>
-      </div>
-    </section>
-  `;
+  const notesChapter = notesBody
+    ? buildChapterHtml({
+      kicker: 'Notes',
+      title: 'Costing and Production Notes',
+      body: notesBody
+    })
+    : '';
+
+  return `${coverHtml}${buildReportBodyHtml([costingChapter, ingredientChapter, notesChapter])}`;
 }

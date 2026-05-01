@@ -8,6 +8,8 @@ export type ChapterConfig = {
 };
 
 export function buildChapterHtml(config: ChapterConfig): string {
+  if (!config.body.trim()) return '';
+
   return `
     <section class="pdf-chapter pdf-chapter-break">
       <div class="pdf-chapter-header">

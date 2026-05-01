@@ -1,7 +1,6 @@
 import type { AuditFormState } from '../../types';
 import { calculateKitchenProfitMetrics, buildKitchenProfitNarrative } from '../../features/profit/kitchenProfit';
 import { safe } from '../../lib/utils';
-import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 import {
   buildReportCoverHtml,
   buildChapterHtml,
@@ -12,7 +11,8 @@ import {
   buildReportBodyHtml,
   buildSummaryGridHtml,
   buildRecommendationListHtml,
-  buildActionRegisterHtml
+  buildActionRegisterHtml,
+  buildReportPhotoGalleryHtml
 } from './index';
 
 export function buildKitchenAuditPdf(audit: AuditFormState): string {
@@ -38,10 +38,10 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
       { label: 'Control Score', value: `${Math.round(metrics.controlScore)}%` }
     ],
     details: [
-      { label: 'Location', value: safe(audit.location) || 'Not recorded' },
-      { label: 'Covers / Week', value: String(audit.coversPerWeek || 'Not recorded') },
-      { label: 'Average Spend', value: formatCurrencyShort(audit.averageSpend) },
-      { label: 'Kitchen Team', value: String(audit.kitchenTeamSize || 'Not recorded') }
+      { label: 'Location', value: safe(audit.location) },
+      { label: 'Covers / Week', value: audit.coversPerWeek > 0 ? String(audit.coversPerWeek) : '' },
+      { label: 'Average Spend', value: audit.averageSpend > 0 ? formatCurrencyShort(audit.averageSpend) : '' },
+      { label: 'Kitchen Team', value: audit.kitchenTeamSize > 0 ? String(audit.kitchenTeamSize) : '' }
     ],
     summary: narrative.executiveSummary || audit.summary
   });
@@ -60,8 +60,8 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
         { label: 'Open actions', value: `${namedActions.length}`, detail: 'Named client actions captured in the audit.' }
       ])}
 
-      ${buildSectionHtml('Key findings', buildRecommendationListHtml(narrative.keyIssues, 'No material issues recorded.'))}
-      ${buildSectionHtml('Recommended first moves', buildRecommendationListHtml(narrative.quickWins, 'No quick wins recorded.'))}
+      ${buildSectionHtml('Key findings', buildRecommendationListHtml(narrative.keyIssues))}
+      ${buildSectionHtml('Recommended first moves', buildRecommendationListHtml(narrative.quickWins))}
       ${buildSectionHtml('Follow-up recommendation', `<p>${escapeHtml(normalizeProseText(narrative.followUpRecommendation))}</p>`)}
     `
   });
@@ -132,9 +132,9 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 3 - IMMEDIATE PRIORITIES
   // --------------------------
   const prioritiesHtml = `
-    <div class="report-grid">
+    ${highPriorityActions.length ? `<div class="report-grid">
       ${audit.actionItems
-      .filter(item => item.priority === 'High')
+      .filter(item => item.priority === 'Critical' || item.priority === 'High')
         .slice(0, 3)
         .map(item => `
         <div class="report-story-card">
@@ -144,7 +144,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
           <p>${escapeHtml(item.impact)}</p>
         </div>
         `).join('')}
-    </div>
+    </div>` : ''}
 
     <div style="margin-top: 24px;">
       <h3>Milestones</h3>
@@ -164,8 +164,8 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
       </div>
     </div>
 
-    ${buildSectionHtml('30 to 90 day plan', buildRecommendationListHtml(narrative.actionPlan30To90Days, 'No 30 to 90 day plan recorded.'))}
-    ${buildSectionHtml('Action register', buildActionRegisterHtml(highPriorityActions.length ? highPriorityActions : namedActions, 'No priority actions recorded.'))}
+    ${buildSectionHtml('30 to 90 day plan', buildRecommendationListHtml(narrative.actionPlan30To90Days))}
+    ${buildSectionHtml('Action register', buildActionRegisterHtml(highPriorityActions.length ? highPriorityActions : namedActions))}
     ${buildSectionHtml('Next scheduled review', `<p>${escapeHtml(normalizeProseText(audit.nextVisit || 'To be confirmed'))}</p>`)}
   `;
 
@@ -215,15 +215,14 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 5 - LAYOUT & EQUIPMENT
   // --------------------------
   const layoutHtml = `
-    ${buildSectionHtml('Layout Assessment', `
-      <p>${normalizeProseText(audit.layoutStrengths)}</p>
-      <p>${normalizeProseText(audit.layoutIssues)}</p>
-      <p>${normalizeProseText(audit.layoutImpact)}</p>
-    `)}
+    ${buildSectionHtml('Layout Assessment', [audit.layoutStrengths, audit.layoutIssues, audit.layoutImpact]
+      .filter(Boolean)
+      .map((item) => `<p>${escapeHtml(normalizeProseText(item))}</p>`)
+      .join(''))}
 
-    ${buildSectionHtml('Equipment Condition', `
-      <p>${normalizeProseText(audit.equipmentNeeds)}</p>
-    `)}
+    ${buildSectionHtml('Equipment Condition', audit.equipmentNeeds ? `
+      <p>${escapeHtml(normalizeProseText(audit.equipmentNeeds))}</p>
+    ` : '')}
   `;
 
   const layoutChapter = buildChapterHtml({
@@ -237,10 +236,10 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 6 - OPERATIONAL FINDINGS
   // --------------------------
   const findingsHtml = `
-    ${buildSectionHtml('Strengths', `<p>${escapeHtml(normalizeProseText(audit.quickWins || 'No strengths recorded.'))}</p>`)}
-    ${buildSectionHtml('Areas For Improvement', `<p>${escapeHtml(normalizeProseText(audit.systems || 'No improvement narrative recorded.'))}</p>`)}
-    ${buildSectionHtml('Food Quality', `<p>${escapeHtml(normalizeProseText(audit.foodQuality || 'No food quality narrative recorded.'))}</p>`)}
-    ${renderAuditPhotoGallery(audit.photos, 'summary')}
+    ${buildSectionHtml('Strengths', audit.quickWins ? `<p>${escapeHtml(normalizeProseText(audit.quickWins))}</p>` : '')}
+    ${buildSectionHtml('Areas For Improvement', audit.systems ? `<p>${escapeHtml(normalizeProseText(audit.systems))}</p>` : '')}
+    ${buildSectionHtml('Food Quality', audit.foodQuality ? `<p>${escapeHtml(normalizeProseText(audit.foodQuality))}</p>` : '')}
+    ${buildReportPhotoGalleryHtml(audit.photos, 'summary')}
   `;
 
   const findingsChapter = buildChapterHtml({
@@ -275,7 +274,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
         `).join('')}
       </tbody>
     </table>
-    ` : '<p class="pdf-empty-state">No portion variance issues recorded</p>')}
+    ` : '')}
 
     ${buildSectionHtml('Ordering & Stock', audit.orderingItems.length > 0 ? `
     <table class="report-table">
@@ -298,7 +297,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
         `).join('')}
       </tbody>
     </table>
-    ` : '<p class="pdf-empty-state">No ordering issues recorded</p>')}
+    ` : '')}
   `;
 
   const operationsChapter = buildChapterHtml({
@@ -312,13 +311,12 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 9 - LEADERSHIP NARRATIVE
   // --------------------------
   const leadershipHtml = `
-    ${buildSectionHtml('Culture & Leadership', `<p>${escapeHtml(normalizeProseText(audit.cultureLeadership || 'No leadership narrative recorded.'))}</p>`)}
-    ${buildSectionHtml('Team & Training', `<p>${escapeHtml(normalizeProseText(audit.cultureLeadership || 'Training assessment complete.'))}</p>`)}
+    ${buildSectionHtml('Culture & Leadership', audit.cultureLeadership ? `<p>${escapeHtml(normalizeProseText(audit.cultureLeadership))}</p>` : '')}
 
-    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--pdf-line-medium);">
+    ${audit.longTermStrategy ? `<div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--pdf-line-medium);">
       <h3>Closing Summary</h3>
-      <p>${escapeHtml(normalizeProseText(audit.longTermStrategy || 'No long-term strategy recorded.'))}</p>
-    </div>
+      <p>${escapeHtml(normalizeProseText(audit.longTermStrategy))}</p>
+    </div>` : ''}
   `;
 
   const leadershipChapter = buildChapterHtml({

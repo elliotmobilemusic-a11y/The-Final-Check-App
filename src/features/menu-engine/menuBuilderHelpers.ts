@@ -3,6 +3,7 @@ import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/uti
 import { createEmptyClientData } from '../clients/clientData';
 import {
   buildChapterHtml,
+  buildDetailGridHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
   buildRecommendationListHtml,
@@ -151,15 +152,15 @@ export function buildMenuReport(project: MenuProjectState) {
     consultant: 'The Final Check',
     summary: 'Dish-level margin, weekly contribution, and pricing opportunity prepared for client review and PDF handover.',
     metrics: [
-      { label: 'Weighted GP', value: fmtPercent(summary.weightedGp), primary: true },
-      { label: 'Weekly profit', value: fmtCurrency(summary.weeklyProfit) },
-      { label: 'Weekly opportunity', value: fmtCurrency(summary.totalOpportunity) }
+      { label: 'Weighted GP', value: allDishes.length > 0 ? fmtPercent(summary.weightedGp) : '', primary: true },
+      { label: 'Weekly profit', value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '' },
+      { label: 'Weekly opportunity', value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '' }
     ],
     details: [
-      { label: 'Menu', value: safe(project.menuName) || 'Not recorded' },
-      { label: 'Sections', value: `${project.sections.length}` },
-      { label: 'Dishes', value: `${allDishes.length}` },
-      { label: 'Below target', value: `${summary.belowTargetCount}` }
+      { label: 'Menu', value: safe(project.menuName) },
+      { label: 'Sections', value: project.sections.length > 0 ? `${project.sections.length}` : '' },
+      { label: 'Dishes', value: allDishes.length > 0 ? `${allDishes.length}` : '' },
+      { label: 'Below target', value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '' }
     ]
   });
 
@@ -169,36 +170,30 @@ export function buildMenuReport(project: MenuProjectState) {
     lead: 'Client-facing view of menu GP, weekly profit, pricing opportunities, and recommended next steps.',
     body: `
       ${buildSummaryGridHtml([
-        { label: 'Weighted GP', value: fmtPercent(summary.weightedGp), detail: `Default target ${fmtPercent(project.defaultTargetGp)}.` },
-        { label: 'Weekly revenue', value: fmtCurrency(summary.weeklyRevenue), detail: 'Estimated revenue from current dish mix.' },
-        { label: 'Weekly profit', value: fmtCurrency(summary.weeklyProfit), detail: 'Estimated contribution from recorded dishes.' },
-        { label: 'Weekly opportunity', value: fmtCurrency(summary.totalOpportunity), detail: 'Potential uplift from pricing gaps.' },
-        { label: 'Below target', value: `${summary.belowTargetCount}`, detail: `${pricingChangesNeeded} dishes need pricing review.` },
-        { label: 'Total dishes', value: `${allDishes.length}` }
+        { label: 'Weighted GP', value: allDishes.length > 0 ? fmtPercent(summary.weightedGp) : '', detail: `Default target ${fmtPercent(project.defaultTargetGp)}.` },
+        { label: 'Weekly revenue', value: summary.weeklyRevenue > 0 ? fmtCurrency(summary.weeklyRevenue) : '', detail: 'Estimated revenue from current dish mix.' },
+        { label: 'Weekly profit', value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '', detail: 'Estimated contribution from recorded dishes.' },
+        { label: 'Weekly opportunity', value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '', detail: 'Potential uplift from pricing gaps.' },
+        { label: 'Below target', value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '', detail: pricingChangesNeeded > 0 ? `${pricingChangesNeeded} dishes need pricing review.` : '' },
+        { label: 'Total dishes', value: allDishes.length > 0 ? `${allDishes.length}` : '' }
       ])}
       ${buildSectionHtml('Top opportunity dishes', buildRecommendationListHtml(
         topOpportunities.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity.`),
-        'No material pricing opportunities recorded.'
       ))}
       ${buildSectionHtml('Strongest contributors', buildRecommendationListHtml(
         strongestDishes.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyProfit(dish))} weekly profit.`),
-        'No dishes recorded yet.'
       ))}
       ${buildSectionHtml('Recommended next steps', buildRecommendationListHtml([
         pricingChangesNeeded > 0 ? 'Review recommended selling prices for dishes with material price gaps before the next menu sign-off.' : '',
         summary.belowTargetCount > 0 ? 'Prioritise recipe costing and portion checks for dishes below target GP.' : '',
         allDishes.length > 0 ? 'Use sales mix weekly to confirm whether high-contribution dishes are being promoted and positioned correctly.' : ''
-      ], 'Add dishes, sales mix, and ingredient costs before next-step recommendations can be generated.'))}
+      ]))}
     `
   });
 
-  const sectionDetailChapter = buildChapterHtml({
-    kicker: 'Menu Detail',
-    title: 'Section Performance and Dish-Level Appendix',
-    lead: 'Section-level commercial performance and dish detail for pricing review.',
-    body: `
-
-    ${project.sections
+  const sectionDetailBody = allDishes.length
+    ? project.sections
+      .filter((section) => section.dishes.length > 0)
       .map((section) => {
         const sectionRevenue = section.dishes.reduce(
           (sum, dish) => sum + num(dish.sellPrice) * Math.max(num(dish.weeklySalesVolume), 0),
@@ -221,21 +216,16 @@ export function buildMenuReport(project: MenuProjectState) {
       <section>
         <h2>${section.name}</h2>
         <p class="report-section-lead">Section-level performance summary and dish detail for pricing review.</p>
-        <div class="report-grid columns-4">
-          <div><strong>Dishes</strong><br />${section.dishes.length}</div>
-          <div><strong>Section revenue</strong><br />${fmtCurrency(sectionRevenue)}</div>
-          <div><strong>Section profit</strong><br />${fmtCurrency(sectionProfit)}</div>
-          <div><strong>Average actual GP</strong><br />${section.dishes.length ? fmtPercent(sectionGp) : 'No dishes'}</div>
-        </div>
-        <div class="report-grid columns-4">
-          <div><strong>Below target</strong><br />${sectionBelowTarget}</div>
-          <div><strong>Pricing changes needed</strong><br />${section.dishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length}</div>
-          <div><strong>Best performer</strong><br />${topSectionDish ? safe(topSectionDish.name) : 'No dishes'}</div>
-          <div><strong>Largest gap</strong><br />${fmtCurrency(largestGap)}</div>
-        </div>
-        ${
-          section.dishes.length
-            ? `
+        ${buildDetailGridHtml([
+          { label: 'Dishes', value: section.dishes.length },
+          { label: 'Section revenue', value: fmtCurrency(sectionRevenue) },
+          { label: 'Section profit', value: fmtCurrency(sectionProfit) },
+          { label: 'Average actual GP', value: fmtPercent(sectionGp) },
+          { label: 'Below target', value: sectionBelowTarget },
+          { label: 'Pricing changes needed', value: section.dishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length },
+          { label: 'Best performer', value: topSectionDish ? safe(topSectionDish.name) : '' },
+          { label: 'Largest gap', value: largestGap > 0 ? fmtCurrency(largestGap) : '' }
+        ])}
         <table class="report-table report-table-compact">
           <thead>
             <tr>
@@ -271,15 +261,21 @@ export function buildMenuReport(project: MenuProjectState) {
               )
               .join('')}
           </tbody>
-        </table>`
-            : '<p class="muted-copy">No dishes in this section yet.</p>'
-        }
+        </table>
       </section>
     `;
       })
-      .join('')}
-    `
-  });
+      .join('')
+    : '';
+
+  const sectionDetailChapter = sectionDetailBody
+    ? buildChapterHtml({
+      kicker: 'Menu Detail',
+      title: 'Section Performance and Dish-Level Appendix',
+      lead: 'Section-level commercial performance and dish detail for pricing review.',
+      body: sectionDetailBody
+    })
+    : '';
 
   return `${coverHtml}${buildReportBodyHtml([executiveChapter, sectionDetailChapter])}`;
 }

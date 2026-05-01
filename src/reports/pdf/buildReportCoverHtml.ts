@@ -1,4 +1,5 @@
 import { escapeHtml, normalizeProseText, normalizeTitleLabel } from './buildPdfDocumentHtml';
+import { hasReportContent } from './reportBlocks';
 
 export type ReportCoverMetric = {
   label: string;
@@ -23,6 +24,7 @@ export type ReportCoverConfig = {
 
 export function buildReportCoverHtml(config: ReportCoverConfig): string {
   const metricsHtml = config.metrics
+    .filter(metric => hasReportContent(metric.value))
     .map(metric => `
         <div class="pdf-cover-metric ${metric.primary ? 'primary' : ''}">
         <div class="pdf-cover-metric-label">${escapeHtml(normalizeTitleLabel(metric.label))}</div>
@@ -32,6 +34,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
     .join('');
 
   const detailsHtml = config.details
+    .filter(detail => hasReportContent(detail.value))
     .map(detail => `
       <div class="pdf-cover-detail">
         <span class="pdf-cover-detail-label">${escapeHtml(normalizeTitleLabel(detail.label))}</span>
@@ -81,12 +84,12 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
         ${metricsHtml}
       </div>
 
-      <div class="pdf-cover-details-band">
+      ${detailsHtml ? `<div class="pdf-cover-details-band">
         <div class="pdf-cover-details-heading">Engagement details</div>
         <div class="pdf-cover-details-grid">
           ${detailsHtml}
         </div>
-      </div>
+      </div>` : ''}
     </div>
   `;
 }

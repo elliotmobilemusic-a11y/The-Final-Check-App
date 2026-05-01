@@ -9,10 +9,14 @@ import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildActionRegisterHtml,
   buildChapterHtml,
+  buildDetailGridHtml,
+  buildReportPhotoGalleryHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
   buildSectionHtml,
   buildSummaryGridHtml,
+  buildStoryCardsHtml,
+  buildTextSectionHtml,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -34,7 +38,6 @@ import type {
   FoodSafetyTemperatureItem
 } from '../../types';
 import { newUUID, safe, todayIso, uid } from '../../lib/utils';
-import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 
 const FOOD_SAFETY_DRAFT_KEY = 'food-safety-audit-draft-v1';
@@ -265,7 +268,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
     reportType: 'Food Safety Audit',
     clientName: safe(state.siteName) || 'Client Site',
     preparedDate: formatShortDate(state.auditDate),
-    consultant: safe(state.auditorName) || 'Not recorded',
+    consultant: safe(state.auditorName) || 'The Final Check',
     summary: 'Food safety readiness, compliance risk, and immediate actions prepared for site follow-up.',
     metrics: [
       {
@@ -283,10 +286,10 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
       }
     ],
     details: [
-      { label: 'Site', value: safe(state.siteName) || 'Not recorded' },
-      { label: 'Location', value: safe(state.location) || 'Not recorded' },
-      { label: 'Service period', value: safe(state.servicePeriod) || 'Not recorded' },
-      { label: 'Site lead', value: safe(state.managerName) || 'Not recorded' }
+      { label: 'Site', value: safe(state.siteName) },
+      { label: 'Location', value: safe(state.location) },
+      { label: 'Service period', value: safe(state.servicePeriod) },
+      { label: 'Site lead', value: safe(state.managerName) }
     ]
   });
 
@@ -299,11 +302,11 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
         { label: 'Risk position', value: calc.riskLabel, detail: `${calc.failCount} failed checks and ${calc.watchCount} watch items.` },
         { label: 'Control pass rate', value: `${calc.completion}%`, detail: `${calc.passCount} of ${calc.passCount + calc.watchCount + calc.failCount} active checks passed.` },
         { label: 'Action progress', value: `${completedActions} closed / ${openActions} open`, detail: 'Actions captured for follow-up after the audit.' },
-        { label: 'Food hygiene rating', value: safe(state.hygieneRating) || 'Not recorded' }
+        { label: 'Food hygiene rating', value: safe(state.hygieneRating) }
       ])}
-      ${buildSectionHtml('Audit summary', `<p>${safe(state.summary) || 'No summary recorded.'}</p>`)}
-      ${buildSectionHtml('Critical concerns', `<p>${safe(state.criticalConcerns) || 'No critical concerns recorded.'}</p>`)}
-      ${buildSectionHtml('Immediate actions', `<p>${safe(state.immediateActions) || 'No immediate actions recorded.'}</p>`)}
+      ${buildTextSectionHtml('Audit summary', state.summary)}
+      ${buildTextSectionHtml('Critical concerns', state.criticalConcerns)}
+      ${buildTextSectionHtml('Immediate actions', state.immediateActions)}
     `
   });
 
@@ -312,27 +315,21 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
     title: 'Audit Overview and Good Practice',
     lead: 'Site context, summary notes, positive practice, and visit details captured during the review.',
     body: `
-      <div class="report-columns">
-        <div>
-          <h3>Audit summary</h3>
-          <p>${safe(state.summary) || 'No summary recorded.'}</p>
-        </div>
-        <div>
-          <h3>Good practice seen</h3>
-          <p>${safe(state.goodPractice) || 'No good practice recorded.'}</p>
-        </div>
-      </div>
-      <div class="report-grid columns-4">
-        <div><strong>Site</strong><br />${safe(state.siteName) || 'Unnamed site'}</div>
-        <div><strong>Location</strong><br />${safe(state.location) || 'Not recorded'}</div>
-        <div><strong>Audit date</strong><br />${formatShortDate(state.auditDate)}</div>
-        <div><strong>Service period</strong><br />${safe(state.servicePeriod) || 'Not recorded'}</div>
-        <div><strong>Auditor</strong><br />${safe(state.auditorName) || 'Not recorded'}</div>
-        <div><strong>Site lead</strong><br />${safe(state.managerName) || 'Not recorded'}</div>
-        <div><strong>Active actions</strong><br />${openActions}</div>
-        <div><strong>Closed actions</strong><br />${completedActions}</div>
-      </div>
-      ${renderAuditPhotoGallery(state.photos, 'overview')}
+      ${buildStoryCardsHtml([
+        { title: 'Audit summary', body: state.summary },
+        { title: 'Good practice seen', body: state.goodPractice }
+      ])}
+      ${buildDetailGridHtml([
+        { label: 'Site', value: safe(state.siteName) || 'Client site' },
+        { label: 'Location', value: state.location },
+        { label: 'Audit date', value: formatShortDate(state.auditDate) },
+        { label: 'Service period', value: state.servicePeriod },
+        { label: 'Auditor', value: state.auditorName },
+        { label: 'Site lead', value: state.managerName },
+        { label: 'Active actions', value: openActions > 0 ? openActions : '' },
+        { label: 'Closed actions', value: completedActions > 0 ? completedActions : '' }
+      ])}
+      ${buildReportPhotoGalleryHtml(state.photos, 'overview')}
     `
   });
 
@@ -361,15 +358,15 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
                 <td>${safe(item.area) || 'General'}</td>
                 <td>${safe(item.item) || 'Unnamed check'}</td>
                 <td>${item.status}</td>
-                <td>${safe(item.note) || 'No note recorded'}</td>
+                <td>${safe(item.note)}</td>
               </tr>`
               )
               .join('')}
           </tbody>
         </table>`
-          : '<p class="muted-copy">No checks recorded.</p>'
+          : ''
       }
-      ${renderAuditPhotoGallery(state.photos, 'checks')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'checks')}
     `
   });
 
@@ -395,18 +392,18 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
               .map(
                 (item) => `
               <tr>
-                <td>${safe(item.area) || 'Area not set'}</td>
-                <td>${safe(item.reading) || 'Not recorded'}</td>
-                <td>${safe(item.target) || 'Not recorded'}</td>
-                <td>${safe(item.note) || 'No note recorded'}</td>
+                <td>${safe(item.area)}</td>
+                <td>${safe(item.reading)}</td>
+                <td>${safe(item.target)}</td>
+                <td>${safe(item.note)}</td>
               </tr>`
               )
               .join('')}
           </tbody>
         </table>`
-          : '<p class="muted-copy">No temperature checks recorded.</p>'
+          : ''
       }
-      ${renderAuditPhotoGallery(state.photos, 'temperature')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'temperature')}
     `
   });
 
@@ -423,17 +420,17 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
                   (item) => `
                 <div class="report-story-card">
                   <h3>${safe(item.area) || 'General'}</h3>
-                  <p>${safe(item.summary) || 'No summary recorded.'}</p>
-                  <p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan) || 'No action plan recorded.'}</p>
+                  ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
+                  ${safe(item.actionPlan) ? `<p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan)}</p>` : ''}
                 </div>`
                 )
                 .join('')}
             </div>`
-          : '<p class="muted-copy">No area summaries recorded.</p>'
+          : ''
       }
-      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions, 'No action items recorded.'))}
+      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions))}
       ${buildSectionHtml('Follow-up date', `<p>${safe(state.followUpDate) || 'To be confirmed'}</p>`)}
-      ${renderAuditPhotoGallery(state.photos, 'actions')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
     `
   });
 

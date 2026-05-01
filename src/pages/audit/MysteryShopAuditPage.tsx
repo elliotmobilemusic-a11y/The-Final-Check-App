@@ -7,10 +7,13 @@ import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildActionRegisterHtml,
   buildChapterHtml,
+  buildReportPhotoGalleryHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
   buildSectionHtml,
   buildSummaryGridHtml,
+  buildStoryCardsHtml,
+  buildTextSectionHtml,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -35,7 +38,6 @@ import type {
   MysteryShopScorecard
 } from '../../types';
 import { newUUID, safe, todayIso, uid } from '../../lib/utils';
-import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 
 
 const MYSTERY_SHOP_DRAFT_KEY = 'mystery-shop-audit-draft-v1';
@@ -204,12 +206,34 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
   const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 4);
   const completedActions = actions.filter((item) => item.status === 'Done').length;
   const openActions = Math.max(actions.length - completedActions, 0);
+  const standoutMomentsHtml = standoutObservations.length
+    ? `<div class="report-story-card">
+        <h3>Standout moments</h3>
+        <ul>${standoutObservations
+          .map(
+            (item) =>
+              `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` - ${safe(item.note)}` : ''}</li>`
+          )
+          .join('')}</ul>
+      </div>`
+    : '';
+  const weakMomentsHtml = weakObservations.length
+    ? `<div class="report-story-card">
+        <h3>Weak moments</h3>
+        <ul>${weakObservations
+          .map(
+            (item) =>
+              `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` - ${safe(item.note)}` : ''}</li>`
+          )
+          .join('')}</ul>
+      </div>`
+    : '';
 
   const coverHtml = buildReportCoverHtml({
     reportType: 'Mystery Shop Audit',
     clientName: safe(state.siteName) || 'Client Site',
     preparedDate: formatShortDate(state.visitDate),
-    consultant: safe(state.shopperName) || 'Not recorded',
+    consultant: safe(state.shopperName) || 'The Final Check',
     summary: 'Guest-experience review, scoring, and service-improvement actions prepared for management follow-up.',
     metrics: [
       {
@@ -227,10 +251,10 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
       }
     ],
     details: [
-      { label: 'Site', value: safe(state.siteName) || 'Not recorded' },
-      { label: 'Location', value: safe(state.location) || 'Not recorded' },
-      { label: 'Visit window', value: safe(state.visitWindow) || 'Not recorded' },
-      { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded' }
+      { label: 'Site', value: safe(state.siteName) },
+      { label: 'Location', value: safe(state.location) },
+      { label: 'Visit window', value: safe(state.visitWindow) },
+      { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : '' }
     ]
   });
 
@@ -244,12 +268,12 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
         { label: 'Standout moments', value: `${calc.standoutMoments}`, detail: 'Positive touchpoints to retain and coach around.' },
         { label: 'Weak moments', value: `${calc.lowMoments}`, detail: 'Touchpoints requiring management attention.' },
         { label: 'Action progress', value: `${completedActions} closed / ${openActions} open` },
-        { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded' },
+        { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : '' },
         { label: 'Follow-up', value: safe(state.followUpDate) || 'To be confirmed' }
       ])}
-      ${buildSectionHtml('Experience summary', `<p>${safe(state.overallSummary) || 'No overall summary recorded.'}</p>`)}
-      ${buildSectionHtml('Recommendations', `<p>${safe(state.recommendations) || 'No recommendations recorded.'}</p>`)}
-      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions, 'No action items recorded.'))}
+      ${buildTextSectionHtml('Experience summary', state.overallSummary)}
+      ${buildTextSectionHtml('Recommendations', state.recommendations)}
+      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions))}
     `
   });
 
@@ -270,56 +294,32 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
         <div><strong>Product</strong><br />${state.scorecard.product}/10</div>
         <div><strong>Value</strong><br />${state.scorecard.value}/10</div>
       </div>
-      ${renderAuditPhotoGallery(state.photos, 'scorecard')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'scorecard')}
     </section>
 
     <section>
       <h2>Guest journey summary</h2>
       <p class="report-section-lead">Narrative notes from first impression through to recommendation and revisit intent.</p>
-      <div class="report-story-grid">
-        <div class="report-story-card"><h3>Overall summary</h3><p>${safe(state.overallSummary) || 'No overall summary recorded.'}</p></div>
-        <div class="report-story-card"><h3>First impression</h3><p>${safe(state.firstImpression) || 'No first-impression notes recorded.'}</p></div>
-        <div class="report-story-card"><h3>Service story</h3><p>${safe(state.serviceStory) || 'No service notes recorded.'}</p></div>
-        <div class="report-story-card"><h3>Food and drink</h3><p>${safe(state.foodAndDrink) || 'No product notes recorded.'}</p></div>
-        <div class="report-story-card"><h3>Cleanliness and atmosphere</h3><p>${safe(state.cleanlinessNotes) || 'No cleanliness notes recorded.'}</p></div>
-        <div class="report-story-card"><h3>Recommendations</h3><p>${safe(state.recommendations) || 'No recommendations recorded.'}</p></div>
-      </div>
-      ${renderAuditPhotoGallery(state.photos, 'journey')}
+      ${buildStoryCardsHtml([
+        { title: 'Overall summary', body: state.overallSummary },
+        { title: 'First impression', body: state.firstImpression },
+        { title: 'Service story', body: state.serviceStory },
+        { title: 'Food and drink', body: state.foodAndDrink },
+        { title: 'Cleanliness and atmosphere', body: state.cleanlinessNotes },
+        { title: 'Recommendations', body: state.recommendations }
+      ])}
+      ${buildReportPhotoGalleryHtml(state.photos, 'journey')}
     </section>
 
-    <section>
+    ${standoutMomentsHtml || weakMomentsHtml ? `<section>
       <h2>Key moments</h2>
       <p class="report-section-lead">Best and weakest observed touchpoints highlighted for management review.</p>
       <div class="report-story-grid">
-        <div class="report-story-card">
-          <h3>Standout moments</h3>
-          ${
-            standoutObservations.length
-              ? `<ul>${standoutObservations
-                  .map(
-                    (item) =>
-                      `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
-                  )
-                  .join('')}</ul>`
-              : '<p>No standout moments recorded.</p>'
-          }
-        </div>
-        <div class="report-story-card">
-          <h3>Weak moments</h3>
-          ${
-            weakObservations.length
-              ? `<ul>${weakObservations
-                  .map(
-                    (item) =>
-                      `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
-                  )
-                  .join('')}</ul>`
-              : '<p>No weak moments recorded.</p>'
-          }
-        </div>
+        ${standoutMomentsHtml}
+        ${weakMomentsHtml}
       </div>
-      ${renderAuditPhotoGallery(state.photos, 'visit')}
-    </section>
+      ${buildReportPhotoGalleryHtml(state.photos, 'visit')}
+    </section>` : ''}
 
     <section>
       <h2>Touchpoint observations</h2>
@@ -342,17 +342,17 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
                 (item) => `
               <tr>
                 <td>${safe(item.area) || 'General'}</td>
-                <td>${safe(item.touchpoint) || 'Touchpoint not set'}</td>
+                <td>${safe(item.touchpoint)}</td>
                 <td>${item.score}/10</td>
-                <td>${safe(item.note) || 'No note recorded'}</td>
+                <td>${safe(item.note)}</td>
               </tr>`
               )
               .join('')}
           </tbody>
         </table>`
-          : '<p class="muted-copy">No mystery shop observations recorded.</p>'
+          : ''
       }
-      ${renderAuditPhotoGallery(state.photos, 'observations')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'observations')}
     </section>
 
     <section>
@@ -366,21 +366,21 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
                   (item) => `
                 <div class="report-story-card">
                   <h3>${safe(item.area) || 'General'}</h3>
-                  <p>${safe(item.summary) || 'No summary recorded.'}</p>
-                  <p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan) || 'No action plan recorded.'}</p>
+                  ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
+                  ${safe(item.actionPlan) ? `<p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan)}</p>` : ''}
                 </div>`
                 )
                 .join('')}
             </div>`
-          : '<p class="muted-copy">No area summaries recorded.</p>'
+          : ''
       }
-      ${renderAuditPhotoGallery(state.photos, 'actions')}
+      ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
     </section>
 
     <section>
       <h2>Action register</h2>
       <p class="report-section-lead">Named follow-up actions, owners, and timing captured during the shop review.</p>
-      ${buildActionRegisterHtml(actions, 'No action items recorded.')}
+      ${buildActionRegisterHtml(actions)}
     </section>
     `
   });

@@ -31,7 +31,6 @@ import {
   readFileAsDataUrl,
   type DishEditorTab
 } from '../../features/menu-engine/menuBuilderHelpers';
-import { openPrintableHtmlDocument } from '../../features/clients/clientExports';
 import { openPdfDocument } from '../../reports/pdf';
 import {
   getMenuProjectById,
@@ -625,7 +624,7 @@ export function MenuBuilderPage() {
             preparedBy: 'Jason Wardill / The Final Check'
           });
 
-    openPrintableHtmlDocument(title, html);
+    openPdfDocument(title, html);
     setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} export opened.`);
   }
 

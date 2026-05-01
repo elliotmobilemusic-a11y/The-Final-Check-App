@@ -95,6 +95,7 @@ import {
   buildQuotePdfTemplate,
   exportPdfDocument
 } from '../../lib/pdf';
+import { openPdfDocument } from '../../reports/pdf';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 
@@ -1377,7 +1378,7 @@ export function ClientProfilePage() {
         return;
       }
 
-      openPrintableHtmlDocument(
+      openPdfDocument(
         `${record.dish.name} spec sheet`,
         buildDishSpecReportHtml({
           client: activeForm,
@@ -1397,7 +1398,7 @@ export function ClientProfilePage() {
         return;
       }
 
-      openPrintableHtmlDocument(
+      openPdfDocument(
         `${record.dish.name} recipe costing`,
         buildRecipeCostingReportHtml({
           client: activeForm,
