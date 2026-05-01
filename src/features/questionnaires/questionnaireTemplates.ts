@@ -49,7 +49,7 @@ const profitAuditTemplate: QuestionnaireTemplate = {
       fields: [
         {
           key: 'weeklySales',
-          label: 'Approximate weekly food & drink sales (£)',
+          label: 'Approximate weekly food sales (£)',
           type: 'number',
           placeholder: '0'
         },
@@ -70,6 +70,12 @@ const profitAuditTemplate: QuestionnaireTemplate = {
           label: 'Kitchen team size (headcount)',
           type: 'number',
           placeholder: '0'
+        },
+        {
+          key: 'labourPercent',
+          label: 'Kitchen labour %',
+          type: 'number',
+          placeholder: '25'
         },
         {
           key: 'tradingDays',

@@ -31,6 +31,7 @@ function buildPrefillState(answers: Record<string, string>): Partial<AuditFormSt
     coversPerWeek: parseInt(answers.coversPerWeek) || 0,
     averageSpend: parseFloat(answers.averageSpend) || 0,
     kitchenTeamSize: parseInt(answers.teamSize) || 0,
+    labourPercent: parseFloat(answers.labourPercent) || 0,
     tradingDays: answers.tradingDays?.trim() ?? '',
     mainSupplier: answers.mainSupplier?.trim() ?? '',
     summary: summaryParts.join('\n\n')
