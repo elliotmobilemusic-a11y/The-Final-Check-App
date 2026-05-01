@@ -11,7 +11,7 @@ import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
-import { PageContainer, PageHeader } from '../../components/layout';
+import { PageContainer } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 
 type BeforeInstallPromptEvent = Event & {
@@ -401,28 +401,21 @@ export function DashboardPage() {
         </div>
       )}
 
-       <PageHeader
-         size="compact"
-         className="dashboard-intro"
-         eyebrow="Command Centre"
-         title={`Welcome, ${welcomeLabel}`}
-         description="Run the portfolio like a consultancy business: track live clients, profit opportunity identified, follow-ups due, and which sites need attention next."
-         actions={
-           <>
-             <Link className="button button-primary" to="/clients">
-               Open clients
-             </Link>
-             <Link className="button button-secondary" to="/audit">
-               Start Kitchen Profit Audit
-             </Link>
-             <Link className="button button-secondary" to="/menu">
-               Open Menu Profit Engine
-             </Link>
-           </>
-         }
-       />
-      
-      {message && <div className="page-inline-note dashboard-sync-note">{message}</div>}
+      <div className="dashboard-intro-band">
+        <div className="dashboard-intro-copy">
+          <span className="dashboard-intro-eyebrow">Command Centre</span>
+          <h1 className="dashboard-intro-title">Welcome, {welcomeLabel}</h1>
+          <div className="dashboard-intro-support">
+            <p>Track live clients, profit opportunity, follow-ups due, and which sites need attention next.</p>
+            {message && <span className="dashboard-intro-status-chip">{message}</span>}
+          </div>
+        </div>
+        <div className="dashboard-intro-actions">
+          <Link className="button button-primary" to="/clients">Open clients</Link>
+          <Link className="button button-secondary" to="/audit">Start Kitchen Profit Audit</Link>
+          <Link className="button button-secondary" to="/menu">Open Menu Profit Engine</Link>
+        </div>
+      </div>
 
       <div className="stats-grid compact dashboard-stat-row">
         <StatCard
