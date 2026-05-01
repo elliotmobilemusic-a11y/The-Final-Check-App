@@ -55,7 +55,7 @@ export function KitchenAuditPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [form, setForm] = useState<AuditFormState>(() =>
-    searchParams.get('load')
+    (searchParams.get('load') || searchParams.get('new'))
       ? normalizeAuditState({}, searchParams.get('client') || null)
       : normalizeAuditState(
           readDraft<AuditFormState>(KITCHEN_AUDIT_DRAFT_KEY) ?? {},

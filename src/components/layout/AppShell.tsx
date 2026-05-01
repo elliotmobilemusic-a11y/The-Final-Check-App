@@ -21,7 +21,7 @@ import { CookingLoader } from './CookingLoader';
 const navItems = [
   { to: '/dashboard', label: 'Command Centre' },
   { to: '/clients', label: 'Clients' },
-  { to: '/audit', label: 'Profit Audit' },
+  { to: '/audit-hub', label: 'Profit Audit' },
   { to: '/food-safety', label: 'Food Safety' },
   { to: '/mystery-shop', label: 'Mystery Shop' },
   { to: '/menu', label: 'Menu Profit Engine' },
@@ -46,8 +46,13 @@ const workspaceDetails = [
     detail: 'Manage accounts, contacts, sites, commercial detail, and follow-up.'
   },
   {
+    match: '/audit-hub',
+    label: 'Profit Audit workspace',
+    detail: 'Choose a client, continue a recent audit, or start fresh from a pre-visit questionnaire.'
+  },
+  {
     match: '/audit',
-    label: 'Kitchen Profit Audit workspace',
+    label: 'Kitchen Profit Audit',
     detail: 'Quantify hidden profit, structure findings, and build a premium client-ready report.'
   },
   {
