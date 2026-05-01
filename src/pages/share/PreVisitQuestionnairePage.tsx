@@ -4,32 +4,6 @@ import { getQuestionnaireShareByToken } from '../../services/preVisitQuestionnai
 import { getQuestionnaireTemplate } from '../../features/questionnaires/questionnaireTemplates';
 import type { QuestionnaireSharePayload, QuestionnaireTemplate, ReportShareRecord } from '../../types';
 
-const cardStyle = {
-  padding: 'clamp(16px, 4vw, 24px)',
-  borderRadius: '20px',
-  border: '1px solid rgba(86, 81, 91, 0.14)',
-  background: 'rgba(255,255,255,0.7)'
-} as const;
-
-const fieldStyle = {
-  padding: '14px 16px',
-  minHeight: '50px',
-  borderRadius: '14px',
-  border: '1px solid rgba(86, 81, 91, 0.18)',
-  background: 'rgba(255,255,255,0.95)',
-  fontSize: '16px',
-  width: '100%',
-  boxSizing: 'border-box' as const,
-  WebkitAppearance: 'none' as const,
-  appearance: 'none' as const
-} as const;
-
-const textareaStyle: React.CSSProperties = {
-  ...fieldStyle,
-  minHeight: '110px',
-  resize: 'vertical'
-};
-
 function renderField(
   field: QuestionnaireTemplate['groups'][number]['fields'][number],
   value: string,
@@ -37,9 +11,10 @@ function renderField(
 ) {
   const id = `qfield-${field.key}`;
   const label = (
-    <label htmlFor={id} style={{ display: 'grid', gap: '6px', ...(field.fullWidth ? { gridColumn: '1 / -1' } : {}) }}>
-      <span style={{ fontSize: '14px', fontWeight: 600, color: '#4a4641' }}>
-        {field.label}{field.required ? ' *' : ''}
+    <label htmlFor={id} className={`pv-q-field${field.fullWidth ? ' pv-q-field--full' : ''}`}>
+      <span className="pv-q-label">
+        {field.label}
+        {field.required && <span className="pv-q-required"> *</span>}
       </span>
       {field.type === 'textarea' ? (
         <textarea
@@ -48,14 +23,14 @@ function renderField(
           value={value}
           placeholder={field.placeholder ?? ''}
           onChange={(e) => onChange(field.key, e.target.value)}
-          style={textareaStyle}
+          className="pv-q-control pv-q-textarea"
         />
       ) : field.type === 'select' && field.options ? (
         <select
           id={id}
           value={value}
           onChange={(e) => onChange(field.key, e.target.value)}
-          style={fieldStyle}
+          className="pv-q-control pv-q-select"
         >
           <option value="">Select one</option>
           {field.options.map((opt) => (
@@ -69,7 +44,7 @@ function renderField(
           value={value}
           placeholder={field.placeholder ?? ''}
           onChange={(e) => onChange(field.key, e.target.value)}
-          style={fieldStyle}
+          className="pv-q-control"
         />
       )}
     </label>
@@ -229,36 +204,34 @@ export function PreVisitQuestionnairePage() {
   return (
     <main className="pv-q-page">
       <div className="pv-q-wrap">
-        <p className="pv-q-brand">The Final Check</p>
-        <h1 className="pv-q-title">{template!.label}</h1>
-        {clientName && <p className="pv-q-for">For: <strong>{clientName}</strong></p>}
-        <p className="pv-q-subtitle">
-          {note ?? template!.description}
-        </p>
+        <header className="pv-q-hero">
+          <p className="pv-q-brand">The Final Check</p>
+          <h1 className="pv-q-title">{template!.label}</h1>
+          {clientName && <p className="pv-q-for">Prepared for <strong>{clientName}</strong></p>}
+          <p className="pv-q-subtitle">
+            {note ?? template!.description}
+          </p>
+        </header>
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px', marginTop: '28px' }}>
+        <form onSubmit={handleSubmit} className="pv-q-form">
           {template!.groups.map((group) => (
-            <div key={group.title} style={cardStyle}>
-              <h3 className="pv-q-group-title">{group.title}</h3>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                  gap: '16px'
-                }}
-              >
+            <section key={group.title} className="pv-q-card">
+              <div className="pv-q-group-head">
+                <h3 className="pv-q-group-title">{group.title}</h3>
+              </div>
+              <div className="pv-q-fields">
                 {group.fields.map((field) =>
                   renderField(field, answers[field.key] ?? '', updateAnswer)
                 )}
               </div>
-            </div>
+            </section>
           ))}
 
           {message && (
             <p className="pv-q-error">{message}</p>
           )}
 
-          <div style={{ marginTop: '4px' }}>
+          <div className="pv-q-submit-row">
             <button
               type="submit"
               disabled={submitting}

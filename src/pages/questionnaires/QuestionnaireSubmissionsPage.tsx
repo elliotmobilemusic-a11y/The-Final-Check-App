@@ -85,7 +85,10 @@ export function QuestionnaireSubmissionsPage() {
 
       <section className="panel">
         <div className="panel-header">
-          <h3>Generate a questionnaire link</h3>
+          <div>
+            <h3>Generate a questionnaire link</h3>
+            <p className="muted-copy">Create a client-ready form link for a specific visit.</p>
+          </div>
         </div>
         <div className="panel-body stack gap-16">
           {shareModalOpen ? (
@@ -127,7 +130,7 @@ export function QuestionnaireSubmissionsPage() {
 
               {generatedLink ? (
                 <div className="q-link-result">
-                  <p className="q-link-label">Questionnaire link — copy and share with client:</p>
+                  <p className="q-link-label">Questionnaire link ready</p>
                   <div className="q-link-box">
                     <code className="q-link-url">{generatedLink}</code>
                     <button className="button button-secondary" type="button" onClick={copyLink}>
@@ -172,6 +175,7 @@ export function QuestionnaireSubmissionsPage() {
           ) : (
             <div className="q-cta-row">
               <div>
+                <strong className="q-cta-title">Send a polished pre-visit questionnaire</strong>
                 <p className="q-cta-text">
                   Create a one-time link to send to a client before their site visit. Their answers come back here for review and can be used to prefill the Profit Audit.
                 </p>
@@ -190,7 +194,10 @@ export function QuestionnaireSubmissionsPage() {
 
       <section className="panel">
         <div className="panel-header">
-          <h3>Received submissions</h3>
+          <div>
+            <h3>Received submissions</h3>
+            <p className="muted-copy">Review answers, confirm status, and continue into the Profit Audit flow.</p>
+          </div>
         </div>
         <div className="panel-body">
           {loading ? (
@@ -216,6 +223,7 @@ export function QuestionnaireSubmissionsPage() {
                   <div className="q-submission-meta">
                     <span className={statusClass(sub.status)}>{statusLabel(sub.status)}</span>
                     <span className="q-submission-date">{fmtDate(sub.submitted_at)}</span>
+                    <span className="q-submission-arrow" aria-hidden="true">→</span>
                   </div>
                 </Link>
               ))}

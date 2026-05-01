@@ -38,6 +38,18 @@ function buildPrefillState(answers: Record<string, string>): Partial<AuditFormSt
   };
 }
 
+function statusLabel(status: QuestionnaireSubmissionRecord['status']) {
+  if (status === 'pending') return 'Pending review';
+  if (status === 'reviewed') return 'Reviewed';
+  return 'Used in audit';
+}
+
+function statusClass(status: QuestionnaireSubmissionRecord['status']) {
+  if (status === 'pending') return 'q-badge q-badge--pending';
+  if (status === 'reviewed') return 'q-badge q-badge--reviewed';
+  return 'q-badge q-badge--used';
+}
+
 export function QuestionnaireSubmissionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -112,36 +124,50 @@ export function QuestionnaireSubmissionDetailPage() {
         </Link>
       </PageIntro>
 
-      <section className="panel">
+      <section className="panel q-detail-summary">
         <div className="panel-header">
-          <h3>Actions</h3>
+          <div>
+            <h3>Review summary</h3>
+            <p className="muted-copy">Triage the submission before moving into client or audit work.</p>
+          </div>
         </div>
         <div className="panel-body">
-          <div className="q-detail-actions">
-            {canPrefillAudit && (
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={handlePrefillAudit}
-              >
-                Open in Profit Audit
-              </button>
-            )}
-            {submission.status === 'pending' && (
-              <button
-                className="button button-secondary"
-                type="button"
-                disabled={updatingStatus}
-                onClick={handleMarkReviewed}
-              >
-                {updatingStatus ? 'Saving...' : 'Mark as reviewed'}
-              </button>
-            )}
-            {submission.status !== 'pending' && (
-              <span className="q-badge q-badge--reviewed">
-                {submission.status === 'reviewed' ? 'Reviewed' : 'Used'}
-              </span>
-            )}
+          <div className="q-detail-overview">
+            <div className="q-detail-facts">
+              <div className="q-detail-fact">
+                <span>Status</span>
+                <strong><span className={statusClass(submission.status)}>{statusLabel(submission.status)}</span></strong>
+              </div>
+              <div className="q-detail-fact">
+                <span>Contact</span>
+                <strong>{submission.answers.contactName || 'Not supplied'}</strong>
+              </div>
+              <div className="q-detail-fact">
+                <span>Business type</span>
+                <strong>{submission.answers.businessType || 'Not supplied'}</strong>
+              </div>
+            </div>
+            <div className="q-detail-actions">
+              {canPrefillAudit && (
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={handlePrefillAudit}
+                >
+                  Open in Profit Audit
+                </button>
+              )}
+              {submission.status === 'pending' && (
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  disabled={updatingStatus}
+                  onClick={handleMarkReviewed}
+                >
+                  {updatingStatus ? 'Saving...' : 'Mark as reviewed'}
+                </button>
+              )}
+            </div>
           </div>
           {message && <p className="form-error" style={{ marginTop: '10px' }}>{message}</p>}
         </div>
