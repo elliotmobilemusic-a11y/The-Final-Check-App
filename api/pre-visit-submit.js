@@ -4,13 +4,13 @@ import { sendPushNotificationToUser } from './_push.js';
 function createSupabaseAdminClient() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const fallbackAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl) throw new Error('Supabase URL is not configured.');
-  const apiKey = serviceRoleKey || fallbackAnonKey;
-  if (!apiKey) throw new Error('Supabase API key is not configured.');
+  if (!serviceRoleKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for questionnaire submission.');
+  }
 
-  return createClient(supabaseUrl, apiKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
@@ -56,7 +56,9 @@ export default async function handler(request, response) {
       .eq('is_public', true)
       .maybeSingle();
 
-    if (shareError) throw shareError;
+    if (shareError) {
+      throw new Error(`Share lookup failed: ${shareError.message ?? shareError.code ?? 'unknown database error'}`);
+    }
     if (!share) {
       response.status(404).json({ error: 'This questionnaire link is no longer available.' });
       return;
@@ -86,7 +88,18 @@ export default async function handler(request, response) {
       .select('id')
       .single();
 
-    if (submitError) throw submitError;
+    if (submitError) {
+      console.error('Questionnaire submission insert failed', {
+        token,
+        templateId,
+        clientId,
+        code: submitError.code,
+        details: submitError.details,
+        hint: submitError.hint,
+        message: submitError.message
+      });
+      throw new Error(`Submission insert failed: ${submitError.message ?? submitError.code ?? 'unknown database error'}`);
+    }
 
     // Deactivate the share so it can't be resubmitted
     await supabase
@@ -120,8 +133,16 @@ export default async function handler(request, response) {
 
     response.status(200).json({ ok: true, submissionId: submission.id });
   } catch (error) {
+    console.error('Pre-visit submit failed', {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
     response.status(500).json({
-      error: error instanceof Error ? error.message : 'Could not submit questionnaire.'
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Could not submit questionnaire.'
     });
   }
 }
