@@ -24,7 +24,7 @@ const navItems = [
   { to: '/audit-hub', label: 'Profit Audit' },
   { to: '/food-safety-hub', label: 'Food Safety' },
   { to: '/mystery-shop-hub', label: 'Mystery Shop' },
-  { to: '/menu', label: 'Menu Profit Engine' },
+  { to: '/menu-hub', label: 'Menu Profit Engine' },
   { to: '/questionnaires', label: 'Pre-Visit Forms' }
 ];
 
@@ -76,8 +76,13 @@ const workspaceDetails = [
     detail: 'Score the guest journey, capture service moments, and build a clean follow-up review.'
   },
   {
-    match: '/menu',
+    match: '/menu-hub',
     label: 'Menu Profit Engine workspace',
+    detail: 'Choose a client, continue a recent project, or start fresh from a pre-visit questionnaire.'
+  },
+  {
+    match: '/menu',
+    label: 'Menu Profit Engine',
     detail: 'Track dish margin, weekly contribution, and pricing opportunities in one flow.'
   },
   {

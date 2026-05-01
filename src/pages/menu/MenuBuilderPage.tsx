@@ -71,7 +71,7 @@ export function MenuBuilderPage() {
   const queryDishTab = searchParams.get('dishTab');
 
   const [project, setProject] = useState<MenuProjectState>(() =>
-    queryLoadId
+    (queryLoadId || searchParams.get('new'))
       ? normalizeMenuProject(createDefaultMenu(queryClientId))
       : normalizeMenuProject(
           readDraft<MenuProjectState>(MENU_BUILDER_DRAFT_KEY) ?? createDefaultMenu(queryClientId)

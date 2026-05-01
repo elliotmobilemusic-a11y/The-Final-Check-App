@@ -10396,6 +10396,28 @@ body {
   align-items: center;
 }
 
+.share-panel-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.share-panel-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.share-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .page-floating-controls {
   position: sticky;
   top: calc(var(--nav-offset) + 10px);

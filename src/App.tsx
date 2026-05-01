@@ -117,6 +117,9 @@ const QuestionnaireSubmissionDetailPage = lazy(() =>
     default: module.QuestionnaireSubmissionDetailPage
   }))
 );
+const MenuHubPage = lazy(() =>
+  import('./pages/menu/MenuHubPage').then((module) => ({ default: module.MenuHubPage }))
+);
 
 function HomeRedirect() {
   const { preferences } = usePreferences();
@@ -168,6 +171,7 @@ export default function App() {
           <Route path="food-safety" element={<FoodSafetyAuditPage />} />
           <Route path="mystery-shop-hub" element={<MysteryShopHubPage />} />
           <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
+          <Route path="menu-hub" element={<MenuHubPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
           <Route path="questionnaires" element={<QuestionnaireSubmissionsPage />} />
           <Route path="questionnaires/:id" element={<QuestionnaireSubmissionDetailPage />} />

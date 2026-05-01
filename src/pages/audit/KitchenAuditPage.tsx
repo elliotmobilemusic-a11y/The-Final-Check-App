@@ -7,7 +7,6 @@ import {
 } from '../../components/audit/KitchenAuditSections';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
-import { openPdfDocument, normalizeTitleLabel } from '../../reports/pdf';
 import { getAuditById, saveAudit } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import type {
@@ -412,23 +411,6 @@ export function KitchenAuditPage() {
     setMessage('Narrative sections drafted from the current audit data.');
   }
 
-  function exportPdf() {
-    void runWithActivity(
-      {
-        kicker: 'Preparing export',
-        title: 'Building PDF report',
-        detail: 'Formatting the kitchen audit into a clean client-ready report.'
-      },
-      async () => {
-        openPdfDocument(
-          `${normalizeTitleLabel(safe(form.businessName || 'Kitchen Profit Audit'))} report`,
-          reportHtml
-        );
-      },
-      700
-    );
-  }
-
   function downloadHtmlReport() {
     void runWithActivity(
       {
@@ -492,8 +474,8 @@ export function KitchenAuditPage() {
     <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
       <PageIntro
         eyebrow="Kitchen Profit Audit"
-        title="We identify £2k–£10k per week in hidden profit"
-        description="Capture the commercial leaks, quantify the weekly opportunity, and generate a premium consultancy report while you are still onsite."
+        title={form.businessName || 'Kitchen Profit Audit'}
+        description="Quantify hidden profit, structure findings, and build a premium client-ready report."
         actions={
           <>
             <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
@@ -504,15 +486,6 @@ export function KitchenAuditPage() {
             </button>
             <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
               {isSaving ? 'Saving...' : 'Save audit'}
-            </button>
-            <button className="button button-secondary" onClick={exportPdf}>
-              Export PDF
-            </button>
-            <button className="button button-secondary" disabled={isSharing} onClick={downloadHtmlReport}>
-              Download HTML
-            </button>
-            <button className="button button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
-              {isSharing ? 'Creating link...' : 'Create share link'}
             </button>
           </>
         }
@@ -545,13 +518,23 @@ export function KitchenAuditPage() {
       ) : null}
 
       <section className="panel share-link-panel">
-        <div className="panel-body stack gap-12">
-          <div className="record-header-message">
-            <span className="soft-pill">{message}</span>
-            {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+        <div className="panel-body">
+          <div className="share-panel-status-row">
+            <div className="share-panel-status">
+              <span className="soft-pill">{message}</span>
+              {shareUrl ? <span className="soft-pill">Share link ready</span> : null}
+            </div>
+            <div className="share-panel-actions">
+              <button className="button button-small button-ghost" disabled={isSharing} onClick={downloadHtmlReport}>
+                Download HTML
+              </button>
+              <button className="button button-small button-secondary" disabled={isSharing} onClick={shareHtmlReport}>
+                {isSharing ? 'Creating link...' : 'Share report'}
+              </button>
+            </div>
           </div>
           {shareUrl ? (
-            <div className="share-link-row">
+            <div className="share-link-row" style={{ marginTop: '10px' }}>
               <input className="input" readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} />
               <button className="button button-secondary" onClick={() => void copyShareLink()}>
                 Copy link
@@ -564,7 +547,7 @@ export function KitchenAuditPage() {
         </div>
       </section>
 
-      <section className="stats-grid">
+      <section className="stats-grid dashboard-stat-row" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
         <StatCard
           label="Total weekly opportunity"
           value={fmtCurrency(calc.totalWeeklyOpportunity)}
