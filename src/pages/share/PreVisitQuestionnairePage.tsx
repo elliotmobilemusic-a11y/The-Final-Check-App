@@ -214,9 +214,10 @@ export function PreVisitQuestionnairePage() {
         </header>
 
         <form onSubmit={handleSubmit} className="pv-q-form">
-          {template!.groups.map((group) => (
+          {template!.groups.map((group, groupIndex) => (
             <section key={group.title} className="pv-q-card">
               <div className="pv-q-group-head">
+                <div className="pv-q-group-number">{groupIndex + 1}</div>
                 <h3 className="pv-q-group-title">{group.title}</h3>
               </div>
               <div className="pv-q-fields">
@@ -228,16 +229,26 @@ export function PreVisitQuestionnairePage() {
           ))}
 
           {message && (
-            <p className="pv-q-error">{message}</p>
+            <div className="pv-q-message-row">
+              <p className="pv-q-error">{message}</p>
+            </div>
           )}
 
           <div className="pv-q-submit-row">
+            <p className="pv-q-submit-note">
+              All information provided will be kept confidential and only used to prepare for your visit.
+            </p>
             <button
               type="submit"
               disabled={submitting}
               className="pv-q-submit"
             >
-              {submitting ? 'Submitting...' : 'Submit questionnaire'}
+              {submitting ? (
+                <>
+                  <span className="pv-q-submit-spinner" />
+                  Submitting...
+                </>
+              ) : 'Submit questionnaire'}
             </button>
           </div>
         </form>
