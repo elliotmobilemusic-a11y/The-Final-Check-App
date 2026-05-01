@@ -1484,19 +1484,19 @@ input[type="radio"]:checked {
 }
 
 .shell-topbar {
-  top: 18px;
+  top: 14px;
   z-index: 50;
   isolation: isolate;
   overflow: visible;
   display: block;
   padding: 8px 12px;
   border-radius: 18px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel-strong) 96%, white 4%), color-mix(in srgb, var(--bg-panel) 96%, transparent 4%));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel-strong) 98%, white 2%), color-mix(in srgb, var(--bg-panel) 98%, transparent 2%));
   border: 1px solid var(--shell-line);
   box-shadow:
-    0 10px 22px rgba(36, 31, 38, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.68);
-  backdrop-filter: blur(14px);
+    0 14px 34px rgba(36, 31, 38, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
 }
 
 .shell-topbar::after {
@@ -11258,7 +11258,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-task-panel .panel-body {
-  min-height: 420px;
+  min-height: 240px;
   align-content: start;
 }
 
@@ -11439,14 +11439,14 @@ body[data-theme="midnight"] .client-portal-launch-card {
 .activity-item-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .activity-item strong {
   min-width: 0;
   font-size: 13px;
-  font-weight: 620;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -11454,14 +11454,15 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .activity-item-label {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--accent-strong);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .activity-item > span {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
   flex-shrink: 0;
@@ -11471,7 +11472,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 30px 22px;
+  padding: 22px 20px;
   border: 1px dashed color-mix(in srgb, var(--line-strong) 70%, transparent);
   border-radius: 15px;
   background:
