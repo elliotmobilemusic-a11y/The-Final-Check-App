@@ -1,7 +1,14 @@
 import type { ClientProfile, ClientRecord, MenuDish, MenuProjectState, SupabaseRecord } from '../../types';
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { createEmptyClientData } from '../clients/clientData';
-import { buildReportCoverHtml } from '../../reports/pdf';
+import {
+  buildChapterHtml,
+  buildReportBodyHtml,
+  buildReportCoverHtml,
+  buildRecommendationListHtml,
+  buildSectionHtml,
+  buildSummaryGridHtml
+} from '../../reports/pdf';
 import {
   buildMenuProfitSummary,
   dishActualGp,
@@ -135,6 +142,7 @@ export function buildMenuReport(project: MenuProjectState) {
   const strongestDishes = [...allDishes]
     .sort((left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left))
     .slice(0, 4);
+  const pricingChangesNeeded = allDishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length;
 
   const coverHtml = buildReportCoverHtml({
     reportType: 'Menu Profit Engine',
@@ -155,61 +163,40 @@ export function buildMenuReport(project: MenuProjectState) {
     ]
   });
 
-  return `
-    ${coverHtml}
+  const executiveChapter = buildChapterHtml({
+    kicker: 'Executive Summary',
+    title: 'Menu Performance and Commercial Priorities',
+    lead: 'Client-facing view of menu GP, weekly profit, pricing opportunities, and recommended next steps.',
+    body: `
+      ${buildSummaryGridHtml([
+        { label: 'Weighted GP', value: fmtPercent(summary.weightedGp), detail: `Default target ${fmtPercent(project.defaultTargetGp)}.` },
+        { label: 'Weekly revenue', value: fmtCurrency(summary.weeklyRevenue), detail: 'Estimated revenue from current dish mix.' },
+        { label: 'Weekly profit', value: fmtCurrency(summary.weeklyProfit), detail: 'Estimated contribution from recorded dishes.' },
+        { label: 'Weekly opportunity', value: fmtCurrency(summary.totalOpportunity), detail: 'Potential uplift from pricing gaps.' },
+        { label: 'Below target', value: `${summary.belowTargetCount}`, detail: `${pricingChangesNeeded} dishes need pricing review.` },
+        { label: 'Total dishes', value: `${allDishes.length}` }
+      ])}
+      ${buildSectionHtml('Top opportunity dishes', buildRecommendationListHtml(
+        topOpportunities.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity.`),
+        'No material pricing opportunities recorded.'
+      ))}
+      ${buildSectionHtml('Strongest contributors', buildRecommendationListHtml(
+        strongestDishes.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyProfit(dish))} weekly profit.`),
+        'No dishes recorded yet.'
+      ))}
+      ${buildSectionHtml('Recommended next steps', buildRecommendationListHtml([
+        pricingChangesNeeded > 0 ? 'Review recommended selling prices for dishes with material price gaps before the next menu sign-off.' : '',
+        summary.belowTargetCount > 0 ? 'Prioritise recipe costing and portion checks for dishes below target GP.' : '',
+        allDishes.length > 0 ? 'Use sales mix weekly to confirm whether high-contribution dishes are being promoted and positioned correctly.' : ''
+      ], 'Add dishes, sales mix, and ingredient costs before next-step recommendations can be generated.'))}
+    `
+  });
 
-    <div class="summary-grid">
-      <div class="meta-card"><span>Review date</span><strong>${formatShortDate(project.reviewDate)}</strong></div>
-      <div class="meta-card"><span>Sections</span><strong>${project.sections.length}</strong></div>
-      <div class="meta-card"><span>Total dishes</span><strong>${allDishes.length}</strong></div>
-      <div class="meta-card"><span>Weighted GP</span><strong>${fmtPercent(summary.weightedGp)}</strong></div>
-      <div class="meta-card"><span>Below target</span><strong>${summary.belowTargetCount}</strong></div>
-      <div class="meta-card"><span>Weekly opportunity</span><strong>${fmtCurrency(summary.totalOpportunity)}</strong></div>
-    </div>
-
-    <section>
-      <h2>Menu profit snapshot</h2>
-      <p class="report-section-lead">Commercial headline numbers for the reviewed menu and its current profit position.</p>
-      <div class="report-grid columns-4">
-        <div><strong>Review date</strong><br />${formatShortDate(project.reviewDate)}</div>
-        <div><strong>Sections</strong><br />${project.sections.length}</div>
-        <div><strong>Total dishes</strong><br />${allDishes.length}</div>
-        <div><strong>Dishes below target</strong><br />${summary.belowTargetCount}</div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Menu highlights</h2>
-      <p class="report-section-lead">Priority pricing opportunities and strongest commercial performers at a glance.</p>
-      <div class="report-story-grid">
-        <div class="report-story-card">
-          <h3>Top opportunity dishes</h3>
-          ${
-            topOpportunities.length
-              ? `<ul>${topOpportunities
-                  .map(
-                    (dish) =>
-                      `<li><strong>${safe(dish.name)}</strong> — ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity</li>`
-                  )
-                  .join('')}</ul>`
-              : '<p>No material pricing opportunities recorded.</p>'
-          }
-        </div>
-        <div class="report-story-card">
-          <h3>Strongest contributors</h3>
-          ${
-            strongestDishes.length
-              ? `<ul>${strongestDishes
-                  .map(
-                    (dish) =>
-                      `<li><strong>${safe(dish.name)}</strong> — ${fmtCurrency(dishWeeklyProfit(dish))} weekly profit</li>`
-                  )
-                  .join('')}</ul>`
-              : '<p>No dishes recorded yet.</p>'
-          }
-        </div>
-      </div>
-    </section>
+  const sectionDetailChapter = buildChapterHtml({
+    kicker: 'Menu Detail',
+    title: 'Section Performance and Dish-Level Appendix',
+    lead: 'Section-level commercial performance and dish detail for pricing review.',
+    body: `
 
     ${project.sections
       .map((section) => {
@@ -291,7 +278,10 @@ export function buildMenuReport(project: MenuProjectState) {
     `;
       })
       .join('')}
-  `;
+    `
+  });
+
+  return `${coverHtml}${buildReportBodyHtml([executiveChapter, sectionDetailChapter])}`;
 }
 
 export function completionSummary(project: MenuProjectState) {

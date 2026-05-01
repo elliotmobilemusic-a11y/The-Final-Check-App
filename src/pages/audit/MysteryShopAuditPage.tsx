@@ -5,7 +5,12 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
+  buildActionRegisterHtml,
+  buildChapterHtml,
+  buildReportBodyHtml,
   buildReportCoverHtml,
+  buildSectionHtml,
+  buildSummaryGridHtml,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -197,6 +202,8 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
   );
   const standoutObservations = state.observations.filter((item) => item.score >= 8).slice(0, 4);
   const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 4);
+  const completedActions = actions.filter((item) => item.status === 'Done').length;
+  const openActions = Math.max(actions.length - completedActions, 0);
 
   const coverHtml = buildReportCoverHtml({
     reportType: 'Mystery Shop Audit',
@@ -227,17 +234,30 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
     ]
   });
 
-  return `
-    ${coverHtml}
+  const executiveChapter = buildChapterHtml({
+    kicker: 'Executive Summary',
+    title: 'Guest Experience Position and Service Priorities',
+    lead: 'Client-facing summary of the guest journey, service strengths, weak moments, and follow-up actions.',
+    body: `
+      ${buildSummaryGridHtml([
+        { label: 'Overall score', value: `${calc.overallScore}/10`, detail: `Experience grade: ${calc.grade}.` },
+        { label: 'Standout moments', value: `${calc.standoutMoments}`, detail: 'Positive touchpoints to retain and coach around.' },
+        { label: 'Weak moments', value: `${calc.lowMoments}`, detail: 'Touchpoints requiring management attention.' },
+        { label: 'Action progress', value: `${completedActions} closed / ${openActions} open` },
+        { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded' },
+        { label: 'Follow-up', value: safe(state.followUpDate) || 'To be confirmed' }
+      ])}
+      ${buildSectionHtml('Experience summary', `<p>${safe(state.overallSummary) || 'No overall summary recorded.'}</p>`)}
+      ${buildSectionHtml('Recommendations', `<p>${safe(state.recommendations) || 'No recommendations recorded.'}</p>`)}
+      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions, 'No action items recorded.'))}
+    `
+  });
 
-    <div class="summary-grid">
-      <div class="meta-card"><span>Overall score</span><strong>${calc.overallScore}/10</strong></div>
-      <div class="meta-card"><span>Grade</span><strong>${calc.grade}</strong></div>
-      <div class="meta-card"><span>Standout moments</span><strong>${calc.standoutMoments}</strong></div>
-      <div class="meta-card"><span>Weak moments</span><strong>${calc.lowMoments}</strong></div>
-      <div class="meta-card"><span>Spend</span><strong>${state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : 'Not recorded'}</strong></div>
-      <div class="meta-card"><span>Named actions</span><strong>${calc.namedActions}</strong></div>
-    </div>
+  const detailedChapter = buildChapterHtml({
+    kicker: 'Detailed Review',
+    title: 'Scorecard, Guest Journey and Touchpoint Detail',
+    lead: 'Detailed scores, narrative observations, and area-level action planning for the management team.',
+    body: `
 
     <section>
       <h2>Scorecard</h2>
@@ -360,40 +380,12 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
     <section>
       <h2>Action register</h2>
       <p class="report-section-lead">Named follow-up actions, owners, and timing captured during the shop review.</p>
-      ${
-        actions.length
-          ? `
-        <table class="report-table report-table-compact">
-          <thead>
-            <tr>
-              <th>Action</th>
-              <th>Area</th>
-              <th>Priority</th>
-              <th>Owner</th>
-              <th>Due</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${actions
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.title) || 'Untitled action'}</td>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${item.priority}</td>
-                <td>${safe(item.owner) || 'Not assigned'}</td>
-                <td>${safe(item.dueDate) || 'Not set'}</td>
-                <td>${item.status}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
-          : '<p class="muted-copy">No action items recorded.</p>'
-      }
+      ${buildActionRegisterHtml(actions, 'No action items recorded.')}
     </section>
-  `;
+    `
+  });
+
+  return `${coverHtml}${buildReportBodyHtml([executiveChapter, detailedChapter])}`;
 }
 
 export function MysteryShopAuditPage() {

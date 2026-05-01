@@ -1,35 +1,69 @@
 import type { AuditFormState } from '../../types';
+import { calculateKitchenProfitMetrics, buildKitchenProfitNarrative } from '../../features/profit/kitchenProfit';
+import { safe } from '../../lib/utils';
+import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 import {
-  buildPdfDocumentHtml,
   buildReportCoverHtml,
   buildChapterHtml,
   buildSectionHtml,
   formatCurrencyShort,
   escapeHtml,
-  normalizeProseText
+  normalizeProseText,
+  buildReportBodyHtml,
+  buildSummaryGridHtml,
+  buildRecommendationListHtml,
+  buildActionRegisterHtml
 } from './index';
 
 export function buildKitchenAuditPdf(audit: AuditFormState): string {
+  const metrics = calculateKitchenProfitMetrics(audit);
+  const narrative = buildKitchenProfitNarrative(audit, metrics);
+  const namedActions = audit.actionItems.filter((item) => safe(item.title));
+  const highPriorityActions = namedActions
+    .filter((item) => item.priority === 'Critical' || item.priority === 'High')
+    .slice(0, 4);
+  const preparedDate = audit.visitDate || new Date().toISOString();
+
   // --------------------------
   // PAGE 1 - COVER PAGE
   // --------------------------
   const coverHtml = buildReportCoverHtml({
-    clientName: audit.businessName,
+    clientName: safe(audit.businessName) || 'Client Site',
     reportType: 'Kitchen Profit Audit',
-    preparedDate: audit.visitDate,
-    consultant: audit.consultantName,
+    preparedDate,
+    consultant: safe(audit.consultantName) || 'The Final Check',
     metrics: [
-      { label: 'Overall Score', value: `${Math.round(Object.values(audit.categoryScores).reduce((a,b) => a+b, 0) / 8)}/10` },
-      { label: 'Current GP', value: `${audit.targetGp}%` },
-      { label: 'Missed Opportunity', value: formatCurrencyShort(audit.actualWasteValue * 4) }
+      { label: 'Recoverable Opportunity', value: formatCurrencyShort(metrics.totalWeeklyOpportunity), primary: true },
+      { label: 'Actual GP', value: `${Math.round(metrics.actualGp)}%` },
+      { label: 'Control Score', value: `${Math.round(metrics.controlScore)}%` }
     ],
     details: [
-      { label: 'Location', value: audit.location },
-      { label: 'Covers / Week', value: String(audit.coversPerWeek) },
+      { label: 'Location', value: safe(audit.location) || 'Not recorded' },
+      { label: 'Covers / Week', value: String(audit.coversPerWeek || 'Not recorded') },
       { label: 'Average Spend', value: formatCurrencyShort(audit.averageSpend) },
-      { label: 'Kitchen Team', value: String(audit.kitchenTeamSize) }
+      { label: 'Kitchen Team', value: String(audit.kitchenTeamSize || 'Not recorded') }
     ],
-    summary: audit.summary
+    summary: narrative.executiveSummary || audit.summary
+  });
+
+  const executiveChapter = buildChapterHtml({
+    kicker: 'Executive Summary',
+    title: 'Headline Findings and Commercial Opportunity',
+    lead: 'Client-facing summary of the profit position, immediate risks, and recommended management response.',
+    body: `
+      ${buildSummaryGridHtml([
+        { label: 'Weekly opportunity', value: formatCurrencyShort(metrics.totalWeeklyOpportunity), detail: 'Estimated recoverable margin from GP, waste, portion, and labour controls.' },
+        { label: 'Annualised opportunity', value: formatCurrencyShort(metrics.totalAnnualOpportunity), detail: 'Indicative run-rate if the weekly opportunity remains unresolved.' },
+        { label: 'GP gap', value: `${Math.max(metrics.gpGap, 0).toFixed(1)} pts`, detail: `Actual GP ${metrics.actualGp.toFixed(1)}% against target ${audit.targetGp}%.` },
+        { label: 'Weekly waste', value: formatCurrencyShort(metrics.weeklyWasteLoss), detail: `${metrics.wastePercent.toFixed(1)}% of weekly sales.` },
+        { label: 'Portion risk', value: metrics.portionRisk, detail: `${formatCurrencyShort(metrics.totalPortionLoss)} weekly portion loss recorded.` },
+        { label: 'Open actions', value: `${namedActions.length}`, detail: 'Named client actions captured in the audit.' }
+      ])}
+
+      ${buildSectionHtml('Key findings', buildRecommendationListHtml(narrative.keyIssues, 'No material issues recorded.'))}
+      ${buildSectionHtml('Recommended first moves', buildRecommendationListHtml(narrative.quickWins, 'No quick wins recorded.'))}
+      ${buildSectionHtml('Follow-up recommendation', `<p>${escapeHtml(normalizeProseText(narrative.followUpRecommendation))}</p>`)}
+    `
   });
 
   // --------------------------
@@ -100,7 +134,7 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   const prioritiesHtml = `
     <div class="report-grid">
       ${audit.actionItems
-        .filter(item => item.priority === 'High')
+      .filter(item => item.priority === 'High')
         .slice(0, 3)
         .map(item => `
         <div class="report-story-card">
@@ -130,9 +164,9 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
       </div>
     </div>
 
-    <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--pdf-line-medium);">
-      <p class="pdf-muted">Next scheduled audit: ${audit.nextVisit || 'To be confirmed'}</p>
-    </div>
+    ${buildSectionHtml('30 to 90 day plan', buildRecommendationListHtml(narrative.actionPlan30To90Days, 'No 30 to 90 day plan recorded.'))}
+    ${buildSectionHtml('Action register', buildActionRegisterHtml(highPriorityActions.length ? highPriorityActions : namedActions, 'No priority actions recorded.'))}
+    ${buildSectionHtml('Next scheduled review', `<p>${escapeHtml(normalizeProseText(audit.nextVisit || 'To be confirmed'))}</p>`)}
   `;
 
   const prioritiesChapter = buildChapterHtml({
@@ -203,9 +237,10 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 6 - OPERATIONAL FINDINGS
   // --------------------------
   const findingsHtml = `
-    ${buildSectionHtml('Strengths', `<p>${normalizeProseText(audit.quickWins)}</p>`)}
-    ${buildSectionHtml('Areas For Improvement', `<p>${normalizeProseText(audit.systems)}</p>`)}
-    ${buildSectionHtml('Food Quality', `<p>${normalizeProseText(audit.foodQuality)}</p>`)}
+    ${buildSectionHtml('Strengths', `<p>${escapeHtml(normalizeProseText(audit.quickWins || 'No strengths recorded.'))}</p>`)}
+    ${buildSectionHtml('Areas For Improvement', `<p>${escapeHtml(normalizeProseText(audit.systems || 'No improvement narrative recorded.'))}</p>`)}
+    ${buildSectionHtml('Food Quality', `<p>${escapeHtml(normalizeProseText(audit.foodQuality || 'No food quality narrative recorded.'))}</p>`)}
+    ${renderAuditPhotoGallery(audit.photos, 'summary')}
   `;
 
   const findingsChapter = buildChapterHtml({
@@ -277,12 +312,12 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // PAGE 9 - LEADERSHIP NARRATIVE
   // --------------------------
   const leadershipHtml = `
-    ${buildSectionHtml('Culture & Leadership', `<p>${normalizeProseText(audit.cultureLeadership)}</p>`)}
-    ${buildSectionHtml('Team & Training', `<p>${normalizeProseText(audit.cultureLeadership || 'Training assessment complete')}</p>`)}
+    ${buildSectionHtml('Culture & Leadership', `<p>${escapeHtml(normalizeProseText(audit.cultureLeadership || 'No leadership narrative recorded.'))}</p>`)}
+    ${buildSectionHtml('Team & Training', `<p>${escapeHtml(normalizeProseText(audit.cultureLeadership || 'Training assessment complete.'))}</p>`)}
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--pdf-line-medium);">
       <h3>Closing Summary</h3>
-      <p>${normalizeProseText(audit.longTermStrategy)}</p>
+      <p>${escapeHtml(normalizeProseText(audit.longTermStrategy || 'No long-term strategy recorded.'))}</p>
     </div>
   `;
 
@@ -296,8 +331,10 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
   // --------------------------
   // COMBINE FULL DOCUMENT
   // --------------------------
-  const bodyHtml = [
+  return [
     coverHtml,
+    buildReportBodyHtml([
+    executiveChapter,
     commercialChapter,
     prioritiesChapter,
     controlsChapter,
@@ -305,7 +342,6 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
     findingsChapter,
     operationsChapter,
     leadershipChapter
+    ])
   ].join('');
-
-  return buildPdfDocumentHtml(`Kitchen Audit - ${audit.businessName}`, bodyHtml);
 }

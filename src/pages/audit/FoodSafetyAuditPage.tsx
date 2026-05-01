@@ -7,7 +7,12 @@ import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
+  buildActionRegisterHtml,
+  buildChapterHtml,
+  buildReportBodyHtml,
   buildReportCoverHtml,
+  buildSectionHtml,
+  buildSummaryGridHtml,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -285,21 +290,28 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
     ]
   });
 
-  return `
-    ${coverHtml}
+  const executiveChapter = buildChapterHtml({
+    kicker: 'Executive Summary',
+    title: 'Compliance Position and Urgent Priorities',
+    lead: 'Client-facing view of the current food safety risk position, control performance, and management follow-up required.',
+    body: `
+      ${buildSummaryGridHtml([
+        { label: 'Risk position', value: calc.riskLabel, detail: `${calc.failCount} failed checks and ${calc.watchCount} watch items.` },
+        { label: 'Control pass rate', value: `${calc.completion}%`, detail: `${calc.passCount} of ${calc.passCount + calc.watchCount + calc.failCount} active checks passed.` },
+        { label: 'Action progress', value: `${completedActions} closed / ${openActions} open`, detail: 'Actions captured for follow-up after the audit.' },
+        { label: 'Food hygiene rating', value: safe(state.hygieneRating) || 'Not recorded' }
+      ])}
+      ${buildSectionHtml('Audit summary', `<p>${safe(state.summary) || 'No summary recorded.'}</p>`)}
+      ${buildSectionHtml('Critical concerns', `<p>${safe(state.criticalConcerns) || 'No critical concerns recorded.'}</p>`)}
+      ${buildSectionHtml('Immediate actions', `<p>${safe(state.immediateActions) || 'No immediate actions recorded.'}</p>`)}
+    `
+  });
 
-    <div class="summary-grid">
-      <div class="meta-card"><span>Risk position</span><strong>${calc.riskLabel}</strong></div>
-      <div class="meta-card"><span>Control pass rate</span><strong>${calc.completion}%</strong></div>
-      <div class="meta-card"><span>Checks reviewed</span><strong>${calc.passCount + calc.watchCount + calc.failCount}</strong></div>
-      <div class="meta-card"><span>Fails / watches</span><strong>${calc.failCount} fail • ${calc.watchCount} watch</strong></div>
-      <div class="meta-card"><span>Action progress</span><strong>${completedActions} closed • ${openActions} open</strong></div>
-      <div class="meta-card"><span>Food hygiene rating</span><strong>${safe(state.hygieneRating) || 'Not recorded'}</strong></div>
-    </div>
-
-    <section>
-      <h2>Audit overview</h2>
-      <p class="report-section-lead">Site context, summary notes, and positive practice captured during the visit.</p>
+  const overviewChapter = buildChapterHtml({
+    kicker: 'Site Context',
+    title: 'Audit Overview and Good Practice',
+    lead: 'Site context, summary notes, positive practice, and visit details captured during the review.',
+    body: `
       <div class="report-columns">
         <div>
           <h3>Audit summary</h3>
@@ -321,25 +333,14 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
         <div><strong>Closed actions</strong><br />${completedActions}</div>
       </div>
       ${renderAuditPhotoGallery(state.photos, 'overview')}
-    </section>
+    `
+  });
 
-    <section>
-      <h2>Priority safety narrative</h2>
-      <div class="report-story-grid">
-        <div class="report-story-card">
-          <h3>Critical concerns</h3>
-          <p>${safe(state.criticalConcerns) || 'No critical concerns recorded.'}</p>
-        </div>
-        <div class="report-story-card">
-          <h3>Immediate actions</h3>
-          <p>${safe(state.immediateActions) || 'No immediate actions recorded.'}</p>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Control check register</h2>
-      <p class="report-section-lead">Core compliance checks with status and supporting audit notes.</p>
+  const checksChapter = buildChapterHtml({
+    kicker: 'Compliance Checks',
+    title: 'Control Check Register',
+    lead: 'Core compliance checks with status and supporting audit notes.',
+    body: `
       ${
         checkRows.length
           ? `
@@ -369,11 +370,14 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
           : '<p class="muted-copy">No checks recorded.</p>'
       }
       ${renderAuditPhotoGallery(state.photos, 'checks')}
-    </section>
+    `
+  });
 
-    <section>
-      <h2>Temperature and holding checks</h2>
-      <p class="report-section-lead">Temperature, hot-hold, cooling, and delivery controls reviewed during the visit.</p>
+  const temperatureChapter = buildChapterHtml({
+    kicker: 'Temperature Controls',
+    title: 'Temperature and Holding Checks',
+    lead: 'Temperature, hot-hold, cooling, and delivery controls reviewed during the visit.',
+    body: `
       ${
         temperatureRows.length
           ? `
@@ -403,11 +407,14 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
           : '<p class="muted-copy">No temperature checks recorded.</p>'
       }
       ${renderAuditPhotoGallery(state.photos, 'temperature')}
-    </section>
+    `
+  });
 
-    <section>
-      <h2>Area summaries and action plans</h2>
-      <p class="report-section-lead">Area-by-area summary notes and corrective actions for follow-up.</p>
+  const actionChapter = buildChapterHtml({
+    kicker: 'Follow-Up',
+    title: 'Area Plans and Action Register',
+    lead: 'Area-by-area summary notes, corrective actions, owners, and target dates for operational follow-up.',
+    body: `
       ${
         focusAreas.length
           ? `<div class="report-story-grid">
@@ -424,45 +431,15 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
             </div>`
           : '<p class="muted-copy">No area summaries recorded.</p>'
       }
+      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions, 'No action items recorded.'))}
+      ${buildSectionHtml('Follow-up date', `<p>${safe(state.followUpDate) || 'To be confirmed'}</p>`)}
       ${renderAuditPhotoGallery(state.photos, 'actions')}
-    </section>
+    `
+  });
 
-    <section>
-      <h2>Action register</h2>
-      <p class="report-section-lead">Assigned actions, owners, and target dates for operational follow-up.</p>
-      ${
-        actions.length
-          ? `
-        <table class="report-table report-table-compact">
-          <thead>
-            <tr>
-              <th>Action</th>
-              <th>Area</th>
-              <th>Priority</th>
-              <th>Owner</th>
-              <th>Due</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${actions
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.title) || 'Untitled action'}</td>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${item.priority}</td>
-                <td>${safe(item.owner) || 'Not assigned'}</td>
-                <td>${safe(item.dueDate) || 'Not set'}</td>
-                <td>${item.status}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
-          : '<p class="muted-copy">No action items recorded.</p>'
-      }
-    </section>
+  return `
+    ${coverHtml}
+    ${buildReportBodyHtml([executiveChapter, overviewChapter, checksChapter, temperatureChapter, actionChapter])}
   `;
 }
 
