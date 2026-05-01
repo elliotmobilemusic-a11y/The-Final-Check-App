@@ -11065,13 +11065,13 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-stack {
-  gap: 10px;
+  gap: 14px;
 }
 
 .dashboard-intro-band {
   display: grid;
-  gap: 10px;
-  padding: 2px 0 0;
+  gap: 12px;
+  padding: 4px 0 0;
   max-width: 640px;
 }
 
@@ -11154,49 +11154,67 @@ body[data-theme="midnight"] .client-portal-launch-card {
 
 .dashboard-stat-row {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 2px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .dashboard-stat-row .stat-card {
-  min-height: 78px;
-  padding: 12px 14px;
+  min-height: 84px;
+  padding: 14px 16px;
+  justify-items: start;
+  text-align: left;
+  gap: 4px;
+  align-content: start;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.dashboard-stat-row .stat-card::before {
+  display: none;
 }
 
 .dashboard-stat-row .stat-card-accent {
-  width: 40px;
-  height: 2px;
-}
-
-.dashboard-stat-row .stat-value {
-  font-size: clamp(1.35rem, 1.6vw, 1.85rem);
+  display: none;
 }
 
 .dashboard-stat-row .stat-label {
-  font-size: 10px;
-  line-height: 1.25;
-  letter-spacing: 0.075em;
+  order: -1;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.2;
+  text-align: left;
+}
+
+.dashboard-stat-row .stat-value {
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-align: left;
+  color: var(--text);
 }
 
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(330px, 0.82fr);
   align-items: start;
-  gap: 16px;
-  margin-top: 2px;
+  gap: 18px;
+  margin-top: 4px;
 }
 
 .dashboard-main-zone {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   min-width: 0;
 }
 
 .dashboard-side-zone {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
   min-width: 0;
 }
 
@@ -11209,7 +11227,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-page .panel-header {
-  padding: 13px 16px;
+  padding: 15px 18px;
   border-bottom: 1px solid var(--surface-shadow-line);
   display: flex;
   justify-content: space-between;
@@ -11221,9 +11239,9 @@ body[data-theme="midnight"] .client-portal-launch-card {
 .dashboard-page .panel-header h3 {
   margin: 0;
   font-size: 15px;
-  font-weight: 750;
+  font-weight: 800;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .dashboard-page .panel-header p {
@@ -11234,9 +11252,9 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-page .panel-body {
-  padding: 14px;
+  padding: 16px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .dashboard-task-panel .panel-body {
@@ -11253,7 +11271,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .dashboard-task-panel .sub-panel-header {
-  padding: 10px 12px;
+  padding: 11px 14px;
   background: var(--bg-soft);
   display: flex;
   justify-content: space-between;
@@ -11281,7 +11299,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
 }
 
 .task-list {
-  padding: 10px 12px 12px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -11342,26 +11360,30 @@ body[data-theme="midnight"] .client-portal-launch-card {
 .action-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 9px;
+}
+
+.action-list .button-primary {
+  grid-column: 1 / -1;
 }
 
 .action-list .button {
   justify-content: center;
   padding: 10px 11px;
   font-size: 13px;
-  min-height: 42px;
+  min-height: 40px;
   text-align: center;
 }
 
 .attention-panel .panel-body {
-  padding: 12px 14px 14px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .attention-item {
-  padding: 11px 12px;
+  padding: 12px 14px;
   border-radius: 13px;
   background: color-mix(in srgb, var(--bg-soft) 82%, var(--surface-card-strong) 18%);
   border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
@@ -11405,7 +11427,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 9px 0;
+  padding: 11px 0;
   border-bottom: 1px solid var(--line);
   line-height: 1.3;
 }
