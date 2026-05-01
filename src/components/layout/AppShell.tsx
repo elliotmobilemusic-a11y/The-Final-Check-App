@@ -24,7 +24,8 @@ const navItems = [
   { to: '/audit', label: 'Profit Audit' },
   { to: '/food-safety', label: 'Food Safety' },
   { to: '/mystery-shop', label: 'Mystery Shop' },
-  { to: '/menu', label: 'Menu Profit Engine' }
+  { to: '/menu', label: 'Menu Profit Engine' },
+  { to: '/questionnaires', label: 'Pre-Visit Forms' }
 ];
 
 const visitModeItems = [
@@ -63,6 +64,11 @@ const workspaceDetails = [
     match: '/menu',
     label: 'Menu Profit Engine workspace',
     detail: 'Track dish margin, weekly contribution, and pricing opportunities in one flow.'
+  },
+  {
+    match: '/questionnaires',
+    label: 'Pre-Visit Forms workspace',
+    detail: 'Generate pre-visit questionnaire links, review client answers, and prefill audits.'
   },
   {
     match: '/settings',

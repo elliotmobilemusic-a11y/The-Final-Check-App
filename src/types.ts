@@ -347,6 +347,62 @@ export interface ReportShareRecord<T = Record<string, unknown>> {
   updated_at: string;
 }
 
+// ─── Pre-Visit Questionnaire System ──────────────────────────────────────────
+
+export type QuestionnaireFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'email'
+  | 'tel'
+  | 'select';
+
+export interface QuestionnaireField {
+  key: string;
+  label: string;
+  type: QuestionnaireFieldType;
+  required?: boolean;
+  placeholder?: string;
+  fullWidth?: boolean;
+  options?: string[];
+}
+
+export interface QuestionnaireGroup {
+  title: string;
+  fields: QuestionnaireField[];
+}
+
+export interface QuestionnaireTemplate {
+  id: string;
+  label: string;
+  description: string;
+  groups: QuestionnaireGroup[];
+}
+
+export type QuestionnaireSubmissionStatus = 'pending' | 'reviewed' | 'used';
+
+export interface QuestionnaireSubmissionRecord {
+  id: string;
+  user_id: string;
+  share_id: string;
+  template_id: string;
+  client_id: string | null;
+  answers: Record<string, string>;
+  status: QuestionnaireSubmissionStatus;
+  submitted_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuestionnaireSharePayload {
+  templateId: string;
+  clientId?: string | null;
+  clientName?: string;
+  note?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export type ClientPortalVisibilityMode = 'all' | 'paid_only';
 
 export type ClientPortalSettings = {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   KitchenAuditControlsPanel,
@@ -53,6 +53,7 @@ import { buildKitchenAuditPdfTemplate, exportPdfDocument } from '../../lib/pdf';
 export function KitchenAuditPage() {
   const { runWithActivity } = useActivityOverlay();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [form, setForm] = useState<AuditFormState>(() =>
     searchParams.get('load')
       ? normalizeAuditState({}, searchParams.get('client') || null)
@@ -105,6 +106,23 @@ export function KitchenAuditPage() {
   useEffect(() => {
     writeDraft(KITCHEN_AUDIT_DRAFT_KEY, form);
   }, [form]);
+
+  useEffect(() => {
+    const state = location.state as { prefill?: Partial<AuditFormState>; fromSubmissionId?: string } | null;
+    if (!state?.prefill) return;
+
+    setForm((current) =>
+      normalizeAuditState(
+        { ...current, ...state.prefill },
+        current.clientId ?? null
+      )
+    );
+    setMessage('Audit prefilled from pre-visit questionnaire.');
+
+    // Clear location state so a refresh doesn't re-apply
+    window.history.replaceState({}, '', window.location.href);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const clientId = searchParams.get('client');

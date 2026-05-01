@@ -87,6 +87,21 @@ const ClientIntakePage = lazy(() =>
 const ClientPortalPage = lazy(() =>
   import('./pages/share/ClientPortalPage').then((module) => ({ default: module.ClientPortalPage }))
 );
+const PreVisitQuestionnairePage = lazy(() =>
+  import('./pages/share/PreVisitQuestionnairePage').then((module) => ({
+    default: module.PreVisitQuestionnairePage
+  }))
+);
+const QuestionnaireSubmissionsPage = lazy(() =>
+  import('./pages/questionnaires/QuestionnaireSubmissionsPage').then((module) => ({
+    default: module.QuestionnaireSubmissionsPage
+  }))
+);
+const QuestionnaireSubmissionDetailPage = lazy(() =>
+  import('./pages/questionnaires/QuestionnaireSubmissionDetailPage').then((module) => ({
+    default: module.QuestionnaireSubmissionDetailPage
+  }))
+);
 
 function HomeRedirect() {
   const { preferences } = usePreferences();
@@ -123,6 +138,7 @@ export default function App() {
          <Route path="/intake/client/:token" element={<ClientIntakePage />} />
          <Route path="/contact" element={<ClientIntakePage />} />
          <Route path="/portal/client/:token" element={<ClientPortalPage />} />
+         <Route path="/questionnaire/:type/:token" element={<PreVisitQuestionnairePage />} />
 
         <Route path="/*" element={<PrivateApp />}>
           <Route index element={<HomeRedirect />} />
@@ -135,6 +151,8 @@ export default function App() {
           <Route path="food-safety" element={<FoodSafetyAuditPage />} />
           <Route path="mystery-shop" element={<MysteryShopAuditPage />} />
           <Route path="menu" element={<MenuBuilderPage />} />
+          <Route path="questionnaires" element={<QuestionnaireSubmissionsPage />} />
+          <Route path="questionnaires/:id" element={<QuestionnaireSubmissionDetailPage />} />
           <Route path="settings" element={<Navigate to="/settings/profile" replace />} />
           <Route path="settings/:section" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
