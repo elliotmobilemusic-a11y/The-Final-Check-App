@@ -2,13 +2,15 @@ import type { ClientProfile, ClientRecord, MenuDish, MenuProjectState, SupabaseR
 import { fmtCurrency, fmtPercent, num, safe, todayIso, uid } from '../../lib/utils';
 import { createEmptyClientData } from '../clients/clientData';
 import {
+  buildCalloutHtml,
   buildChapterHtml,
-  buildDetailGridHtml,
+  buildKpiHeroHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
   buildRecommendationListHtml,
   buildSectionHtml,
-  buildSummaryGridHtml
+  buildSummaryGridHtml,
+  escapeHtml
 } from '../../reports/pdf';
 import {
   buildMenuProfitSummary,
@@ -139,145 +141,242 @@ export function buildMenuReport(project: MenuProjectState) {
   const topOpportunities = [...allDishes]
     .sort((left, right) => dishWeeklyOpportunity(right) - dishWeeklyOpportunity(left))
     .filter((dish) => dishWeeklyOpportunity(dish) > 0)
-    .slice(0, 4);
+    .slice(0, 5);
   const strongestDishes = [...allDishes]
     .sort((left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left))
-    .slice(0, 4);
+    .filter((dish) => dishWeeklyProfit(dish) > 0)
+    .slice(0, 5);
   const pricingChangesNeeded = allDishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length;
+  const gpGap = summary.weightedGp > 0 && project.defaultTargetGp > 0
+    ? project.defaultTargetGp - summary.weightedGp
+    : 0;
 
+  // ──────────────────────────────────────────────
+  // COVER
+  // ──────────────────────────────────────────────
   const coverHtml = buildReportCoverHtml({
     reportType: 'Menu Profit Engine',
-    clientName: safe(project.siteName) || 'Client Site',
+    clientName: safe(project.siteName) || safe(project.menuName) || 'Client Site',
     preparedDate: formatShortDate(project.reviewDate),
     consultant: 'The Final Check',
-    summary: 'Dish-level margin, weekly contribution, and pricing opportunity prepared for client review and PDF handover.',
+    summary:
+      'Dish-level margin analysis, weekly contribution, and pricing opportunity prepared for commercial review.',
     metrics: [
       { label: 'Weighted GP', value: allDishes.length > 0 ? fmtPercent(summary.weightedGp) : '', primary: true },
-      { label: 'Weekly profit', value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '' },
-      { label: 'Weekly opportunity', value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '' }
+      { label: 'Weekly Profit', value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '' },
+      { label: 'Weekly Opportunity', value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '' }
     ],
     details: [
       { label: 'Menu', value: safe(project.menuName) },
       { label: 'Sections', value: project.sections.length > 0 ? `${project.sections.length}` : '' },
       { label: 'Dishes', value: allDishes.length > 0 ? `${allDishes.length}` : '' },
-      { label: 'Below target', value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '' }
+      { label: 'Below Target', value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '' }
     ]
   });
 
-  const executiveChapter = buildChapterHtml({
-    kicker: 'Executive Summary',
-    title: 'Menu Performance and Commercial Priorities',
-    lead: 'Client-facing view of menu GP, weekly profit, pricing opportunities, and recommended next steps.',
-    body: `
-      ${buildSummaryGridHtml([
-        { label: 'Weighted GP', value: allDishes.length > 0 ? fmtPercent(summary.weightedGp) : '', detail: `Default target ${fmtPercent(project.defaultTargetGp)}.` },
-        { label: 'Weekly revenue', value: summary.weeklyRevenue > 0 ? fmtCurrency(summary.weeklyRevenue) : '', detail: 'Estimated revenue from current dish mix.' },
-        { label: 'Weekly profit', value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '', detail: 'Estimated contribution from recorded dishes.' },
-        { label: 'Weekly opportunity', value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '', detail: 'Potential uplift from pricing gaps.' },
-        { label: 'Below target', value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '', detail: pricingChangesNeeded > 0 ? `${pricingChangesNeeded} dishes need pricing review.` : '' },
-        { label: 'Total dishes', value: allDishes.length > 0 ? `${allDishes.length}` : '' }
-      ])}
-      ${buildSectionHtml('Top opportunity dishes', buildRecommendationListHtml(
-        topOpportunities.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity.`),
-      ))}
-      ${buildSectionHtml('Strongest contributors', buildRecommendationListHtml(
-        strongestDishes.map((dish) => `${safe(dish.name)}: ${fmtCurrency(dishWeeklyProfit(dish))} weekly profit.`),
-      ))}
-      ${buildSectionHtml('Recommended next steps', buildRecommendationListHtml([
-        pricingChangesNeeded > 0 ? 'Review recommended selling prices for dishes with material price gaps before the next menu sign-off.' : '',
-        summary.belowTargetCount > 0 ? 'Prioritise recipe costing and portion checks for dishes below target GP.' : '',
-        allDishes.length > 0 ? 'Use sales mix weekly to confirm whether high-contribution dishes are being promoted and positioned correctly.' : ''
-      ]))}
-    `
+  // ──────────────────────────────────────────────
+  // PAGE 2 — COMMERCIAL OVERVIEW
+  // KPI-anchored; opportunity-first narrative
+  // ──────────────────────────────────────────────
+  const commercialBody = `
+    ${buildKpiHeroHtml(
+      allDishes.length > 0 ? fmtPercent(summary.weightedGp) : '—',
+      'Weighted Gross Profit',
+      `Target ${fmtPercent(project.defaultTargetGp)}.${gpGap > 0 ? ` Gap of ${fmtPercent(gpGap)} to close.` : summary.weightedGp > 0 ? ' On or above target.' : ''}`
+    )}
+
+    ${buildSummaryGridHtml([
+      {
+        label: 'Weekly Revenue',
+        value: summary.weeklyRevenue > 0 ? fmtCurrency(summary.weeklyRevenue) : '',
+        detail: 'Estimated from current dish selling prices and weekly volumes.'
+      },
+      {
+        label: 'Weekly Profit',
+        value: summary.weeklyProfit > 0 ? fmtCurrency(summary.weeklyProfit) : '',
+        detail: 'Estimated weekly contribution from all recorded dishes.'
+      },
+      {
+        label: 'Weekly Opportunity',
+        value: summary.totalOpportunity > 0 ? fmtCurrency(summary.totalOpportunity) : '',
+        detail: 'Potential additional margin from closing pricing gaps.'
+      },
+      {
+        label: 'Below Target',
+        value: summary.belowTargetCount > 0 ? `${summary.belowTargetCount}` : '0',
+        detail: `${pricingChangesNeeded} dish${pricingChangesNeeded !== 1 ? 'es' : ''} with a material pricing gap.`
+      },
+      {
+        label: 'Total Dishes',
+        value: allDishes.length > 0 ? `${allDishes.length}` : ''
+      },
+      {
+        label: 'Sections',
+        value: project.sections.filter((s) => s.dishes.length > 0).length > 0
+          ? `${project.sections.filter((s) => s.dishes.length > 0).length}`
+          : ''
+      }
+    ])}
+
+    ${gpGap > 1
+      ? buildCalloutHtml(
+          `Weighted GP of ${fmtPercent(summary.weightedGp)} is ${fmtPercent(gpGap)} below the default target of ${fmtPercent(project.defaultTargetGp)}. Weekly opportunity of ${fmtCurrency(summary.totalOpportunity)} is recoverable through pricing corrections and recipe costing reviews.`,
+          { title: 'GP Gap', variant: gpGap > 5 ? 'risk' : 'warn' }
+        )
+      : ''}
+
+    ${topOpportunities.length
+      ? buildSectionHtml(
+          'Top Pricing Opportunities',
+          buildRecommendationListHtml(
+            topOpportunities.map(
+              (dish) =>
+                `${safe(dish.name)}: ${fmtCurrency(dishWeeklyOpportunity(dish))} weekly opportunity — sell price ${fmtCurrency(dish.sellPrice)}, actual GP ${fmtPercent(dishActualGp(dish))}.`
+            )
+          ),
+          'Dishes with the largest recoverable weekly margin based on current pricing gaps.'
+        )
+      : ''}
+
+    ${strongestDishes.length
+      ? buildSectionHtml(
+          'Strongest Contributors',
+          buildRecommendationListHtml(
+            strongestDishes.map(
+              (dish) =>
+                `${safe(dish.name)}: ${fmtCurrency(dishWeeklyProfit(dish))} estimated weekly profit.`
+            )
+          ),
+          'Highest weekly profit contributors — protect positioning and volume on these dishes.'
+        )
+      : ''}
+
+    ${buildSectionHtml(
+      'Recommended Next Steps',
+      buildRecommendationListHtml(
+        [
+          pricingChangesNeeded > 0
+            ? `Review sell prices for ${pricingChangesNeeded} dish${pricingChangesNeeded !== 1 ? 'es' : ''} with material pricing gaps before the next menu sign-off.`
+            : '',
+          summary.belowTargetCount > 0
+            ? `Prioritise recipe costing and portion discipline for ${summary.belowTargetCount} dish${summary.belowTargetCount !== 1 ? 'es' : ''} currently below GP target.`
+            : '',
+          allDishes.length > 0
+            ? 'Monitor weekly sales mix to confirm high-contribution dishes are positioned and promoted correctly.'
+            : ''
+        ].filter(Boolean)
+      )
+    )}
+  `;
+
+  const commercialChapter = buildChapterHtml({
+    kicker: 'Menu Performance',
+    title: 'Commercial Position & Pricing Opportunities',
+    lead:
+      'Weighted margin, weekly profit and opportunity analysis — the commercial case for action on this menu.',
+    body: commercialBody
   });
 
+  // ──────────────────────────────────────────────
+  // PAGE 3+ — SECTION PERFORMANCE
+  // Reduced table columns; section summary inline header
+  // ──────────────────────────────────────────────
   const sectionDetailBody = allDishes.length
     ? project.sections
-      .filter((section) => section.dishes.length > 0)
-      .map((section) => {
-        const sectionRevenue = section.dishes.reduce(
-          (sum, dish) => sum + num(dish.sellPrice) * Math.max(num(dish.weeklySalesVolume), 0),
-          0
-        );
-        const sectionProfit = section.dishes.reduce((sum, dish) => sum + dishWeeklyProfit(dish), 0);
-        const sectionGp =
-          section.dishes.length > 0
-            ? section.dishes.reduce((sum, dish) => sum + dishTheoGp(dish), 0) / section.dishes.length
-            : 0;
-        const sectionBelowTarget = section.dishes.filter((dish) => dishTheoGp(dish) < num(dish.targetGp)).length;
-        const topSectionDish = [...section.dishes].sort(
-          (left, right) => dishWeeklyProfit(right) - dishWeeklyProfit(left)
-        )[0];
-        const largestGap = section.dishes.length
-          ? Math.max(...section.dishes.map((dish) => dishWeeklyOpportunity(dish)))
-          : 0;
+        .filter((section) => section.dishes.length > 0)
+        .map((section) => {
+          const sectionRevenue = section.dishes.reduce(
+            (sum, dish) => sum + num(dish.sellPrice) * Math.max(num(dish.weeklySalesVolume), 0),
+            0
+          );
+          const sectionProfit = section.dishes.reduce((sum, dish) => sum + dishWeeklyProfit(dish), 0);
+          const sectionGp =
+            section.dishes.length > 0
+              ? section.dishes.reduce((sum, dish) => sum + dishTheoGp(dish), 0) / section.dishes.length
+              : 0;
+          const sectionBelowTarget = section.dishes.filter(
+            (dish) => dishTheoGp(dish) < num(dish.targetGp)
+          ).length;
+          const sectionOpportunity = Math.max(
+            ...section.dishes.map((dish) => dishWeeklyOpportunity(dish)),
+            0
+          );
 
-        return `
-      <section>
-        <h2>${section.name}</h2>
-        <p class="report-section-lead">Section-level performance summary and dish detail for pricing review.</p>
-        ${buildDetailGridHtml([
-          { label: 'Dishes', value: section.dishes.length },
-          { label: 'Section revenue', value: fmtCurrency(sectionRevenue) },
-          { label: 'Section profit', value: fmtCurrency(sectionProfit) },
-          { label: 'Average actual GP', value: fmtPercent(sectionGp) },
-          { label: 'Below target', value: sectionBelowTarget },
-          { label: 'Pricing changes needed', value: section.dishes.filter((dish) => Math.abs(dishPriceGap(dish)) >= 0.01).length },
-          { label: 'Best performer', value: topSectionDish ? safe(topSectionDish.name) : '' },
-          { label: 'Largest gap', value: largestGap > 0 ? fmtCurrency(largestGap) : '' }
-        ])}
-        <table class="report-table report-table-compact">
-          <thead>
-            <tr>
-              <th>Dish</th>
-              <th>Ingredient cost</th>
-              <th>Weekly cost</th>
-              <th>Sell price</th>
-              <th>Profit / sale</th>
-              <th>Target GP</th>
-              <th>Actual GP</th>
-              <th>Sales mix %</th>
-              <th>Weekly volume</th>
-              <th>Weekly opportunity</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${section.dishes
-              .map(
-                (dish) => `
-              <tr>
-                <td>${safe(dish.name)}</td>
-                <td>${fmtCurrency(dishUnitCost(dish))}</td>
-                <td>${fmtCurrency(dishMixCost(dish))}</td>
-                <td>${fmtCurrency(dish.sellPrice)}</td>
-                <td>${fmtCurrency(dishProfit(dish))}</td>
-                <td>${fmtPercent(dish.targetGp)}</td>
-                <td>${fmtPercent(dishTheoGp(dish))}</td>
-                <td>${fmtPercent(dish.salesMixPercent)}</td>
-                <td>${num(dish.weeklySalesVolume)}</td>
-                <td>${fmtCurrency(dishWeeklyOpportunity(dish))}</td>
-              </tr>
-            `
-              )
-              .join('')}
-          </tbody>
-        </table>
-      </section>
-    `;
-      })
-      .join('')
+          return `
+            <section>
+              <h2>${escapeHtml(safe(section.name) || 'Section')}</h2>
+              <div class="summary-grid" style="margin-bottom: 10px;">
+                <div class="meta-card">
+                  <span>Section Profit</span>
+                  <strong>${fmtCurrency(sectionProfit)}</strong>
+                </div>
+                <div class="meta-card">
+                  <span>Avg GP</span>
+                  <strong>${fmtPercent(sectionGp)}</strong>
+                </div>
+                <div class="meta-card">
+                  <span>Below Target</span>
+                  <strong>${sectionBelowTarget} of ${section.dishes.length}</strong>
+                </div>
+              </div>
+              ${sectionOpportunity > 0
+                ? `<p style="font-size: 9pt; color: var(--pdf-muted-strong); margin: 0 0 10px;">Largest pricing gap: ${fmtCurrency(sectionOpportunity)} weekly opportunity on a single dish.  Revenue: ${fmtCurrency(sectionRevenue)}.</p>`
+                : `<p style="font-size: 9pt; color: var(--pdf-muted); margin: 0 0 10px;">Revenue: ${fmtCurrency(sectionRevenue)}.</p>`}
+              <table class="report-table report-table-compact">
+                <thead>
+                  <tr>
+                    <th>Dish</th>
+                    <th>Sell Price</th>
+                    <th>Actual GP</th>
+                    <th>Target GP</th>
+                    <th>Weekly Vol.</th>
+                    <th>Weekly Profit</th>
+                    <th>Opportunity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${section.dishes
+                    .map(
+                      (dish) => {
+                        const actualGp = dishTheoGp(dish);
+                        const targetGp = num(dish.targetGp);
+                        const gpStyle =
+                          actualGp < targetGp - 3
+                            ? ' style="color: #b71c1c; font-weight: 700;"'
+                            : actualGp < targetGp
+                              ? ' style="color: #bf360c; font-weight: 600;"'
+                              : ' style="color: #2e7d32; font-weight: 600;"';
+                        const opp = dishWeeklyOpportunity(dish);
+                        return `
+                          <tr>
+                            <td>${escapeHtml(safe(dish.name) || '')}</td>
+                            <td>${fmtCurrency(dish.sellPrice)}</td>
+                            <td${gpStyle}>${fmtPercent(actualGp)}</td>
+                            <td>${fmtPercent(dish.targetGp)}</td>
+                            <td>${num(dish.weeklySalesVolume) > 0 ? num(dish.weeklySalesVolume) : '—'}</td>
+                            <td>${dishWeeklyProfit(dish) > 0 ? fmtCurrency(dishWeeklyProfit(dish)) : '—'}</td>
+                            <td>${opp > 0.01 ? fmtCurrency(opp) : '—'}</td>
+                          </tr>`;
+                      }
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+            </section>`;
+        })
+        .join('')
     : '';
 
   const sectionDetailChapter = sectionDetailBody
     ? buildChapterHtml({
-      kicker: 'Menu Detail',
-      title: 'Section Performance and Dish-Level Appendix',
-      lead: 'Section-level commercial performance and dish detail for pricing review.',
-      body: sectionDetailBody
-    })
+        kicker: 'Menu Detail',
+        title: 'Section Performance & Dish Analysis',
+        lead: 'Section-level commercial summary with GP, weekly profit, and pricing opportunity for each dish.',
+        body: sectionDetailBody
+      })
     : '';
 
-  return `${coverHtml}${buildReportBodyHtml([executiveChapter, sectionDetailChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([commercialChapter, sectionDetailChapter])}`;
 }
 
 export function completionSummary(project: MenuProjectState) {

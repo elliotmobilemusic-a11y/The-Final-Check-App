@@ -6,14 +6,16 @@ import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildActionRegisterHtml,
+  buildCalloutHtml,
   buildChapterHtml,
+  buildKpiHeroHtml,
   buildReportPhotoGalleryHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
+  buildRecommendationListHtml,
   buildSectionHtml,
-  buildSummaryGridHtml,
+  buildScoreGridHtml,
   buildStoryCardsHtml,
-  buildTextSectionHtml,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -202,190 +204,211 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
   const focusAreas = state.focusAreas.filter(
     (item) => safe(item.area) || safe(item.summary) || safe(item.actionPlan)
   );
-  const standoutObservations = state.observations.filter((item) => item.score >= 8).slice(0, 4);
-  const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 4);
+  const standoutObservations = state.observations.filter((item) => item.score >= 8).slice(0, 5);
+  const weakObservations = state.observations.filter((item) => item.score <= 5).slice(0, 5);
   const completedActions = actions.filter((item) => item.status === 'Done').length;
   const openActions = Math.max(actions.length - completedActions, 0);
-  const standoutMomentsHtml = standoutObservations.length
-    ? `<div class="report-story-card">
-        <h3>Standout moments</h3>
-        <ul>${standoutObservations
-          .map(
-            (item) =>
-              `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` - ${safe(item.note)}` : ''}</li>`
-          )
-          .join('')}</ul>
-      </div>`
-    : '';
-  const weakMomentsHtml = weakObservations.length
-    ? `<div class="report-story-card">
-        <h3>Weak moments</h3>
-        <ul>${weakObservations
-          .map(
-            (item) =>
-              `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` - ${safe(item.note)}` : ''}</li>`
-          )
-          .join('')}</ul>
-      </div>`
-    : '';
 
+  // ──────────────────────────────────────────────
+  // COVER
+  // ──────────────────────────────────────────────
   const coverHtml = buildReportCoverHtml({
     reportType: 'Mystery Shop Audit',
     clientName: safe(state.siteName) || 'Client Site',
     preparedDate: formatShortDate(state.visitDate),
     consultant: safe(state.shopperName) || 'The Final Check',
-    summary: 'Guest-experience review, scoring, and service-improvement actions prepared for management follow-up.',
+    summary:
+      'Independent guest experience review with scoring, journey analysis, and service-improvement actions for management.',
     metrics: [
-      {
-        label: 'Overall score',
-        value: `${calc.overallScore}/10`,
-        primary: true
-      },
-      {
-        label: 'Grade',
-        value: calc.grade
-      },
-      {
-        label: 'Weak moments',
-        value: `${calc.lowMoments}`
-      }
+      { label: 'Overall Score', value: `${calc.overallScore}/10`, primary: true },
+      { label: 'Grade', value: calc.grade },
+      { label: 'Weak Moments', value: `${calc.lowMoments}` }
     ],
     details: [
       { label: 'Site', value: safe(state.siteName) },
       { label: 'Location', value: safe(state.location) },
-      { label: 'Visit window', value: safe(state.visitWindow) },
-      { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : '' }
+      { label: 'Visit Window', value: safe(state.visitWindow) },
+      { label: 'Spend', value: state.spendAmount > 0 ? `£${state.spendAmount.toFixed(2)}` : '' }
     ]
   });
 
-  const executiveChapter = buildChapterHtml({
-    kicker: 'Executive Summary',
-    title: 'Guest Experience Position and Service Priorities',
-    lead: 'Client-facing summary of the guest journey, service strengths, weak moments, and follow-up actions.',
-    body: `
-      ${buildSummaryGridHtml([
-        { label: 'Overall score', value: `${calc.overallScore}/10`, detail: `Experience grade: ${calc.grade}.` },
-        { label: 'Standout moments', value: `${calc.standoutMoments}`, detail: 'Positive touchpoints to retain and coach around.' },
-        { label: 'Weak moments', value: `${calc.lowMoments}`, detail: 'Touchpoints requiring management attention.' },
-        { label: 'Action progress', value: `${completedActions} closed / ${openActions} open` },
-        { label: 'Spend', value: state.spendAmount > 0 ? `GBP ${state.spendAmount.toFixed(2)}` : '' },
-        { label: 'Follow-up', value: safe(state.followUpDate) || 'To be confirmed' }
-      ])}
-      ${buildTextSectionHtml('Experience summary', state.overallSummary)}
-      ${buildTextSectionHtml('Recommendations', state.recommendations)}
-      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions))}
-    `
+  // ──────────────────────────────────────────────
+  // PAGE 2 — EXPERIENCE OVERVIEW
+  // Score as hero KPI; scorecard grid; standout vs weak
+  // ──────────────────────────────────────────────
+  const standoutHtml = standoutObservations.length
+    ? `<div class="report-story-card">
+        <h3>Standout moments</h3>
+        <ul>
+          ${standoutObservations
+            .map(
+              (item) =>
+                `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
+            )
+            .join('')}
+        </ul>
+       </div>`
+    : '';
+
+  const weakHtml = weakObservations.length
+    ? `<div class="report-story-card">
+        <h3>Weak moments</h3>
+        <ul>
+          ${weakObservations
+            .map(
+              (item) =>
+                `<li><strong>${safe(item.touchpoint) || 'Touchpoint'}</strong>${safe(item.note) ? ` — ${safe(item.note)}` : ''}</li>`
+            )
+            .join('')}
+        </ul>
+       </div>`
+    : '';
+
+  const overviewBody = `
+    ${buildKpiHeroHtml(
+      `${calc.overallScore}/10`,
+      'Overall Guest Experience Score',
+      `Grade: ${calc.grade}  ·  ${calc.standoutMoments} standout moment${calc.standoutMoments !== 1 ? 's' : ''}  ·  ${calc.lowMoments} weak moment${calc.lowMoments !== 1 ? 's' : ''}`
+    )}
+
+    ${buildSectionHtml(
+      'Scorecard',
+      buildScoreGridHtml([
+        { label: 'Arrival', score: state.scorecard.arrival },
+        { label: 'Cleanliness', score: state.scorecard.cleanliness },
+        { label: 'Atmosphere', score: state.scorecard.atmosphere },
+        { label: 'Service', score: state.scorecard.service },
+        { label: 'Product', score: state.scorecard.product },
+        { label: 'Value', score: state.scorecard.value }
+      ]),
+      'Category scoring across the full guest journey.'
+    )}
+
+    ${standoutHtml || weakHtml
+      ? buildSectionHtml(
+          'Key Moments',
+          `<div class="pdf-2col">${standoutHtml}${weakHtml}</div>`,
+          'Best and weakest observed touchpoints highlighted for management review.'
+        )
+      : ''}
+
+    ${safe(state.overallSummary)
+      ? buildSectionHtml('Experience Summary', `<p>${safe(state.overallSummary)}</p>`)
+      : ''}
+
+    ${safe(state.recommendations)
+      ? buildSectionHtml(
+          'Recommendations',
+          buildRecommendationListHtml(
+            safe(state.recommendations)
+              ?.split(/\n+/)
+              .filter(Boolean) ?? [],
+            safe(state.recommendations) || ''
+          ) || `<p>${safe(state.recommendations)}</p>`
+        )
+      : ''}
+
+    ${buildCalloutHtml(
+      `${completedActions} action${completedActions !== 1 ? 's' : ''} closed  ·  ${openActions} open${safe(state.followUpDate) ? `  ·  Follow-up: ${safe(state.followUpDate)}` : ''}`,
+      { title: 'Action Progress', variant: openActions > 3 ? 'warn' : 'neutral' }
+    )}
+
+    ${buildReportPhotoGalleryHtml(state.photos, 'scorecard')}
+  `;
+
+  const overviewChapter = buildChapterHtml({
+    kicker: 'Guest Experience',
+    title: 'Performance Overview & Key Findings',
+    lead:
+      'Score summary, category scorecard, standout and weak moments, and the headline recommendations for management.',
+    body: overviewBody
   });
 
-  const detailedChapter = buildChapterHtml({
-    kicker: 'Detailed Review',
-    title: 'Scorecard, Guest Journey and Touchpoint Detail',
-    lead: 'Detailed scores, narrative observations, and area-level action planning for the management team.',
-    body: `
+  // ──────────────────────────────────────────────
+  // PAGE 3 — GUEST JOURNEY & DETAIL
+  // Narrative journey + touchpoint log + area plans + actions
+  // ──────────────────────────────────────────────
+  const journeyBody = `
+    ${buildSectionHtml(
+      'Guest Journey',
+      buildStoryCardsHtml([
+        { title: 'First Impression', body: state.firstImpression },
+        { title: 'Service Story', body: state.serviceStory },
+        { title: 'Food & Drink', body: state.foodAndDrink },
+        { title: 'Cleanliness & Atmosphere', body: state.cleanlinessNotes }
+      ]),
+      'Narrative observations from arrival through to departure.'
+    )}
 
-    <section>
-      <h2>Scorecard</h2>
-      <p class="report-section-lead">Category scoring across arrival, service, product, and overall guest value.</p>
-      <div class="report-grid columns-4">
-        <div><strong>Arrival</strong><br />${state.scorecard.arrival}/10</div>
-        <div><strong>Cleanliness</strong><br />${state.scorecard.cleanliness}/10</div>
-        <div><strong>Atmosphere</strong><br />${state.scorecard.atmosphere}/10</div>
-        <div><strong>Service</strong><br />${state.scorecard.service}/10</div>
-        <div><strong>Product</strong><br />${state.scorecard.product}/10</div>
-        <div><strong>Value</strong><br />${state.scorecard.value}/10</div>
-      </div>
-      ${buildReportPhotoGalleryHtml(state.photos, 'scorecard')}
-    </section>
+    ${buildReportPhotoGalleryHtml(state.photos, 'journey')}
 
-    <section>
-      <h2>Guest journey summary</h2>
-      <p class="report-section-lead">Narrative notes from first impression through to recommendation and revisit intent.</p>
-      ${buildStoryCardsHtml([
-        { title: 'Overall summary', body: state.overallSummary },
-        { title: 'First impression', body: state.firstImpression },
-        { title: 'Service story', body: state.serviceStory },
-        { title: 'Food and drink', body: state.foodAndDrink },
-        { title: 'Cleanliness and atmosphere', body: state.cleanlinessNotes },
-        { title: 'Recommendations', body: state.recommendations }
-      ])}
-      ${buildReportPhotoGalleryHtml(state.photos, 'journey')}
-    </section>
-
-    ${standoutMomentsHtml || weakMomentsHtml ? `<section>
-      <h2>Key moments</h2>
-      <p class="report-section-lead">Best and weakest observed touchpoints highlighted for management review.</p>
-      <div class="report-story-grid">
-        ${standoutMomentsHtml}
-        ${weakMomentsHtml}
-      </div>
-      ${buildReportPhotoGalleryHtml(state.photos, 'visit')}
-    </section>` : ''}
-
-    <section>
-      <h2>Touchpoint observations</h2>
-      <p class="report-section-lead">Detailed observation log across touchpoints, areas, and scoring.</p>
-      ${
-        state.observations.length
-          ? `
-        <table class="report-table report-table-compact">
-          <thead>
-            <tr>
-              <th>Area</th>
-              <th>Touchpoint</th>
-              <th>Score</th>
-              <th>Observation</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${state.observations
-              .map(
-                (item) => `
+    ${state.observations.length
+      ? buildSectionHtml(
+          'Touchpoint Observations',
+          `<table class="report-table report-table-compact">
+            <thead>
               <tr>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${safe(item.touchpoint)}</td>
-                <td>${item.score}/10</td>
-                <td>${safe(item.note)}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
-          : ''
-      }
-      ${buildReportPhotoGalleryHtml(state.photos, 'observations')}
-    </section>
-
-    <section>
-      <h2>Area summaries and action plans</h2>
-      <p class="report-section-lead">Management-level reading of each area with the follow-up response required.</p>
-      ${
-        focusAreas.length
-          ? `<div class="report-story-grid">
-              ${focusAreas
+                <th style="width: 22%">Area</th>
+                <th style="width: 28%">Touchpoint</th>
+                <th style="width: 10%">Score</th>
+                <th>Observation</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.observations
                 .map(
                   (item) => `
-                <div class="report-story-card">
-                  <h3>${safe(item.area) || 'General'}</h3>
-                  ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
-                  ${safe(item.actionPlan) ? `<p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan)}</p>` : ''}
-                </div>`
+                <tr>
+                  <td>${safe(item.area) || 'General'}</td>
+                  <td>${safe(item.touchpoint)}</td>
+                  <td>${item.score}/10</td>
+                  <td>${safe(item.note)}</td>
+                </tr>`
                 )
                 .join('')}
-            </div>`
-          : ''
-      }
-      ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
-    </section>
+            </tbody>
+          </table>`,
+          'Detailed scoring and observations across all visited touchpoints.'
+        )
+      : ''}
 
-    <section>
-      <h2>Action register</h2>
-      <p class="report-section-lead">Named follow-up actions, owners, and timing captured during the shop review.</p>
-      ${buildActionRegisterHtml(actions)}
-    </section>
-    `
+    ${buildReportPhotoGalleryHtml(state.photos, 'observations')}
+
+    ${focusAreas.length
+      ? buildSectionHtml(
+          'Area Summaries & Action Plans',
+          `<div class="report-story-grid">
+            ${focusAreas
+              .map(
+                (item) => `
+              <div class="report-story-card">
+                <h3>${safe(item.area) || 'General'}</h3>
+                ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
+                ${safe(item.actionPlan)
+                  ? `<p style="margin-top: 8px; color: var(--pdf-muted-strong); font-size: 9.5pt;">${safe(item.actionPlan)}</p>`
+                  : ''}
+              </div>`
+              )
+              .join('')}
+           </div>`,
+          'Management-level reading of each area with the required follow-up response.'
+        )
+      : ''}
+
+    ${buildSectionHtml('Action Register', buildActionRegisterHtml(actions))}
+
+    ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
+  `;
+
+  const journeyChapter = buildChapterHtml({
+    kicker: 'Guest Journey',
+    title: 'The Visit — Narrative, Observations & Actions',
+    lead:
+      'Detailed journey narrative, touchpoint scoring, area-level management plans, and the full action register.',
+    body: journeyBody
   });
 
-  return `${coverHtml}${buildReportBodyHtml([executiveChapter, detailedChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([overviewChapter, journeyChapter])}`;
 }
 
 export function MysteryShopAuditPage() {

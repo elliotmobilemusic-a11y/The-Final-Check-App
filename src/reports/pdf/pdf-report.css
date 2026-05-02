@@ -966,6 +966,538 @@ table tr {
    10. PRINT MODE OVERRIDES
    ============================================== */
 
+/* ==============================================
+   11. CALLOUT BLOCKS
+   ============================================== */
+
+.pdf-callout {
+  padding: 12px 16px 13px;
+  border-radius: 12px;
+  border-left: 3px solid var(--pdf-accent);
+  background: var(--pdf-accent-soft);
+  margin: 0 0 14px;
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-callout strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11pt;
+  color: var(--pdf-ink);
+  line-height: 1.35;
+}
+
+.pdf-callout p {
+  margin: 0;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--pdf-ink-soft);
+}
+
+.pdf-callout--risk {
+  border-left-color: #b71c1c;
+  background: #fff5f5;
+}
+.pdf-callout--risk strong { color: #7f0000; }
+.pdf-callout--risk p { color: #7f0000; }
+
+.pdf-callout--warn {
+  border-left-color: #bf360c;
+  background: #fff8f3;
+}
+.pdf-callout--warn strong { color: #7f2400; }
+.pdf-callout--warn p { color: #7f2400; }
+
+.pdf-callout--good {
+  border-left-color: #2e7d32;
+  background: #f1f8f1;
+}
+.pdf-callout--good strong { color: #1b5e20; }
+.pdf-callout--good p { color: #1b5e20; }
+
+.pdf-callout--neutral {
+  border-left-color: var(--pdf-line-medium);
+  background: var(--pdf-panel);
+}
+
+/* ==============================================
+   12. KPI HERO BLOCK
+   ============================================== */
+
+.pdf-kpi-hero {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--pdf-line-medium);
+  margin-bottom: 20px;
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-kpi-hero-value {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 54pt;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--pdf-ink);
+}
+
+.pdf-kpi-hero-meta {
+  padding-bottom: 7px;
+}
+
+.pdf-kpi-hero-label {
+  display: block;
+  color: var(--pdf-accent);
+  font-size: 7.5pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.pdf-kpi-hero-detail {
+  color: var(--pdf-muted-strong);
+  font-size: 11pt;
+  line-height: 1.52;
+  max-width: 64ch;
+}
+
+/* ==============================================
+   13. EDITORIAL ACTION CARDS
+   ============================================== */
+
+.pdf-action-cards {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.pdf-action-card {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--pdf-line-medium);
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-action-card--critical {
+  border-color: rgba(183, 28, 28, 0.22);
+}
+
+.pdf-action-card--high {
+  border-color: rgba(191, 54, 12, 0.2);
+}
+
+.pdf-action-card-stripe {
+  background: var(--pdf-accent);
+  flex-shrink: 0;
+}
+
+.pdf-action-card--critical .pdf-action-card-stripe { background: #b71c1c; }
+.pdf-action-card--high .pdf-action-card-stripe { background: #bf360c; }
+.pdf-action-card--medium .pdf-action-card-stripe { background: var(--pdf-accent); }
+
+.pdf-action-card-body {
+  padding: 10px 13px 11px;
+  background: #ffffff;
+}
+
+.pdf-action-card--critical .pdf-action-card-body { background: #fffbfb; }
+
+.pdf-action-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pdf-ink);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.pdf-action-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+  margin-top: 4px;
+}
+
+.pdf-action-card-meta-item {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+}
+
+.pdf-action-card-meta-item span {
+  color: var(--pdf-muted);
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.pdf-action-card-meta-item strong {
+  color: var(--pdf-ink-soft);
+  font-size: 8.5pt;
+  font-weight: 600;
+}
+
+.pdf-action-card-impact {
+  color: var(--pdf-muted-strong);
+  font-size: 9pt;
+  line-height: 1.5;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ==============================================
+   14. MYSTERY SHOP SCORE GRID
+   ============================================== */
+
+.pdf-score-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 8px 0 14px;
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-score-cell {
+  padding: 11px 13px 12px;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(251, 248, 242, 0.7) 0%, #fff 100%);
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-score-cell-label {
+  display: block;
+  color: var(--pdf-muted);
+  font-size: 7pt;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.pdf-score-cell-value {
+  font-size: 26pt;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--pdf-ink);
+}
+
+.pdf-score-cell-max {
+  font-size: 13pt;
+  font-weight: 400;
+  color: var(--pdf-muted);
+  letter-spacing: 0;
+}
+
+.pdf-score-cell--strong .pdf-score-cell-value { color: #2e7d32; }
+.pdf-score-cell--weak .pdf-score-cell-value { color: #b71c1c; }
+.pdf-score-cell--mid .pdf-score-cell-value { color: #bf360c; }
+
+/* ==============================================
+   15. TWO-COLUMN CONTENT LAYOUT
+   ============================================== */
+
+.pdf-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.pdf-2col > * { min-width: 0; }
+
+/* ==============================================
+   16. STATUS COLOUR HELPERS
+   ============================================== */
+
+.pdf-status-pass   { color: #2e7d32 !important; font-weight: 700; }
+.pdf-status-fail   { color: #b71c1c !important; font-weight: 700; }
+.pdf-status-watch  { color: #bf360c !important; font-weight: 700; }
+.pdf-status-critical { color: #b71c1c !important; font-weight: 700; }
+.pdf-status-high   { color: #bf360c !important; font-weight: 700; }
+.pdf-status-medium { color: var(--pdf-accent-strong) !important; font-weight: 600; }
+.pdf-status-low    { color: var(--pdf-muted-strong) !important; font-weight: 600; }
+.pdf-status-done   { color: #2e7d32 !important; font-weight: 600; }
+.pdf-status-open   { color: var(--pdf-muted-strong) !important; }
+
+/* ==============================================
+   17. CHAPTER VARIANT — TIGHT
+   ============================================== */
+
+.pdf-chapter--tight {
+  padding: 12mm 18mm 14mm !important;
+}
+
+/* ==============================================
+   18. OPERATIONAL COVER  (Dish Spec family)
+   ============================================== */
+
+.pdf-cover-page--operational {
+  position: relative;
+  overflow: hidden;
+  min-height: 270mm;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  break-after: page;
+  page-break-after: always;
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-op-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid rgba(127, 82, 33, 0.18);
+}
+
+.pdf-cover-op-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18mm 0 14mm;
+}
+
+.pdf-cover-op-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 13px;
+  border: 1px solid rgba(159, 107, 47, 0.28);
+  border-radius: 999px;
+  background: rgba(244, 239, 229, 0.92);
+  color: var(--pdf-accent-strong);
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-bottom: 16px;
+}
+
+.pdf-cover-op-name {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 40pt;
+  font-weight: 600;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+  color: var(--pdf-ink);
+  max-width: 18ch;
+  margin: 0 0 20px;
+  hyphens: none;
+  word-break: keep-all;
+}
+
+.pdf-cover-op-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.pdf-cover-op-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 999px;
+  background: var(--pdf-panel);
+  color: var(--pdf-muted-strong);
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+.pdf-cover-op-metrics {
+  display: flex;
+  max-width: 130mm;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdf-cover-op-metric {
+  flex: 1;
+  padding: 12px 15px 13px;
+  border-right: 1px solid var(--pdf-line-soft);
+}
+
+.pdf-cover-op-metric:last-child { border-right: none; }
+
+.pdf-cover-op-metric.primary {
+  background: linear-gradient(135deg, rgba(159, 107, 47, 0.1), rgba(159, 107, 47, 0.02));
+}
+
+.pdf-cover-op-metric-value {
+  display: block;
+  font-size: 19pt;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--pdf-ink);
+  margin-bottom: 3px;
+}
+
+.pdf-cover-op-metric-label {
+  display: block;
+  color: var(--pdf-muted);
+  font-size: 6.8pt;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* ==============================================
+   19. COMMERCIAL COVER  (Recipe Costing family)
+   ============================================== */
+
+.pdf-cover-page--commercial {
+  position: relative;
+  overflow: hidden;
+  min-height: 270mm;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  break-after: page;
+  page-break-after: always;
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+}
+
+.pdf-cover-com-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid rgba(127, 82, 33, 0.18);
+}
+
+.pdf-cover-com-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18mm 0 12mm;
+}
+
+.pdf-cover-com-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 13px;
+  border: 1px solid rgba(159, 107, 47, 0.28);
+  border-radius: 999px;
+  background: rgba(244, 239, 229, 0.92);
+  color: var(--pdf-accent-strong);
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.pdf-cover-com-name {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 38pt;
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: var(--pdf-ink);
+  max-width: 18ch;
+  margin: 0 0 22px;
+  hyphens: none;
+}
+
+.pdf-cover-com-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 150mm;
+  margin: 0 0 12px;
+}
+
+.pdf-cover-com-number {
+  padding: 13px 15px 14px;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 14px;
+  background: #ffffff;
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-cover-com-number.primary {
+  border-color: rgba(159, 107, 47, 0.28);
+  background: linear-gradient(135deg, rgba(159, 107, 47, 0.1), rgba(159, 107, 47, 0.02));
+}
+
+.pdf-cover-com-number-value {
+  display: block;
+  font-size: 24pt;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: var(--pdf-ink);
+  margin-bottom: 4px;
+}
+
+.pdf-cover-com-number-label {
+  display: block;
+  color: var(--pdf-muted);
+  font-size: 6.8pt;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pdf-cover-com-gp-status {
+  display: block;
+  padding: 9px 14px;
+  border-radius: 10px;
+  max-width: 150mm;
+  font-size: 10pt;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.pdf-cover-com-gp-status.above-target {
+  background: #f1f8f1;
+  border-left: 3px solid #2e7d32;
+  color: #1b5e20;
+}
+
+.pdf-cover-com-gp-status.below-target {
+  background: #fff5f5;
+  border-left: 3px solid #b71c1c;
+  color: #7f0000;
+}
+
+@media print {
+  .pdf-cover-page--operational,
+  .pdf-cover-page--commercial {
+    margin: 0;
+    padding: 16mm 16mm 18mm;
+    border-radius: 0;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-after: page;
+    page-break-after: always;
+  }
+}
+
 @media print {
   html {
     font-size: 14px;

@@ -167,3 +167,117 @@ export function buildReportPhotoGalleryHtml(photos: AuditPhoto[], section: strin
   if (!photos.some((photo) => photo.section === section)) return '';
   return renderAuditPhotoGallery(photos, section);
 }
+
+export type CalloutVariant = 'risk' | 'warn' | 'good' | 'neutral';
+
+export function buildCalloutHtml(
+  text: unknown,
+  options: { title?: string; variant?: CalloutVariant } = {}
+): string {
+  const prose = normalizeProseText(text);
+  if (!prose) return '';
+  const variantClass = options.variant ? ` pdf-callout--${options.variant}` : '';
+  const titleHtml = options.title
+    ? `<strong>${escapeHtml(normalizeTitleLabel(options.title))}</strong>`
+    : '';
+  return `<div class="pdf-callout${variantClass}">${titleHtml}<p>${escapeHtml(prose)}</p></div>`;
+}
+
+export function buildKpiHeroHtml(value: string, label: string, detail?: string): string {
+  if (!value) return '';
+  return `
+    <div class="pdf-kpi-hero">
+      <div class="pdf-kpi-hero-value">${escapeHtml(value)}</div>
+      <div class="pdf-kpi-hero-meta">
+        <span class="pdf-kpi-hero-label">${escapeHtml(normalizeTitleLabel(label))}</span>
+        ${detail ? `<div class="pdf-kpi-hero-detail">${escapeHtml(normalizeProseText(detail))}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+export function buildActionCardsHtml(actions: AuditActionItem[]): string {
+  const visible = actions.filter((item) => safe(item.title));
+  if (!visible.length) return '';
+
+  return `
+    <div class="pdf-action-cards">
+      ${visible
+        .map((item) => {
+          const priority = (item.priority || 'medium').toLowerCase();
+          const priorityClass =
+            priority === 'critical'
+              ? 'pdf-action-card--critical'
+              : priority === 'high'
+                ? 'pdf-action-card--high'
+                : 'pdf-action-card--medium';
+          const impactHtml =
+            safe(item.impact)
+              ? `<div class="pdf-action-card-impact">${escapeHtml(normalizeProseText(item.impact))}</div>`
+              : '';
+          return `
+            <div class="pdf-action-card ${priorityClass}">
+              <div class="pdf-action-card-stripe"></div>
+              <div class="pdf-action-card-body">
+                <div class="pdf-action-card-title">${escapeHtml(safe(item.title) || 'Action')}</div>
+                <div class="pdf-action-card-meta">
+                  ${safe(item.area) ? `<div class="pdf-action-card-meta-item"><span>Area</span><strong>${escapeHtml(safe(item.area) || '')}</strong></div>` : ''}
+                  <div class="pdf-action-card-meta-item"><span>Priority</span><strong>${escapeHtml(item.priority)}</strong></div>
+                  ${safe(item.owner) ? `<div class="pdf-action-card-meta-item"><span>Owner</span><strong>${escapeHtml(safe(item.owner) || '')}</strong></div>` : ''}
+                  ${safe(item.dueDate) ? `<div class="pdf-action-card-meta-item"><span>Due</span><strong>${escapeHtml(safe(item.dueDate) || '')}</strong></div>` : ''}
+                </div>
+                ${impactHtml}
+              </div>
+            </div>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+export function buildScoreGridHtml(
+  scores: Array<{ label: string; score: number; max?: number }>
+): string {
+  if (!scores.length) return '';
+
+  return `
+    <div class="pdf-score-grid">
+      ${scores
+        .map((item) => {
+          const max = item.max ?? 10;
+          const ratio = item.score / max;
+          const scoreClass =
+            ratio >= 0.8
+              ? 'pdf-score-cell--strong'
+              : ratio >= 0.6
+                ? ''
+                : ratio >= 0.45
+                  ? 'pdf-score-cell--mid'
+                  : 'pdf-score-cell--weak';
+          return `
+            <div class="pdf-score-cell ${scoreClass}">
+              <span class="pdf-score-cell-label">${escapeHtml(normalizeTitleLabel(item.label))}</span>
+              <span class="pdf-score-cell-value">${item.score}<span class="pdf-score-cell-max">/${max}</span></span>
+            </div>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+export function buildStatusCell(value: string): string {
+  const lc = value.toLowerCase();
+  const cls =
+    lc === 'pass' || lc === 'done' || lc === 'in place'
+      ? 'pdf-status-pass'
+      : lc === 'fail' || lc === 'critical' || lc === 'missing'
+        ? 'pdf-status-fail'
+        : lc === 'watch' || lc === 'partial' || lc === 'high'
+          ? 'pdf-status-watch'
+          : lc === 'medium'
+            ? 'pdf-status-medium'
+            : 'pdf-status-low';
+  return `<span class="${cls}">${escapeHtml(value)}</span>`;
+}

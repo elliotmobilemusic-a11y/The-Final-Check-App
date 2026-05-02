@@ -8,15 +8,15 @@ import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { selectableSitesForClient } from '../../features/clients/clientData';
 import {
   buildActionRegisterHtml,
+  buildCalloutHtml,
   buildChapterHtml,
-  buildDetailGridHtml,
   buildReportPhotoGalleryHtml,
   buildReportBodyHtml,
   buildReportCoverHtml,
   buildSectionHtml,
   buildSummaryGridHtml,
   buildStoryCardsHtml,
-  buildTextSectionHtml,
+  buildStatusCell,
   openPdfDocument,
 } from '../../reports/pdf';
 import { listClients } from '../../services/clients';
@@ -263,180 +263,239 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
   );
   const completedActions = actions.filter((item) => item.status === 'Done').length;
   const openActions = Math.max(actions.length - completedActions, 0);
+  const riskVariant =
+    calc.riskLabel === 'High risk' ? 'risk' : calc.riskLabel === 'At risk' ? 'warn' : 'good';
 
+  // ──────────────────────────────────────────────
+  // COVER
+  // ──────────────────────────────────────────────
   const coverHtml = buildReportCoverHtml({
     reportType: 'Food Safety Audit',
     clientName: safe(state.siteName) || 'Client Site',
     preparedDate: formatShortDate(state.auditDate),
     consultant: safe(state.auditorName) || 'The Final Check',
-    summary: 'Food safety readiness, compliance risk, and immediate actions prepared for site follow-up.',
+    summary:
+      'Food safety compliance review, risk assessment, and corrective action programme prepared for site management.',
     metrics: [
-      {
-        label: 'Control pass rate',
-        value: `${calc.completion}%`,
-        primary: true
-      },
-      {
-        label: 'Risk position',
-        value: calc.riskLabel
-      },
-      {
-        label: 'Failed checks',
-        value: `${calc.failCount}`
-      }
+      { label: 'Risk Position', value: calc.riskLabel, primary: true },
+      { label: 'Control Pass Rate', value: `${calc.completion}%` },
+      { label: 'Failed Checks', value: `${calc.failCount}` }
     ],
     details: [
       { label: 'Site', value: safe(state.siteName) },
       { label: 'Location', value: safe(state.location) },
-      { label: 'Service period', value: safe(state.servicePeriod) },
-      { label: 'Site lead', value: safe(state.managerName) }
+      { label: 'Service Period', value: safe(state.servicePeriod) },
+      { label: 'Site Lead', value: safe(state.managerName) }
     ]
   });
 
-  const executiveChapter = buildChapterHtml({
-    kicker: 'Executive Summary',
-    title: 'Compliance Position and Urgent Priorities',
-    lead: 'Client-facing view of the current food safety risk position, control performance, and management follow-up required.',
-    body: `
-      ${buildSummaryGridHtml([
-        { label: 'Risk position', value: calc.riskLabel, detail: `${calc.failCount} failed checks and ${calc.watchCount} watch items.` },
-        { label: 'Control pass rate', value: `${calc.completion}%`, detail: `${calc.passCount} of ${calc.passCount + calc.watchCount + calc.failCount} active checks passed.` },
-        { label: 'Action progress', value: `${completedActions} closed / ${openActions} open`, detail: 'Actions captured for follow-up after the audit.' },
-        { label: 'Food hygiene rating', value: safe(state.hygieneRating) }
-      ])}
-      ${buildTextSectionHtml('Audit summary', state.summary)}
-      ${buildTextSectionHtml('Critical concerns', state.criticalConcerns)}
-      ${buildTextSectionHtml('Immediate actions', state.immediateActions)}
-    `
+  // ──────────────────────────────────────────────
+  // PAGE 2 — RISK POSITION & IMMEDIATE ACTIONS
+  // Risk callout anchors the page; immediate actions follow
+  // ──────────────────────────────────────────────
+  const riskSummaryText =
+    calc.riskLabel === 'High risk'
+      ? `HIGH RISK — ${calc.failCount} failed check${calc.failCount !== 1 ? 's' : ''} and ${calc.watchCount} watch item${calc.watchCount !== 1 ? 's' : ''} require immediate corrective action before the next operational period.`
+      : calc.riskLabel === 'At risk'
+        ? `AT RISK — ${calc.failCount > 0 ? `${calc.failCount} failed check${calc.failCount !== 1 ? 's' : ''} and ` : ''}${calc.watchCount} watch item${calc.watchCount !== 1 ? 's' : ''} identified. Corrective action required.`
+        : `CONTROLLED — ${calc.completion}% of active checks passed. ${calc.watchCount > 0 ? `${calc.watchCount} watch item${calc.watchCount !== 1 ? 's' : ''} to monitor.` : 'No significant compliance concerns identified.'}`;
+
+  const riskChapterBody = `
+    ${buildCalloutHtml(riskSummaryText, { variant: riskVariant })}
+
+    ${buildSummaryGridHtml([
+      {
+        label: 'Control Pass Rate',
+        value: `${calc.completion}%`,
+        detail: `${calc.passCount} passed of ${calc.passCount + calc.watchCount + calc.failCount} active checks.`
+      },
+      {
+        label: 'Failed Checks',
+        value: `${calc.failCount}`,
+        detail: 'Checks requiring immediate corrective action.'
+      },
+      {
+        label: 'Watch Items',
+        value: `${calc.watchCount}`,
+        detail: 'Checks at risk — monitor and review before next service.'
+      },
+      {
+        label: 'Actions',
+        value: `${completedActions} closed / ${openActions} open`,
+        detail: 'Follow-up actions captured in this audit.'
+      },
+      ...(safe(state.hygieneRating)
+        ? [{ label: 'Hygiene Rating', value: safe(state.hygieneRating) || '' }]
+        : [])
+    ])}
+
+    ${safe(state.criticalConcerns)
+      ? buildCalloutHtml(safe(state.criticalConcerns), {
+          title: 'Critical Concerns',
+          variant: 'risk'
+        })
+      : ''}
+
+    ${safe(state.immediateActions)
+      ? buildSectionHtml(
+          'Immediate Actions Required',
+          `<p>${safe(state.immediateActions)}</p>`
+        )
+      : ''}
+
+    ${safe(state.summary)
+      ? buildSectionHtml('Audit Summary', `<p>${safe(state.summary)}</p>`)
+      : ''}
+
+    ${buildReportPhotoGalleryHtml(state.photos, 'overview')}
+  `;
+
+  const riskChapter = buildChapterHtml({
+    kicker: 'Risk Assessment',
+    title: 'Compliance Position & Urgent Response',
+    lead: 'Client-facing view of the current food safety risk, control performance, and the corrective response required.',
+    body: riskChapterBody
   });
 
-  const overviewChapter = buildChapterHtml({
-    kicker: 'Site Context',
-    title: 'Audit Overview and Good Practice',
-    lead: 'Site context, summary notes, positive practice, and visit details captured during the review.',
-    body: `
-      ${buildStoryCardsHtml([
-        { title: 'Audit summary', body: state.summary },
-        { title: 'Good practice seen', body: state.goodPractice }
-      ])}
-      ${buildDetailGridHtml([
-        { label: 'Site', value: safe(state.siteName) || 'Client site' },
-        { label: 'Location', value: state.location },
-        { label: 'Audit date', value: formatShortDate(state.auditDate) },
-        { label: 'Service period', value: state.servicePeriod },
-        { label: 'Auditor', value: state.auditorName },
-        { label: 'Site lead', value: state.managerName },
-        { label: 'Active actions', value: openActions > 0 ? openActions : '' },
-        { label: 'Closed actions', value: completedActions > 0 ? completedActions : '' }
-      ])}
-      ${buildReportPhotoGalleryHtml(state.photos, 'overview')}
-    `
-  });
+  // ──────────────────────────────────────────────
+  // PAGE 3 — CONTROL CHECK REGISTER
+  // Coloured status cells; grouped by fail/watch/pass ordering
+  // ──────────────────────────────────────────────
+  const failChecks = checkRows.filter((c) => c.status === 'Fail');
+  const watchChecks = checkRows.filter((c) => c.status === 'Watch');
+  const passChecks = checkRows.filter((c) => c.status === 'Pass');
+  const naChecks = checkRows.filter((c) => c.status === 'N/A');
+  const orderedChecks = [...failChecks, ...watchChecks, ...passChecks, ...naChecks];
 
-  const checksChapter = buildChapterHtml({
-    kicker: 'Compliance Checks',
-    title: 'Control Check Register',
-    lead: 'Core compliance checks with status and supporting audit notes.',
-    body: `
-      ${
-        checkRows.length
-          ? `
-        <table class="report-table report-table-compact">
-          <thead>
+  const checksBody = checkRows.length
+    ? `
+      ${buildCalloutHtml(
+        `${calc.passCount} pass  ·  ${calc.watchCount} watch  ·  ${calc.failCount} fail  ·  ${naChecks.length} N/A  —  ${checkRows.length} checks total.`,
+        { variant: riskVariant }
+      )}
+      <table class="report-table report-table-compact">
+        <thead>
+          <tr>
+            <th style="width: 28%">Area</th>
+            <th style="width: 36%">Check</th>
+            <th style="width: 14%">Status</th>
+            <th>Audit Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orderedChecks
+            .map(
+              (item) => `
             <tr>
-              <th>Area</th>
-              <th>Check</th>
-              <th>Status</th>
-              <th>Audit note</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${checkRows
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.area) || 'General'}</td>
-                <td>${safe(item.item) || 'Unnamed check'}</td>
-                <td>${item.status}</td>
-                <td>${safe(item.note)}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
-          : ''
-      }
-      ${buildReportPhotoGalleryHtml(state.photos, 'checks')}
-    `
-  });
+              <td>${safe(item.area) || 'General'}</td>
+              <td>${safe(item.item) || 'Unnamed check'}</td>
+              <td>${buildStatusCell(item.status)}</td>
+              <td>${safe(item.note)}</td>
+            </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+      ${buildReportPhotoGalleryHtml(state.photos, 'checks')}`
+    : '';
 
-  const temperatureChapter = buildChapterHtml({
-    kicker: 'Temperature Controls',
-    title: 'Temperature and Holding Checks',
-    lead: 'Temperature, hot-hold, cooling, and delivery controls reviewed during the visit.',
-    body: `
-      ${
-        temperatureRows.length
-          ? `
-        <table class="report-table report-table-compact">
-          <thead>
+  const checksChapter = checksBody
+    ? buildChapterHtml({
+        kicker: 'Compliance Register',
+        title: 'Control Check Results',
+        lead: `Compliance checks conducted during the visit. Fails and watches listed first for management attention.`,
+        body: checksBody
+      })
+    : '';
+
+  // ──────────────────────────────────────────────
+  // PAGE 4 — TEMPERATURE & GOOD PRACTICE
+  // ──────────────────────────────────────────────
+  const temperatureBody = temperatureRows.length
+    ? `
+      <table class="report-table report-table-compact">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Reading</th>
+            <th>Target</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${temperatureRows
+            .map(
+              (item) => `
             <tr>
-              <th>Area</th>
-              <th>Reading</th>
-              <th>Target</th>
-              <th>Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${temperatureRows
-              .map(
-                (item) => `
-              <tr>
-                <td>${safe(item.area)}</td>
-                <td>${safe(item.reading)}</td>
-                <td>${safe(item.target)}</td>
-                <td>${safe(item.note)}</td>
-              </tr>`
-              )
-              .join('')}
-          </tbody>
-        </table>`
-          : ''
-      }
-      ${buildReportPhotoGalleryHtml(state.photos, 'temperature')}
-    `
-  });
+              <td>${safe(item.area)}</td>
+              <td>${safe(item.reading)}</td>
+              <td>${safe(item.target)}</td>
+              <td>${safe(item.note)}</td>
+            </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+      ${buildReportPhotoGalleryHtml(state.photos, 'temperature')}`
+    : '';
+
+  const goodPracticeCards = buildStoryCardsHtml([
+    { title: 'Good Practice Observed', body: state.goodPractice }
+  ]);
+
+  const tempAndContextBody = [temperatureBody, goodPracticeCards]
+    .filter(Boolean)
+    .join('');
+
+  const temperatureChapter = tempAndContextBody
+    ? buildChapterHtml({
+        kicker: 'Temperature & Context',
+        title: 'Temperature Controls & Positive Observations',
+        lead: 'Temperature, hot-hold, cooling, and delivery controls — plus good practice noted during the visit.',
+        body: tempAndContextBody
+      })
+    : '';
+
+  // ──────────────────────────────────────────────
+  // PAGE 5 — AREA PLANS & ACTION REGISTER
+  // ──────────────────────────────────────────────
+  const actionBody = `
+    ${focusAreas.length
+      ? `<div class="report-story-grid">
+          ${focusAreas
+            .map(
+              (item) => `
+            <div class="report-story-card">
+              <h3>${safe(item.area) || 'General'}</h3>
+              ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
+              ${safe(item.actionPlan)
+                ? `<p style="margin-top: 8px; color: var(--pdf-muted-strong); font-size: 9.5pt;">${safe(item.actionPlan)}</p>`
+                : ''}
+            </div>`
+            )
+            .join('')}
+         </div>`
+      : ''}
+    ${buildSectionHtml('Action Register', buildActionRegisterHtml(actions))}
+    ${safe(state.followUpDate)
+      ? buildCalloutHtml(`Follow-up visit: ${safe(state.followUpDate)}`, {
+          title: 'Next Review',
+          variant: 'neutral'
+        })
+      : ''}
+    ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
+  `;
 
   const actionChapter = buildChapterHtml({
     kicker: 'Follow-Up',
-    title: 'Area Plans and Action Register',
-    lead: 'Area-by-area summary notes, corrective actions, owners, and target dates for operational follow-up.',
-    body: `
-      ${
-        focusAreas.length
-          ? `<div class="report-story-grid">
-              ${focusAreas
-                .map(
-                  (item) => `
-                <div class="report-story-card">
-                  <h3>${safe(item.area) || 'General'}</h3>
-                  ${safe(item.summary) ? `<p>${safe(item.summary)}</p>` : ''}
-                  ${safe(item.actionPlan) ? `<p class="muted-copy" style="margin-top: 8px;">${safe(item.actionPlan)}</p>` : ''}
-                </div>`
-                )
-                .join('')}
-            </div>`
-          : ''
-      }
-      ${buildSectionHtml('Action register', buildActionRegisterHtml(actions))}
-      ${buildSectionHtml('Follow-up date', `<p>${safe(state.followUpDate) || 'To be confirmed'}</p>`)}
-      ${buildReportPhotoGalleryHtml(state.photos, 'actions')}
-    `
+    title: 'Area Plans & Action Register',
+    lead: 'Area-by-area summary, corrective actions, owners, and target dates for the operational follow-up programme.',
+    body: actionBody
   });
 
   return `
     ${coverHtml}
-    ${buildReportBodyHtml([executiveChapter, overviewChapter, checksChapter, temperatureChapter, actionChapter])}
+    ${buildReportBodyHtml([riskChapter, checksChapter, temperatureChapter, actionChapter])}
   `;
 }
 

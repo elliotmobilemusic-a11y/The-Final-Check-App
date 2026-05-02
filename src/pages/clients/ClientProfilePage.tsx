@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
-import { invoiceTotal, openPrintableHtmlDocument } from '../../features/clients/clientExports';
+import { invoiceTotal } from '../../features/clients/clientExports';
 import { clientRecordToProfile } from '../../features/clients/clientData';
 import {
   buildDishSpecReportHtml,
