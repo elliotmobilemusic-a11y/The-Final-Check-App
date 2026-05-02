@@ -15,9 +15,9 @@ import {
   buildRecommendationListHtml,
   buildSectionHtml,
   buildScoreGridHtml,
-  buildStoryCardsHtml,
-  openPdfDocument,
+  buildStoryCardsHtml
 } from '../../reports/pdf';
+import { downloadPdfWithFallback } from '../../services/pdfExport';
 import { listClients } from '../../services/clients';
 import {
   getMysteryShopAudit,
@@ -662,12 +662,9 @@ export function MysteryShopAuditPage() {
         detail: 'Formatting the guest journey review into a printable report.'
       },
       async () => {
-        openPdfDocument(
-          `${form.title || 'Mystery Shop Audit'} printout`,
-          buildMysteryShopReport(form)
-        );
-      },
-      700
+        const title = `${form.title || 'Mystery Shop Audit'} printout`;
+        await downloadPdfWithFallback(title, buildMysteryShopReport(form), title);
+      }
     );
   }
 

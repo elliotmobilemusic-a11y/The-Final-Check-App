@@ -31,7 +31,7 @@ import {
   readFileAsDataUrl,
   type DishEditorTab
 } from '../../features/menu-engine/menuBuilderHelpers';
-import { openPdfDocument } from '../../reports/pdf';
+import { downloadPdfWithFallback } from '../../services/pdfExport';
 import {
   getMenuProjectById,
   saveMenuProject
@@ -624,8 +624,17 @@ export function MenuBuilderPage() {
             preparedBy: 'Jason Wardill / The Final Check'
           });
 
-    openPdfDocument(title, html);
-    setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} export opened.`);
+    void runWithActivity(
+      {
+        kicker: 'Preparing export',
+        title: `Building ${kind === 'spec' ? 'dish spec' : 'recipe costing'} PDF`,
+        detail: 'Rendering your document through the high-quality export engine.'
+      },
+      async () => {
+        await downloadPdfWithFallback(title, html, title);
+        setMessage(`${kind === 'spec' ? 'Dish spec' : 'Recipe costing'} export downloaded.`);
+      }
+    );
   }
 
   async function createDishReportShare(kind: 'spec' | 'recipe') {
@@ -803,12 +812,9 @@ export function MenuBuilderPage() {
         detail: 'Formatting the menu profit engine into a clean client-ready report.'
       },
       async () => {
-        openPdfDocument(
-          `${safe(project.menuName || 'Menu Builder Report')} report`,
-          reportHtml
-        );
-      },
-      700
+        const title = `${safe(project.menuName || 'Menu Builder Report')} report`;
+        await downloadPdfWithFallback(title, reportHtml, title);
+      }
     );
   }
 

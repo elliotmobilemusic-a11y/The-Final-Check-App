@@ -16,9 +16,9 @@ import {
   buildSectionHtml,
   buildSummaryGridHtml,
   buildStoryCardsHtml,
-  buildStatusCell,
-  openPdfDocument,
+  buildStatusCell
 } from '../../reports/pdf';
+import { downloadPdfWithFallback } from '../../services/pdfExport';
 import { listClients } from '../../services/clients';
 import {
   getFoodSafetyAudit,
@@ -738,12 +738,9 @@ export function FoodSafetyAuditPage() {
         detail: 'Formatting the food safety audit into a printable report.'
       },
       async () => {
-        openPdfDocument(
-          `${form.title || 'Food Safety Audit'} printout`,
-          buildFoodSafetyReport(form)
-        );
-      },
-      700
+        const title = `${form.title || 'Food Safety Audit'} printout`;
+        await downloadPdfWithFallback(title, buildFoodSafetyReport(form), title);
+      }
     );
   }
 

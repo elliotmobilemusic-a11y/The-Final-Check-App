@@ -95,7 +95,7 @@ import {
   buildQuotePdfTemplate,
   exportPdfDocument
 } from '../../lib/pdf';
-import { openPdfDocument } from '../../reports/pdf';
+import { downloadPdfWithFallback } from '../../services/pdfExport';
 
 type LookupScopeFilter = 'group' | 'site' | 'all';
 
@@ -1378,15 +1378,26 @@ export function ClientProfilePage() {
         return;
       }
 
-      openPdfDocument(
-        `${record.dish.name} spec sheet`,
-        buildDishSpecReportHtml({
-          client: activeForm,
-          menuRecord: record.menu,
-          dish: record.dish,
-          sectionName: record.sectionName,
-          preparedBy: currentUserName
-        })
+      void runWithActivity(
+        {
+          kicker: 'Preparing export',
+          title: 'Building dish spec PDF',
+          detail: 'Rendering your document through the high-quality export engine.'
+        },
+        async () => {
+          const title = `${record.dish.name} spec sheet`;
+          await downloadPdfWithFallback(
+            title,
+            buildDishSpecReportHtml({
+              client: activeForm,
+              menuRecord: record.menu,
+              dish: record.dish,
+              sectionName: record.sectionName,
+              preparedBy: currentUserName
+            }),
+            title
+          );
+        }
       );
       return;
     }
@@ -1398,15 +1409,26 @@ export function ClientProfilePage() {
         return;
       }
 
-      openPdfDocument(
-        `${record.dish.name} recipe costing`,
-        buildRecipeCostingReportHtml({
-          client: activeForm,
-          menuRecord: record.menu,
-          dish: record.dish,
-          sectionName: record.sectionName,
-          preparedBy: currentUserName
-        })
+      void runWithActivity(
+        {
+          kicker: 'Preparing export',
+          title: 'Building recipe costing PDF',
+          detail: 'Rendering your document through the high-quality export engine.'
+        },
+        async () => {
+          const title = `${record.dish.name} recipe costing`;
+          await downloadPdfWithFallback(
+            title,
+            buildRecipeCostingReportHtml({
+              client: activeForm,
+              menuRecord: record.menu,
+              dish: record.dish,
+              sectionName: record.sectionName,
+              preparedBy: currentUserName
+            }),
+            title
+          );
+        }
       );
       return;
     }

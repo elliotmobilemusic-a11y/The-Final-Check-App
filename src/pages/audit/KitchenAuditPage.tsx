@@ -47,7 +47,8 @@ import {
   buildKitchenAuditReportHtml,
   buildStandaloneKitchenAuditReportHtml
 } from '../../features/audits/kitchenAuditReport';
-import { buildKitchenAuditPdf, openPdfDocument } from '../../reports/pdf';
+import { buildKitchenAuditPdf } from '../../reports/pdf';
+import { downloadPdfWithFallback } from '../../services/pdfExport';
 
 export function KitchenAuditPage() {
   const { runWithActivity } = useActivityOverlay();
@@ -621,15 +622,17 @@ export function KitchenAuditPage() {
         <button 
           className="button button-secondary control-dock-button"
           onClick={() => {
-            try {
-              openPdfDocument(
-                `${safe(form.businessName || 'Kitchen Profit Audit')} report`,
-                buildKitchenAuditPdf(form)
-              );
-            } catch (error) {
-              console.error('PDF export failed', error);
-              setMessage(error instanceof Error ? error.message : 'Could not export PDF.');
-            }
+            void runWithActivity(
+              {
+                kicker: 'Preparing export',
+                title: 'Building kitchen audit PDF',
+                detail: 'Rendering your report through the high-quality export engine.'
+              },
+              async () => {
+                const title = `${safe(form.businessName || 'Kitchen Profit Audit')} report`;
+                await downloadPdfWithFallback(title, buildKitchenAuditPdf(form), title);
+              }
+            );
           }}
           style={{ marginRight: '12px' }}
         >
