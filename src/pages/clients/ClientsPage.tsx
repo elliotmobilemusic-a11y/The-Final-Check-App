@@ -4,7 +4,6 @@ import { createEmptyClientData } from '../../features/clients/clientData';
 import { createClientIntakeShare } from '../../services/clientIntakeShares';
 import { deleteClient, listClients } from '../../services/clients';
 import type { ClientRecord } from '../../types';
-import { PageIntro } from '../../components/layout/PageIntro';
 
 type SortMode = 'attention' | 'updated' | 'review' | 'value' | 'company';
 
@@ -227,16 +226,27 @@ export function ClientsPage() {
   );
 
   return (
-    <div className="page-stack">
-      <PageIntro
-        eyebrow="Clients"
-        title="Client CRM"
-        description="Use this as a clear operating view for the whole account book: what needs attention, what is active, and where to go next."
-      >
-        <div className="page-inline-note">{summary.activeCount} active accounts</div>
-        <div className="page-inline-note">{visibleClients.length} visible</div>
-        <div className="page-inline-note">{message}</div>
-      </PageIntro>
+    <div className="page-stack clients-page">
+      <section className="crm-intro-band">
+        <div className="crm-intro-copy">
+          <span className="crm-intro-eyebrow">Clients</span>
+          <h2>Client CRM</h2>
+          <div className="crm-intro-support">
+            <span className="crm-intro-chip">{summary.activeCount} active accounts</span>
+            <p>Use this as a clear operating view for the whole account book: what needs attention, what is active, and where to go next.</p>
+          </div>
+          <div className="crm-intro-message">{message}</div>
+        </div>
+
+        <div className="crm-intro-actions">
+          <button className="button button-ghost" onClick={handleCreateIntakeLink} type="button">
+            Enquiry link
+          </button>
+          <Link className="button button-secondary" to="/clients/new">
+            New client
+          </Link>
+        </div>
+      </section>
 
       <section className="panel">
         <div className="panel-body stack gap-20">
@@ -246,12 +256,7 @@ export function ClientsPage() {
               <p>Find the right client quickly, spot risk early, and move straight into the record.</p>
             </div>
             <div className="crm-list-top-meta">
-              <button className="button button-ghost" onClick={handleCreateIntakeLink} type="button">
-                Enquiry link
-              </button>
-              <Link className="button button-secondary" to="/clients/new">
-                New client
-              </Link>
+              <span>{visibleClients.length} visible accounts</span>
             </div>
           </div>
 
@@ -431,7 +436,6 @@ export function ClientsPage() {
 
                         {signals.needsAttention && (
                           <div className="crm-account-attention-bar">
-                            <span className="attention-indicator">⚠️</span>
                             {signals.attentionLabel}
                           </div>
                         )}
