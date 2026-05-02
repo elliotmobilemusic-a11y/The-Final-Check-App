@@ -15,7 +15,8 @@ import {
   buildRecommendationListHtml,
   buildSectionHtml,
   buildScoreGridHtml,
-  buildStoryCardsHtml
+  buildStoryCardsHtml,
+  buildMysteryShopAuditPdf
 } from '../../reports/pdf';
 import { downloadPdfWithFallback } from '../../services/pdfExport';
 import { listClients } from '../../services/clients';
@@ -663,7 +664,7 @@ export function MysteryShopAuditPage() {
       },
       async () => {
         const title = `${form.title || 'Mystery Shop Audit'} printout`;
-        await downloadPdfWithFallback(title, buildMysteryShopReport(form), title);
+        await downloadPdfWithFallback(title, buildMysteryShopAuditPdf(form), title);
       }
     );
   }

@@ -16,7 +16,8 @@ import {
   buildSectionHtml,
   buildSummaryGridHtml,
   buildStoryCardsHtml,
-  buildStatusCell
+  buildStatusCell,
+  buildFoodSafetyAuditPdf
 } from '../../reports/pdf';
 import { downloadPdfWithFallback } from '../../services/pdfExport';
 import { listClients } from '../../services/clients';
@@ -739,7 +740,7 @@ export function FoodSafetyAuditPage() {
       },
       async () => {
         const title = `${form.title || 'Food Safety Audit'} printout`;
-        await downloadPdfWithFallback(title, buildFoodSafetyReport(form), title);
+        await downloadPdfWithFallback(title, buildFoodSafetyAuditPdf(form), title);
       }
     );
   }

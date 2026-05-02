@@ -32,6 +32,7 @@ import {
   type DishEditorTab
 } from '../../features/menu-engine/menuBuilderHelpers';
 import { downloadPdfWithFallback } from '../../services/pdfExport';
+import { buildMenuSummaryPdf } from '../../reports/pdf';
 import {
   getMenuProjectById,
   saveMenuProject
@@ -813,7 +814,7 @@ export function MenuBuilderPage() {
       },
       async () => {
         const title = `${safe(project.menuName || 'Menu Builder Report')} report`;
-        await downloadPdfWithFallback(title, reportHtml, title);
+        await downloadPdfWithFallback(title, buildMenuSummaryPdf(project), title);
       }
     );
   }
