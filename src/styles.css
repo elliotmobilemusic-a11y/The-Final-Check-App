@@ -12547,3 +12547,21 @@ body[data-theme="midnight"] .client-portal-launch-card {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Shared Kitchen Profit report: print (scoped to deliverable only) ─── */
+
+@media print {
+  main[data-shared-deliverable='kitchen-audit'] {
+    background: #fff !important;
+  }
+
+  main[data-shared-deliverable='kitchen-audit'] .shared-report-chrome {
+    display: none !important;
+  }
+
+  main[data-shared-deliverable='kitchen-audit'] iframe {
+    width: 100% !important;
+    min-height: 100vh !important;
+    border: 0 !important;
+  }
+}

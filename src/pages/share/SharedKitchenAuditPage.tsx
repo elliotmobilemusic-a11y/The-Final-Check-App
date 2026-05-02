@@ -41,6 +41,7 @@ export function SharedKitchenAuditPage() {
     <SharedReportFrame
       bodyHtml={audit ? buildKitchenAuditReportHtml(audit) : ''}
       message={message}
+      printDeliverableKind="kitchen-audit"
       ready={status === 'ready' && Boolean(audit)}
       status={status}
       title={title}

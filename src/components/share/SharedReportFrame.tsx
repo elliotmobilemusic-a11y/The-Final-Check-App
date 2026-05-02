@@ -8,6 +8,8 @@ type SharedReportFrameProps = {
   loadingTitle?: string;
   message: string;
   missingTitle?: string;
+  /** When set, parent-page print CSS can hide chrome without affecting other deliverables. */
+  printDeliverableKind?: 'kitchen-audit';
   ready: boolean;
   status: 'loading' | 'ready' | 'missing' | 'error';
   title: string;
@@ -19,6 +21,7 @@ export function SharedReportFrame({
   loadingTitle = 'Opening report',
   message,
   missingTitle = 'Report unavailable',
+  printDeliverableKind,
   ready,
   status,
   title
@@ -80,8 +83,12 @@ export function SharedReportFrame({
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#ece5da' }}>
+    <main
+      data-shared-deliverable={printDeliverableKind}
+      style={{ minHeight: '100vh', background: '#ece5da' }}
+    >
       <div
+        className="shared-report-chrome"
         style={{
           position: 'sticky',
           top: 0,

@@ -129,7 +129,7 @@ async function getPublicShareByToken<T>(
   token: string,
   reportType?: ReportShareType
 ): Promise<ReportShareRecord<T> | null> {
-  let query = supabasePublic.from('report_shares').select('*').eq('token', token);
+  let query = supabasePublic.from('report_shares').select('*').eq('token', token).eq('is_public', true);
 
   if (reportType) {
     query = query.eq('report_type', reportType);
@@ -138,7 +138,17 @@ async function getPublicShareByToken<T>(
   const { data, error } = await query.maybeSingle();
   if (error) throw normalizeShareError(error);
 
-  return (data as ReportShareRecord<T> | null) ?? null;
+  const row = (data as ReportShareRecord<T> | null) ?? null;
+  if (!row) return null;
+
+  if (row.expires_at) {
+    const expiresMs = Date.parse(row.expires_at);
+    if (!Number.isNaN(expiresMs) && expiresMs <= Date.now()) {
+      return null;
+    }
+  }
+
+  return row;
 }
 
 export async function createReportShare(clientId: string | null, reportData: Record<string, unknown>) {

@@ -7,11 +7,98 @@ import {
   normalizeProseText,
   normalizeTitleLabel
 } from '../../reports/pdf';
-import type { AuditFormState } from '../../types';
+import type { AuditActionItem, AuditFormState } from '../../types';
 import { fmtCurrency, fmtPercent, lines, num, safe } from '../../lib/utils';
 import { renderAuditPhotoGallery } from '../../lib/photoEvidence';
 import { buildKitchenProfitNarrative } from '../profit/kitchenProfit';
 import { calculateAudit } from './kitchenAuditHelpers';
+
+const KITCHEN_AUDIT_DELIVERABLE_STYLES = `
+<style>
+  /* Scoped to Kitchen Profit deliverable HTML only (shared + standalone export). */
+  .kitchen-audit-deliverable { color: inherit; }
+  .kitchen-audit-primary-reading .report-chapter-header h2 {
+    font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  }
+  .kitchen-audit-exec-lead {
+    margin-bottom: 0.5rem;
+  }
+  .kitchen-audit-exec-body {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: #3a383d;
+    max-width: 52rem;
+  }
+  .kitchen-audit-exec-body p {
+    margin: 0;
+  }
+  .kitchen-audit-appendix {
+    margin-top: 2.25rem;
+    padding: 1.5rem 1rem 2rem;
+    border-top: 2px solid rgba(115, 95, 64, 0.22);
+    background: rgba(246, 241, 234, 0.55);
+    border-radius: 0 0 14px 14px;
+  }
+  .kitchen-audit-appendix-banner {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7b6b54;
+    font-weight: 700;
+    margin: 0 0 1.1rem;
+  }
+  .kitchen-audit-appendix .report-chapter-header h2 {
+    font-size: 1.28rem;
+    color: #5a554d;
+  }
+  .kitchen-audit-appendix .report-chapter-header p {
+    color: #6c655c;
+  }
+  .kitchen-audit-appendix .report-section-header h3 {
+    font-size: 1.02rem;
+    color: #5c5752;
+  }
+  .kitchen-audit-appendix .report-table {
+    font-size: 0.88rem;
+  }
+  .kitchen-audit-appendix .report-story-card h3 {
+    font-size: 1rem;
+  }
+  .kitchen-audit-priority-actions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .kitchen-audit-priority-actions-list li {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(115, 95, 64, 0.12);
+  }
+  .kitchen-audit-priority-actions-list li:last-child {
+    border-bottom: 0;
+  }
+  .kitchen-audit-priority-meta {
+    display: block;
+    font-size: 0.82rem;
+    color: #6c655c;
+    margin-top: 0.2rem;
+  }
+  @media print {
+    .kitchen-audit-appendix {
+      background: #faf8f4 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .kitchen-audit-deliverable .kitchen-audit-appendix {
+      break-before: page;
+      page-break-before: always;
+    }
+  }
+</style>`;
+
+function sortAuditActionsByPriority(items: AuditActionItem[]) {
+  const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+  return [...items].sort((a, b) => (order[a.priority] ?? 9) - (order[b.priority] ?? 9));
+}
 
 export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const calc = calculateAudit(state);
@@ -98,10 +185,15 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const actionPlanHtml = renderList(
     lines(state.priorityActions).length ? lines(state.priorityActions) : narrative.actionPlan30To90Days
   );
-  const followUpHtml =
-    hasMeaningfulText(state.nextVisit) || hasMeaningfulText(narrative.followUpRecommendation)
-      ? `<p>${cleanCopy(state.nextVisit) || cleanCopy(narrative.followUpRecommendation)}</p>`
-      : '';
+  const followUpParagraphs = [
+    hasMeaningfulText(narrative.followUpRecommendation)
+      ? `<p>${cleanCopy(narrative.followUpRecommendation)}</p>`
+      : '',
+    hasMeaningfulText(state.nextVisit) ? `<p><strong>Next visit:</strong> ${cleanCopy(state.nextVisit)}</p>` : ''
+  ]
+    .filter(Boolean)
+    .join('');
+  const followUpHtml = followUpParagraphs;
 
   const controlsTableRows = controlRows
     .filter((item) => hasMeaningfulText(item.label) || hasMeaningfulText(item.note))
@@ -311,6 +403,33 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       `
       : '';
 
+  const namedActions = state.actionItems.filter((item) => hasMeaningfulText(item.title));
+  const topNamedActions = sortAuditActionsByPriority(namedActions).slice(0, 5);
+  const priorityActionsListHtml = topNamedActions.length
+    ? `<ul class="kitchen-audit-priority-actions-list">${topNamedActions
+        .map(
+          (item) => `
+        <li>
+          <strong>${cleanCopy(item.title)}</strong>
+          <span class="kitchen-audit-priority-meta">${cleanCopy(item.priority)} · ${cleanCopy(item.owner) || 'Owner TBC'}</span>
+          ${hasMeaningfulText(item.impact) ? `<p class="muted-copy" style="margin:0.35rem 0 0">${cleanCopy(item.impact)}</p>` : ''}
+        </li>`
+        )
+        .join('')}</ul>`
+    : '';
+
+  const execProse = narrative.executiveSummary || state.summary;
+  const executiveLeadSection = hasMeaningfulText(execProse)
+    ? `
+        <section class="report-chapter report-chapter-break kitchen-audit-exec-lead">
+          <div class="report-chapter-header">
+            <p class="report-chapter-kicker">At a glance</p>
+            <h2>Executive summary</h2>
+          </div>
+          <div class="kitchen-audit-exec-body"><p>${cleanCopy(execProse)}</p></div>
+        </section>`
+    : '';
+
   const coverHtml = buildReportCoverHtml({
     reportType: 'Kitchen Profit Audit',
     clientName: normalizeTitleLabel(safe(state.businessName) || 'Client Site'),
@@ -365,10 +484,10 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       .join('')
   );
 
-  const actionChapter = renderChapter(
-    'Action plan',
-    'Immediate Priorities and Follow-Up',
-    'A practical action sequence covering quick wins, the next 30 to 90 days, and the recommended follow-up cadence.',
+  const priorityActionsChapter = renderChapter(
+    'What to do first',
+    'Priority actions',
+    'Quick wins and the highest-impact corrective actions to stabilise margin and control.',
     [
       renderSection(
         'Immediate quick wins',
@@ -376,14 +495,29 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
         'Fast operational corrections that can usually be put in place immediately.'
       ),
       renderSection(
-        '30–90 day action plan',
+        'Structured priority actions',
+        priorityActionsListHtml,
+        'Top recorded actions ranked by priority for management focus.'
+      )
+    ]
+      .filter(Boolean)
+      .join('')
+  );
+
+  const nextStepsChapter = renderChapter(
+    'What happens next',
+    'Next steps and follow-up',
+    'Medium-term programme, cadence, and evidence for management.',
+    [
+      renderSection(
+        '30–90 day programme',
         actionPlanHtml,
         'Structured medium-term actions to stabilise margin, systems, and team execution.'
       ),
       renderSection(
-        'Follow-up recommendation',
+        'Follow-up and review',
         [followUpHtml, renderAuditPhotoGallery(state.photos, 'actions', '')].filter(Boolean).join(''),
-        'Recommended next review point, ownership, and evidence gathered against the action plan.'
+        'Recommended cadence, next review point, and supporting evidence from the visit.'
       )
     ]
       .filter(Boolean)
@@ -410,9 +544,31 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       .join('')
   );
 
-  return [coverHtml, commercialChapter, actionChapter, controlsChapter, findingsChapter]
+  const primaryReading = [
+    executiveLeadSection,
+    commercialChapter,
+    priorityActionsChapter,
+    nextStepsChapter
+  ]
     .filter(Boolean)
     .join('');
+
+  const appendix = [controlsChapter, findingsChapter].filter(Boolean).join('');
+
+  const inner = [
+    coverHtml,
+    `<div class="kitchen-audit-primary-reading">${primaryReading}</div>`,
+    appendix
+      ? `<aside class="kitchen-audit-appendix" aria-label="Supporting detail">
+          <div class="kitchen-audit-appendix-banner">Supporting detail · full register and evidence</div>
+          ${appendix}
+        </aside>`
+      : ''
+  ]
+    .filter(Boolean)
+    .join('');
+
+  return `${KITCHEN_AUDIT_DELIVERABLE_STYLES}<div class="kitchen-audit-deliverable">${inner}</div>`;
 }
 
 export function buildStandaloneKitchenAuditReportHtml(title: string, reportHtml: string) {
