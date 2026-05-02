@@ -495,7 +495,7 @@ export function buildFoodSafetyReport(state: FoodSafetyAuditState) {
 
   return `
     ${coverHtml}
-    ${buildReportBodyHtml([riskChapter, checksChapter, temperatureChapter, actionChapter])}
+    ${buildReportBodyHtml([riskChapter, checksChapter, temperatureChapter, actionChapter], 'consultancy')}
   `;
 }
 

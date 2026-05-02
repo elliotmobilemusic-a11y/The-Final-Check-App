@@ -31,8 +31,10 @@ export function hasReportContent(value: unknown): boolean {
   return !isReportPlaceholder(value);
 }
 
-export function buildReportBodyHtml(chapters: string[]): string {
-  return `<div class="pdf-report-body">${chapters.filter(Boolean).join('')}</div>`;
+export type PdfReportFamily = 'consultancy' | 'operational' | 'commercial';
+
+export function buildReportBodyHtml(chapters: string[], family: PdfReportFamily = 'consultancy'): string {
+  return `<div class="pdf-report-body pdf-report-body--${family}">${chapters.filter(Boolean).join('')}</div>`;
 }
 
 export function buildSummaryGridHtml(cards: ReportMetricCard[]): string {
@@ -160,6 +162,45 @@ export function buildStoryCardsHtml(
         )
         .join('')}
     </div>
+  `;
+}
+
+export function buildDocumentPanelHtml(
+  title: string,
+  body: string,
+  options: { eyebrow?: string; className?: string } = {}
+): string {
+  if (!body.trim()) return '';
+  const className = options.className ? ` ${options.className}` : '';
+
+  return `
+    <section class="pdf-document-panel${className}">
+      <div class="pdf-document-panel-header">
+        ${options.eyebrow ? `<span>${escapeHtml(normalizeTitleLabel(options.eyebrow))}</span>` : ''}
+        <h3>${escapeHtml(normalizeTitleLabel(title))}</h3>
+      </div>
+      <div class="pdf-document-panel-body">${body}</div>
+    </section>
+  `;
+}
+
+export function buildDefinitionListHtml(items: Array<{ label: string; value: unknown }>): string {
+  const visibleItems = items.filter((item) => safe(item.label) && hasReportContent(item.value));
+  if (!visibleItems.length) return '';
+
+  return `
+    <dl class="pdf-definition-list">
+      ${visibleItems
+        .map(
+          (item) => `
+            <div>
+              <dt>${escapeHtml(normalizeTitleLabel(item.label))}</dt>
+              <dd>${escapeHtml(normalizeProseText(item.value))}</dd>
+            </div>
+          `
+        )
+        .join('')}
+    </dl>
   `;
 }
 

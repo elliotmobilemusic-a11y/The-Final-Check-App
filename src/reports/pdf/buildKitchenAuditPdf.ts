@@ -423,6 +423,6 @@ export function buildKitchenAuditPdf(audit: AuditFormState): string {
       controlsChapter,
       operationalChapter,
       leadershipChapter
-    ])
+    ], 'consultancy')
   ].join('');
 }

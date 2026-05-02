@@ -91,7 +91,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
     .join('');
 
   return `
-    <div class="pdf-cover-page">
+    <div class="pdf-cover-page pdf-cover-page--consultancy">
       <div class="pdf-cover-top-bar">
         <div class="pdf-cover-brand-block">
           <div class="pdf-cover-brand">The Final Check</div>
@@ -119,11 +119,10 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
             <p class="pdf-cover-summary">${escapeHtml(normalizeProseText(config.summary))}</p>
           ` : ''}
         </div>
-
-        <div class="pdf-cover-hero-aside" aria-hidden="true">
-          <div class="pdf-cover-hero-aside-frame"></div>
-          <div class="pdf-cover-hero-aside-accent"></div>
-          <div class="pdf-cover-hero-aside-orb"></div>
+        <div class="pdf-cover-hero-rule" aria-hidden="true"></div>
+        <div class="pdf-cover-hero-aside">
+          <span>Prepared for operational leadership</span>
+          <strong>Confidential client document</strong>
         </div>
       </div>
 
@@ -180,9 +179,11 @@ export function buildOperationalCoverHtml(config: OperationalCoverConfig): strin
       ${brandTopBar(config.reportType, config.preparedDate, config.consultant)}
 
       <div class="pdf-cover-op-body">
-        <div class="pdf-cover-op-tag">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
-        <h1 class="pdf-cover-op-name">${escapeHtml(config.dishName)}</h1>
-        ${chipsHtml}
+        <div class="pdf-cover-op-title-block">
+          <div class="pdf-cover-op-tag">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
+          <h1 class="pdf-cover-op-name">${escapeHtml(config.dishName)}</h1>
+          ${chipsHtml}
+        </div>
         ${visibleMetrics.length ? `<div class="pdf-cover-op-metrics">${metricsHtml}</div>` : ''}
       </div>
 
@@ -230,10 +231,14 @@ export function buildCommercialCoverHtml(config: CommercialCoverConfig): string 
       ${brandTopBar(config.reportType, config.preparedDate, config.consultant)}
 
       <div class="pdf-cover-com-body">
-        <div class="pdf-cover-com-tag">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
-        <h1 class="pdf-cover-com-name">${escapeHtml(config.dishName)}</h1>
-        ${visibleNumbers.length ? `<div class="pdf-cover-com-numbers">${numbersHtml}</div>` : ''}
-        ${gpStatusHtml}
+        <div class="pdf-cover-com-title-block">
+          <div class="pdf-cover-com-tag">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
+          <h1 class="pdf-cover-com-name">${escapeHtml(config.dishName)}</h1>
+        </div>
+        <div class="pdf-cover-com-commercials">
+          ${visibleNumbers.length ? `<div class="pdf-cover-com-numbers">${numbersHtml}</div>` : ''}
+          ${gpStatusHtml}
+        </div>
       </div>
 
       ${detailsBand(config.details)}

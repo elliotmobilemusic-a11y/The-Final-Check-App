@@ -5,11 +5,13 @@ import {
   buildChapterHtml,
   buildOperationalCoverHtml,
   buildCommercialCoverHtml,
+  buildDefinitionListHtml,
+  buildDocumentPanelHtml,
   buildReportBodyHtml,
-  buildSectionHtml,
   buildStoryCardsHtml,
   escapeHtml,
-  hasReportContent
+  hasReportContent,
+  normalizeProseText
 } from '../../reports/pdf';
 import { dishActualGp, dishIngredientCost, dishRecommendedPrice } from '../profit/menuProfit';
 
@@ -44,7 +46,7 @@ function ingredientRows(dish: MenuDish) {
   const showSupplier = rows.some((ingredient) => safe(ingredient.supplier));
 
   return `
-    <table class="report-table report-table-compact">
+    <table class="report-table report-table-compact pdf-ingredient-ledger">
       <thead>
         <tr>
           <th>Ingredient</th>
@@ -143,49 +145,62 @@ export function buildDishSpecReportHtml(options: {
   const holdingNotes = safe(dish.specSheet.holdingStorageNotes || dish.holdingStorageNotes);
   const clientNotes = safe(dish.specSheet.clientFacingNotes || dish.clientFacingNotes);
 
-  const specSections: string[] = [];
+  const standardRows = [
+    { label: 'Recipe Method', value: method },
+    { label: 'Plating', value: plating },
+    { label: 'Prep', value: prepNotes },
+    { label: 'Service', value: serviceNotes },
+    { label: 'Holding', value: holdingNotes },
+    { label: 'Client Notes', value: clientNotes }
+  ].filter((item) => hasReportContent(item.value));
 
-  if (allergenInfo) {
-    specSections.push(
-      buildCalloutHtml(allergenInfo, { title: 'Allergen Information', variant: 'warn' })
-    );
-  }
+  const specSheet = `
+    <section class="pdf-sheet-page pdf-sheet-page--operational">
+      <header class="pdf-sheet-header">
+        <div>
+          <span>Kitchen Handover</span>
+          <h2>Service Standard</h2>
+        </div>
+        <div class="pdf-sheet-header-meta">
+          ${escapeHtml(safe(dish.name) || 'Dish Spec')}<br />
+          ${siteLabel ? escapeHtml(siteLabel) : 'Kitchen issue copy'}
+        </div>
+      </header>
 
-  if (description) {
-    specSections.push(buildSectionHtml('Dish Description', `<p>${escapeHtml(description)}</p>`));
-  }
+      <div class="pdf-operational-sheet-grid">
+        <aside class="pdf-operational-side">
+          ${buildDocumentPanelHtml(
+            'Service Facts',
+            buildDefinitionListHtml([
+              { label: 'Portion', value: portionSize },
+              { label: 'Section', value: sectionName },
+              { label: 'Selling Price', value: currencyIfPositive(dish.sellPrice) },
+              { label: 'Food Cost', value: currencyIfPositive(foodCost) },
+              { label: 'Actual GP', value: percentIfUseful(actualGp) },
+              { label: 'Menu', value: safe(menuRecord.title || menuRecord.data.menuName) }
+            ]),
+            { eyebrow: 'At Pass' }
+          )}
+          ${allergenInfo ? buildCalloutHtml(allergenInfo, { title: 'Allergen Information', variant: 'warn' }) : ''}
+          ${equipment ? buildDocumentPanelHtml('Equipment Required', `<p>${escapeHtml(normalizeProseText(equipment))}</p>`) : ''}
+        </aside>
 
-  if (equipment) {
-    specSections.push(buildSectionHtml('Equipment Required', `<p>${escapeHtml(equipment)}</p>`));
-  }
-
-  if (portionSize) {
-    specSections.push(
-      buildSectionHtml('Portion', `<p>${escapeHtml(portionSize)}</p>`)
-    );
-  }
-
-  // Method, plating, prep/service/holding as story cards
-  const methodCards = buildStoryCardsHtml([
-    { title: 'Recipe Method', body: method },
-    { title: 'Plating Instructions', body: plating },
-    { title: 'Prep Notes', body: prepNotes },
-    { title: 'Service Notes', body: serviceNotes },
-    { title: 'Holding & Storage', body: holdingNotes },
-    { title: 'Client-Facing Notes', body: clientNotes }
-  ]);
-
-  if (methodCards) {
-    specSections.push(buildSectionHtml('Method, Plating & Service', methodCards));
-  }
-
-  const specChapter = buildChapterHtml({
-    kicker: 'Kitchen Specification',
-    title: `${safe(dish.name) || 'Dish'} — Service Standard`,
-    lead:
-      'Specification for consistent kitchen delivery, service, allergen awareness, and handover.',
-    body: specSections.join('')
-  });
+        <main class="pdf-operational-main">
+          ${description ? buildDocumentPanelHtml('Dish Description', `<p>${escapeHtml(normalizeProseText(description))}</p>`, { eyebrow: 'Guest Promise' }) : ''}
+          ${standardRows
+            .map(
+              (item) => `
+                <div class="pdf-kitchen-standard">
+                  <strong>${escapeHtml(item.label)}</strong>
+                  <p>${escapeHtml(normalizeProseText(item.value))}</p>
+                </div>
+              `
+            )
+            .join('')}
+        </main>
+      </div>
+    </section>
+  `;
 
   // ──────────────────────────────────────────────
   // PAGE 3 — INGREDIENT APPENDIX (if applicable)
@@ -200,7 +215,7 @@ export function buildDishSpecReportHtml(options: {
         })
       : '';
 
-  return `${coverHtml}${buildReportBodyHtml([specChapter, ingredientChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([specSheet, ingredientChapter], 'operational')}`;
 }
 
 /* ================================================================
@@ -273,49 +288,56 @@ export function buildRecipeCostingReportHtml(options: {
   // ──────────────────────────────────────────────
   const vatNote = dish.recipeCosting.vatEnabled ? 'VAT included in sell price.' : '';
 
-  const costingBody = `
-    <table class="report-table">
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${dish.sellPrice > 0 ? `<tr><td>Selling Price</td><td><strong>${fmtCurrency(dish.sellPrice)}</strong></td></tr>` : ''}
-        ${totalRecipeCost > 0 ? `<tr><td>Total Recipe Cost</td><td>${fmtCurrency(totalRecipeCost)}</td></tr>` : ''}
-        ${portions > 0 ? `<tr><td>Recipe Portions</td><td>${portions}</td></tr>` : ''}
-        ${costPerPortion > 0 ? `<tr><td>Cost per Portion</td><td><strong>${fmtCurrency(costPerPortion)}</strong></td></tr>` : ''}
-        ${actualGp > 0 ? `<tr><td>Actual GP</td><td><strong style="${actualGp < targetGp - 3 ? 'color:#b71c1c' : actualGp < targetGp ? 'color:#bf360c' : 'color:#2e7d32'}">${fmtPercent(actualGp)}</strong></td></tr>` : ''}
-        ${targetGp > 0 ? `<tr><td>Target GP</td><td>${fmtPercent(targetGp)}</td></tr>` : ''}
-        ${suggestedSell > 0 && Math.abs(suggestedSell - dish.sellPrice) > 0.01 ? `<tr><td>Suggested Sell Price</td><td><strong>${fmtCurrency(suggestedSell)}</strong></td></tr>` : ''}
-        ${vatNote ? `<tr><td>VAT</td><td>${vatNote}</td></tr>` : ''}
-      </tbody>
-    </table>
+  const costingSheet = `
+    <section class="pdf-sheet-page pdf-sheet-page--commercial">
+      <header class="pdf-sheet-header">
+        <div>
+          <span>Commercial Costing</span>
+          <h2>GP Position & Recipe Costing</h2>
+        </div>
+        <div class="pdf-sheet-header-meta">
+          ${escapeHtml(safe(dish.name) || 'Recipe Costing')}<br />
+          ${siteLabel ? escapeHtml(siteLabel) : 'Commercial review copy'}
+        </div>
+      </header>
 
-    ${gpGap > 0 && totalRecipeCost > 0
-      ? buildCalloutHtml(
-          gpGap > 3
-            ? `Sell price of ${fmtCurrency(dish.sellPrice)} produces a GP of ${fmtPercent(actualGp)} — ${fmtPercent(gpGap)} below the ${fmtPercent(targetGp)} target. Suggested sell price to hit target: ${fmtCurrency(suggestedSell)}.`
-            : `GP is ${fmtPercent(gpGap)} below target. Minor price adjustment or ingredient review may close the gap.`,
-          { title: 'GP Gap', variant: gpGap > 3 ? 'risk' : 'warn' }
-        )
-      : ''}
+      <div class="pdf-commercial-ledger">
+        ${buildDocumentPanelHtml(
+          'Commercial Lines',
+          `<div class="pdf-cost-stack">
+            ${dish.sellPrice > 0 ? `<div class="pdf-cost-line pdf-cost-line--primary"><span>Selling Price</span><strong>${fmtCurrency(dish.sellPrice)}</strong></div>` : ''}
+            ${costPerPortion > 0 ? `<div class="pdf-cost-line"><span>Cost / Portion</span><strong>${fmtCurrency(costPerPortion)}</strong></div>` : ''}
+            ${actualGp > 0 ? `<div class="pdf-cost-line"><span>Actual GP</span><strong style="${actualGp < targetGp - 3 ? 'color:#b71c1c' : actualGp < targetGp ? 'color:#bf360c' : 'color:#2e7d32'}">${fmtPercent(actualGp)}</strong></div>` : ''}
+            ${targetGp > 0 ? `<div class="pdf-cost-line"><span>Target GP</span><strong>${fmtPercent(targetGp)}</strong></div>` : ''}
+            ${suggestedSell > 0 && Math.abs(suggestedSell - dish.sellPrice) > 0.01 ? `<div class="pdf-cost-line"><span>Suggested Sell</span><strong>${fmtCurrency(suggestedSell)}</strong></div>` : ''}
+          </div>`,
+          { eyebrow: 'Pricing Decision' }
+        )}
 
-    <div class="summary-grid" style="margin-top: 14px;">
-      ${safe(client.companyName) ? `<div class="meta-card"><span>Client</span><strong>${escapeHtml(safe(client.companyName) || '')}</strong></div>` : ''}
-      ${siteLabel ? `<div class="meta-card"><span>Site</span><strong>${escapeHtml(siteLabel)}</strong></div>` : ''}
-      ${portionSize ? `<div class="meta-card"><span>Portion</span><strong>${escapeHtml(portionSize)}</strong></div>` : ''}
-    </div>
+        ${buildDocumentPanelHtml(
+          'Recipe Basis',
+          buildDefinitionListHtml([
+            { label: 'Total Recipe Cost', value: totalRecipeCost > 0 ? fmtCurrency(totalRecipeCost) : '' },
+            { label: 'Recipe Portions', value: portions > 0 ? String(portions) : '' },
+            { label: 'Portion Size', value: portionSize },
+            { label: 'Section', value: sectionName },
+            { label: 'Client', value: safe(client.companyName) },
+            { label: 'VAT', value: vatNote }
+          ]),
+          { eyebrow: 'Cost Assumptions' }
+        )}
+      </div>
+
+      ${gpGap > 0 && totalRecipeCost > 0
+        ? buildCalloutHtml(
+            gpGap > 3
+              ? `Sell price of ${fmtCurrency(dish.sellPrice)} produces a GP of ${fmtPercent(actualGp)} — ${fmtPercent(gpGap)} below the ${fmtPercent(targetGp)} target. Suggested sell price to hit target: ${fmtCurrency(suggestedSell)}.`
+              : `GP is ${fmtPercent(gpGap)} below target. Minor price adjustment or ingredient review may close the gap.`,
+            { title: 'GP Gap', variant: gpGap > 3 ? 'risk' : 'warn' }
+          )
+        : ''}
+    </section>
   `;
-
-  const costingChapter = buildChapterHtml({
-    kicker: 'Commercial Summary',
-    title: 'GP Position & Recipe Costing',
-    lead:
-      'Commercial summary for pricing review, margin protection, and client cost control.',
-    body: costingBody
-  });
 
   // ──────────────────────────────────────────────
   // PAGE 3 — INGREDIENT DETAIL
@@ -345,5 +367,5 @@ export function buildRecipeCostingReportHtml(options: {
       })
     : '';
 
-  return `${coverHtml}${buildReportBodyHtml([costingChapter, ingredientChapter, notesChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([costingSheet, ingredientChapter, notesChapter], 'commercial')}`;
 }

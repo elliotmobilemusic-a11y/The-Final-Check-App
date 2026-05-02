@@ -408,7 +408,7 @@ export function buildMysteryShopReport(state: MysteryShopAuditState) {
     body: journeyBody
   });
 
-  return `${coverHtml}${buildReportBodyHtml([overviewChapter, journeyChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([overviewChapter, journeyChapter], 'consultancy')}`;
 }
 
 export function MysteryShopAuditPage() {

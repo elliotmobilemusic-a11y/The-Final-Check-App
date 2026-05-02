@@ -376,7 +376,7 @@ export function buildMenuReport(project: MenuProjectState) {
       })
     : '';
 
-  return `${coverHtml}${buildReportBodyHtml([commercialChapter, sectionDetailChapter])}`;
+  return `${coverHtml}${buildReportBodyHtml([commercialChapter, sectionDetailChapter], 'consultancy')}`;
 }
 
 export function completionSummary(project: MenuProjectState) {

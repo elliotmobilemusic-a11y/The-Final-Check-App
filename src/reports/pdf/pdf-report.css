@@ -514,6 +514,7 @@ strong {
   min-height: 270mm;
 }
 
+.pdf-chapter-break,
 .report-chapter-break {
   break-before: page;
   page-break-before: always;
@@ -1482,6 +1483,482 @@ table tr {
   background: #fff5f5;
   border-left: 3px solid #b71c1c;
   color: #7f0000;
+}
+
+/* ==============================================
+   20. FAMILY REDESIGN OVERRIDES
+   Dedicated print systems for reports, handovers, and costing sheets
+   ============================================== */
+
+.pdf-document {
+  padding: 0;
+}
+
+.pdf-cover-page,
+.pdf-cover-page--operational,
+.pdf-cover-page--commercial {
+  padding: 16mm 18mm 18mm;
+  box-sizing: border-box;
+  background: #fffdf9;
+}
+
+.pdf-cover-page--consultancy {
+  background:
+    linear-gradient(90deg, rgba(127, 82, 33, 0.12) 0 1.8mm, transparent 1.8mm),
+    linear-gradient(180deg, #fffdf9 0%, #ffffff 58%, #fbf8f2 100%);
+}
+
+.pdf-cover-page--consultancy .pdf-cover-hero {
+  min-height: 142mm;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42mm;
+  align-items: end;
+  gap: 18mm;
+  margin-top: 24mm;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-hero-main {
+  justify-items: start;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  max-width: 118mm;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-report-type {
+  padding: 0 0 7px;
+  border: 0;
+  border-bottom: 1px solid rgba(127, 82, 33, 0.28);
+  border-radius: 0;
+  background: transparent;
+  color: var(--pdf-accent-strong);
+}
+
+.pdf-cover-page--consultancy .pdf-cover-client-title {
+  max-width: 12ch;
+  margin: 0;
+  font-size: 50pt;
+  line-height: 0.94;
+  text-align: left;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-summary {
+  max-width: 94mm;
+  margin: 0;
+  text-align: left;
+  font-size: 11pt;
+  line-height: 1.72;
+}
+
+.pdf-cover-hero-rule {
+  width: 1px;
+  height: 128mm;
+  background: linear-gradient(180deg, transparent, rgba(127, 82, 33, 0.32), transparent);
+  justify-self: end;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-hero-aside {
+  display: grid;
+  align-self: end;
+  gap: 5px;
+  padding-bottom: 8mm;
+  color: var(--pdf-muted);
+}
+
+.pdf-cover-page--consultancy .pdf-cover-hero-aside span {
+  font-size: 7pt;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-hero-aside strong {
+  color: var(--pdf-ink-soft);
+  font-size: 10pt;
+  line-height: 1.4;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-metrics {
+  grid-template-columns: 1.25fr repeat(2, minmax(0, 1fr));
+  max-width: none;
+  margin: auto 0 0;
+}
+
+.pdf-cover-page--consultancy .pdf-cover-metric,
+.pdf-cover-detail {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.pdf-cover-details-band {
+  grid-template-columns: 30mm minmax(0, 1fr);
+  margin-top: 14mm;
+  padding: 12px 0 0;
+}
+
+.pdf-cover-details-grid {
+  grid-template-columns: repeat(auto-fit, minmax(34mm, 1fr));
+  gap: 8px;
+}
+
+.pdf-cover-detail {
+  padding: 8px 10px 9px;
+  background: #ffffff;
+}
+
+.pdf-report-body--consultancy .pdf-chapter,
+.pdf-report-body--consultancy .report-chapter {
+  padding: 15mm 18mm 18mm;
+  min-height: 270mm;
+}
+
+.pdf-report-body--consultancy .pdf-chapter-header,
+.pdf-report-body--consultancy .report-chapter-header {
+  grid-template-columns: 34mm minmax(0, 1fr);
+  gap: 12mm;
+  align-items: start;
+  padding-bottom: 9mm;
+}
+
+.pdf-report-body--consultancy .pdf-chapter-kicker,
+.pdf-report-body--consultancy .report-chapter-kicker {
+  padding-top: 3px;
+}
+
+.pdf-report-body--consultancy .pdf-chapter-header h2,
+.pdf-report-body--consultancy .report-chapter-header h2 {
+  font-size: 30px;
+  max-width: 18ch;
+}
+
+.pdf-report-body--consultancy .pdf-chapter-header p,
+.pdf-report-body--consultancy .report-chapter-header p {
+  grid-column: 2;
+  max-width: 76ch;
+  font-size: 11.5px;
+}
+
+.pdf-report-body--consultancy .summary-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdf-report-body--consultancy .summary-grid .meta-card {
+  grid-column: span 2;
+  border: 0;
+  border-right: 1px solid var(--pdf-line-soft);
+  border-bottom: 1px solid var(--pdf-line-soft);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pdf-report-body--consultancy .report-story-card,
+.pdf-report-body--consultancy .report-columns > div,
+.pdf-report-body--consultancy .report-grid > div,
+.pdf-document-panel {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.pdf-report-body--consultancy .report-table,
+.pdf-report-body--consultancy table {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.pdf-document-panel {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px 15px;
+  border: 1px solid var(--pdf-line-medium);
+  background: #ffffff;
+  page-break-inside: avoid;
+  break-inside: avoid-page;
+}
+
+.pdf-document-panel-header {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pdf-line-soft);
+}
+
+.pdf-document-panel-header span,
+.pdf-definition-list dt {
+  color: var(--pdf-accent);
+  font-size: 6.8pt;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pdf-document-panel-header h3 {
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.pdf-definition-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--pdf-line-soft);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pdf-definition-list div {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-right: 1px solid var(--pdf-line-soft);
+  border-bottom: 1px solid var(--pdf-line-soft);
+  min-width: 0;
+}
+
+.pdf-definition-list dd {
+  margin: 0;
+  color: var(--pdf-ink-soft);
+  font-size: 9.5pt;
+  line-height: 1.35;
+}
+
+.pdf-cover-page--operational {
+  background:
+    linear-gradient(90deg, rgba(46, 49, 56, 0.08) 0 32mm, transparent 32mm),
+    #fffdf9;
+}
+
+.pdf-cover-page--operational .pdf-cover-op-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56mm;
+  align-items: end;
+  gap: 16mm;
+  padding: 28mm 0 18mm;
+}
+
+.pdf-cover-op-title-block {
+  display: grid;
+  gap: 13px;
+  align-content: end;
+}
+
+.pdf-cover-page--operational .pdf-cover-op-name {
+  max-width: 11ch;
+  font-size: 48pt;
+  line-height: 0.94;
+}
+
+.pdf-cover-page--operational .pdf-cover-op-metrics {
+  display: grid;
+  max-width: none;
+  border-radius: 6px;
+}
+
+.pdf-cover-page--operational .pdf-cover-op-metric {
+  border-right: 0;
+  border-bottom: 1px solid var(--pdf-line-soft);
+}
+
+.pdf-cover-page--operational .pdf-cover-op-metric:last-child {
+  border-bottom: 0;
+}
+
+.pdf-report-body--operational .pdf-chapter,
+.pdf-report-body--commercial .pdf-chapter {
+  padding: 12mm 14mm 14mm;
+}
+
+.pdf-sheet-page {
+  min-height: 270mm;
+  padding: 12mm 14mm 14mm;
+  box-sizing: border-box;
+  break-after: page;
+  page-break-after: always;
+  background: #ffffff;
+}
+
+.pdf-sheet-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.pdf-sheet-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 45mm;
+  gap: 12mm;
+  align-items: end;
+  padding-bottom: 8mm;
+  border-bottom: 2px solid var(--pdf-ink);
+}
+
+.pdf-sheet-header span {
+  color: var(--pdf-accent);
+  font-size: 7pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.pdf-sheet-header h2 {
+  margin-top: 5px;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 28pt;
+  line-height: 0.98;
+}
+
+.pdf-sheet-header-meta {
+  color: var(--pdf-muted);
+  font-size: 8.5pt;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.pdf-operational-sheet-grid {
+  display: grid;
+  grid-template-columns: 68mm minmax(0, 1fr);
+  gap: 10mm;
+  margin-top: 9mm;
+  align-items: start;
+}
+
+.pdf-operational-main {
+  display: grid;
+  gap: 10px;
+}
+
+.pdf-kitchen-standard {
+  display: grid;
+  grid-template-columns: 27mm minmax(0, 1fr);
+  gap: 8px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--pdf-line-soft);
+}
+
+.pdf-kitchen-standard strong {
+  color: var(--pdf-accent-strong);
+  font-size: 7.2pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pdf-kitchen-standard p {
+  color: var(--pdf-ink-soft);
+  font-size: 9.7pt;
+  line-height: 1.52;
+}
+
+.pdf-cover-page--commercial {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fffdf9 54%, #f8f2e8 100%);
+}
+
+.pdf-cover-page--commercial .pdf-cover-com-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62mm;
+  align-items: end;
+  gap: 16mm;
+  padding: 30mm 0 18mm;
+}
+
+.pdf-cover-com-title-block {
+  display: grid;
+  gap: 12px;
+}
+
+.pdf-cover-page--commercial .pdf-cover-com-name {
+  max-width: 11ch;
+  font-size: 46pt;
+  line-height: 0.96;
+}
+
+.pdf-cover-com-commercials,
+.pdf-cover-page--commercial .pdf-cover-com-numbers {
+  display: grid;
+  gap: 9px;
+  max-width: none;
+}
+
+.pdf-cover-page--commercial .pdf-cover-com-numbers {
+  grid-template-columns: 1fr;
+}
+
+.pdf-cover-page--commercial .pdf-cover-com-number {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.pdf-commercial-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  margin-top: 9mm;
+}
+
+.pdf-commercial-ledger .pdf-document-panel:first-child {
+  background: linear-gradient(180deg, #fffaf1 0%, #ffffff 100%);
+}
+
+.pdf-cost-stack {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--pdf-line-medium);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pdf-cost-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--pdf-line-soft);
+  align-items: baseline;
+}
+
+.pdf-cost-line:last-child {
+  border-bottom: 0;
+}
+
+.pdf-cost-line span {
+  color: var(--pdf-muted);
+  font-size: 7.2pt;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pdf-cost-line strong {
+  color: var(--pdf-ink);
+  font-size: 16pt;
+  line-height: 1;
+}
+
+.pdf-cost-line--primary {
+  background: var(--pdf-panel);
+}
+
+.pdf-cost-line--primary strong {
+  font-size: 22pt;
+}
+
+.pdf-ingredient-ledger {
+  table-layout: auto;
+  border-radius: 6px;
+}
+
+.pdf-ingredient-ledger th,
+.pdf-ingredient-ledger td {
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  hyphens: none;
 }
 
 @media print {
