@@ -111,7 +111,7 @@ export function MenuBuilderPage() {
   const totalProfit = menuSummary.weeklyProfit;
   const weightedGp = menuSummary.weightedGp;
 
-  const reportHtml = useMemo(() => buildMenuReport(project), [project]);
+  const _reportHtml = useMemo(() => buildMenuReport(project), [project]);
   const completion = useMemo(() => completionSummary(project), [project]);
   const insights = useMemo(
     () => buildMenuInsights(project, weightedGp, totalRevenue, totalProfit),

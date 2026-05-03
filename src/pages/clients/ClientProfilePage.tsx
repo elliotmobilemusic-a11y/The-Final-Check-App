@@ -1627,6 +1627,7 @@ export function ClientProfilePage() {
             siteCount={siteCount}
             editing={editing}
             saving={saving}
+            message={message}
             onToggleEditing={toggleEditing}
             onSave={handleSave}
             onNewQuote={handleRequestNewQuote}
@@ -1637,7 +1638,6 @@ export function ClientProfilePage() {
           />
 
           <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
-        <div className="page-inline-note">{message}</div>
 
         {activeTab === 'information' ? (
           <ClientInformationTab

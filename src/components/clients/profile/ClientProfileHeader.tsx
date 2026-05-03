@@ -1,3 +1,11 @@
+function statusPillClass(status: string) {
+  const s = status.toLowerCase();
+  if (s === 'active') return 'status-pill status-success';
+  if (s === 'prospect' || s === 'onboarding') return 'status-pill status-warning';
+  if (s === 'paused' || s === 'completed' || s === 'inactive') return 'status-pill status-danger';
+  return 'status-pill';
+}
+
 interface ClientProfileHeaderProps {
   companyName: string;
   contactName: string;
@@ -8,6 +16,7 @@ interface ClientProfileHeaderProps {
   siteCount: number;
   editing: boolean;
   saving: boolean;
+  message?: string;
   onToggleEditing: () => void;
   onSave: () => void;
   onNewQuote: () => void;
@@ -27,6 +36,7 @@ export function ClientProfileHeader({
   siteCount,
   editing,
   saving,
+  message,
   onToggleEditing,
   onSave,
   onNewQuote,
@@ -37,19 +47,27 @@ export function ClientProfileHeader({
   return (
     <header className="client-profile-header">
       <div className="client-profile-header-content">
-        <div className="client-profile-header-info">
-          <div className="client-profile-name-group">
-            <h1>{companyName}</h1>
-            <span className="client-status-badge">{status}</span>
+        <div className="client-profile-header-identity">
+          <div className="client-profile-avatar" aria-hidden="true">
+            {(companyName || 'C').charAt(0).toUpperCase()}
           </div>
 
-          <p className="client-contact-name">{contactName}</p>
+          <div className="client-profile-header-info">
+            <span className="client-profile-eyebrow">Clients</span>
 
-          <div className="client-profile-meta-row">
-            <span className="client-meta-item">{industry}</span>
-            <span className="client-meta-item">{siteCount} sites</span>
-            <span className="client-meta-item">Last review: {lastReviewDate}</span>
-            <span className="client-meta-item client-balance">{outstandingBalance}</span>
+            <div className="client-profile-name-group">
+              <h1>{companyName}</h1>
+              <span className={statusPillClass(status)}>{status}</span>
+            </div>
+
+            <p className="client-contact-name">{contactName}</p>
+
+            <div className="client-profile-meta-row">
+              <span className="client-meta-item">{industry}</span>
+              <span className="client-meta-item">{siteCount} sites</span>
+              <span className="client-meta-item">Next review: {lastReviewDate}</span>
+              <span className="client-meta-item client-balance">{outstandingBalance}</span>
+            </div>
           </div>
         </div>
 
@@ -115,6 +133,10 @@ export function ClientProfileHeader({
           </div>
         </div>
       </div>
+
+      {message ? (
+        <p className="client-profile-note">{message}</p>
+      ) : null}
     </header>
   );
 }

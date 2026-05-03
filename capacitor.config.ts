@@ -14,6 +14,8 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     webContentsDebuggingEnabled: false,
+    // Enforce https scheme for Web APIs (localStorage, cookies) on API 30+
+    androidScheme: 'https',
   },
   plugins: {
     Keyboard: {

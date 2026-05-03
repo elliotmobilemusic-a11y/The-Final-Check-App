@@ -40,5 +40,14 @@
 
     <!-- Permissions -->
 
+    <!-- Network access for hosted WebView -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Local notifications (@capacitor/local-notifications) -->
+    <!-- POST_NOTIFICATIONS: runtime permission required on Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- RECEIVE_BOOT_COMPLETED: restore scheduled notifications after device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- WAKE_LOCK: ensure notification delivery while device is in low-power state -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest>
