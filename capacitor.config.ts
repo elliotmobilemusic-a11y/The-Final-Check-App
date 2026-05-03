@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'uk.thefinalcheck.portal',
+  appId: 'uk.thefinalcheck.app',
   appName: 'The Final Check',
   webDir: 'dist',
   backgroundColor: '#10141b',
