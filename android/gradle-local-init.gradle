@@ -1,0 +1,6 @@
+// Redirects all Gradle build outputs to /tmp/ so iCloud Drive cannot interfere
+// with intermediate files during the build. Required because this project lives
+// on the macOS Desktop (iCloud-synced). Safe to commit — works on any Mac.
+allprojects {
+    buildDir = "/tmp/tfcapp-build/${project.name}" // must match android/build.gradle
+}

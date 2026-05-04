@@ -23,7 +23,7 @@
     "android:open": "npx cap open android",
     "android:build:debug": "npm run cap:sync && cd android && ./gradlew assembleDebug",
     "android:build:release": "npm run cap:sync && cd android && ./gradlew assembleRelease",
-    "android:build:bundle": "npm run cap:sync && cd android && ./gradlew bundleRelease",
+    "android:build:bundle": "bash scripts/android-bundle.sh",
     "android:publish:debug": "node scripts/publish-android-debug.mjs",
     "build:desktop": "npm run build:web && electron-builder --config electron-builder.config.mjs",
     "pack:desktop": "npm run build:web && electron-builder --dir --config electron-builder.config.mjs",

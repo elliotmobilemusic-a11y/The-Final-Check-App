@@ -22,6 +22,8 @@ allprojects {
         google()
         mavenCentral()
     }
+    // Write all build output to /tmp to avoid iCloud Drive interference
+    buildDir = "/tmp/tfcapp-build/${project.name}"
 }
 
 task clean(type: Delete) {
