@@ -344,3 +344,359 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   TABLET OPTIMISATION — Phase 1–3
+   ========================================================================== */
+
+@media (min-width: 768px) and (max-width: 1280px) {
+
+  /* ── Dead space fix ─────────────────────────────────────────────────── */
+  .app-content {
+    padding-top: 0 !important;
+  }
+
+  /* ── Nav pill sizing ────────────────────────────────────────────────── */
+  .shell-primary-link {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 13px;
+  }
+
+  .shell-secondary-link {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .shell-secondary-nav {
+    gap: 6px;
+    padding: 4px 2px;
+  }
+
+  /* ── Touch targets ──────────────────────────────────────────────────── */
+  .shell-primary-link,
+  .shell-secondary-link,
+  .button,
+  [role="tab"],
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Dashboard welcome panel action buttons ─────────────────────────── */
+  .dashboard-intro-actions .button {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .dashboard-intro-band {
+    padding: 22px 24px;
+  }
+
+  .dashboard-intro-title {
+    font-size: clamp(1.6rem, 2.8vw, 2rem);
+  }
+
+  .dashboard-intro-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* ── Stat cards ─────────────────────────────────────────────────────── */
+  .dashboard-stat-row .stat-card {
+    min-height: 96px;
+    padding: 16px 18px;
+  }
+
+  .dashboard-stat-row .stat-value {
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+  }
+
+  .dashboard-stat-row .stat-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  /* ── Panel padding — scoped to dashboard to avoid regressions ─────── */
+  .dashboard-page .panel-header {
+    padding: 18px 22px 16px;
+  }
+
+  .dashboard-page .panel-body {
+    padding: 18px 20px 20px;
+    gap: 16px;
+  }
+}
+
+/* ── Landscape: two-column dashboard ───────────────────────────────────── */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.75fr) !important;
+    gap: 16px;
+  }
+
+  .dashboard-side-zone {
+    display: flex !important;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .dashboard-stat-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ── Portrait: 2×2 stat grid ────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 900px) and (orientation: portrait) {
+  .dashboard-stat-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+}
+
+/* ==========================================================================
+   TABLET OPTIMISATION — Phase 4: Premium Refresh
+   Stronger touch targets · richer hierarchy · portrait-first layouts
+   ========================================================================== */
+
+/* ── All tablet widths (768–1280px) ─────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1280px) {
+
+  /* Nav: stronger primary pill targets */
+  .shell-primary-link {
+    min-height: 48px;
+    padding: 0 20px;
+    font-size: 13.5px;
+  }
+
+  .shell-primary-nav {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .shell-secondary-link {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 13px;
+  }
+
+  /* Shell action bar: bigger notification & profile triggers */
+  .shell-notification-trigger {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 13px;
+  }
+
+  .user-chip {
+    min-height: 44px;
+    padding: 6px 14px;
+    gap: 10px;
+  }
+
+  .user-chip-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .user-chip-copy strong {
+    font-size: 14px;
+  }
+
+  /* Notification panel: more app-like */
+  .shell-notification-panel {
+    min-width: 320px;
+    border-radius: 18px;
+  }
+
+  .shell-notification-item {
+    padding: 13px 14px;
+    min-height: 52px;
+  }
+
+  /* Stat cards: premium hierarchy */
+  .stat-card {
+    padding: 20px 22px;
+    min-height: 112px;
+    gap: 10px;
+  }
+
+  .stat-card-compact {
+    min-height: 104px;
+    padding: 18px 20px;
+    gap: 8px;
+  }
+
+  .stat-card-compact .stat-value {
+    font-size: clamp(1.75rem, 2.6vw, 2.2rem);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .stat-card-compact .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    opacity: 0.88;
+  }
+
+  .stat-value {
+    font-size: clamp(2rem, 2.8vw, 2.6rem);
+  }
+
+  /* Dashboard welcome band: more generous on all tablet */
+  .dashboard-intro-band {
+    padding: 28px 32px;
+    border-radius: 20px;
+    gap: 20px 36px;
+  }
+
+  .dashboard-intro-title {
+    font-size: clamp(1.85rem, 3vw, 2.4rem);
+  }
+
+  .dashboard-intro-support p {
+    font-size: 14px;
+  }
+
+  .dashboard-intro-actions .button {
+    min-height: 46px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  /* Panel spacing: more breathing room */
+  .panel-header {
+    padding: 20px 24px 18px;
+  }
+
+  .panel-header h3 {
+    font-size: 15px;
+  }
+
+  .panel-body {
+    padding: 18px 22px 22px;
+    gap: 14px;
+  }
+
+  /* Attention items: touch-sized */
+  .attention-item {
+    padding: 14px 18px;
+    border-radius: 14px;
+  }
+
+  /* Activity items: touch-sized */
+  .activity-item {
+    min-height: 48px;
+    padding: 10px 0;
+  }
+
+  /* Task items: proper touch targets */
+  .task-item {
+    min-height: 48px;
+    padding: 10px 0;
+    gap: 12px;
+  }
+
+  .task-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  .task-item span {
+    font-size: 15px;
+  }
+
+  .task-add-row input {
+    min-height: 48px;
+    font-size: 15px;
+    padding: 10px 14px;
+  }
+
+  .dashboard-task-panel .sub-panel-header {
+    padding: 14px 18px;
+  }
+
+  .dashboard-task-panel .sub-panel-header strong {
+    font-size: 14px;
+  }
+
+  .task-list {
+    padding: 14px 18px 18px;
+  }
+
+  /* Action list: bigger buttons */
+  .action-list .button {
+    min-height: 48px;
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  /* Empty states: more breathing room */
+  .dashboard-empty-state {
+    padding: 28px 24px;
+    border-radius: 16px;
+  }
+
+  /* Settings hero: single column on portrait tablet */
+  .settings-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* ── Landscape tablet (1024–1280px): restore two-column settings & intro ── */
+@media (min-width: 1024px) and (max-width: 1280px) {
+  .settings-hero-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  }
+
+  .dashboard-intro-band {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .dashboard-intro-actions {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 220px;
+    gap: 8px;
+  }
+}
+
+/* ── Portrait tablet (768–1023px): single-column dashboard ─────────────── */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-side-zone {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    flex-direction: unset;
+  }
+
+  .dashboard-intro-band {
+    grid-template-columns: 1fr !important;
+    gap: 18px;
+  }
+
+  .dashboard-intro-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: auto;
+  }
+
+  .dashboard-intro-actions .button {
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+
+  .action-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}

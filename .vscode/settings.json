@@ -1,3 +1,9 @@
 {
-    "js/ts.tsdk.path": "node_modules/typescript/lib"
+    "js/ts.tsdk.path": "node_modules/typescript/lib",
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/android/.gradle/**",
+        "**/android/build/**"
+    ]
 }
