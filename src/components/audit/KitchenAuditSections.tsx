@@ -259,19 +259,62 @@ export function KitchenAuditWorkspaceSection({
                 <span className="soft-pill">Profit and control</span>
               </div>
 
-              <div className="form-grid">
+              {/* GP calculator */}
+              <div className="form-grid" style={{ marginBottom: '0.75rem' }}>
                 <label className="field">
-                  <span>Weekly food sales (£)</span>
+                  <span>Taken — weekly sales (£)</span>
                   <input className="input" inputMode="decimal" value={form.weeklySales} onChange={(e) => onUpdateField('weeklySales', num(e.target.value))} />
                 </label>
                 <label className="field">
-                  <span>Weekly food cost (£)</span>
+                  <span>Spent — weekly food cost (£)</span>
                   <input className="input" inputMode="decimal" value={form.weeklyFoodCost} onChange={(e) => onUpdateField('weeklyFoodCost', num(e.target.value))} />
                 </label>
                 <label className="field">
                   <span>Target GP %</span>
                   <input className="input" inputMode="decimal" value={form.targetGp} onChange={(e) => onUpdateField('targetGp', num(e.target.value))} />
                 </label>
+              </div>
+
+              {/* Live GP result */}
+              {(() => {
+                const actualGp = form.weeklySales > 0 ? ((form.weeklySales - form.weeklyFoodCost) / form.weeklySales) * 100 : null;
+                const onTarget = actualGp !== null && actualGp >= form.targetGp;
+                return (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '0.875rem 1rem',
+                    borderRadius: '8px',
+                    background: actualGp === null ? 'var(--color-surface-2, #f5f5f5)' : onTarget ? '#f0faf4' : '#fff5f5',
+                    border: `1.5px solid ${actualGp === null ? 'var(--color-border, #e0e0e0)' : onTarget ? '#4caf50' : '#ef5350'}`,
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted, #666)', marginBottom: '0.2rem' }}>
+                        Gross Profit
+                      </div>
+                      <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1, color: actualGp === null ? 'var(--color-text-muted, #999)' : onTarget ? '#2e7d32' : '#c62828' }}>
+                        {actualGp !== null ? `${actualGp.toFixed(1)}%` : '—'}
+                      </div>
+                    </div>
+                    {actualGp !== null && (
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.8rem', color: onTarget ? '#2e7d32' : '#c62828', fontWeight: 600 }}>
+                          {onTarget ? `+${(actualGp - form.targetGp).toFixed(1)}% above target` : `${(form.targetGp - actualGp).toFixed(1)}% below target`}
+                        </div>
+                        {!onTarget && (
+                          <div style={{ fontSize: '0.8rem', color: '#c62828', marginTop: '0.15rem' }}>
+                            {fmtCurrency(calc.gpOpportunityValue)} per week opportunity
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="form-grid">
                 <label className="field">
                   <span>Weekly waste loss (£)</span>
                   <input className="input" inputMode="decimal" value={form.actualWasteValue} onChange={(e) => onUpdateField('actualWasteValue', num(e.target.value))} />
@@ -295,16 +338,6 @@ export function KitchenAuditWorkspaceSection({
               </div>
 
               <div className="audit-chip-row">
-                <div className="audit-chip">
-                  <strong>GP position</strong>
-                  <span>
-                    {form.weeklySales > 0
-                      ? calc.gpGap > 0
-                        ? `${fmtCurrency(calc.gpOpportunityValue)} per week below target`
-                        : 'On or above target'
-                      : 'Awaiting numbers'}
-                  </span>
-                </div>
                 <div className="audit-chip">
                   <strong>Waste reading</strong>
                   <span>
