@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { PhotoEvidenceField } from '../common/PhotoEvidenceField';
+import { AuditSectionShell } from './AuditSectionShell';
 import type {
   AuditActionItem,
   AuditCategoryScores,
@@ -94,20 +95,13 @@ export function KitchenAuditWorkspaceSection({
             </div>
           </div>
 
-          <div className="panel-body stack gap-20">
-            <section className="sub-panel audit-nav-panel">
-              <div className="sub-panel-header">
-                <h4>Jump to section</h4>
-                <span className="soft-pill">Fast navigation</span>
-              </div>
-              <div className="audit-section-nav">
-                {sectionLinks.map((section) => (
-                  <a className="audit-section-link" href={section.href} key={section.href}>
-                    {section.label}
-                  </a>
-                ))}
-              </div>
-            </section>
+          <AuditSectionShell
+            description="Use the section rail for fast movement through the audit, with larger touch targets for tablet visits."
+            progressLabel={`${sectionLinks.length} sections`}
+            sections={sectionLinks}
+            title="Kitchen Profit Audit"
+          >
+            <div className="panel-body stack gap-20">
 
             <section className="sub-panel" id="audit-site-details">
               <h4>Site details</h4>
@@ -723,7 +717,8 @@ export function KitchenAuditWorkspaceSection({
                 sectionLabel={kitchenPhotoSections.actions}
               />
             </section>
-          </div>
+            </div>
+          </AuditSectionShell>
         </div>
       </div>
     </section>

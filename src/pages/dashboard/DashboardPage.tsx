@@ -264,26 +264,21 @@ export function DashboardPage() {
 
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [taskGroups, setTaskGroups] = useState<TaskGroup[]>(
-    () => readDraft<TaskGroup[]>(DASHBOARD_TASKS_DRAFT_KEY) ?? defaultTaskGroups
+    () => readDraft<TaskGroup[]>(DASHBOARD_TASKS_DRAFT_KEY, session?.user.id) ?? defaultTaskGroups
   );
   const [groupInputText, setGroupInputText] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    writeDraft(DASHBOARD_TASKS_DRAFT_KEY, taskGroups);
-  }, [taskGroups]);
+    writeDraft(DASHBOARD_TASKS_DRAFT_KEY, taskGroups, session?.user.id);
+  }, [session?.user.id, taskGroups]);
 
-  // Show install prompt randomly after random times
   useEffect(() => {
-    if (installState === 'installed') return;
-    
-    // Random chance to show prompt 15% chance after 12 seconds
-    const timer = setTimeout(() => {
-      if (Math.random() < 0.15) {
-        setShowInstallPrompt(true);
-      }
-    }, 12000);
+    if (installState === 'ready') {
+      setShowInstallPrompt(true);
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    setShowInstallPrompt(false);
   }, [installState]);
 
   function dismissInstallPrompt() {

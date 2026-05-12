@@ -358,7 +358,7 @@ export function buildReportDocumentHtml(
             try {
               window.print();
             } catch (error) {
-              console.error('Automatic print failed', error);
+              document.body.dataset.printError = 'true';
             }
           }, 350);
         });

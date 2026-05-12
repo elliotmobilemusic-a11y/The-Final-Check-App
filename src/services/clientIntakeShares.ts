@@ -1,5 +1,6 @@
 import { supabasePublic } from '../lib/supabase-public';
 import type { ClientIntakeSharePayload, ReportShareRecord } from '../types';
+import { isSafePublicToken, normalizeServiceError, requireSignedInUserId } from './serviceUtils';
 
 const TABLE = 'report_shares';
 const CLIENT_INTAKE_REPORT = 'client_intake';
@@ -19,7 +20,7 @@ function normalizeShareError(error: unknown): Error {
     );
   }
 
-  return error instanceof Error ? error : new Error('Could not reach the enquiry link service.');
+  return normalizeServiceError(error, 'Could not reach the enquiry link service.');
 }
 
 /**
@@ -29,6 +30,8 @@ function normalizeShareError(error: unknown): Error {
 export async function getClientIntakeShareByToken(
   token: string
 ): Promise<ReportShareRecord<ClientIntakeSharePayload> | null> {
+  if (!isSafePublicToken(token)) return null;
+
   const { data, error } = await supabasePublic
     .from(TABLE)
     .select('*')
@@ -49,12 +52,10 @@ export async function createClientIntakeShare(
 ): Promise<ReportShareRecord<ClientIntakeSharePayload>> {
   // Lazy load authenticated client ONLY when this function is actually called
   const { supabase } = await import('../lib/supabase');
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) throw new Error('You must be signed in.');
+  const userId = await requireSignedInUserId();
 
   const body = {
-    user_id: user.id,
+    user_id: userId,
     report_type: CLIENT_INTAKE_REPORT,
     title: 'Client enquiry form',
     token: createShareToken(),

@@ -6,6 +6,7 @@ import {
   getMigratedIds,
   addMigratedId
 } from './localToolStore';
+import { normalizeServiceError, requireSignedInUserId } from './serviceUtils';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isValidUUID(value: string | undefined): value is string {
@@ -72,35 +73,41 @@ export async function listMysteryShopAudits(): Promise<MysteryShopAuditRecord[]>
 
   if (!supabase) return [];
 
+  const userId = await requireSignedInUserId();
   const { data, error } = await supabase
     .from('mystery_shop_audits')
     .select('*')
+    .eq('user_id', userId)
     .order('review_date', { ascending: false });
 
-  if (error) throw error;
+  if (error) throw normalizeServiceError(error, 'Could not load mystery shop audits.');
   return data || [];
 }
 
 export async function listMysteryShopAuditsForClient(clientId: string): Promise<MysteryShopAuditRecord[]> {
   if (!supabase) return [];
 
+  const userId = await requireSignedInUserId();
   const { data, error } = await supabase
     .from('mystery_shop_audits')
     .select('*')
+    .eq('user_id', userId)
     .eq('client_id', clientId)
     .order('review_date', { ascending: false });
 
-  if (error) throw error;
+  if (error) throw normalizeServiceError(error, 'Could not load mystery shop audits.');
   return data || [];
 }
 
 export async function getMysteryShopAudit(id: string): Promise<MysteryShopAuditRecord | null> {
   if (!supabase) return null;
 
+  const userId = await requireSignedInUserId();
   const { data, error } = await supabase
     .from('mystery_shop_audits')
     .select('*')
     .eq('id', id)
+    .eq('user_id', userId)
     .single();
 
   if (error) return null;
@@ -111,10 +118,14 @@ export async function saveMysteryShopAudit(
   record: Omit<MysteryShopAuditRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> & { id?: string } & Partial<Pick<MysteryShopAuditRecord, 'created_at' | 'updated_at'>>
 ): Promise<MysteryShopAuditRecord> {
   if (!supabase) throw new Error('Not authenticated.');
+  const userId = await requireSignedInUserId();
 
   // Strip non-UUID ids (e.g. legacy prefixed ids like "mystery-shop-xxx") so Supabase
   // generates a valid UUID on insert rather than rejecting with a parse error.
-  const payload = isValidUUID(record.id) ? record : { ...record, id: undefined };
+  const payload = {
+    ...(isValidUUID(record.id) ? record : { ...record, id: undefined }),
+    user_id: userId
+  };
 
   const { data, error } = await supabase
     .from('mystery_shop_audits')
@@ -122,15 +133,19 @@ export async function saveMysteryShopAudit(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throw normalizeServiceError(error, 'Could not save this mystery shop audit.');
   return data;
 }
 
 export async function deleteMysteryShopAudit(id: string): Promise<void> {
   if (!supabase) return;
 
-  await supabase
+  const userId = await requireSignedInUserId();
+  const { error } = await supabase
     .from('mystery_shop_audits')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw normalizeServiceError(error, 'Could not delete this mystery shop audit.');
 }

@@ -6,6 +6,7 @@ import type {
   QuestionnaireSubmissionStatus,
   ReportShareRecord
 } from '../types';
+import { isSafePublicToken, normalizeServiceError, requireSignedInUserId } from './serviceUtils';
 
 const SHARES_TABLE = 'report_shares';
 const SUBMISSIONS_TABLE = 'questionnaire_submissions';
@@ -22,7 +23,7 @@ function normalizeError(error: unknown): Error {
   if (error instanceof Error && /failed to fetch/i.test(error.message)) {
     return new Error('Could not reach the questionnaire service. Check your connection and try again.');
   }
-  return error instanceof Error ? error : new Error('Questionnaire service error.');
+  return normalizeServiceError(error, 'Questionnaire service error.');
 }
 
 // ─── Public (anon) ────────────────────────────────────────────────────────────
@@ -30,6 +31,8 @@ function normalizeError(error: unknown): Error {
 export async function getQuestionnaireShareByToken(
   token: string
 ): Promise<ReportShareRecord<QuestionnaireSharePayload> | null> {
+  if (!isSafePublicToken(token)) return null;
+
   const { data, error } = await supabasePublic
     .from(SHARES_TABLE)
     .select('*')
@@ -48,8 +51,7 @@ export async function createQuestionnaireShare(
   payload: QuestionnaireSharePayload
 ): Promise<ReportShareRecord<QuestionnaireSharePayload>> {
   const { supabase } = await import('../lib/supabase');
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) throw new Error('You must be signed in.');
+  const userId = await requireSignedInUserId();
 
   const template = getQuestionnaireTemplate(payload.templateId);
   const title = template
@@ -57,7 +59,7 @@ export async function createQuestionnaireShare(
     : 'Pre-visit questionnaire';
 
   const body = {
-    user_id: user.id,
+    user_id: userId,
     report_type: REPORT_TYPE,
     title,
     token: createShareToken(),
@@ -74,9 +76,11 @@ export async function createQuestionnaireShare(
 
 export async function listQuestionnaireSubmissions(): Promise<QuestionnaireSubmissionRecord[]> {
   const { supabase } = await import('../lib/supabase');
+  const userId = await requireSignedInUserId();
   const { data, error } = await supabase
     .from(SUBMISSIONS_TABLE)
     .select('*')
+    .eq('user_id', userId)
     .order('submitted_at', { ascending: false });
 
   if (error) throw normalizeError(error);
@@ -87,10 +91,12 @@ export async function getQuestionnaireSubmission(
   id: string
 ): Promise<QuestionnaireSubmissionRecord | null> {
   const { supabase } = await import('../lib/supabase');
+  const userId = await requireSignedInUserId();
   const { data, error } = await supabase
     .from(SUBMISSIONS_TABLE)
     .select('*')
     .eq('id', id)
+    .eq('user_id', userId)
     .maybeSingle();
 
   if (error) throw normalizeError(error);
@@ -102,10 +108,12 @@ export async function updateSubmissionStatus(
   status: QuestionnaireSubmissionStatus
 ): Promise<void> {
   const { supabase } = await import('../lib/supabase');
+  const userId = await requireSignedInUserId();
   const { error } = await supabase
     .from(SUBMISSIONS_TABLE)
     .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', userId);
 
   if (error) throw normalizeError(error);
 }

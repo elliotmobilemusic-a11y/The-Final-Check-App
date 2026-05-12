@@ -53,6 +53,20 @@ body.native-shell.platform-android .desktop-main {
   max-width: 100%;
 }
 
+body.native-shell.platform-android .shell-sidebar {
+  display: none !important;
+}
+
+body.native-shell.platform-android .button,
+body.native-shell.platform-android .input,
+body.native-shell.platform-android select,
+body.native-shell.platform-android textarea,
+body.native-shell.platform-android .shell-primary-link,
+body.native-shell.platform-android .shell-secondary-link,
+body.native-shell.platform-android .audit-section-rail-link {
+  min-height: 48px;
+}
+
 body.native-shell.platform-android .page-stack {
   gap: 16px;
   padding-bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));

@@ -8,34 +8,18 @@ const validateSupabaseConfig = () => {
   const errors: string[] = [];
 
   if (!supabaseUrl) {
-    errors.push('❌ VITE_SUPABASE_URL is missing from environment variables');
+    errors.push('VITE_SUPABASE_URL is missing from environment variables');
   } else if (!supabaseUrl.includes('supabase.co')) {
-    errors.push(`❌ VITE_SUPABASE_URL does not appear to be a valid Supabase URL: ${supabaseUrl}`);
+    errors.push('VITE_SUPABASE_URL does not appear to be a valid Supabase URL.');
   }
 
   if (!supabaseAnonKey) {
-    errors.push('❌ VITE_SUPABASE_ANON_KEY is missing from environment variables');
+    errors.push('VITE_SUPABASE_ANON_KEY is missing from environment variables');
   } else if (supabaseAnonKey.length < 20 && !supabaseAnonKey.startsWith('sb_')) {
-    errors.push('❌ VITE_SUPABASE_ANON_KEY appears to be incomplete or invalid');
+    errors.push('VITE_SUPABASE_ANON_KEY appears to be incomplete or invalid');
   }
 
   if (errors.length > 0) {
-    console.error('══════════════════════════════════════════════════');
-    console.error('SUPABASE CONFIGURATION ERROR - APP WILL NOT WORK');
-    console.error('══════════════════════════════════════════════════');
-    errors.forEach(err => console.error(err));
-    
-    if (supabaseAnonKey) {
-      console.error(`🔑 Using anon key starting with: ${supabaseAnonKey.substring(0, 20)}...`);
-    }
-    if (supabaseUrl) {
-      console.error(`🔗 Using Supabase URL: ${supabaseUrl}`);
-    }
-    
-    console.error('══════════════════════════════════════════════════');
-    console.error('Supabase is reachable; the failure is due to an invalid API key/config mismatch.');
-    console.error('══════════════════════════════════════════════════');
-    
     return false;
   }
 

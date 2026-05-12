@@ -19,19 +19,19 @@ import { disablePushNotifications } from '../../services/pushNotifications';
 import { CookingLoader } from './CookingLoader';
 
 const navItems = [
-  { to: '/dashboard', label: 'Command Centre' },
-  { to: '/clients', label: 'Clients' },
-  { to: '/audit-hub', label: 'Profit Audit' },
-  { to: '/food-safety-hub', label: 'Food Safety' },
-  { to: '/mystery-shop-hub', label: 'Mystery Shop' },
-  { to: '/menu-hub', label: 'Menu Profit Engine' },
-  { to: '/questionnaires', label: 'Pre-Visit Forms' }
+  { to: '/dashboard', label: 'Command Centre', icon: 'CC', group: 'Operate' },
+  { to: '/clients', label: 'Clients', icon: 'CL', group: 'Operate' },
+  { to: '/audit-hub', label: 'Profit Audit', icon: 'PA', group: 'Audits' },
+  { to: '/food-safety-hub', label: 'Food Safety', icon: 'FS', group: 'Audits' },
+  { to: '/mystery-shop-hub', label: 'Mystery Shop', icon: 'MS', group: 'Audits' },
+  { to: '/menu-hub', label: 'Menu Profit Engine', icon: 'MP', group: 'Profit tools' },
+  { to: '/questionnaires', label: 'Pre-Visit Forms', icon: 'PV', group: 'Profit tools' }
 ];
 
 const visitModeItems = [
-  { to: '/audit?visit=1', label: 'Profit Visit' },
-  { to: '/food-safety?visit=1', label: 'Safety Visit' },
-  { to: '/mystery-shop?visit=1', label: 'Mystery Visit' }
+  { to: '/audit?visit=1', label: 'Profit Visit', icon: 'PV' },
+  { to: '/food-safety?visit=1', label: 'Safety Visit', icon: 'SV' },
+  { to: '/mystery-shop?visit=1', label: 'Mystery Visit', icon: 'MV' }
 ];
 
 const workspaceDetails = [
@@ -116,6 +116,11 @@ function normalizeAvatarUrl(value?: string | null) {
   const url = String(value ?? '').trim();
   return /^https?:\/\/.+\/storage\/v1\/object\/public\/avatars\//i.test(url) ? url : '';
 }
+
+const navGroups = navItems.reduce<Record<string, typeof navItems>>((groups, item) => {
+  groups[item.group] = [...(groups[item.group] ?? []), item];
+  return groups;
+}, {});
 
 export function AppShell() {
   const location = useLocation();
@@ -355,6 +360,56 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <div className="app-shell-frame">
+        <aside className="shell-sidebar" aria-label="Workspace navigation">
+          <NavLink className="shell-sidebar-brand" to="/dashboard">
+            <span className="shell-brand-mark">TF</span>
+            <span>
+              <strong>The Final Check</strong>
+              <small>Consultancy OS</small>
+            </span>
+          </NavLink>
+
+          <div className="shell-sidebar-scroll">
+            {Object.entries(navGroups).map(([group, items]) => (
+              <div className="shell-nav-group" key={group}>
+                <span className="shell-nav-group-label">{group}</span>
+                {items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to !== '/clients'}
+                    className={({ isActive }) => `shell-sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="shell-nav-icon" aria-hidden="true">{item.icon}</span>
+                    <span className="shell-nav-label">{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+
+            <div className="shell-nav-group shell-nav-group-visit">
+              <span className="shell-nav-group-label">Visit mode</span>
+              {visitModeItems.map((item) => (
+                <NavLink key={item.to} to={item.to} className="shell-sidebar-link shell-sidebar-link-visit">
+                  <span className="shell-nav-icon" aria-hidden="true">{item.icon}</span>
+                  <span className="shell-nav-label">{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+
+          <div className="shell-sidebar-footer">
+            <Link className="shell-sidebar-link" to="/settings/profile">
+              <span className="shell-nav-icon" aria-hidden="true">ST</span>
+              <span className="shell-nav-label">Settings</span>
+            </Link>
+            <button className="shell-sidebar-link shell-sidebar-button" onClick={() => void handleSignOut()} type="button">
+              <span className="shell-nav-icon" aria-hidden="true">SO</span>
+              <span className="shell-nav-label">Sign out</span>
+            </button>
+          </div>
+        </aside>
+
         <header 
           ref={navRef} 
           className={`shell-topbar ${!disableAutoHideNav && !navExpanded && preferences.autoShowNav && !preferences.reducedMotion ? 'nav-collapsed' : ''}`}
@@ -377,6 +432,7 @@ export function AppShell() {
                      end={item.to !== '/clients'}
                      className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
                    >
+                     <span className="shell-nav-icon shell-nav-icon-compact" aria-hidden="true">{item.icon}</span>
                      <span className="nav-link-inner">{item.label}</span>
                    </NavLink>
                  ))}
@@ -384,14 +440,15 @@ export function AppShell() {
                <nav className="shell-secondary-nav" aria-label="Visit mode launches">
                  <span className="shell-secondary-label">Visit mode</span>
                  {visitModeItems.map((item) => (
-                   <NavLink
-                     key={item.to}
-                     to={item.to}
-                     className="shell-secondary-link"
-                   >
-                     <span className="nav-link-inner">{item.label}</span>
-                   </NavLink>
-                 ))}
+                 <NavLink
+                   key={item.to}
+                   to={item.to}
+                   className="shell-secondary-link"
+                 >
+                   <span className="shell-nav-icon shell-nav-icon-mini" aria-hidden="true">{item.icon}</span>
+                   <span className="nav-link-inner">{item.label}</span>
+                 </NavLink>
+               ))}
                </nav>
              </div>
 

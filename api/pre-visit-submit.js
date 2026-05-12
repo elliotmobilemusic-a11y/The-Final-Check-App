@@ -90,12 +90,8 @@ export default async function handler(request, response) {
 
     if (submitError) {
       console.error('Questionnaire submission insert failed', {
-        token,
         templateId,
-        clientId,
         code: submitError.code,
-        details: submitError.details,
-        hint: submitError.hint,
         message: submitError.message
       });
       throw new Error(`Submission insert failed: ${submitError.message ?? submitError.code ?? 'unknown database error'}`);
@@ -134,8 +130,7 @@ export default async function handler(request, response) {
     response.status(200).json({ ok: true, submissionId: submission.id });
   } catch (error) {
     console.error('Pre-visit submit failed', {
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined
+      error: error instanceof Error ? error.message : 'Unexpected error'
     });
 
     response.status(500).json({

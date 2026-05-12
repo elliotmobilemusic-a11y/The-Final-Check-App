@@ -7,6 +7,7 @@ import type {
   MysteryShopAuditState,
   ReportShareRecord
 } from '../types';
+import { isSafePublicToken, normalizeServiceError } from './serviceUtils';
 
 type ReportShareType =
   | 'generic_report'
@@ -50,7 +51,7 @@ function normalizeShareError(error: unknown): Error {
     );
   }
 
-  return error instanceof Error ? error : new Error('Could not create the share link.');
+  return normalizeServiceError(error, 'Could not create the share link.');
 }
 
 async function createShareRecord<T>({
@@ -129,6 +130,10 @@ async function getPublicShareByToken<T>(
   token: string,
   reportType?: ReportShareType
 ): Promise<ReportShareRecord<T> | null> {
+  if (!isSafePublicToken(token)) {
+    return null;
+  }
+
   let query = supabasePublic.from('report_shares').select('*').eq('token', token).eq('is_public', true);
 
   if (reportType) {

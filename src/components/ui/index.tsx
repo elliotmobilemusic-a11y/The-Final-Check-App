@@ -157,18 +157,69 @@ interface FormSectionProps {
   description?: string;
   children: React.ReactNode;
   className?: string;
+  actions?: React.ReactNode;
+  completion?: React.ReactNode;
 }
 
-export function FormSection({ title, description, children, className = '' }: FormSectionProps) {
+export function FormSection({ title, description, children, className = '', actions, completion }: FormSectionProps) {
   return (
     <div className={`form-section ${className}`}>
-      {title && <h4 className="form-section-title">{title}</h4>}
-      {description && <p className="form-section-description muted-copy">{description}</p>}
+      {(title || description || actions || completion) && (
+        <div className="form-section-head">
+          <div>
+            {title && <h4 className="form-section-title">{title}</h4>}
+            {description && <p className="form-section-description muted-copy">{description}</p>}
+          </div>
+          {(completion || actions) && (
+            <div className="form-section-actions">
+              {completion}
+              {actions}
+            </div>
+          )}
+        </div>
+      )}
       <div className="form-section-content">
         {children}
       </div>
     </div>
   );
+}
+
+interface FormGridProps {
+  children: React.ReactNode;
+  columns?: 1 | 2 | 3;
+  className?: string;
+}
+
+export function FormGrid({ children, columns = 2, className = '' }: FormGridProps) {
+  return <div className={`form-grid form-grid-${columns} ${className}`}>{children}</div>;
+}
+
+interface SaveStatusIndicatorProps {
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  message?: string;
+}
+
+export function SaveStatusIndicator({ status, message }: SaveStatusIndicatorProps) {
+  const label =
+    message ??
+    {
+      idle: 'Ready',
+      saving: 'Saving...',
+      saved: 'Saved',
+      error: 'Needs attention'
+    }[status];
+
+  return <span className={`save-status-indicator save-status-${status}`}>{label}</span>;
+}
+
+interface ResponsivePageActionsProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ResponsivePageActions({ children, className = '' }: ResponsivePageActionsProps) {
+  return <div className={`responsive-page-actions ${className}`}>{children}</div>;
 }
 
 // ==============================================

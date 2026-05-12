@@ -22,3 +22,6 @@ dist/
 android/.gradle/
 android/build/
 android/app/build/
+
+.idea/
+node_modules.old/
