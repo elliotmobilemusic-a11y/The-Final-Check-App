@@ -105,7 +105,7 @@ const defaultTaskGroups: TaskGroup[] = [
   }
 ];
 
-function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'trend' | 'plus' | 'safety' }) {
+function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'plus' }) {
   const common = {
     width: 17,
     height: 17,
@@ -148,15 +148,6 @@ function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'tren
     );
   }
 
-  if (type === 'trend') {
-    return (
-      <svg {...common}>
-        <path d="M3 17l6-6 4 4 8-8" />
-        <path d="M15 7h6v6" />
-      </svg>
-    );
-  }
-
   if (type === 'plus') {
     return (
       <svg {...common}>
@@ -166,12 +157,7 @@ function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'tren
     );
   }
 
-  return (
-    <svg {...common}>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <path d="M8 12h8" />
-    </svg>
-  );
+  return null;
 }
 
 export function DashboardPage() {
@@ -449,14 +435,6 @@ export function DashboardPage() {
     .filter((item) => !!item.date)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
-  const totalAuditsCompleted = audits.length + foodSafetyAudits.length + mysteryShopAudits.length;
-  const avgOpportunityFound = latestAuditByClient.size > 0
-    ? totalOpportunityIdentified / latestAuditByClient.size
-    : 0;
-  const recentActivityCount = recentActivity.filter((item) => {
-    const timestamp = new Date(item.date).getTime();
-    return !Number.isNaN(timestamp) && Date.now() - timestamp <= 30 * 24 * 60 * 60 * 1000;
-  }).length;
 
   return (
     <PageContainer size="wide" className="command-centre-page dashboard-page">
@@ -487,27 +465,6 @@ export function DashboardPage() {
               <span className="command-centre-status-chip command-centre-status-chip-muted">
                 {loading ? 'Refreshing portfolio' : 'Updated just now'}
               </span>
-            </div>
-          </div>
-          <div className="command-centre-actions-card">
-            <span className="cc-actions-label">Client &amp; Audit Actions</span>
-            <div className="cc-actions-grid">
-              <Link className="button button-primary cc-action-btn" to="/clients">
-                <span className="cc-action-icon"><ActionGlyph type="clients" /></span>
-                Open clients
-              </Link>
-              <Link className="button button-secondary cc-action-btn" to="/audit">
-                <span className="cc-action-icon"><ActionGlyph type="shield" /></span>
-                Start kitchen audit
-              </Link>
-              <Link className="button button-secondary cc-action-btn" to="/menu">
-                <span className="cc-action-icon"><ActionGlyph type="document" /></span>
-                Open menu builder
-              </Link>
-              <Link className="button button-secondary cc-action-btn" to="/audit">
-                <span className="cc-action-icon"><ActionGlyph type="trend" /></span>
-                Start profit audit
-              </Link>
             </div>
           </div>
         </div>
@@ -685,46 +642,6 @@ export function DashboardPage() {
               </div>
             </div>
 
-            <div className="panel command-centre-panel portfolio-snapshot-panel">
-              <div className="panel-header">
-                <div className="cc-panel-header-inner">
-                  <div className="cc-panel-icon-wrap" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 3v18h18" />
-                      <path d="M7 15l4-4 3 3 5-7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3>Portfolio Snapshot</h3>
-                    <p>A quick view of your performance.</p>
-                  </div>
-                </div>
-              </div>
-              <div className="panel-body">
-                <div className="portfolio-snapshot-grid">
-                  <div className="portfolio-snapshot-metric">
-                    <span>Audits Completed</span>
-                    <strong>{totalAuditsCompleted}</strong>
-                    <small>All time</small>
-                  </div>
-                  <div className="portfolio-snapshot-metric">
-                    <span>Avg Opportunity Found</span>
-                    <strong>{fmtCurrency(avgOpportunityFound)}</strong>
-                    <small>Per audit</small>
-                  </div>
-                  <div className="portfolio-snapshot-metric">
-                    <span>Clients Engaged</span>
-                    <strong>{activeClients.length}</strong>
-                    <small>Active</small>
-                  </div>
-                  <div className="portfolio-snapshot-metric">
-                    <span>Last 30 Days</span>
-                    <strong>{recentActivityCount}</strong>
-                    <small>Activities logged</small>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="command-centre-side">
@@ -747,9 +664,9 @@ export function DashboardPage() {
               </div>
               <div className="panel-body">
                 <div className="action-list">
-                  <Link className="button button-primary" to="/clients/new">
-                    <span><ActionGlyph type="plus" /></span>
-                    Create new client
+                  <Link className="button button-primary" to="/clients">
+                    <span><ActionGlyph type="clients" /></span>
+                    Open clients
                   </Link>
                   <Link className="button button-secondary" to="/audit">
                     <span><ActionGlyph type="shield" /></span>
@@ -759,9 +676,9 @@ export function DashboardPage() {
                     <span><ActionGlyph type="document" /></span>
                     Open menu builder
                   </Link>
-                  <Link className="button button-secondary" to="/food-safety">
-                    <span><ActionGlyph type="safety" /></span>
-                    Food safety check
+                  <Link className="button button-secondary" to="/clients/new">
+                    <span><ActionGlyph type="plus" /></span>
+                    Create new client
                   </Link>
                 </div>
               </div>
