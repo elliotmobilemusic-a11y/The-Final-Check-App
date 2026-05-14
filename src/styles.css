@@ -1811,6 +1811,7 @@ input[type="radio"]:checked {
 
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
+    width: auto;
   }
 }
 
@@ -7381,6 +7382,8 @@ body[data-theme="midnight"] .dish-modal-header {
 
 .workspace-transition-shell {
   min-height: 100%;
+  min-width: 0;
+  max-width: 100%;
   animation: workspaceEnter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: center top;
 }
@@ -13501,6 +13504,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
 
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
+    width: auto;
   }
 }
 
