@@ -47,7 +47,6 @@ import {
   buildKitchenAuditReportHtml,
   buildStandaloneKitchenAuditReportHtml
 } from '../../features/audits/kitchenAuditReport';
-import { buildKitchenAuditPdf } from '../../reports/pdf';
 import { downloadPdfWithFallback } from '../../services/pdfExport';
 
 export function KitchenAuditPage() {
@@ -630,7 +629,7 @@ export function KitchenAuditPage() {
               },
               async () => {
                 const title = `${safe(form.businessName || 'Kitchen Profit Audit')} report`;
-                await downloadPdfWithFallback(title, buildKitchenAuditPdf(form), title);
+                await downloadPdfWithFallback(title, reportHtml, title);
               }
             );
           }}
