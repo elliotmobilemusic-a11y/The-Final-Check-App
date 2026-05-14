@@ -14761,3 +14761,115 @@ textarea:focus-visible {
   min-width: 0;
   max-width: 100%;
 }
+
+/* ============================================================
+   SIDEBAR + LAYOUT FIX PASS
+   - Correct collapsed grid selector (class is on app-shell-frame itself)
+   - Kill old margin-left system that fought the CSS grid
+   - Fix sidebar colour (was too caramel)
+   - Polish expanded + collapsed nav states
+   ============================================================ */
+
+:root {
+  --sidebar-width: 248px;
+  --tablet-sidebar-width: 72px;
+}
+
+@media (min-width: 1181px) {
+  .app-shell-frame {
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    column-gap: 20px;
+  }
+
+  /* CORRECT selector: sidebar-is-collapsed is on app-shell-frame itself */
+  .app-shell-frame.sidebar-is-collapsed {
+    grid-template-columns: var(--tablet-sidebar-width) minmax(0, 1fr);
+  }
+
+  /* Kill the old margin-based offset system — grid handles positioning */
+  .app-content,
+  .sidebar-is-collapsed .app-content {
+    margin-left: 0 !important;
+  }
+
+  /* Sidebar fills its grid column exactly when collapsed */
+  .app-shell-frame.sidebar-is-collapsed .shell-sidebar {
+    width: 100%;
+  }
+}
+
+/* Sidebar colour — softer oat/mushroom, not caramel */
+.shell-sidebar {
+  background: #f0e8dc;
+  border-right: 1px solid rgba(84, 64, 42, 0.12);
+  overflow: visible;
+}
+
+/* Expanded nav links */
+.shell-sidebar-link {
+  min-height: 40px;
+}
+
+.shell-sidebar-link.active,
+.shell-sidebar-link[aria-current="page"] {
+  background: rgba(155, 106, 50, 0.14);
+}
+
+.shell-nav-icon {
+  background: rgba(155, 106, 50, 0.09);
+}
+
+/* Toggle button */
+.shell-sidebar-toggle {
+  z-index: 60;
+  width: 26px;
+  height: 26px;
+  right: -13px;
+  top: 18px;
+  background: #ffffff;
+  border: 1.5px solid rgba(84, 64, 42, 0.20);
+}
+
+/* ---- Collapsed icon-rail ---- */
+.sidebar-is-collapsed .shell-sidebar-scroll {
+  gap: 6px;
+}
+
+.sidebar-is-collapsed .shell-nav-group {
+  gap: 4px;
+}
+
+.sidebar-is-collapsed .shell-sidebar-link {
+  grid-template-columns: auto;
+  justify-items: center;
+  min-height: 42px;
+  padding: 5px;
+  gap: 0;
+}
+
+.sidebar-is-collapsed .shell-nav-icon {
+  width: 34px;
+  height: 34px;
+}
+
+/* Collapsed brand — icon only, centred */
+.sidebar-is-collapsed .shell-sidebar-brand {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 10px 0;
+  gap: 0;
+  min-height: 52px;
+}
+
+.sidebar-is-collapsed .shell-brand-logo {
+  width: 34px;
+  height: 34px;
+}
+
+.sidebar-is-collapsed .shell-brand-copy {
+  display: none;
+}
+
+.sidebar-is-collapsed .shell-sidebar-footer {
+  gap: 4px;
+}
