@@ -9,7 +9,7 @@ export type AuditSectionLink = {
 
 type AuditSectionShellProps = {
   children: ReactNode;
-  sections: AuditSectionLink[];
+  sections: readonly AuditSectionLink[];
   title: string;
   description?: string;
   progressLabel?: string;
