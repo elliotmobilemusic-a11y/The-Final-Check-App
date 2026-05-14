@@ -14133,3 +14133,459 @@ textarea:focus-visible {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ================================================================
+   POLISH PASS — Spacing, dashboard, forms, tabs, cards, tables
+   Applied after warm-neutral block — wins all cascade conflicts.
+   ================================================================ */
+
+/* ---- Page stack: tighter consistent gap ---- */
+.page-stack {
+  gap: clamp(10px, 1.1vw, 14px);
+}
+
+/* ---- Page intro: collapse empty right column, compact header ---- */
+.page-intro {
+  grid-template-columns: 1fr;
+  padding: 16px 20px;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+}
+
+@media (min-width: 1100px) {
+  .page-intro:has(.page-intro-side) {
+    grid-template-columns: minmax(0, 1.65fr) minmax(220px, 280px);
+  }
+}
+
+.page-intro-copy h2 {
+  font-size: clamp(17px, 1.8vw, 21px);
+  letter-spacing: -0.025em;
+}
+
+.page-intro-copy p {
+  font-size: 13.5px;
+}
+
+.page-intro-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+/* ---- Page intro/record summary stats: flat warm cells ---- */
+.page-intro-summary,
+.record-header-summary {
+  background: var(--bg-soft);
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.page-intro-summary-list div,
+.record-header-grid div {
+  background: #ffffff;
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.page-intro-summary-list div:hover,
+.record-header-grid div:hover {
+  transform: none;
+  border-color: rgba(155, 106, 50, 0.20);
+  box-shadow: none;
+}
+
+/* ---- Record header: flat warm white, tighter ---- */
+.record-header {
+  grid-template-columns: 1fr;
+  background: #ffffff;
+  border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(44, 32, 20, 0.03);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .record-header:has(.record-header-side) {
+    grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.7fr);
+  }
+}
+
+.record-header-copy h2 {
+  font-size: clamp(20px, 2.6vw, 26px);
+}
+
+/* ---- Page heading / hero panels: compact, clean ---- */
+.page-heading,
+.hero-panel {
+  padding: 18px 22px;
+  border-radius: var(--radius-md);
+  gap: 10px;
+}
+
+.page-heading h2,
+.hero-panel h2 {
+  font-size: clamp(20px, 2.8vw, 26px);
+}
+
+.page-heading::before,
+.hero-panel::before {
+  background: linear-gradient(90deg, transparent, rgba(155, 106, 50, 0.50), transparent);
+}
+
+.page-heading::after,
+.hero-panel::after {
+  display: none;
+}
+
+/* ---- Brand badge: warm accent ---- */
+.brand-badge {
+  background: var(--accent-soft);
+  border-color: rgba(155, 106, 50, 0.22);
+  color: var(--accent-strong);
+}
+
+/* ================================================================
+   DASHBOARD POLISH
+   ================================================================ */
+
+/* Dashboard page panels: no hover lift, consistent radius */
+.dashboard-page .panel {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(44, 32, 20, 0.03);
+}
+
+.dashboard-page .panel:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(44, 32, 20, 0.05);
+  border-color: rgba(155, 106, 50, 0.18);
+}
+
+.dashboard-page .panel-header {
+  background: #faf8f4;
+  border-bottom-color: var(--line);
+}
+
+/* Dashboard grid: tighter gaps */
+.dashboard-grid {
+  gap: 14px;
+  margin-top: 0;
+}
+
+.dashboard-main-zone {
+  gap: 14px;
+}
+
+.dashboard-side-zone {
+  gap: 12px;
+}
+
+/* Stat row: tighter */
+.dashboard-stat-row {
+  gap: 10px;
+}
+
+.dashboard-stat-row .stat-card {
+  min-height: 76px;
+  padding: 12px 14px;
+  border-left-color: rgba(155, 106, 50, 0.50);
+}
+
+/* Flatten all dashboard gradient cards */
+.dashboard-command-card,
+.dashboard-activity-item,
+.dashboard-client-item,
+.dashboard-queue-item {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  gap: 8px;
+  box-shadow: none;
+}
+
+.dashboard-command-card:hover,
+.dashboard-activity-item:hover,
+.dashboard-client-item:hover,
+.dashboard-queue-item:hover {
+  transform: none;
+  border-color: rgba(155, 106, 50, 0.20);
+  box-shadow: 0 2px 8px rgba(44, 32, 20, 0.06);
+}
+
+.dashboard-step,
+.dashboard-check-row,
+.dashboard-record,
+.dashboard-health-row {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  box-shadow: none;
+}
+
+.dashboard-module {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: none;
+}
+
+.dashboard-modules-card {
+  padding: 18px;
+}
+
+.dashboard-download-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  box-shadow: none;
+}
+
+/* Dashboard item lists: tighter gaps */
+.dashboard-steps,
+.dashboard-checklist,
+.dashboard-record-list,
+.dashboard-health-list,
+.dashboard-activity-list,
+.dashboard-client-list,
+.dashboard-queue-list {
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.dashboard-command-card-grid {
+  gap: 10px;
+}
+
+/* Kicker / label pills: warm accent, flatter */
+.dashboard-command-kicker,
+.dashboard-activity-label,
+.dashboard-client-status {
+  background: var(--accent-soft);
+  border-color: rgba(155, 106, 50, 0.22);
+  color: var(--accent-strong);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 10px;
+}
+
+/* Command card titles: tighter */
+.dashboard-command-card strong,
+.dashboard-activity-item strong,
+.dashboard-client-item strong,
+.dashboard-queue-item strong {
+  font-size: 14.5px;
+  letter-spacing: -0.015em;
+}
+
+/* Dashboard empty states: compact */
+.dashboard-empty-state {
+  padding: 18px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  border-color: var(--line);
+}
+
+.dashboard-empty-state.compact {
+  padding: 12px 14px;
+}
+
+/* Task panel sub-panels: warm */
+.dashboard-task-panel .sub-panel {
+  background: #faf8f4;
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+/* ================================================================
+   CARDS, TABS, FORMS, TABLES
+   ================================================================ */
+
+/* Repeat cards and sub-panels: consistent, no hover lift */
+.repeat-card {
+  border-radius: var(--radius-sm);
+}
+
+.repeat-card:hover,
+.sub-panel:hover {
+  transform: none;
+}
+
+/* Empty states: compact */
+.empty-state {
+  padding: 28px 20px;
+  border-radius: var(--radius-sm);
+}
+
+.empty-state-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+/* ---- Tabs: warm neutral pill-nav ---- */
+.client-tab-nav,
+.client-profile-tab-nav {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  border-radius: var(--radius-sm);
+  padding: 5px;
+  gap: 4px;
+}
+
+.client-tab-link,
+.client-profile-tab {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 0 14px;
+  color: var(--sidebar-fg);
+}
+
+.client-tab-link:hover,
+.client-profile-tab:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.client-tab-link.active,
+.client-profile-tab.active {
+  background: #ffffff;
+  border-color: rgba(155, 106, 50, 0.22);
+  color: var(--accent-strong);
+  box-shadow: 0 1px 3px rgba(44, 32, 20, 0.06);
+  font-weight: 700;
+}
+
+/* Client tab sections: flat white */
+.client-tab-section {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 18px;
+  gap: 16px;
+}
+
+.client-tab-layout {
+  gap: 12px;
+}
+
+/* ---- Input (.input class): warm focus ring ---- */
+.input:hover {
+  border-color: rgba(155, 106, 50, 0.28);
+}
+
+.input:focus {
+  border-color: rgba(155, 106, 50, 0.40);
+  box-shadow: 0 0 0 3px rgba(155, 106, 50, 0.12);
+  outline: none;
+}
+
+/* ---- CRM client account cards: no hover lift ---- */
+.crm-client-account-card {
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(44, 32, 20, 0.03);
+}
+
+.crm-client-account-card:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(44, 32, 20, 0.06);
+  border-color: rgba(155, 106, 50, 0.18);
+}
+
+.crm-metric {
+  background: var(--bg-soft);
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Status badges and pills: no hover scale ---- */
+.status-badge:hover,
+.client-tag:hover,
+.status-pill:hover {
+  transform: none;
+}
+
+.status-pill {
+  border-radius: 6px;
+}
+
+/* ---- Section / surface stacks: tighter ---- */
+.section-stack {
+  gap: 16px;
+}
+
+.surface-stack {
+  gap: 12px;
+}
+
+/* ---- Saved items / section buttons: warm ---- */
+.saved-item,
+.section-button {
+  background: #ffffff;
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.saved-item:hover,
+.section-button:hover {
+  transform: none;
+  border-color: rgba(155, 106, 50, 0.20);
+  box-shadow: 0 2px 6px rgba(44, 32, 20, 0.05);
+}
+
+/* ---- Data tables: tighter, consistent ---- */
+.data-table {
+  border-radius: var(--radius-sm);
+}
+
+.data-table th {
+  background: #faf8f4;
+  padding: 10px 14px;
+  font-size: 11px;
+}
+
+.data-table td {
+  padding: 11px 14px;
+  font-size: 14px;
+}
+
+.data-table tr.clickable:hover {
+  background: var(--bg-soft);
+}
+
+/* ---- Forms: tighter gaps ---- */
+.form-section {
+  gap: 14px;
+}
+
+.form-grid {
+  gap: 14px;
+}
+
+.field {
+  gap: 8px;
+}
+
+/* ---- Mobile table cards: warm ---- */
+.mobile-table-card {
+  background: #ffffff;
+  border-color: var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+/* ---- Modals: warm white ---- */
+.modal-shell {
+  background: #ffffff;
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+}
