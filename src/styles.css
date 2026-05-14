@@ -1700,6 +1700,65 @@ input[type="radio"]:checked {
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 88%, white 12%), transparent);
 }
 
+/* ---- Sidebar collapse toggle ---- */
+.shell-sidebar-toggle {
+  position: absolute;
+  right: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--shell-line);
+  border-radius: 50%;
+  background: var(--shell-glass);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: color var(--duration-normal) ease;
+}
+
+.shell-sidebar-toggle:hover {
+  color: var(--text);
+}
+
+/* ---- Sidebar collapsed (icon-only) state ---- */
+.shell-sidebar {
+  transition: width 0.25s ease;
+}
+
+.sidebar-is-collapsed .shell-sidebar {
+  width: var(--tablet-sidebar-width);
+  overflow-x: hidden;
+}
+
+.sidebar-is-collapsed .shell-sidebar-brand {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 0;
+  gap: 0;
+}
+
+.sidebar-is-collapsed .shell-sidebar-brand > span {
+  display: none;
+}
+
+.sidebar-is-collapsed .shell-nav-group-label,
+.sidebar-is-collapsed .shell-nav-label {
+  display: none;
+}
+
+.sidebar-is-collapsed .shell-sidebar-link {
+  grid-template-columns: auto;
+  justify-items: center;
+  padding: var(--space-2);
+  gap: 0;
+}
+
 .shell-topbar {
   position: fixed;
   top: 14px;
@@ -1812,6 +1871,15 @@ input[type="radio"]:checked {
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
     width: auto;
+  }
+
+  .sidebar-is-collapsed .shell-topbar {
+    margin-left: calc(var(--tablet-sidebar-width) + var(--space-5));
+    transition: margin-left 0.25s ease;
+  }
+
+  .sidebar-is-collapsed .app-content {
+    margin-left: calc(var(--tablet-sidebar-width) + var(--space-5));
   }
 }
 
@@ -13505,6 +13573,15 @@ body[data-theme="midnight"] .client-portal-launch-card {
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
     width: auto;
+  }
+
+  .sidebar-is-collapsed .shell-topbar {
+    margin-left: calc(var(--tablet-sidebar-width) + var(--space-5));
+    transition: margin-left 0.25s ease;
+  }
+
+  .sidebar-is-collapsed .app-content {
+    margin-left: calc(var(--tablet-sidebar-width) + var(--space-5));
   }
 }
 

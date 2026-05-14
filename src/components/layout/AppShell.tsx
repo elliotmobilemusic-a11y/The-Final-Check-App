@@ -127,6 +127,7 @@ export function AppShell() {
   const { session } = useAuth();
   const { preferences } = usePreferences();
   const { activity } = useActivityOverlay();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [navExpanded, setNavExpanded] = useState(true);
   const [navHeight, setNavHeight] = useState(72);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
@@ -359,8 +360,16 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      <div className="app-shell-frame">
+      <div className={`app-shell-frame${sidebarCollapsed ? ' sidebar-is-collapsed' : ''}`}>
         <aside className="shell-sidebar" aria-label="Workspace navigation">
+          <button
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="shell-sidebar-toggle"
+            onClick={() => setSidebarCollapsed(c => !c)}
+            type="button"
+          >
+            {sidebarCollapsed ? '›' : '‹'}
+          </button>
           <NavLink className="shell-sidebar-brand" to="/dashboard">
             <span className="shell-brand-mark">TF</span>
             <span>
@@ -556,7 +565,7 @@ export function AppShell() {
             paddingTop: 'var(--nav-offset)',
             transition: disableAutoHideNav
               ? 'none'
-              : 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              : 'padding-top 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), margin-left 0.25s ease'
           }}
         >
           <CookingLoader
