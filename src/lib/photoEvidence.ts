@@ -88,7 +88,9 @@ export function renderAuditPhotoGallery(
   section: string,
   emptyCopy = 'No photo evidence recorded for this section.'
 ) {
-  const sectionPhotos = photos.filter((photo) => photo.section === section && photo.imageDataUrl);
+  const sectionPhotos = photos
+    .filter((photo) => photo.section === section && photo.imageDataUrl)
+    .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
 
   if (!sectionPhotos.length) {
     return emptyCopy
@@ -104,17 +106,18 @@ export function renderAuditPhotoGallery(
       </div>
       <div class="report-photo-grid ${sectionPhotos.length > 2 ? 'report-photo-grid-featured' : ''}">
       ${sectionPhotos
-        .map(
-          (photo) => `
+        .map((photo) => {
+          const caption = String(photo.caption ?? '').trim();
+          return `
             <figure class="report-photo-card">
               <img src="${photo.imageDataUrl}" alt="${escapeHtml(photo.caption || `${photo.sectionLabel} evidence photo`)}" />
               <figcaption>
                 <strong>${escapeHtml(photo.sectionLabel)}</strong>
-                <span>${escapeHtml(photo.caption || 'Evidence photo')}</span>
+                ${caption ? `<span>${escapeHtml(caption)}</span>` : ''}
               </figcaption>
             </figure>
-          `
-        )
+          `;
+        })
         .join('')}
       </div>
     </section>

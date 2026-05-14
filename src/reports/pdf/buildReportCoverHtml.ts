@@ -95,7 +95,7 @@ export function buildReportCoverHtml(config: ReportCoverConfig): string {
       <div class="pdf-cover-top-bar">
         <div class="pdf-cover-brand-block">
           <div class="pdf-cover-brand">The Final Check</div>
-          <div class="pdf-cover-brand-tagline">Boutique consultancy reporting</div>
+          <div class="pdf-cover-brand-tagline">Hospitality Consultancy Report</div>
           <div class="pdf-cover-brand-context">${escapeHtml(normalizeTitleLabel(config.reportType))}</div>
         </div>
         <div class="pdf-cover-meta">
