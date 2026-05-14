@@ -188,6 +188,12 @@ function NavIcon({ id, size = 16 }: { id: string; size?: number }) {
         <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
     ),
+    bell: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    ),
   };
   return icons[id] ?? null;
 }
@@ -207,6 +213,7 @@ export function AppShell() {
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const sidebarProfileRef = useRef<HTMLDivElement>(null);
   const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
   const disableAutoHideNav = location.pathname.startsWith('/settings') || isNativeAndroid;
 
@@ -405,7 +412,9 @@ export function AppShell() {
   useEffect(() => {
     if (!profileMenuOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+      const inTopbar = profileMenuRef.current?.contains(e.target as Node) ?? false;
+      const inSidebar = sidebarProfileRef.current?.contains(e.target as Node) ?? false;
+      if (!inTopbar && !inSidebar) {
         setProfileMenuOpen(false);
       }
     };
@@ -478,14 +487,99 @@ export function AppShell() {
           </div>
 
           <div className="shell-sidebar-footer">
-            <Link className="shell-sidebar-link" to="/settings/profile">
-              <span className="shell-nav-icon"><NavIcon id="cog" /></span>
-              <span className="shell-nav-label">Settings</span>
-            </Link>
-            <button className="shell-sidebar-link shell-sidebar-button" onClick={() => void handleSignOut()} type="button">
-              <span className="shell-nav-icon"><NavIcon id="logout" /></span>
-              <span className="shell-nav-label">Sign out</span>
-            </button>
+            <div className="shell-notification-wrap">
+              <button
+                aria-expanded={notificationPanelOpen}
+                className={`shell-sidebar-link${unreadEnquiryCount > 0 ? ' has-unread' : ''}`}
+                onClick={() => setNotificationPanelOpen((current) => !current)}
+                type="button"
+              >
+                <span className="shell-nav-icon"><NavIcon id="bell" /></span>
+                <span className="shell-nav-label">
+                  Alerts
+                  {unreadEnquiryCount > 0 ? (
+                    <span className="shell-notification-badge">{unreadEnquiryCount}</span>
+                  ) : null}
+                </span>
+              </button>
+              {notificationPanelOpen ? (
+                <div className="shell-notification-panel">
+                  <div className="shell-notification-panel-top">
+                    <div>
+                      <strong>New enquiries</strong>
+                      <small>{unreadEnquiryCount > 0 ? `${unreadEnquiryCount} unread` : 'All caught up'}</small>
+                    </div>
+                    <button className="button button-ghost" onClick={handleMarkAllEnquiriesRead} type="button">
+                      Mark all read
+                    </button>
+                  </div>
+                  {!enquiryAlerts.length ? (
+                    <div className="shell-notification-empty">No new enquiries yet.</div>
+                  ) : (
+                    <div className="shell-notification-list">
+                      {enquiryAlerts.map((alert) => (
+                        <Link
+                          className={`shell-notification-item ${alert.readAt ? '' : 'unread'}`}
+                          key={alert.id}
+                          onClick={() => handleOpenEnquiry(alert.id)}
+                          to={`/clients/${alert.clientId}`}
+                        >
+                          <strong>{alert.companyName}</strong>
+                          <span>{alert.contactName || 'New client enquiry'}</span>
+                          <small>{alert.location || 'Location not set'}</small>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="shell-profile-wrap" ref={sidebarProfileRef}>
+              <button
+                aria-expanded={profileMenuOpen}
+                className="shell-sidebar-link shell-sidebar-profile-btn shell-profile-trigger"
+                onClick={() => setProfileMenuOpen((p) => !p)}
+                type="button"
+              >
+                <span className="shell-nav-icon shell-nav-icon-avatar">
+                  {avatarUrl ? (
+                    <img
+                      alt={`${displayName} avatar`}
+                      className="user-chip-avatar"
+                      src={avatarUrl}
+                      style={{
+                        objectPosition: `${avatarPosition.x}% ${avatarPosition.y}%`,
+                        transform: `scale(${avatarPosition.scale})`
+                      }}
+                    />
+                  ) : (
+                    <span className="user-chip-avatar user-chip-avatar-fallback">
+                      {getInitials(displayName)}
+                    </span>
+                  )}
+                </span>
+                <span className="shell-nav-label">{displayName}</span>
+              </button>
+              {profileMenuOpen && (
+                <div className="shell-profile-menu">
+                  <Link
+                    className="shell-profile-menu-item"
+                    onClick={() => setProfileMenuOpen(false)}
+                    to="/settings/profile"
+                  >
+                    Profile &amp; settings
+                  </Link>
+                  <button
+                    className="shell-profile-menu-item shell-profile-menu-signout"
+                    onClick={() => { setProfileMenuOpen(false); void handleSignOut(); }}
+                    type="button"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </aside>
 

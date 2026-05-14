@@ -16,9 +16,18 @@
   --success: #4f8e67;
   --warning: #c6a161;
   --danger: #a76060;
-  --shadow: 0 14px 34px rgba(36, 31, 38, 0.08);
-  --shadow-strong: 0 20px 48px rgba(36, 31, 38, 0.12);
-  --shadow-soft: 0 10px 24px rgba(36, 31, 38, 0.06);
+  --shadow: 0 2px 8px rgba(36, 31, 38, 0.06), 0 8px 24px rgba(36, 31, 38, 0.07);
+  --shadow-strong: 0 4px 16px rgba(36, 31, 38, 0.1), 0 16px 40px rgba(36, 31, 38, 0.1);
+  --shadow-soft: 0 1px 3px rgba(36, 31, 38, 0.04), 0 4px 12px rgba(36, 31, 38, 0.04);
+  /* Sidebar dark theme */
+  --sidebar-bg: #272429;
+  --sidebar-fg: rgba(255, 255, 255, 0.68);
+  --sidebar-fg-strong: rgba(255, 255, 255, 0.92);
+  --sidebar-muted: rgba(255, 255, 255, 0.3);
+  --sidebar-line: rgba(255, 255, 255, 0.07);
+  --sidebar-icon-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-active-bg: rgba(255, 255, 255, 0.11);
   --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -13544,49 +13553,34 @@ body[data-theme="midnight"] .client-portal-launch-card {
   gap: var(--space-2);
 }
 
-/* Desktop CSS grid layout — sidebar column | content column, no margin-left offset */
+/* Desktop CSS grid layout — sidebar column | content column. Topbar removed on desktop. */
 @media (min-width: 1181px) {
-  /* Two-column grid: sidebar | content. No margin-left needed on children. */
+  /* Two-column grid: sidebar | content. Single row — no topbar. */
   .app-shell-frame {
     display: grid;
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
     column-gap: var(--space-5);
     align-items: start;
     width: 100%;
     transition: grid-template-columns 0.25s ease;
   }
 
-  /* Sidebar: sticky in grid column 1, spans both rows */
+  /* Sidebar: sticky in grid column 1 */
   .shell-sidebar {
     position: sticky;
     top: 20px;
     inset: auto;
     grid-column: 1;
-    grid-row: 1 / 3;
+    grid-row: 1;
     height: calc(100vh - 40px);
     width: 100%;
     z-index: 40;
     transition: width 0.25s ease;
   }
 
-  /* Topbar: sticky in grid column 2, row 1 */
+  /* Topbar: hidden on desktop — alerts and profile live in sidebar footer */
   .shell-topbar {
-    position: sticky;
-    top: 20px;
-    grid-column: 2;
-    grid-row: 1;
-    left: auto;
-    transform: none;
-    margin-left: 0;
-    width: auto;
-  }
-
-  .shell-topbar.nav-collapsed,
-  .shell-topbar.nav-collapsed:hover,
-  .shell-topbar.nav-collapsed:focus-within {
-    transform: none;
-    opacity: 1;
+    display: none;
   }
 
   .shell-toolbar-main {
@@ -13605,10 +13599,10 @@ body[data-theme="midnight"] .client-portal-launch-card {
     font-weight: 800;
   }
 
-  /* Content: grid column 2, row 2. No margin-left, no padding-top. */
+  /* Content: grid column 2, row 1. No margin-left, no padding-top. */
   .app-content {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
     margin-left: 0;
     width: auto;
     padding-top: 0 !important;
@@ -13617,10 +13611,6 @@ body[data-theme="midnight"] .client-portal-launch-card {
   /* Collapsed: shrink sidebar column */
   .sidebar-is-collapsed .app-shell-frame {
     grid-template-columns: var(--tablet-sidebar-width) minmax(0, 1fr);
-  }
-
-  .sidebar-is-collapsed .shell-topbar {
-    margin-left: 0;
   }
 
   .sidebar-is-collapsed .app-content {
@@ -13706,4 +13696,305 @@ body[data-theme="midnight"] .client-portal-launch-card {
     min-height: 100vh !important;
     border: 0 !important;
   }
+}
+
+/* ================================================================
+   PREMIUM REDESIGN — Visual system overrides.
+   Source-order wins: these rules take precedence over earlier rules
+   for shared selectors.
+   ================================================================ */
+
+/* ----- Sidebar: premium dark appearance ----- */
+.shell-sidebar {
+  background: var(--sidebar-bg);
+  border-color: var(--sidebar-line);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.16);
+  backdrop-filter: none;
+}
+
+.shell-sidebar-brand {
+  color: var(--sidebar-fg-strong);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--sidebar-line);
+}
+
+.shell-brand-mark {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, #4a4050 40%) 0%, var(--accent-strong) 100%);
+  color: #fff;
+  box-shadow: none;
+}
+
+.shell-sidebar-brand strong,
+.shell-sidebar-brand small {
+  color: var(--sidebar-fg-strong);
+}
+
+.shell-sidebar-brand small {
+  color: var(--sidebar-muted);
+}
+
+.shell-nav-group-label {
+  color: var(--sidebar-muted);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+
+/* Nav icons get the sidebar icon background */
+.shell-brand-mark,
+.shell-nav-icon {
+  background: var(--sidebar-icon-bg);
+  color: var(--sidebar-fg);
+}
+
+/* Brand mark keeps a slight accent tint */
+.shell-brand-mark {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, #4a4050 40%) 0%, var(--accent-strong) 100%);
+  color: #fff;
+}
+
+.shell-sidebar-link {
+  color: var(--sidebar-fg);
+  border-color: transparent;
+}
+
+.shell-sidebar-link:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-fg-strong);
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.shell-sidebar-link.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-fg-strong);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.shell-sidebar-link:hover .shell-nav-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--sidebar-fg-strong);
+}
+
+.shell-sidebar-link.active .shell-nav-icon {
+  background: rgba(198, 161, 97, 0.2);
+  color: var(--accent);
+}
+
+/* Visit mode: accent tint on dark bg */
+.shell-sidebar-link-visit {
+  background: rgba(198, 161, 97, 0.08);
+  color: color-mix(in srgb, var(--accent) 80%, white 20%);
+}
+
+.shell-sidebar-link-visit:hover {
+  background: rgba(198, 161, 97, 0.14);
+}
+
+/* Override the danger colour — sign-out is now in the profile dropdown */
+.shell-sidebar-footer .shell-sidebar-link {
+  color: var(--sidebar-fg);
+}
+
+.shell-sidebar-footer {
+  border-top-color: var(--sidebar-line);
+}
+
+/* Collapse toggle on dark sidebar */
+.shell-sidebar-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--sidebar-muted);
+  box-shadow: none;
+}
+
+.shell-sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sidebar-fg-strong);
+}
+
+/* Sidebar notification panel: opens upward */
+.shell-sidebar-footer .shell-notification-wrap .shell-notification-panel {
+  top: auto;
+  bottom: calc(100% + 8px);
+  right: auto;
+  left: 0;
+  width: min(320px, calc(100vw - 48px));
+  background: #fff;
+  border-color: rgba(86, 81, 91, 0.12);
+}
+
+/* Sidebar profile menu: opens upward */
+.shell-sidebar-footer .shell-profile-wrap .shell-profile-menu {
+  top: auto;
+  bottom: calc(100% + 8px);
+  right: auto;
+  left: 0;
+  background: #fff;
+  border-color: rgba(86, 81, 91, 0.12);
+}
+
+/* Avatar icon in sidebar profile button */
+.shell-nav-icon-avatar {
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.shell-nav-icon-avatar .user-chip-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+.shell-nav-icon-avatar .user-chip-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(198, 161, 97, 0.2);
+  border-radius: 50%;
+}
+
+/* ----- Page stack: tighter ----- */
+.page-stack {
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+/* ----- Page intro: compact, flat header ----- */
+.page-intro {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(86, 81, 91, 0.09);
+  box-shadow: 0 1px 3px rgba(36, 31, 38, 0.04);
+  padding: 20px 24px;
+  border-radius: 16px;
+}
+
+/* Replace top gradient stripe with a cleaner 1px line */
+.page-intro::before {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(198, 161, 97, 0.4) 30%, transparent 100%);
+  opacity: 1;
+}
+
+/* Disable sweeping light animation */
+.page-intro::after {
+  display: none;
+}
+
+.page-intro-copy h2 {
+  font-size: clamp(20px, 2.4vw, 26px);
+}
+
+/* ----- Panels: flat, clean ----- */
+.panel {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(86, 81, 91, 0.09);
+  box-shadow: 0 1px 3px rgba(36, 31, 38, 0.03), 0 4px 14px rgba(36, 31, 38, 0.04);
+  backdrop-filter: none;
+  border-radius: 16px;
+}
+
+.panel:hover {
+  transform: none;
+  box-shadow: 0 2px 6px rgba(36, 31, 38, 0.05), 0 8px 24px rgba(36, 31, 38, 0.07);
+  border-color: rgba(198, 161, 97, 0.18);
+}
+
+/* Remove decorative top stripe */
+.panel::before,
+.stat-card::before,
+.feature-card::before {
+  display: none;
+}
+
+/* Remove hover sheen sweep */
+.panel::after,
+.stat-card::after,
+.feature-card::after {
+  display: none;
+}
+
+/* Kill hover lift on panels and cards */
+.stat-card:hover,
+.feature-card:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(36, 31, 38, 0.06);
+}
+
+.panel-header {
+  padding: 14px 18px;
+  background: transparent;
+}
+
+.panel-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.panel-body {
+  padding: 16px 18px;
+  gap: 14px;
+}
+
+.panel-footer {
+  padding: 14px 18px;
+}
+
+.sub-panel {
+  padding: 14px;
+  border-radius: 12px;
+  border-color: rgba(86, 81, 91, 0.08);
+}
+
+/* ----- Stat cards: tighter ----- */
+.stat-card {
+  min-height: 78px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(86, 81, 91, 0.09);
+  box-shadow: 0 1px 3px rgba(36, 31, 38, 0.04);
+}
+
+/* ----- Buttons: no hover bounce ----- */
+.button:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(36, 31, 38, 0.08);
+}
+
+.button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  transform: none;
+}
+
+/* ----- Card hover: no lift ----- */
+.card:hover,
+.client-stat-card:hover {
+  transform: none;
+}
+
+/* ----- Inputs: no scale on focus ----- */
+input:focus,
+select:focus,
+textarea:focus {
+  transform: none;
+}
+
+/* ----- Dashboard grids: consistent gap ----- */
+.dashboard-command-grid,
+.dashboard-insight-grid {
+  gap: 12px;
+}
+
+/* ----- Notification badge in sidebar: tighten ----- */
+.shell-notification-badge {
+  margin-left: 6px;
 }
