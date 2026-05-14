@@ -450,10 +450,13 @@ export function AppShell() {
             {sidebarCollapsed ? '›' : '‹'}
           </button>
           <NavLink className="shell-sidebar-brand" to="/dashboard">
-            <span className="shell-brand-mark">TF</span>
-            <span>
+            <img
+              alt="The Final Check"
+              className="shell-brand-logo"
+              src="/the-final-check-icon-master-1024.png"
+            />
+            <span className="shell-brand-copy">
               <strong>The Final Check</strong>
-              <small>Consultancy OS</small>
             </span>
           </NavLink>
 

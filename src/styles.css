@@ -14589,3 +14589,175 @@ textarea:focus-visible {
   border-color: var(--line);
   border-radius: var(--radius-md);
 }
+
+/* ================================================================
+   SIDEBAR REFINEMENT PASS
+   Colour, logo, toggle visibility, collapsed layout containment.
+   ================================================================ */
+
+/* ---- Sidebar: richer warm caramel — clearly distinct from page bg ---- */
+.shell-sidebar {
+  background: #ede0cd;
+  border: 1px solid rgba(91, 72, 48, 0.18);
+  box-shadow: 0 2px 8px rgba(44, 32, 20, 0.06), 0 1px 0 rgba(91, 72, 48, 0.08);
+}
+
+/* ---- Brand logo image ---- */
+.shell-brand-logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Brand text copy: same visual rhythm as before */
+.shell-brand-copy strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--sidebar-fg-strong);
+  letter-spacing: -0.01em;
+}
+
+/* ---- Collapsed brand: logo centered, text hidden ---- */
+.sidebar-is-collapsed .shell-brand-copy {
+  display: none;
+}
+
+.sidebar-is-collapsed .shell-sidebar-brand {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 10px 0;
+  gap: 0;
+  min-height: 50px;
+}
+
+/* ---- Nav icons: slightly stronger on richer sidebar ---- */
+.shell-nav-icon {
+  background: rgba(155, 106, 50, 0.11);
+  color: var(--sidebar-fg);
+}
+
+/* ---- Nav hover ---- */
+.shell-sidebar-link:hover {
+  background: rgba(91, 72, 48, 0.09);
+  color: var(--sidebar-fg-strong);
+  border-color: transparent;
+}
+
+.shell-sidebar-link:hover .shell-nav-icon {
+  background: rgba(155, 106, 50, 0.15);
+  color: var(--accent);
+}
+
+/* ---- Nav active: clearly premium ---- */
+.shell-sidebar-link.active {
+  background: rgba(155, 106, 50, 0.18);
+  border-color: rgba(155, 106, 50, 0.28);
+  color: var(--accent-strong);
+}
+
+.shell-sidebar-link.active .shell-nav-icon {
+  background: rgba(155, 106, 50, 0.22);
+  color: var(--accent-strong);
+}
+
+/* ---- Group labels: refined ---- */
+.shell-nav-group-label {
+  color: rgba(91, 72, 48, 0.50);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding-left: var(--space-3);
+}
+
+/* ---- Sidebar footer border: stronger on richer bg ---- */
+.shell-sidebar-footer {
+  border-top-color: rgba(91, 72, 48, 0.14);
+}
+
+/* ---- Collapse toggle: 28px, high contrast, always visible ---- */
+.shell-sidebar-toggle {
+  position: absolute;
+  right: -14px;
+  top: 20px;
+  z-index: 50;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid rgba(91, 72, 48, 0.22);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 1px 4px rgba(44, 32, 20, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.70);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  touch-action: manipulation;
+}
+
+.shell-sidebar-toggle:hover {
+  background: var(--accent-soft);
+  border-color: rgba(155, 106, 50, 0.38);
+  color: var(--accent-strong);
+  box-shadow: 0 2px 8px rgba(44, 32, 20, 0.14);
+}
+
+/* ---- Ensure toggle is never clipped by sidebar ---- */
+.shell-sidebar {
+  overflow: visible;
+}
+
+/* Remove the overflow-x: hidden from collapsed state so toggle stays visible.
+   Labels are already hidden via display:none so no text bleeds out. */
+.sidebar-is-collapsed .shell-sidebar {
+  overflow-x: visible;
+}
+
+/* ---- Desktop layout: clean grid, no double offsets ---- */
+@media (min-width: 1181px) {
+  /* Outer clip guard — prevents any child from creating horizontal scroll */
+  .app-shell {
+    overflow-x: clip;
+  }
+
+  /* Frame must fill exactly — no horizontal bleed */
+  .app-shell-frame {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Content column: must not overflow its grid cell */
+  .app-content {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* ---- Universal containment: grids/panels must not overflow their column ---- */
+.workspace-transition-shell,
+.page-stack,
+.panel,
+.stat-card,
+.feature-card,
+.summary-grid,
+.metric-grid,
+.dashboard-grid,
+.dashboard-main-zone,
+.dashboard-side-zone,
+.dashboard-stat-row,
+.crm-account-card-metrics {
+  min-width: 0;
+  max-width: 100%;
+}
