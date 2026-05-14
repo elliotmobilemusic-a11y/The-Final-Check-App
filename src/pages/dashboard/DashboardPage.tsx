@@ -105,6 +105,75 @@ const defaultTaskGroups: TaskGroup[] = [
   }
 ];
 
+function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'trend' | 'plus' | 'safety' }) {
+  const common = {
+    width: 17,
+    height: 17,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true
+  };
+
+  if (type === 'clients') {
+    return (
+      <svg {...common}>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 21v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2" />
+        <path d="M16 11a3 3 0 0 1 5 2.2V15" />
+      </svg>
+    );
+  }
+
+  if (type === 'shield') {
+    return (
+      <svg {...common}>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    );
+  }
+
+  if (type === 'document') {
+    return (
+      <svg {...common}>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6" />
+        <path d="M8 13h8" />
+        <path d="M8 17h5" />
+      </svg>
+    );
+  }
+
+  if (type === 'trend') {
+    return (
+      <svg {...common}>
+        <path d="M3 17l6-6 4 4 8-8" />
+        <path d="M15 7h6v6" />
+      </svg>
+    );
+  }
+
+  if (type === 'plus') {
+    return (
+      <svg {...common}>
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M8 12h8" />
+    </svg>
+  );
+}
+
 export function DashboardPage() {
   const { session } = useAuth();
   const { preferences } = usePreferences();
@@ -380,6 +449,14 @@ export function DashboardPage() {
     .filter((item) => !!item.date)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
+  const totalAuditsCompleted = audits.length + foodSafetyAudits.length + mysteryShopAudits.length;
+  const avgOpportunityFound = latestAuditByClient.size > 0
+    ? totalOpportunityIdentified / latestAuditByClient.size
+    : 0;
+  const recentActivityCount = recentActivity.filter((item) => {
+    const timestamp = new Date(item.date).getTime();
+    return !Number.isNaN(timestamp) && Date.now() - timestamp <= 30 * 24 * 60 * 60 * 1000;
+  }).length;
 
   return (
     <PageContainer size="wide" className="command-centre-page dashboard-page">
@@ -397,7 +474,7 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* ── Hero ── */}
+        {/* Hero */}
         <div className="command-centre-hero">
           <div className="command-centre-hero-copy">
             <span className="command-centre-eyebrow">Command Centre</span>
@@ -405,20 +482,37 @@ export function DashboardPage() {
             <p className="command-centre-desc">
               Track live clients, profit opportunity, follow-ups due, and which sites need attention next.
             </p>
-            {message && <span className="command-centre-status-chip">{message}</span>}
+            <div className="command-centre-status-row">
+              {message && <span className="command-centre-status-chip">{message.replace(/\.$/, '')}</span>}
+              <span className="command-centre-status-chip command-centre-status-chip-muted">
+                {loading ? 'Refreshing portfolio' : 'Updated just now'}
+              </span>
+            </div>
           </div>
           <div className="command-centre-actions-card">
             <span className="cc-actions-label">Client &amp; Audit Actions</span>
             <div className="cc-actions-grid">
-              <Link className="button button-primary cc-action-btn" to="/clients">Open clients</Link>
-              <Link className="button button-secondary cc-action-btn" to="/audit">Start kitchen audit</Link>
-              <Link className="button button-secondary cc-action-btn" to="/menu">Open menu builder</Link>
-              <Link className="button button-secondary cc-action-btn" to="/audit">Start profit audit</Link>
+              <Link className="button button-primary cc-action-btn" to="/clients">
+                <span className="cc-action-icon"><ActionGlyph type="clients" /></span>
+                Open clients
+              </Link>
+              <Link className="button button-secondary cc-action-btn" to="/audit">
+                <span className="cc-action-icon"><ActionGlyph type="shield" /></span>
+                Start kitchen audit
+              </Link>
+              <Link className="button button-secondary cc-action-btn" to="/menu">
+                <span className="cc-action-icon"><ActionGlyph type="document" /></span>
+                Open menu builder
+              </Link>
+              <Link className="button button-secondary cc-action-btn" to="/audit">
+                <span className="cc-action-icon"><ActionGlyph type="trend" /></span>
+                Start profit audit
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* ── KPI Strip ── */}
+        {/* KPI Strip */}
         <div className="command-centre-kpis">
           <div className="cc-kpi">
             <div className="cc-kpi-icon" aria-hidden="true">
@@ -459,7 +553,7 @@ export function DashboardPage() {
             <div className="cc-kpi-body">
               <span className="cc-kpi-label">Sites Needing Attention</span>
               <span className="cc-kpi-value">{sitesNeedingAttention}</span>
-              <span className="cc-kpi-note">{loading ? 'Loading…' : 'Reviews overdue or opportunity open'}</span>
+              <span className="cc-kpi-note">{loading ? 'Loading...' : 'Reviews overdue or opportunity open'}</span>
             </div>
           </div>
 
@@ -486,7 +580,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Main grid ── */}
+        {/* Main grid */}
         <div className="command-centre-grid">
 
           <div className="command-centre-main">
@@ -590,6 +684,47 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
+
+            <div className="panel command-centre-panel portfolio-snapshot-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3v18h18" />
+                      <path d="M7 15l4-4 3 3 5-7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3>Portfolio Snapshot</h3>
+                    <p>A quick view of your performance.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="panel-body">
+                <div className="portfolio-snapshot-grid">
+                  <div className="portfolio-snapshot-metric">
+                    <span>Audits Completed</span>
+                    <strong>{totalAuditsCompleted}</strong>
+                    <small>All time</small>
+                  </div>
+                  <div className="portfolio-snapshot-metric">
+                    <span>Avg Opportunity Found</span>
+                    <strong>{fmtCurrency(avgOpportunityFound)}</strong>
+                    <small>Per audit</small>
+                  </div>
+                  <div className="portfolio-snapshot-metric">
+                    <span>Clients Engaged</span>
+                    <strong>{activeClients.length}</strong>
+                    <small>Active</small>
+                  </div>
+                  <div className="portfolio-snapshot-metric">
+                    <span>Last 30 Days</span>
+                    <strong>{recentActivityCount}</strong>
+                    <small>Activities logged</small>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="command-centre-side">
@@ -612,10 +747,22 @@ export function DashboardPage() {
               </div>
               <div className="panel-body">
                 <div className="action-list">
-                  <Link className="button button-primary" to="/clients/new">Create new client</Link>
-                  <Link className="button button-secondary" to="/audit">Start kitchen audit</Link>
-                  <Link className="button button-secondary" to="/menu">Open menu builder</Link>
-                  <Link className="button button-secondary" to="/food-safety">Food safety check</Link>
+                  <Link className="button button-primary" to="/clients/new">
+                    <span><ActionGlyph type="plus" /></span>
+                    Create new client
+                  </Link>
+                  <Link className="button button-secondary" to="/audit">
+                    <span><ActionGlyph type="shield" /></span>
+                    Start kitchen audit
+                  </Link>
+                  <Link className="button button-secondary" to="/menu">
+                    <span><ActionGlyph type="document" /></span>
+                    Open menu builder
+                  </Link>
+                  <Link className="button button-secondary" to="/food-safety">
+                    <span><ActionGlyph type="safety" /></span>
+                    Food safety check
+                  </Link>
                 </div>
               </div>
             </div>
