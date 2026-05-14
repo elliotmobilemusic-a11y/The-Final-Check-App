@@ -1704,8 +1704,8 @@ input[type="radio"]:checked {
 .shell-sidebar-toggle {
   position: absolute;
   right: -11px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 24px;
+  transform: none;
   z-index: 2;
   display: grid;
   place-items: center;
@@ -1871,6 +1871,7 @@ input[type="radio"]:checked {
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
     width: auto;
+    padding-top: 0 !important;
   }
 
   .sidebar-is-collapsed .shell-topbar {
@@ -13573,6 +13574,7 @@ body[data-theme="midnight"] .client-portal-launch-card {
   .app-content {
     margin-left: calc(var(--sidebar-width) + var(--space-5));
     width: auto;
+    padding-top: 0 !important;
   }
 
   .sidebar-is-collapsed .shell-topbar {
