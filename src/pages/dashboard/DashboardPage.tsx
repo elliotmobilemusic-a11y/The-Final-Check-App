@@ -12,7 +12,6 @@ import { readDraft, writeDraft } from '../../services/draftStore';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
 import { PageContainer } from '../../components/layout';
-import { StatCard } from '../../components/ui/StatCard';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -248,6 +247,7 @@ export function DashboardPage() {
       : '') ||
     deriveDisplayName(session?.user.email);
   const welcomeLabel = welcomeName.split(/\s+/).filter(Boolean)[0] || welcomeName;
+
   async function handleInstallApp() {
     if (installPromptEvent) {
       await installPromptEvent.prompt();
@@ -382,230 +382,319 @@ export function DashboardPage() {
     .slice(0, 6);
 
   return (
-    <PageContainer size="wide" className="dashboard-page">
+    <PageContainer size="wide" className="command-centre-page dashboard-page">
       <div className="page-stack dashboard-stack">
-      {showInstallPrompt && installState !== 'installed' && (
-        <div className="install-float-prompt">
-          <div className="install-float-copy">
-            <span>Install desktop app</span>
-          </div>
-          <div className="install-float-actions">
-            <button className="button button-small" onClick={handleInstallApp}>Download</button>
-            <button className="button button-small button-ghost" onClick={dismissInstallPrompt}>Dismiss</button>
-          </div>
-        </div>
-      )}
 
-      <div className="dashboard-intro-band">
-        <div className="dashboard-intro-copy">
-          <span className="dashboard-intro-eyebrow">Command Centre</span>
-          <h1 className="dashboard-intro-title">Welcome, {welcomeLabel}</h1>
-          <div className="dashboard-intro-support">
-            <p>Track live clients, profit opportunity, follow-ups due, and which sites need attention next.</p>
-            {message && <span className="dashboard-intro-status-chip">{message}</span>}
-          </div>
-        </div>
-        <div className="dashboard-intro-actions">
-          <Link className="button button-primary" to="/clients">Open clients</Link>
-          <Link className="button button-secondary" to="/audit">Start Kitchen Profit Audit</Link>
-          <Link className="button button-secondary" to="/menu">Open Menu Profit Engine</Link>
-        </div>
-      </div>
-
-      <div className="stats-grid compact dashboard-stat-row">
-        <StatCard
-          size="compact"
-          label="Total opportunity identified"
-          value={fmtCurrency(totalOpportunityIdentified)}
-          hint="Based on the latest saved audit per client"
-        />
-        <StatCard
-          size="compact"
-          label="Active clients"
-          value={String(activeClients.length)}
-          hint={clients[0]?.company_name ?? 'No clients created yet'}
-        />
-        <StatCard
-          size="compact"
-          label="Sites needing attention"
-          value={String(sitesNeedingAttention)}
-          hint={loading ? 'Loading command centre...' : 'Reviews overdue or profit opportunity still open'}
-        />
-        <StatCard
-          size="compact"
-          label="Follow-ups due"
-          value={String(overdueReviews.length + dueSoonReviews.length)}
-          hint={
-            overdueReviews.length > 0
-              ? `${pluralize(overdueReviews.length, 'review')} overdue`
-              : dueSoonReviews.length > 0
-                ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
-                : 'No upcoming review pressure'
-          }
-        />
-      </div>
-
-      <div className="dashboard-grid">
-        <div className="dashboard-main-zone">
-          <div className="panel dashboard-task-panel">
-            <div className="panel-header">
-              <div>
-                <h3>Workstream Tasks</h3>
-                <p>{openTasks > 0 ? `${openTasks} open actions across ${taskGroups.length} lists` : 'No open task pressure recorded'}</p>
-              </div>
-              <button className="button button-small button-ghost" onClick={addNewGroup}>New list</button>
+        {showInstallPrompt && installState !== 'installed' && (
+          <div className="install-float-prompt">
+            <div className="install-float-copy">
+              <span>Install desktop app</span>
             </div>
-            <div className="panel-body">
-              {taskGroups.length === 0 ? (
-                <div className="dashboard-empty-state">
-                  <strong>No task lists yet</strong>
-                  <span>Create a workstream list for follow-ups, client prep, or audit actions.</span>
-                  <button className="button button-small button-primary" onClick={addNewGroup}>Create list</button>
-                </div>
-              ) : taskGroups.map((group) => (
-                <div key={group.id} className="sub-panel">
-                  <div className="sub-panel-header">
-                    <div>
-                      <button
-                        aria-label={group.collapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
-                        onClick={() => toggleGroupCollapse(group.id)}
-                        className="button button-small button-icon"
-                      >
-                        {group.collapsed ? '+' : '-'}
-                      </button>
-                      <strong>{group.title}</strong>
-                      <span>{pluralize(group.tasks.filter((task) => !task.completed).length, 'open task')}</span>
-                    </div>
-                    <button
-                      aria-label={`Remove ${group.title}`}
-                      onClick={() => deleteGroup(group.id)}
-                      className="button button-small button-ghost"
-                    >
-                      Remove
-                    </button>
+            <div className="install-float-actions">
+              <button className="button button-small" onClick={handleInstallApp}>Download</button>
+              <button className="button button-small button-ghost" onClick={dismissInstallPrompt}>Dismiss</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Hero ── */}
+        <div className="command-centre-hero">
+          <div className="command-centre-hero-copy">
+            <span className="command-centre-eyebrow">Command Centre</span>
+            <h1 className="command-centre-title">Welcome, {welcomeLabel}</h1>
+            <p className="command-centre-desc">
+              Track live clients, profit opportunity, follow-ups due, and which sites need attention next.
+            </p>
+            {message && <span className="command-centre-status-chip">{message}</span>}
+          </div>
+          <div className="command-centre-actions-card">
+            <span className="cc-actions-label">Client &amp; Audit Actions</span>
+            <div className="cc-actions-grid">
+              <Link className="button button-primary cc-action-btn" to="/clients">Open clients</Link>
+              <Link className="button button-secondary cc-action-btn" to="/audit">Start kitchen audit</Link>
+              <Link className="button button-secondary cc-action-btn" to="/menu">Open menu builder</Link>
+              <Link className="button button-secondary cc-action-btn" to="/audit">Start profit audit</Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ── KPI Strip ── */}
+        <div className="command-centre-kpis">
+          <div className="cc-kpi">
+            <div className="cc-kpi-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <div className="cc-kpi-body">
+              <span className="cc-kpi-label">Total Opportunity Identified</span>
+              <span className="cc-kpi-value">{fmtCurrency(totalOpportunityIdentified)}</span>
+              <span className="cc-kpi-note">Based on latest audit per client</span>
+            </div>
+          </div>
+
+          <div className="cc-kpi">
+            <div className="cc-kpi-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div className="cc-kpi-body">
+              <span className="cc-kpi-label">Active Clients</span>
+              <span className="cc-kpi-value">{activeClients.length}</span>
+              <span className="cc-kpi-note">{clients[0]?.company_name ?? 'No clients created yet'}</span>
+            </div>
+          </div>
+
+          <div className="cc-kpi">
+            <div className="cc-kpi-icon cc-kpi-icon-amber" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div className="cc-kpi-body">
+              <span className="cc-kpi-label">Sites Needing Attention</span>
+              <span className="cc-kpi-value">{sitesNeedingAttention}</span>
+              <span className="cc-kpi-note">{loading ? 'Loading…' : 'Reviews overdue or opportunity open'}</span>
+            </div>
+          </div>
+
+          <div className="cc-kpi">
+            <div className="cc-kpi-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <div className="cc-kpi-body">
+              <span className="cc-kpi-label">Follow-ups Due</span>
+              <span className="cc-kpi-value">{overdueReviews.length + dueSoonReviews.length}</span>
+              <span className="cc-kpi-note">
+                {overdueReviews.length > 0
+                  ? `${pluralize(overdueReviews.length, 'review')} overdue`
+                  : dueSoonReviews.length > 0
+                    ? `${pluralize(dueSoonReviews.length, 'review')} due soon`
+                    : 'No upcoming review pressure'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main grid ── */}
+        <div className="command-centre-grid">
+
+          <div className="command-centre-main">
+            {/* Workstream Tasks */}
+            <div className="panel command-centre-panel dashboard-task-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
                   </div>
-
-                  {!group.collapsed && (
-                    <div className="task-list">
-                      {group.tasks.length === 0 ? (
-                        <div className="dashboard-empty-state compact">
-                          <strong>This list is clear</strong>
-                          <span>Add the next action to keep the workstream moving.</span>
-                        </div>
-                      ) : group.tasks.map((task) => (
-                        <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
-                          <input
-                            aria-label={`Mark ${task.text} ${task.completed ? 'incomplete' : 'complete'}`}
-                            type="checkbox"
-                            checked={task.completed}
-                            onChange={() => toggleTaskComplete(group.id, task.id)}
-                          />
-                          <span>{task.text}</span>
-                          <button
-                            aria-label={`Remove ${task.text}`}
-                            onClick={() => deleteTask(group.id, task.id)}
-                            className="button button-small button-ghost"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-
-                      <div className="task-add-row">
-                        <input
-                          type="text"
-                          placeholder="Add task..."
-                          value={groupInputText[group.id] ?? ''}
-                          onChange={(e) => setGroupInputText(prev => ({ ...prev, [group.id]: e.target.value }))}
-                          onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
-                        />
-                        <button className="button button-small" onClick={() => addTask(group.id)}>Add</button>
+                  <div>
+                    <h3>Workstream Tasks</h3>
+                    <p>{openTasks > 0 ? `${openTasks} open actions across ${taskGroups.length} lists` : 'Stay on top of your workflow and never miss a priority.'}</p>
+                  </div>
+                </div>
+                <button className="button button-small button-ghost" onClick={addNewGroup}>New list</button>
+              </div>
+              <div className="panel-body">
+                {taskGroups.length === 0 ? (
+                  <div className="dashboard-empty-state">
+                    <div className="cc-empty-icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="3" />
+                        <line x1="9" y1="9" x2="15" y2="9" />
+                        <line x1="9" y1="13" x2="13" y2="13" />
+                      </svg>
+                    </div>
+                    <strong>No task lists yet</strong>
+                    <span>Create a workstream list for follow-ups, client prep, or audit actions.</span>
+                    <button className="button button-small button-primary" onClick={addNewGroup}>Create task list</button>
+                  </div>
+                ) : taskGroups.map((group) => (
+                  <div key={group.id} className="sub-panel">
+                    <div className="sub-panel-header">
+                      <div>
+                        <button
+                          aria-label={group.collapsed ? `Expand ${group.title}` : `Collapse ${group.title}`}
+                          onClick={() => toggleGroupCollapse(group.id)}
+                          className="button button-small button-icon"
+                        >
+                          {group.collapsed ? '+' : '-'}
+                        </button>
+                        <strong>{group.title}</strong>
+                        <span>{pluralize(group.tasks.filter((task) => !task.completed).length, 'open task')}</span>
                       </div>
+                      <button
+                        aria-label={`Remove ${group.title}`}
+                        onClick={() => deleteGroup(group.id)}
+                        className="button button-small button-ghost"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
-        <div className="dashboard-side-zone">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Quick Actions</h3>
-                <p>Start the next client move</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              <div className="action-list">
-                <Link className="button button-primary" to="/clients/new">
-                  Create new client
-                </Link>
-                <Link className="button button-secondary" to="/audit">
-                  Start kitchen audit
-                </Link>
-                <Link className="button button-secondary" to="/menu">
-                  Open menu builder
-                </Link>
-                <Link className="button button-secondary" to="/food-safety">
-                  Food safety check
-                </Link>
-              </div>
-            </div>
-          </div>
+                    {!group.collapsed && (
+                      <div className="task-list">
+                        {group.tasks.length === 0 ? (
+                          <div className="dashboard-empty-state compact">
+                            <strong>This list is clear</strong>
+                            <span>Add the next action to keep the workstream moving.</span>
+                          </div>
+                        ) : group.tasks.map((task) => (
+                          <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
+                            <input
+                              aria-label={`Mark ${task.text} ${task.completed ? 'incomplete' : 'complete'}`}
+                              type="checkbox"
+                              checked={task.completed}
+                              onChange={() => toggleTaskComplete(group.id, task.id)}
+                            />
+                            <span>{task.text}</span>
+                            <button
+                              aria-label={`Remove ${task.text}`}
+                              onClick={() => deleteTask(group.id, task.id)}
+                              className="button button-small button-ghost"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
 
-          <div className="panel attention-panel">
-            <div className="panel-header">
-              <div>
-                <h3>Attention Required</h3>
-                <p>Items needing immediate action</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              <div className="attention-item warning">
-                <strong>{overdueReviews.length} Overdue reviews</strong>
-                <span>{overdueReviews.length > 0 ? 'Follow up immediately' : 'No overdue reviews'}</span>
-              </div>
-              <div className="attention-item">
-                <strong>{dueSoonReviews.length} Reviews due soon</strong>
-                <span>Due in next 14 days</span>
-              </div>
-              <div className="attention-item success">
-                <strong>{audits.length} Total audits</strong>
-                <span>Completed across client portfolio</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h3>Recent Activity</h3>
-                <p>Latest work across the portfolio</p>
-              </div>
-            </div>
-            <div className="panel-body">
-              <div className="activity-list">
-                {recentActivity.length === 0 ? (
-                  <div className="dashboard-empty-state compact">
-                    <strong>No recent activity yet</strong>
-                    <span>Saved audits and menu projects will appear here.</span>
-                  </div>
-                ) : recentActivity.map((item) => (
-                  <div key={item.id} className="activity-item">
-                    <div className="activity-item-copy">
-                      <strong>{item.title}</strong>
-                      <span className="activity-item-label">{item.label}</span>
-                    </div>
-                    <span>{new Date(item.date).toLocaleDateString()}</span>
+                        <div className="task-add-row">
+                          <input
+                            type="text"
+                            placeholder="Add task..."
+                            value={groupInputText[group.id] ?? ''}
+                            onChange={(e) => setGroupInputText(prev => ({ ...prev, [group.id]: e.target.value }))}
+                            onKeyDown={(e) => e.key === 'Enter' && addTask(group.id)}
+                          />
+                          <button className="button button-small" onClick={() => addTask(group.id)}>Add</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
+          <div className="command-centre-side">
+
+            {/* Quick Actions */}
+            <div className="panel command-centre-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3>Quick Actions</h3>
+                    <p>Start the next client move</p>
+                  </div>
+                </div>
+              </div>
+              <div className="panel-body">
+                <div className="action-list">
+                  <Link className="button button-primary" to="/clients/new">Create new client</Link>
+                  <Link className="button button-secondary" to="/audit">Start kitchen audit</Link>
+                  <Link className="button button-secondary" to="/menu">Open menu builder</Link>
+                  <Link className="button button-secondary" to="/food-safety">Food safety check</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Attention Required */}
+            <div className="panel command-centre-panel attention-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap cc-panel-icon-amber" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3>Attention Required</h3>
+                    <p>Items needing immediate action</p>
+                  </div>
+                </div>
+              </div>
+              <div className="panel-body">
+                <div className="attention-item warning">
+                  <strong>{overdueReviews.length} Overdue reviews</strong>
+                  <span>{overdueReviews.length > 0 ? 'Follow up immediately' : 'No overdue reviews'}</span>
+                </div>
+                <div className="attention-item blue">
+                  <strong>{dueSoonReviews.length} Reviews due soon</strong>
+                  <span>Due in next 14 days</span>
+                </div>
+                <div className="attention-item success">
+                  <strong>{audits.length} Total audits</strong>
+                  <span>Completed across client portfolio</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="panel command-centre-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3>Recent Activity</h3>
+                    <p>Latest work across the portfolio</p>
+                  </div>
+                </div>
+              </div>
+              <div className="panel-body">
+                <div className="activity-list">
+                  {recentActivity.length === 0 ? (
+                    <div className="dashboard-empty-state compact">
+                      <strong>No recent activity yet</strong>
+                      <span>Saved audits and menu projects will appear here.</span>
+                    </div>
+                  ) : recentActivity.map((item) => (
+                    <div key={item.id} className="activity-item">
+                      <div className="activity-item-copy">
+                        <strong>{item.title}</strong>
+                        <span className="activity-item-label">{item.label}</span>
+                      </div>
+                      <span>{new Date(item.date).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+                {recentActivity.length > 0 && (
+                  <Link className="cc-view-all-link" to="/clients">View all activity</Link>
+                )}
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
+
       </div>
     </PageContainer>
   );
