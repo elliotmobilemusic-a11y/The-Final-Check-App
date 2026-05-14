@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
@@ -19,19 +19,19 @@ import { disablePushNotifications } from '../../services/pushNotifications';
 import { CookingLoader } from './CookingLoader';
 
 const navItems = [
-  { to: '/dashboard', label: 'Command Centre', icon: 'CC', group: 'Operate' },
-  { to: '/clients', label: 'Clients', icon: 'CL', group: 'Operate' },
-  { to: '/audit-hub', label: 'Profit Audit', icon: 'PA', group: 'Audits' },
-  { to: '/food-safety-hub', label: 'Food Safety', icon: 'FS', group: 'Audits' },
-  { to: '/mystery-shop-hub', label: 'Mystery Shop', icon: 'MS', group: 'Audits' },
-  { to: '/menu-hub', label: 'Menu Profit Engine', icon: 'MP', group: 'Profit tools' },
-  { to: '/questionnaires', label: 'Pre-Visit Forms', icon: 'PV', group: 'Profit tools' }
+  { to: '/dashboard', label: 'Command Centre', icon: 'dashboard', group: 'Operate' },
+  { to: '/clients', label: 'Clients', icon: 'clients', group: 'Operate' },
+  { to: '/audit-hub', label: 'Profit Audit', icon: 'audit', group: 'Audits' },
+  { to: '/food-safety-hub', label: 'Food Safety', icon: 'shield', group: 'Audits' },
+  { to: '/mystery-shop-hub', label: 'Mystery Shop', icon: 'eye', group: 'Audits' },
+  { to: '/menu-hub', label: 'Menu Profit Engine', icon: 'calculator', group: 'Profit tools' },
+  { to: '/questionnaires', label: 'Pre-Visit Forms', icon: 'forms', group: 'Profit tools' }
 ];
 
 const visitModeItems = [
-  { to: '/audit?visit=1', label: 'Profit Visit', icon: 'PV' },
-  { to: '/food-safety?visit=1', label: 'Safety Visit', icon: 'SV' },
-  { to: '/mystery-shop?visit=1', label: 'Mystery Visit', icon: 'MV' }
+  { to: '/audit?visit=1', label: 'Profit Visit', icon: 'trending' },
+  { to: '/food-safety?visit=1', label: 'Safety Visit', icon: 'shield' },
+  { to: '/mystery-shop?visit=1', label: 'Mystery Visit', icon: 'eye' }
 ];
 
 const workspaceDetails = [
@@ -121,6 +121,76 @@ const navGroups = navItems.reduce<Record<string, typeof navItems>>((groups, item
   groups[item.group] = [...(groups[item.group] ?? []), item];
   return groups;
 }, {});
+
+function NavIcon({ id, size = 16 }: { id: string; size?: number }) {
+  const s = size;
+  const icons: Record<string, React.ReactElement> = {
+    dashboard: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    ),
+    clients: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="8" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2"/>
+        <circle cx="17" cy="8" r="2.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.87"/>
+      </svg>
+    ),
+    audit: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="8 16 10 18 16 12"/>
+      </svg>
+    ),
+    shield: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <polyline points="9 12 11 14 15 10"/>
+      </svg>
+    ),
+    eye: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    ),
+    calculator: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="4" y="2" width="16" height="20" rx="2"/>
+        <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/>
+        <line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/>
+        <line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/>
+      </svg>
+    ),
+    forms: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+      </svg>
+    ),
+    trending: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    ),
+    cog: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    ),
+    logout: (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    ),
+  };
+  return icons[id] ?? null;
+}
 
 export function AppShell() {
   const location = useLocation();
@@ -389,7 +459,7 @@ export function AppShell() {
                     end={item.to !== '/clients'}
                     className={({ isActive }) => `shell-sidebar-link ${isActive ? 'active' : ''}`}
                   >
-                    <span className="shell-nav-icon" aria-hidden="true">{item.icon}</span>
+                    <span className="shell-nav-icon"><NavIcon id={item.icon} /></span>
                     <span className="shell-nav-label">{item.label}</span>
                   </NavLink>
                 ))}
@@ -400,7 +470,7 @@ export function AppShell() {
               <span className="shell-nav-group-label">Visit mode</span>
               {visitModeItems.map((item) => (
                 <NavLink key={item.to} to={item.to} className="shell-sidebar-link shell-sidebar-link-visit">
-                  <span className="shell-nav-icon" aria-hidden="true">{item.icon}</span>
+                  <span className="shell-nav-icon"><NavIcon id={item.icon} /></span>
                   <span className="shell-nav-label">{item.label}</span>
                 </NavLink>
               ))}
@@ -409,11 +479,11 @@ export function AppShell() {
 
           <div className="shell-sidebar-footer">
             <Link className="shell-sidebar-link" to="/settings/profile">
-              <span className="shell-nav-icon" aria-hidden="true">ST</span>
+              <span className="shell-nav-icon"><NavIcon id="cog" /></span>
               <span className="shell-nav-label">Settings</span>
             </Link>
             <button className="shell-sidebar-link shell-sidebar-button" onClick={() => void handleSignOut()} type="button">
-              <span className="shell-nav-icon" aria-hidden="true">SO</span>
+              <span className="shell-nav-icon"><NavIcon id="logout" /></span>
               <span className="shell-nav-label">Sign out</span>
             </button>
           </div>
@@ -441,7 +511,7 @@ export function AppShell() {
                      end={item.to !== '/clients'}
                      className={({ isActive }) => `shell-primary-link ${isActive ? 'active' : ''}`}
                    >
-                     <span className="shell-nav-icon shell-nav-icon-compact" aria-hidden="true">{item.icon}</span>
+                     <span className="shell-nav-icon shell-nav-icon-compact"><NavIcon id={item.icon} /></span>
                      <span className="nav-link-inner">{item.label}</span>
                    </NavLink>
                  ))}
@@ -454,7 +524,7 @@ export function AppShell() {
                    to={item.to}
                    className="shell-secondary-link"
                  >
-                   <span className="shell-nav-icon shell-nav-icon-mini" aria-hidden="true">{item.icon}</span>
+                   <span className="shell-nav-icon shell-nav-icon-mini"><NavIcon id={item.icon} /></span>
                    <span className="nav-link-inner">{item.label}</span>
                  </NavLink>
                ))}
