@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
-import type { ClientRecord } from '../../types';
+import type { AuditFormState, ClientRecord, FoodSafetyAuditState } from '../../types';
 import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import { listFoodSafetyAudits } from '../../services/foodSafetyAudits';
 import { listMysteryShopAudits } from '../../services/mysteryShopAudits';
 import { listMenuProjects } from '../../services/menus';
 import { readDraft, writeDraft } from '../../services/draftStore';
+import { KITCHEN_AUDIT_DRAFT_KEY } from '../../features/audits/kitchenAuditHelpers';
 import { calculateKitchenProfitMetrics } from '../../features/profit/kitchenProfit';
 import { fmtCurrency } from '../../lib/utils';
 import { PageContainer } from '../../components/layout';
@@ -34,9 +35,26 @@ type PortfolioSummary = {
   totalWorkstreams: number;
 };
 
+type FocusItem = {
+  id: string;
+  text: string;
+  sub: string;
+  to: string;
+  tag: string;
+  tagClass: string;
+};
+
+type RecentWorkItem = {
+  id: string;
+  title: string;
+  label: string;
+  date: string;
+  to: string;
+  clientId?: string | null;
+};
+
 function getTimestamp(value?: string | null) {
   if (!value) return 0;
-
   const parsed = new Date(value).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 }
@@ -51,10 +69,8 @@ function sortNewest<T extends { updated_at?: string | null; created_at?: string 
 
 function daysUntil(value?: string | null) {
   if (!value) return null;
-
   const target = new Date(value);
   if (Number.isNaN(target.getTime())) return null;
-
   const today = new Date();
   const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const startTarget = new Date(
@@ -62,7 +78,6 @@ function daysUntil(value?: string | null) {
     target.getMonth(),
     target.getDate()
   ).getTime();
-
   return Math.round((startTarget - startToday) / (1000 * 60 * 60 * 24));
 }
 
@@ -73,6 +88,21 @@ function pluralize(value: number, singular: string, plural = `${singular}s`) {
 function deriveDisplayName(email?: string | null) {
   if (!email) return 'there';
   return email.split('@')[0].replace(/[._-]+/g, ' ');
+}
+
+function fmtRelativeDate(value?: string | null): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const days = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+  }
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 const repoBaseUrl = 'https://github.com/elliotmobilemusic-a11y/The-Final-Check-App';
@@ -105,7 +135,7 @@ const defaultTaskGroups: TaskGroup[] = [
   }
 ];
 
-function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'plus' }) {
+function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'plus' | 'food' | 'play' }) {
   const common = {
     width: 17,
     height: 17,
@@ -153,6 +183,24 @@ function ActionGlyph({ type }: { type: 'clients' | 'shield' | 'document' | 'plus
       <svg {...common}>
         <path d="M12 5v14" />
         <path d="M5 12h14" />
+      </svg>
+    );
+  }
+
+  if (type === 'food') {
+    return (
+      <svg {...common}>
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+    );
+  }
+
+  if (type === 'play') {
+    return (
+      <svg {...common}>
+        <polygon points="5 3 19 12 5 21 5 3" />
       </svg>
     );
   }
@@ -406,35 +454,182 @@ export function DashboardPage() {
     0
   );
   const openTasks = totalTasks - completedTasks;
+
+  // Draft detection from localStorage
+  const kitchenDraft = useMemo(
+    () => readDraft<AuditFormState>(KITCHEN_AUDIT_DRAFT_KEY, session?.user.id),
+    [session?.user.id]
+  );
+  const hasKitchenDraft = Boolean(
+    kitchenDraft?.businessName?.trim() || kitchenDraft?.contactName?.trim() || kitchenDraft?.location?.trim()
+  );
+
+  const foodSafetyDraft = useMemo(
+    () => readDraft<FoodSafetyAuditState>('food-safety-audit-draft-v1', session?.user.id),
+    [session?.user.id]
+  );
+  const hasFoodSafetyDraft = Boolean(foodSafetyDraft?.siteName?.trim() || foodSafetyDraft?.auditorName?.trim());
+
+  // Client ID → name lookup for Recent Work links
+  const clientMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of clients) map.set(c.id, c.company_name);
+    return map;
+  }, [clients]);
+
+  // Today's Focus: priority-ordered next actions derived from real data
+  const todaysFocus = useMemo<FocusItem[]>(() => {
+    const items: FocusItem[] = [];
+
+    for (const item of overdueReviews.slice(0, 2)) {
+      const days = Math.abs(item.nextReviewDays!);
+      items.push({
+        id: `overdue-${item.client.id}`,
+        text: item.client.company_name,
+        sub: `Review overdue by ${pluralize(days, 'day')}`,
+        to: `/clients/${item.client.id}`,
+        tag: 'Overdue',
+        tagClass: 'focus-tag-warning'
+      });
+    }
+
+    for (const item of dueSoonReviews) {
+      if (items.length >= 3) break;
+      const d = item.nextReviewDays!;
+      items.push({
+        id: `due-${item.client.id}`,
+        text: item.client.company_name,
+        sub: d === 0 ? 'Review due today' : `Review due in ${pluralize(d, 'day')}`,
+        to: `/clients/${item.client.id}`,
+        tag: 'Due soon',
+        tagClass: 'focus-tag-blue'
+      });
+    }
+
+    if (items.length < 3 && hasKitchenDraft) {
+      const name = kitchenDraft?.businessName?.trim() || kitchenDraft?.location?.trim();
+      items.push({
+        id: 'kitchen-draft',
+        text: name ? `Resume: ${name}` : 'Kitchen audit draft',
+        sub: 'Unsaved profit audit in progress',
+        to: '/audit',
+        tag: 'Draft',
+        tagClass: 'focus-tag-muted'
+      });
+    }
+
+    if (items.length < 3 && hasFoodSafetyDraft) {
+      const name = foodSafetyDraft?.siteName?.trim();
+      items.push({
+        id: 'fs-draft',
+        text: name ? `Resume: ${name}` : 'Food safety audit draft',
+        sub: 'Unsaved food safety audit in progress',
+        to: '/food-safety',
+        tag: 'Draft',
+        tagClass: 'focus-tag-muted'
+      });
+    }
+
+    if (items.length === 0 && !loading && audits.length > 0) {
+      const a = audits[0];
+      items.push({
+        id: `open-audit-${a.id}`,
+        text: a.title || a.site_name || 'Kitchen Profit Audit',
+        sub: `Last updated ${fmtRelativeDate(a.updated_at ?? a.created_at)}`,
+        to: `/audit?load=${a.id}`,
+        tag: 'Continue audit',
+        tagClass: 'focus-tag-muted'
+      });
+    }
+
+    if (items.length === 0 && !loading && clients.length > 0) {
+      items.push({
+        id: `open-client-${clients[0].id}`,
+        text: clients[0].company_name,
+        sub: 'Most recently active client',
+        to: `/clients/${clients[0].id}`,
+        tag: 'Open client',
+        tagClass: 'focus-tag-muted'
+      });
+    }
+
+    return items.slice(0, 3);
+  }, [overdueReviews, dueSoonReviews, hasKitchenDraft, kitchenDraft, hasFoodSafetyDraft, foodSafetyDraft, audits, clients, loading]);
+
+  // Recent Work: cross-type sorted work items with direct open links
+  const recentWork = useMemo<RecentWorkItem[]>(() => {
+    return [
+      ...audits.map(a => ({
+        id: `audit-${a.id}`,
+        title: a.title || a.site_name || 'Kitchen Profit Audit',
+        label: 'Kitchen audit',
+        date: a.updated_at ?? a.created_at,
+        to: `/audit?load=${a.id}`,
+        clientId: a.client_id
+      })),
+      ...menus.map(m => ({
+        id: `menu-${m.id}`,
+        title: m.title || 'Menu project',
+        label: 'Menu project',
+        date: m.updated_at ?? m.created_at,
+        to: `/menu?load=${m.id}`,
+        clientId: m.client_id
+      })),
+      ...foodSafetyAudits.map(a => ({
+        id: `fs-${a.id}`,
+        title: a.title || 'Food Safety Audit',
+        label: 'Food safety',
+        date: a.updated_at ?? a.created_at,
+        to: `/food-safety?load=${a.id}`,
+        clientId: a.client_id
+      })),
+      ...mysteryShopAudits.map(a => ({
+        id: `ms-${a.id}`,
+        title: a.title || 'Mystery Shop',
+        label: 'Mystery shop',
+        date: a.updated_at ?? a.created_at,
+        to: `/mystery-shop?load=${a.id}`,
+        clientId: a.client_id
+      }))
+    ]
+      .filter(item => !!item.date)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [audits, menus, foodSafetyAudits, mysteryShopAudits]);
+
   const recentActivity = [
     ...audits.map((audit) => ({
       id: `audit-${audit.id}`,
-      title: audit.title || 'Kitchen Audit',
+      title: audit.title || audit.site_name || 'Kitchen Audit',
       label: 'Kitchen audit',
-      date: audit.updated_at ?? audit.created_at
+      date: audit.updated_at ?? audit.created_at,
+      to: `/audit?load=${audit.id}`
     })),
     ...menus.map((menu) => ({
       id: `menu-${menu.id}`,
       title: menu.title || 'Menu project',
       label: 'Menu project',
-      date: menu.updated_at ?? menu.created_at
+      date: menu.updated_at ?? menu.created_at,
+      to: `/menu?load=${menu.id}`
     })),
     ...foodSafetyAudits.map((audit) => ({
       id: `fs-${audit.id}`,
       title: audit.title || 'Food Safety Audit',
       label: 'Food safety',
-      date: audit.updated_at ?? audit.created_at
+      date: audit.updated_at ?? audit.created_at,
+      to: `/food-safety?load=${audit.id}`
     })),
     ...mysteryShopAudits.map((audit) => ({
       id: `ms-${audit.id}`,
       title: audit.title || 'Mystery Shop Audit',
       label: 'Mystery shop',
-      date: audit.updated_at ?? audit.created_at
+      date: audit.updated_at ?? audit.created_at,
+      to: `/mystery-shop?load=${audit.id}`
     }))
   ]
     .filter((item) => !!item.date)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 6);
+    .slice(0, 5);
 
   return (
     <PageContainer size="wide" className="command-centre-page dashboard-page">
@@ -541,6 +736,100 @@ export function DashboardPage() {
         <div className="command-centre-grid">
 
           <div className="command-centre-main">
+
+            {/* Today's Focus */}
+            <div className="panel command-centre-panel">
+              <div className="panel-header">
+                <div className="cc-panel-header-inner">
+                  <div className="cc-panel-icon-wrap" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3>Today's Focus</h3>
+                    <p>
+                      {loading
+                        ? 'Loading portfolio…'
+                        : todaysFocus.length > 0
+                          ? `${todaysFocus.length} ${todaysFocus.length === 1 ? 'item' : 'items'} needing attention`
+                          : 'Everything on track'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="panel-body">
+                {loading ? (
+                  <div className="dashboard-empty-state compact">
+                    <span>Loading portfolio data…</span>
+                  </div>
+                ) : todaysFocus.length === 0 ? (
+                  <div className="dashboard-empty-state compact">
+                    <strong>Nothing urgent right now</strong>
+                    <span>Start with a new client, audit, or task list.</span>
+                  </div>
+                ) : (
+                  <div className="focus-list">
+                    {todaysFocus.map(item => (
+                      <Link key={item.id} className="focus-item" to={item.to}>
+                        <div className="focus-item-body">
+                          <strong className="focus-item-title">{item.text}</strong>
+                          <span className="focus-item-sub">{item.sub}</span>
+                        </div>
+                        <span className={`focus-item-tag ${item.tagClass}`}>{item.tag}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Work */}
+            {recentWork.length > 0 && (
+              <div className="panel command-centre-panel">
+                <div className="panel-header">
+                  <div className="cc-panel-header-inner">
+                    <div className="cc-panel-icon-wrap" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                        <path d="M8 13h8" />
+                        <path d="M8 17h5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3>Recent Work</h3>
+                      <p>Latest audits, menus, and reports</p>
+                    </div>
+                  </div>
+                  <Link className="button button-small button-ghost" to="/audit-hub">View all</Link>
+                </div>
+                <div className="panel-body">
+                  <div className="recent-work-list">
+                    {recentWork.map(item => (
+                      <div key={item.id} className="recent-work-item">
+                        <div className="recent-work-item-copy">
+                          <strong>{item.title}</strong>
+                          <div className="recent-work-item-meta">
+                            <span className="activity-item-label">{item.label}</span>
+                            <span className="recent-work-item-date">{fmtRelativeDate(item.date)}</span>
+                          </div>
+                        </div>
+                        <div className="recent-work-item-actions">
+                          <Link className="button button-small button-ghost" to={item.to}>Open</Link>
+                          {item.clientId && clientMap.has(item.clientId) && (
+                            <Link className="button button-small button-ghost" to={`/clients/${item.clientId}`}>Client</Link>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Workstream Tasks */}
             <div className="panel command-centre-panel dashboard-task-panel">
               <div className="panel-header">
@@ -574,6 +863,15 @@ export function DashboardPage() {
                     </div>
                     <strong>No task lists yet</strong>
                     <span>Create a workstream list for follow-ups, client prep, or audit actions.</span>
+                    {overdueReviews.length > 0 && (
+                      <span className="dashboard-empty-hint">Suggested: Follow up {overdueReviews[0].client.company_name}</span>
+                    )}
+                    {dueSoonReviews.length > 0 && overdueReviews.length === 0 && (
+                      <span className="dashboard-empty-hint">Suggested: Prepare review for {dueSoonReviews[0].client.company_name}</span>
+                    )}
+                    {audits.length > 0 && overdueReviews.length === 0 && dueSoonReviews.length === 0 && (
+                      <span className="dashboard-empty-hint">Suggested: Review latest audit findings</span>
+                    )}
                     <button className="button button-small button-primary" onClick={addNewGroup}>Create task list</button>
                   </div>
                 ) : taskGroups.map((group) => (
@@ -664,13 +962,25 @@ export function DashboardPage() {
               </div>
               <div className="panel-body">
                 <div className="action-list">
-                  <Link className="button button-primary" to="/clients">
-                    <span><ActionGlyph type="clients" /></span>
-                    Open clients
-                  </Link>
-                  <Link className="button button-secondary" to="/audit">
+                  {hasKitchenDraft && (
+                    <Link className="button button-primary" to="/audit">
+                      <span><ActionGlyph type="play" /></span>
+                      Continue draft audit
+                    </Link>
+                  )}
+                  {clients.length > 0 && (
+                    <Link className="button button-secondary" to={`/clients/${clients[0].id}`}>
+                      <span><ActionGlyph type="clients" /></span>
+                      Open latest client
+                    </Link>
+                  )}
+                  <Link className={`button ${!hasKitchenDraft ? 'button-primary' : 'button-secondary'}`} to="/audit?new=1">
                     <span><ActionGlyph type="shield" /></span>
                     Start kitchen audit
+                  </Link>
+                  <Link className="button button-secondary" to="/food-safety">
+                    <span><ActionGlyph type="food" /></span>
+                    Food safety check
                   </Link>
                   <Link className="button button-secondary" to="/menu">
                     <span><ActionGlyph type="document" /></span>
@@ -678,7 +988,7 @@ export function DashboardPage() {
                   </Link>
                   <Link className="button button-secondary" to="/clients/new">
                     <span><ActionGlyph type="plus" /></span>
-                    Create new client
+                    New client
                   </Link>
                 </div>
               </div>
@@ -702,18 +1012,62 @@ export function DashboardPage() {
                 </div>
               </div>
               <div className="panel-body">
-                <div className="attention-item warning">
-                  <strong>{overdueReviews.length} Overdue reviews</strong>
-                  <span>{overdueReviews.length > 0 ? 'Follow up immediately' : 'No overdue reviews'}</span>
-                </div>
-                <div className="attention-item blue">
-                  <strong>{dueSoonReviews.length} Reviews due soon</strong>
-                  <span>Due in next 14 days</span>
-                </div>
-                <div className="attention-item success">
-                  <strong>{audits.length} Total audits</strong>
-                  <span>Completed across client portfolio</span>
-                </div>
+                {overdueReviews.length > 0 ? (
+                  <Link
+                    className="attention-item warning"
+                    to={overdueReviews.length === 1 ? `/clients/${overdueReviews[0].client.id}` : '/clients'}
+                  >
+                    <strong>{pluralize(overdueReviews.length, 'overdue review')}</strong>
+                    <span>
+                      {overdueReviews.length === 1
+                        ? `${overdueReviews[0].client.company_name} — follow up now`
+                        : `Starting with ${overdueReviews[0].client.company_name}`}
+                    </span>
+                  </Link>
+                ) : (
+                  <div className="attention-item success">
+                    <strong>No overdue reviews</strong>
+                    <span>All clients on schedule</span>
+                  </div>
+                )}
+
+                {dueSoonReviews.length > 0 ? (
+                  <Link
+                    className="attention-item blue"
+                    to={dueSoonReviews.length === 1 ? `/clients/${dueSoonReviews[0].client.id}` : '/clients'}
+                  >
+                    <strong>{pluralize(dueSoonReviews.length, 'review')} due soon</strong>
+                    <span>
+                      {dueSoonReviews.length === 1
+                        ? `${dueSoonReviews[0].client.company_name} — ${dueSoonReviews[0].nextReviewDays === 0 ? 'due today' : `in ${pluralize(dueSoonReviews[0].nextReviewDays!, 'day')}`}`
+                        : `Next: ${dueSoonReviews[0].client.company_name}`}
+                    </span>
+                  </Link>
+                ) : (
+                  <div className="attention-item blue">
+                    <strong>No reviews due soon</strong>
+                    <span>Nothing due in next 14 days</span>
+                  </div>
+                )}
+
+                {(hasKitchenDraft || hasFoodSafetyDraft) ? (
+                  <Link
+                    className="attention-item warning"
+                    to={hasKitchenDraft ? '/audit' : '/food-safety'}
+                  >
+                    <strong>
+                      {(hasKitchenDraft ? 1 : 0) + (hasFoodSafetyDraft ? 1 : 0) > 1
+                        ? '2 draft audits saved'
+                        : '1 draft audit saved'}
+                    </strong>
+                    <span>Resume to complete and generate report</span>
+                  </Link>
+                ) : (
+                  <div className="attention-item success">
+                    <strong>{pluralize(audits.length, 'audit')} completed</strong>
+                    <span>Across client portfolio</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -745,13 +1099,14 @@ export function DashboardPage() {
                       <div className="activity-item-copy">
                         <strong>{item.title}</strong>
                         <span className="activity-item-label">{item.label}</span>
+                        <span className="activity-item-date">{fmtRelativeDate(item.date)}</span>
                       </div>
-                      <span>{new Date(item.date).toLocaleDateString()}</span>
+                      <Link className="activity-item-action" to={item.to}>Open</Link>
                     </div>
                   ))}
                 </div>
                 {recentActivity.length > 0 && (
-                  <Link className="cc-view-all-link" to="/clients">View all activity</Link>
+                  <Link className="cc-view-all-link" to="/audit-hub">View all work</Link>
                 )}
               </div>
             </div>
