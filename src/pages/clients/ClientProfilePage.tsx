@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useActivityOverlay } from '../../context/ActivityOverlayContext';
 import { useAuth } from '../../context/AuthContext';
 import { invoiceTotal } from '../../features/clients/clientExports';
@@ -1062,6 +1062,44 @@ export function ClientProfilePage() {
     ]
   );
 
+  const recentCommandItems = useMemo(() => {
+    type CmdItem = { id: string; type: string; title: string; date: string; to: string };
+    const items: CmdItem[] = [
+      ...audits.map((a) => ({
+        id: `audit-${a.id}`,
+        type: 'Kitchen Audit',
+        title: a.title || a.site_name || 'Kitchen Audit',
+        date: a.updated_at ?? a.created_at ?? '',
+        to: `/audit?load=${a.id}`
+      })),
+      ...foodSafetyAudits.map((a) => ({
+        id: `fs-${a.id}`,
+        type: 'Food Safety',
+        title: a.title || a.site_name || 'Food Safety',
+        date: a.updated_at ?? a.created_at ?? '',
+        to: `/food-safety?load=${a.id}`
+      })),
+      ...mysteryShopAudits.map((a) => ({
+        id: `ms-${a.id}`,
+        type: 'Mystery Shop',
+        title: a.title || a.site_name || 'Mystery Shop',
+        date: a.updated_at ?? a.created_at ?? '',
+        to: `/mystery-shop?load=${a.id}`
+      })),
+      ...menus.map((m) => ({
+        id: `menu-${m.id}`,
+        type: 'Menu',
+        title: m.title || 'Menu Project',
+        date: m.updated_at ?? m.created_at ?? '',
+        to: `/menu?client=${clientId}&load=${m.id}`
+      }))
+    ];
+    return items
+      .filter((i) => !!i.date)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 4);
+  }, [audits, foodSafetyAudits, mysteryShopAudits, menus, clientId]);
+
   if (!loadedClient || !activeForm) {
     return (
       <div className="screen-center">
@@ -1082,6 +1120,10 @@ export function ClientProfilePage() {
   const outstandingBalance = activeForm.data.invoices
     .filter((invoice) => invoice.status !== 'Paid' && invoice.status !== 'Cancelled')
     .reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+  const workItemCount = audits.length + foodSafetyAudits.length + mysteryShopAudits.length + menus.length;
+  const nextReviewDays = activeForm.nextReviewDate
+    ? Math.round((new Date(activeForm.nextReviewDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
 
   async function refreshServiceLists() {
     const [auditRows, menuRows] = await Promise.all([listAudits(clientId), listMenuProjects(clientId)]);
@@ -1637,8 +1679,37 @@ export function ClientProfilePage() {
             onDeleteClient={() => setConfirmDeleteOpen(true)}
           />
 
+          <section className="client-record-snapshot" aria-label="Account snapshot">
+            <article className="client-record-kpi">
+              <span>Sites</span>
+              <strong>{siteCount || '—'}</strong>
+            </article>
+            <article className="client-record-kpi">
+              <span>Outstanding</span>
+              <strong>{outstandingBalance > 0 ? fmtCurrency(outstandingBalance) : '—'}</strong>
+            </article>
+            <article className="client-record-kpi">
+              <span>Work items</span>
+              <strong>{workItemCount || '—'}</strong>
+            </article>
+            <article className="client-record-kpi">
+              <span>Next review</span>
+              <strong>{formatShortDate(activeForm.nextReviewDate)}</strong>
+              {nextReviewDays !== null && (
+                <span className={`client-record-kpi-days${nextReviewDays < 0 ? ' overdue' : nextReviewDays <= 14 ? ' soon' : ''}`}>
+                  {nextReviewDays < 0
+                    ? `${Math.abs(nextReviewDays)}d overdue`
+                    : nextReviewDays === 0
+                    ? 'Today'
+                    : `${nextReviewDays}d away`}
+                </span>
+              )}
+            </article>
+          </section>
+
           <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
 
+        <div className="client-record-body-grid">
         <div className="client-record-tab-content">
         {activeTab === 'information' ? (
           <ClientInformationTab
@@ -1751,6 +1822,48 @@ export function ClientProfilePage() {
             onExportQuotePdf={exportQuotePdf}
           />
         ) : null}
+        </div>
+
+          <aside className="client-record-command-panel">
+            <section className="panel client-command-panel-section">
+              <div className="client-command-panel-header">
+                <h3>Quick actions</h3>
+              </div>
+              <div className="client-command-actions">
+                {editing ? (
+                  <p className="client-command-editing-note">Save or cancel edits first.</p>
+                ) : (
+                  <>
+                    <button className="button button-secondary client-cmd-btn" onClick={() => navigate(`/audit?client=${clientId}`)} type="button">New kitchen audit</button>
+                    <button className="button button-secondary client-cmd-btn" onClick={() => navigate(`/food-safety?client=${clientId}&new=1`)} type="button">New food safety</button>
+                    <button className="button button-secondary client-cmd-btn" onClick={handleRequestNewQuote} type="button">New quote</button>
+                    <button className="button button-secondary client-cmd-btn" onClick={() => handleRequestNewInvoice()} type="button">New invoice</button>
+                    <button className="button button-primary client-cmd-btn" onClick={handleOpenPortal} type="button">Client portal</button>
+                  </>
+                )}
+              </div>
+            </section>
+
+            {recentCommandItems.length > 0 && (
+              <section className="panel client-command-panel-section">
+                <div className="client-command-panel-header">
+                  <h3>Recent work</h3>
+                  <Link className="client-cmd-see-all" to={`/clients/${clientId}/services`}>All →</Link>
+                </div>
+                <div className="client-command-work-list">
+                  {recentCommandItems.map((item) => (
+                    <Link key={item.id} to={item.to} className="client-command-work-row">
+                      <div className="client-command-work-info">
+                        <strong>{item.title}</strong>
+                        <span>{item.type}</span>
+                      </div>
+                      <span className="client-command-work-date">{formatShortDate(item.date)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </aside>
         </div>
         </div>
       </main>

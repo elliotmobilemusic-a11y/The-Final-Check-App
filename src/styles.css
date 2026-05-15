@@ -6169,6 +6169,236 @@ input[type="radio"]:checked {
   }
 }
 
+/* ─── Client Profile: Account Snapshot KPI strip ───────── */
+.client-record-snapshot {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.client-record-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 250, 243, 0.80);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.client-record-kpi > span:first-child {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.client-record-kpi > strong {
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 820;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.client-record-kpi-days {
+  display: inline-flex;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  width: fit-content;
+}
+
+.client-record-kpi-days.soon {
+  background: rgba(200, 120, 30, 0.12);
+  color: #8a5a1a;
+}
+
+.client-record-kpi-days.overdue {
+  background: rgba(190, 50, 50, 0.10);
+  color: #8a2020;
+}
+
+/* ─── Client Profile: Body grid + Command Panel ─────────── */
+.client-record-body-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 268px;
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.client-record-command-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  position: sticky;
+  top: 20px;
+}
+
+.client-command-panel-section {
+  overflow: hidden;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.client-command-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.client-command-panel-header h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+}
+
+.client-command-actions {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+}
+
+.client-cmd-btn {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 720;
+  text-align: left;
+}
+
+.client-command-actions .button-primary.client-cmd-btn {
+  background: #4b3d31;
+  border-color: #4b3d31;
+  color: #fffaf3;
+}
+
+.client-command-actions .button-secondary.client-cmd-btn {
+  border-color: rgba(91, 72, 48, 0.11);
+  background: rgba(255, 253, 249, 0.86);
+  color: #3d332a;
+}
+
+.client-command-actions .button-primary.client-cmd-btn:hover {
+  background: #3a2f26;
+}
+
+.client-command-editing-note {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.client-cmd-see-all {
+  color: #74695f;
+  font-size: 11px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.client-cmd-see-all:hover {
+  color: var(--text);
+}
+
+.client-command-work-list {
+  display: grid;
+}
+
+.client-command-work-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.07);
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.client-command-work-row:last-child {
+  border-bottom: 0;
+}
+
+.client-command-work-row:hover {
+  background: rgba(255, 250, 243, 0.72);
+}
+
+.client-command-work-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.client-command-work-info strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 720;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-command-work-info span {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.client-command-work-date {
+  color: var(--muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Client Profile: responsive rules ─────────────────── */
+@media (max-width: 1180px) {
+  .client-record-snapshot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-record-body-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-record-command-panel {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .client-record-snapshot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-record-body-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-record-command-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
 .brand-link {
   display: inline-flex;
   align-items: center;
