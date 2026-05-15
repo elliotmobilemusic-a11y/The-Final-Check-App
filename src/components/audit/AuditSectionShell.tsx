@@ -27,8 +27,8 @@ export function AuditSectionShell({
   actions
 }: AuditSectionShellProps) {
   return (
-    <section className="audit-section-shell">
-      <aside className="audit-section-rail" aria-label={`${title} sections`}>
+    <section className="audit-section-shell profit-audit-section-shell">
+      <aside className="audit-section-rail profit-audit-section-nav" aria-label={`${title} sections`}>
         <div className="audit-section-rail-head">
           <strong>{title}</strong>
           {progressLabel ? <span>{progressLabel}</span> : null}
@@ -36,7 +36,7 @@ export function AuditSectionShell({
         <nav className="audit-section-rail-nav">
           {sections.map((section) => (
             <a
-              className={`audit-section-rail-link ${section.complete ? 'is-complete' : ''}`}
+              className={`audit-section-rail-link profit-audit-section-pill ${section.complete ? 'is-complete' : ''}`}
               href={section.href}
               key={section.href}
             >
@@ -46,8 +46,8 @@ export function AuditSectionShell({
         </nav>
       </aside>
 
-      <div className="audit-section-body">
-        <div className="audit-section-toolbar">
+      <div className="audit-section-body profit-audit-section-body">
+        <div className="audit-section-toolbar profit-audit-section-toolbar">
           <div>
             <h3>{title}</h3>
             {description ? <p>{description}</p> : null}

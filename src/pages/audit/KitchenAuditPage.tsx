@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ControlPanelModal } from '../../components/layout/ControlPanelModal';
 import {
   KitchenAuditControlsPanel,
@@ -24,7 +24,6 @@ import { downloadText, fmtCurrency, fmtPercent, safe } from '../../lib/utils';
 import { clearDraft, readDraft, writeDraft } from '../../services/draftStore';
 import { createKitchenAuditShare } from '../../services/reportShares';
 import { useBodyScrollLock } from '../../lib/useBodyScrollLock';
-import { PageIntro } from '../../components/layout/PageIntro';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import {
@@ -471,25 +470,37 @@ export function KitchenAuditPage() {
   }
 
   return (
-    <div className={`page-stack ${visitMode ? 'visit-mode' : ''}`}>
-      <PageIntro
-        eyebrow="Kitchen Profit Audit"
-        title={form.businessName || 'Kitchen Profit Audit'}
-        description="Quantify hidden profit, structure findings, and build a premium client-ready report."
-        actions={
-          <>
-            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
-              {visitMode ? 'Exit visit mode' : 'Visit mode'}
-            </button>
-            <button className="button button-secondary" onClick={newAudit}>
-              New audit
-            </button>
-            <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
-              {isSaving ? 'Saving...' : 'Save audit'}
-            </button>
-          </>
-        }
-      />
+    <div className={`page-stack profit-audit-tool-page ${visitMode ? 'visit-mode' : ''}`}>
+      <section className="profit-audit-tool-header">
+        <div className="profit-audit-tool-header-copy">
+          <span className="profit-audit-kicker">Profit Audit</span>
+          <h1>{form.businessName || 'Kitchen Profit Audit'}</h1>
+          <p>Quantify hidden profit, structure findings, and build a premium client-ready report.</p>
+          <div className="profit-audit-chip-row">
+            <span>{completion.percent}% complete</span>
+            <span>{message}</span>
+            {form.updatedAt ? <span>Last saved {new Date(form.updatedAt).toLocaleDateString('en-GB')}</span> : null}
+          </div>
+        </div>
+
+        <div className="profit-audit-tool-actions">
+          <Link className="button button-secondary" to="/audit-hub">
+            Back to audits
+          </Link>
+          <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+            {visitMode ? 'Exit visit mode' : 'Visit mode'}
+          </button>
+          <button className="button button-secondary" onClick={newAudit}>
+            New audit
+          </button>
+          <button className="button button-secondary" disabled={isSharing} onClick={downloadHtmlReport}>
+            Download report
+          </button>
+          <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+            {isSaving ? 'Saving...' : 'Save audit'}
+          </button>
+        </div>
+      </section>
 
       {visitMode ? (
         <section className="panel visit-mode-toolbar">
@@ -517,7 +528,7 @@ export function KitchenAuditPage() {
         </section>
       ) : null}
 
-      <section className="panel share-link-panel">
+      <section className="panel share-link-panel profit-audit-report-panel">
         <div className="panel-body">
           <div className="share-panel-status-row">
             <div className="share-panel-status">
@@ -547,7 +558,7 @@ export function KitchenAuditPage() {
         </div>
       </section>
 
-      <section className="stats-grid dashboard-stat-row" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+      <section className="stats-grid dashboard-stat-row profit-audit-tool-kpis">
         <StatCard
           label="Total weekly opportunity"
           value={fmtCurrency(calc.totalWeeklyOpportunity)}

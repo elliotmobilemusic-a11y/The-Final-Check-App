@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
-import { KITCHEN_AUDIT_DRAFT_KEY } from '../../features/audits/kitchenAuditHelpers';
+import { KITCHEN_AUDIT_DRAFT_KEY, calculateAudit } from '../../features/audits/kitchenAuditHelpers';
 import { listAudits } from '../../services/audits';
 import { listClients } from '../../services/clients';
 import { readDraft } from '../../services/draftStore';
 import { listQuestionnaireSubmissions } from '../../services/preVisitQuestionnaires';
+import { fmtCurrency } from '../../lib/utils';
 import type {
   AuditFormState,
   ClientRecord,
@@ -52,17 +52,33 @@ export function ProfitAuditHubPage() {
 
   const latestAudit = audits[0] ?? null;
   const pendingSubmissions = submissions.filter((s) => s.status !== 'used').slice(0, 4);
+  const totalOpportunity = audits.reduce(
+    (total, audit) => total + calculateAudit(audit.data).totalWeeklyOpportunity,
+    0
+  );
+  const auditedClientCount = new Set(audits.map((audit) => audit.client_id).filter(Boolean)).size;
 
   return (
-    <div className="page-stack">
-      <PageIntro
-        eyebrow="Profit Audit"
-        title="Kitchen Profit Audit"
-        description="Quantify hidden profit opportunity, structure findings, and build a premium client-ready report."
-        actions={
-          <div className="hub-intro-actions">
+    <div className="page-stack profit-audit-page">
+      <section className="profit-audit-hero">
+        <div className="profit-audit-hero-copy">
+          <span className="profit-audit-kicker">Profit Audit</span>
+          <h1>Kitchen Profit Audit</h1>
+          <p>
+            Assess margin leakage, kitchen controls, labour efficiency, purchasing, waste, and menu performance.
+          </p>
+          <div className="profit-audit-chip-row" aria-label="Profit audit status">
+            <span>{hasDraft ? '1 draft' : 'No drafts'}</span>
+            <span>{audits.length} completed audits</span>
+            <span>{audits.length} reports ready</span>
+          </div>
+        </div>
+
+        <div className="profit-audit-hero-actions">
+          <span>Audit actions</span>
+          <div className="profit-audit-hero-action-grid">
             <Link className="button button-primary" to="/audit?new=1">
-              New audit
+              New profit audit
             </Link>
             {hasDraft && (
               <Link className="button button-secondary" to="/audit">
@@ -75,14 +91,49 @@ export function ProfitAuditHubPage() {
               </Link>
             )}
           </div>
-        }
-      />
+        </div>
+      </section>
 
-      <div className="hub-layout">
+      <section className="profit-audit-kpis" aria-label="Profit audit performance">
+        <article className="profit-audit-kpi">
+          <span className="profit-audit-icon" aria-hidden="true">$</span>
+          <div>
+            <span>Active drafts</span>
+            <strong>{hasDraft ? '1' : '0'}</strong>
+            <p>{hasDraft ? 'Local draft ready to resume' : 'No local draft in progress'}</p>
+          </div>
+        </article>
+        <article className="profit-audit-kpi">
+          <span className="profit-audit-icon" aria-hidden="true">R</span>
+          <div>
+            <span>Completed reports</span>
+            <strong>{audits.length}</strong>
+            <p>{loading ? 'Checking saved audits' : 'Saved audit records'}</p>
+          </div>
+        </article>
+        <article className="profit-audit-kpi">
+          <span className="profit-audit-icon" aria-hidden="true">$</span>
+          <div>
+            <span>Total opportunity identified</span>
+            <strong>{fmtCurrency(totalOpportunity)}</strong>
+            <p>Weekly value across saved audits</p>
+          </div>
+        </article>
+        <article className="profit-audit-kpi">
+          <span className="profit-audit-icon" aria-hidden="true">C</span>
+          <div>
+            <span>Clients audited</span>
+            <strong>{auditedClientCount}</strong>
+            <p>{clients.length} clients available</p>
+          </div>
+        </article>
+      </section>
+
+      <div className="hub-layout profit-audit-grid">
         {/* ─── Main: recent audits ───────────────────────────── */}
-        <div className="hub-main-zone">
-          <section className="panel">
-            <div className="panel-header">
+        <div className="hub-main-zone profit-audit-main">
+          <section className="panel profit-audit-panel">
+            <div className="panel-header profit-audit-panel-header">
               <div>
                 <h3>Recent audits</h3>
                 <p className="muted-copy">
@@ -107,12 +158,12 @@ export function ProfitAuditHubPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="hub-row-list">
+                <div className="hub-row-list profit-audit-record-list">
                   {audits.slice(0, 12).map((audit) => (
                     <Link
                       key={audit.id}
                       to={`/audit?load=${audit.id}`}
-                      className="hub-row"
+                      className="hub-row profit-audit-record-card"
                     >
                       <div className="hub-row-main">
                         <strong className="hub-row-title">
@@ -123,8 +174,10 @@ export function ProfitAuditHubPage() {
                             {clientMap.get(audit.client_id)}
                           </span>
                         ) : null}
+                        <span className="soft-pill">Report ready</span>
                       </div>
                       <div className="hub-row-meta">
+                        <span>{fmtCurrency(calculateAudit(audit.data).totalWeeklyOpportunity)}</span>
                         <span className="hub-row-date">
                           {fmtDate(audit.updated_at ?? audit.created_at)}
                         </span>
@@ -139,10 +192,10 @@ export function ProfitAuditHubPage() {
         </div>
 
         {/* ─── Side: draft + clients + questionnaires ────────── */}
-        <div className="hub-side-zone">
+        <div className="hub-side-zone profit-audit-side">
           {hasDraft && (
-            <section className="panel hub-draft-panel">
-              <div className="panel-header">
+            <section className="panel hub-draft-panel profit-audit-panel">
+              <div className="panel-header profit-audit-panel-header">
                 <div>
                   <h3>Unsaved draft</h3>
                   <p className="muted-copy">Continue where you left off.</p>
@@ -165,8 +218,8 @@ export function ProfitAuditHubPage() {
             </section>
           )}
 
-          <section className="panel">
-            <div className="panel-header">
+          <section className="panel profit-audit-panel">
+            <div className="panel-header profit-audit-panel-header">
               <div>
                 <h3>Start for a client</h3>
                 <p className="muted-copy">Open a new audit with a client pre-linked.</p>
@@ -189,7 +242,7 @@ export function ProfitAuditHubPage() {
                       <Link
                         key={client.id}
                         to={`/audit?client=${client.id}&new=1`}
-                        className="hub-row hub-row--compact"
+                        className="hub-row hub-row--compact profit-audit-side-row"
                       >
                         <span className="hub-row-title">{client.company_name}</span>
                         <span className="hub-row-arrow" aria-hidden="true">→</span>
@@ -207,8 +260,8 @@ export function ProfitAuditHubPage() {
           </section>
 
           {!loading && (
-            <section className="panel">
-              <div className="panel-header">
+            <section className="panel profit-audit-panel">
+              <div className="panel-header profit-audit-panel-header">
                 <div>
                   <h3>Pre-visit questionnaires</h3>
                   <p className="muted-copy">Recent Profit Audit submissions ready to use.</p>

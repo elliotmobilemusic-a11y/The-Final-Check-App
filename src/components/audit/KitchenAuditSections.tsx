@@ -83,10 +83,10 @@ export function KitchenAuditWorkspaceSection({
   onUpdateActionItem
 }: KitchenAuditWorkspaceSectionProps) {
   return (
-    <section className="workspace-grid full-width">
-      <div className="workspace-main full-width">
-        <div className="panel">
-          <div className="panel-header">
+    <section className="workspace-grid full-width profit-audit-workspace">
+      <div className="workspace-main full-width profit-audit-workspace-main">
+        <div className="panel profit-audit-panel profit-audit-input-panel">
+          <div className="panel-header profit-audit-panel-header">
             <div>
               <h3>Profit audit input</h3>
               <p className="muted-copy">
@@ -103,7 +103,7 @@ export function KitchenAuditWorkspaceSection({
           >
             <div className="panel-body stack gap-20">
 
-            <section className="sub-panel" id="audit-site-details">
+            <section className="sub-panel profit-audit-form-card" id="audit-site-details">
               <h4>Site details</h4>
               <div className="form-grid">
                 <label className="field">
@@ -189,7 +189,7 @@ export function KitchenAuditWorkspaceSection({
               ) : null}
             </section>
 
-            <section className="sub-panel" id="audit-trading-profile">
+            <section className="sub-panel profit-audit-form-card" id="audit-trading-profile">
               <div className="sub-panel-header">
                 <h4>Trading and context profile</h4>
                 <span className="soft-pill">Visit context</span>
@@ -247,7 +247,7 @@ export function KitchenAuditWorkspaceSection({
               </div>
             </section>
 
-            <section className="sub-panel" id="audit-commercial">
+            <section className="sub-panel profit-audit-form-card" id="audit-commercial">
               <div className="sub-panel-header">
                 <h4>Commercial opportunity snapshot</h4>
                 <span className="soft-pill">Profit and control</span>
@@ -375,7 +375,7 @@ export function KitchenAuditWorkspaceSection({
               />
             </section>
 
-            <section className="sub-panel" id="audit-scorecard">
+            <section className="sub-panel profit-audit-form-card" id="audit-scorecard">
               <div className="sub-panel-header">
                 <h4>Operational scorecard</h4>
                 <span className="soft-pill">0 to 10 scoring</span>
@@ -403,7 +403,7 @@ export function KitchenAuditWorkspaceSection({
               </div>
             </section>
 
-            <section className="sub-panel" id="audit-controls">
+            <section className="sub-panel profit-audit-form-card" id="audit-controls">
               <div className="sub-panel-header">
                 <h4>Controls and evidence register</h4>
                 <div className="saved-actions">
@@ -464,7 +464,7 @@ export function KitchenAuditWorkspaceSection({
               />
             </section>
 
-            <section className="sub-panel" id="audit-observations">
+            <section className="sub-panel profit-audit-form-card" id="audit-observations">
               <div className="sub-panel-header">
                 <h4>Consultancy narrative</h4>
                 <span className="soft-pill">Quality and systems</span>
@@ -479,7 +479,7 @@ export function KitchenAuditWorkspaceSection({
               </div>
             </section>
 
-            <section className="sub-panel" id="audit-waste">
+            <section className="sub-panel profit-audit-form-card" id="audit-waste">
               <div className="sub-panel-header">
                 <h4>Where is money being lost?</h4>
                 <button className="button button-secondary" onClick={() => onAddRepeatItem('wasteItems')}>
@@ -528,7 +528,7 @@ export function KitchenAuditWorkspaceSection({
               />
             </section>
 
-            <section className="sub-panel" id="audit-portion">
+            <section className="sub-panel profit-audit-form-card" id="audit-portion">
               <div className="sub-panel-header">
                 <h4>Which dishes are over-portioning and costing profit?</h4>
                 <button className="button button-secondary" onClick={() => onAddRepeatItem('portionItems')}>
@@ -567,7 +567,7 @@ export function KitchenAuditWorkspaceSection({
               </div>
             </section>
 
-            <section className="sub-panel" id="audit-ordering">
+            <section className="sub-panel profit-audit-form-card" id="audit-ordering">
               <div className="sub-panel-header">
                 <h4>Where is ordering creating waste or inefficiency?</h4>
                 <button className="button button-secondary" onClick={() => onAddRepeatItem('orderingItems')}>
@@ -606,7 +606,7 @@ export function KitchenAuditWorkspaceSection({
               </div>
             </section>
 
-            <section className="sub-panel" id="audit-layout">
+            <section className="sub-panel profit-audit-form-card" id="audit-layout">
               <div className="sub-panel-header">
                 <h4>Kitchen layout review</h4>
                 <span className="soft-pill">Flow and efficiency</span>
@@ -631,7 +631,7 @@ export function KitchenAuditWorkspaceSection({
               />
             </section>
 
-            <section className="sub-panel" id="audit-actions">
+            <section className="sub-panel profit-audit-form-card" id="audit-actions">
               <div className="sub-panel-header">
                 <h4>Action planning and follow-up</h4>
                 <div className="saved-actions">

@@ -3378,6 +3378,1309 @@ input[type="radio"]:checked {
   }
 }
 
+/* PROFIT AUDIT - final Command Centre sibling override */
+.profit-audit-page .profit-audit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-page .profit-audit-panel,
+.profit-audit-tool-page .profit-audit-panel,
+.profit-audit-tool-page .profit-audit-form-card,
+.profit-audit-tool-page .profit-audit-section-nav,
+.profit-audit-page .profit-audit-record-card,
+.profit-audit-page .profit-audit-side-row {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-tool-page .profit-audit-section-shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-tool-page .profit-audit-section-pill {
+  min-height: 38px;
+  border: 1px solid rgba(91, 72, 48, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 253, 249, 0.68);
+  color: #4b4037;
+  font-size: 12px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.profit-audit-page,
+.profit-audit-tool-page {
+  gap: 18px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.profit-audit-hero,
+.profit-audit-tool-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px 28px;
+  padding: 24px 28px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 14px;
+  background: rgba(255, 250, 243, 0.74);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.05);
+}
+
+.profit-audit-hero h1,
+.profit-audit-tool-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(1.75rem, 2.1vw, 2.35rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+.profit-audit-hero p,
+.profit-audit-tool-header p {
+  max-width: 680px;
+  margin: 0;
+  color: #74695f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profit-audit-kicker {
+  color: #766657;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-hero-copy,
+.profit-audit-tool-header-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profit-audit-chip-row,
+.profit-audit-hero-action-grid,
+.profit-audit-tool-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profit-audit-tool-actions {
+  justify-content: flex-end;
+}
+
+.profit-audit-chip-row span {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #4b4037;
+  font-size: 10.5px;
+  font-weight: 720;
+  line-height: 1;
+}
+
+.profit-audit-hero-actions {
+  display: grid;
+  gap: 10px;
+  min-width: min(360px, 100%);
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 253, 249, 0.78);
+}
+
+.profit-audit-hero-actions > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-page .button,
+.profit-audit-tool-page .button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 720;
+  box-shadow: none;
+}
+
+.profit-audit-page .button-primary,
+.profit-audit-tool-page .button-primary {
+  background: #4b3d31;
+  border-color: #4b3d31;
+  color: #fffaf3;
+}
+
+.profit-audit-page .button-secondary,
+.profit-audit-page .button-ghost,
+.profit-audit-tool-page .button-secondary,
+.profit-audit-tool-page .button-ghost {
+  border-color: rgba(91, 72, 48, 0.11);
+  background: rgba(255, 253, 249, 0.86);
+  color: #3d332a;
+}
+
+.profit-audit-page .button:hover,
+.profit-audit-tool-page .button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.profit-audit-kpis,
+.profit-audit-tool-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profit-audit-tool-kpis {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.profit-audit-kpi,
+.profit-audit-tool-kpis .stat-card {
+  min-height: 100px;
+  padding: 18px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.profit-audit-tool-kpis .stat-card {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.profit-audit-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 50%;
+  background: #f3ebe2;
+  color: #5b4a3d;
+  font-size: 15px;
+  font-weight: 780;
+}
+
+.profit-audit-kpi span:not(.profit-audit-icon),
+.profit-audit-tool-kpis .stat-label {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-kpi strong,
+.profit-audit-tool-kpis .stat-value {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.profit-audit-kpi p {
+  margin: 5px 0 0;
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.profit-audit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-main,
+.profit-audit-side {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.profit-audit-panel,
+.profit-audit-tool-page .panel,
+.profit-audit-tool-page .sub-panel,
+.profit-audit-tool-page .repeat-card,
+.profit-audit-tool-page .photo-evidence-panel,
+.profit-audit-tool-page .audit-control-card,
+.profit-audit-tool-page .audit-score-card,
+.profit-audit-tool-page .audit-chip {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-panel-header,
+.profit-audit-tool-page .panel-header {
+  align-items: center;
+  padding: 18px 18px 8px;
+  border: 0;
+}
+
+.profit-audit-panel-header h3,
+.profit-audit-tool-page .panel-header h3,
+.profit-audit-tool-page .sub-panel h4,
+.profit-audit-tool-page .sub-panel-header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.profit-audit-panel .panel-body,
+.profit-audit-tool-page .panel-body {
+  padding: 18px;
+}
+
+.profit-audit-record-list,
+.profit-audit-page .hub-row-list {
+  display: grid;
+  gap: 10px;
+}
+
+.profit-audit-record-card,
+.profit-audit-side-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.profit-audit-record-card:hover,
+.profit-audit-side-row:hover {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  transform: none;
+}
+
+.profit-audit-page .hub-row-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.profit-audit-page .hub-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.profit-audit-page .hub-row-meta {
+  align-items: center;
+  color: #74695f;
+  font-size: 12px;
+}
+
+.profit-audit-page .hub-empty {
+  min-height: 148px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 22px 18px;
+  border: 1px dashed rgba(91, 72, 48, 0.13);
+  border-radius: 10px;
+  background: rgba(255, 250, 243, 0.52);
+  color: #756a60;
+  text-align: center;
+}
+
+.profit-audit-section-shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-section-nav {
+  position: sticky;
+  top: calc(var(--nav-offset, 0px) + 12px);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 250, 243, 0.72);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-tool-page .audit-section-rail-head {
+  display: grid;
+  gap: 4px;
+  padding: 0 2px 4px;
+}
+
+.profit-audit-tool-page .audit-section-rail-head strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.profit-audit-tool-page .audit-section-rail-head span {
+  color: #74695f;
+  font-size: 11px;
+}
+
+.profit-audit-tool-page .audit-section-rail-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.profit-audit-section-pill {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid rgba(91, 72, 48, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 253, 249, 0.68);
+  color: #4b4037;
+  font-size: 12px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.profit-audit-section-pill:hover,
+.profit-audit-section-pill:focus-visible {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  transform: none;
+}
+
+.profit-audit-section-pill.is-complete {
+  background: rgba(236, 246, 239, 0.78);
+  color: #3e6948;
+}
+
+.profit-audit-section-body {
+  min-width: 0;
+}
+
+.profit-audit-section-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 0 0 13px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.profit-audit-section-toolbar h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 780;
+}
+
+.profit-audit-section-toolbar p {
+  margin: 4px 0 0;
+  color: #766d64;
+  font-size: 11.5px;
+}
+
+.profit-audit-form-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255, 253, 249, 0.72) !important;
+}
+
+.profit-audit-tool-page .sub-panel-header,
+.profit-audit-tool-page .repeat-header,
+.profit-audit-tool-page .photo-evidence-top,
+.profit-audit-tool-page .audit-control-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.profit-audit-tool-page .form-grid {
+  gap: 12px;
+}
+
+.profit-audit-tool-page .field {
+  gap: 5px;
+}
+
+.profit-audit-tool-page .field > span,
+.profit-audit-tool-page .audit-score-card > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-tool-page .input {
+  min-height: 40px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.88);
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.profit-audit-tool-page textarea.input,
+.profit-audit-tool-page .textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.profit-audit-tool-page .input:focus {
+  border-color: rgba(155, 106, 50, 0.34);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(155, 106, 50, 0.12);
+  outline: none;
+}
+
+.profit-audit-tool-page .audit-chip-row,
+.profit-audit-tool-page .audit-score-grid,
+.profit-audit-tool-page .audit-control-grid,
+.profit-audit-tool-page .photo-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profit-audit-tool-page .audit-chip-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.profit-audit-tool-page .audit-chip,
+.profit-audit-tool-page .audit-score-card,
+.profit-audit-tool-page .audit-control-card,
+.profit-audit-tool-page .repeat-card,
+.profit-audit-tool-page .photo-evidence-card {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+}
+
+.profit-audit-tool-page .audit-chip strong,
+.profit-audit-tool-page .repeat-card strong,
+.profit-audit-tool-page .audit-control-card strong {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 780;
+}
+
+.profit-audit-tool-page .audit-chip span,
+.profit-audit-tool-page .muted-copy,
+.profit-audit-tool-page .photo-evidence-top p {
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.profit-audit-tool-page .photo-evidence-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 250, 243, 0.52);
+}
+
+.profit-audit-tool-page .photo-evidence-frame {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f7f2ec;
+}
+
+.profit-audit-tool-page .photo-evidence-frame img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.profit-audit-tool-page .status-pill,
+.profit-audit-tool-page .soft-pill,
+.profit-audit-page .soft-pill {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 760;
+  box-shadow: none;
+}
+
+.profit-audit-tool-page .control-dock-button {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.profit-audit-tool-page .control-dock-button:hover {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.profit-audit-tool-page.visit-mode .profit-audit-tool-kpis,
+.profit-audit-tool-page.visit-mode .profit-audit-report-panel {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .profit-audit-grid,
+  .profit-audit-section-shell,
+  .profit-audit-hero,
+  .profit-audit-tool-header {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-audit-hero-actions,
+  .profit-audit-tool-actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .profit-audit-kpis,
+  .profit-audit-tool-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profit-audit-section-nav {
+    position: static;
+  }
+
+  .profit-audit-tool-page .audit-section-rail-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .profit-audit-hero,
+  .profit-audit-tool-header {
+    padding: 20px 16px;
+  }
+
+  .profit-audit-kpis,
+  .profit-audit-tool-kpis,
+  .profit-audit-record-card,
+  .profit-audit-side-row,
+  .profit-audit-tool-page .audit-chip-row,
+  .profit-audit-tool-page .audit-score-grid,
+  .profit-audit-tool-page .audit-control-grid,
+  .profit-audit-tool-page .photo-evidence-grid,
+  .profit-audit-tool-page .audit-section-rail-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-audit-hero-action-grid,
+  .profit-audit-tool-actions,
+  .profit-audit-tool-page .sub-panel-header,
+  .profit-audit-tool-page .repeat-header,
+  .profit-audit-tool-page .photo-evidence-top,
+  .profit-audit-tool-page .audit-control-top,
+  .profit-audit-section-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profit-audit-page .button,
+  .profit-audit-tool-page .button,
+  .profit-audit-tool-page .share-link-row .button {
+    width: 100%;
+  }
+}
+
+/* PROFIT AUDIT - Command Centre sibling override */
+.profit-audit-page,
+.profit-audit-tool-page {
+  min-width: 0;
+  max-width: 100%;
+  gap: 18px;
+}
+
+.profit-audit-hero,
+.profit-audit-tool-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px 28px;
+  padding: 24px 28px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 14px;
+  background: rgba(255, 250, 243, 0.74);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.05);
+}
+
+.profit-audit-hero-copy,
+.profit-audit-tool-header-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profit-audit-kicker {
+  color: #766657;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-hero h1,
+.profit-audit-tool-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(1.75rem, 2.1vw, 2.35rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+.profit-audit-hero p,
+.profit-audit-tool-header p {
+  max-width: 680px;
+  margin: 0;
+  color: #74695f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profit-audit-chip-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.profit-audit-chip-row span {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #4b4037;
+  font-size: 10.5px;
+  font-weight: 720;
+  line-height: 1;
+}
+
+.profit-audit-hero-actions {
+  display: grid;
+  gap: 10px;
+  min-width: min(360px, 100%);
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 253, 249, 0.78);
+}
+
+.profit-audit-hero-actions > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-hero-action-grid,
+.profit-audit-tool-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profit-audit-page .button,
+.profit-audit-tool-page .button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 720;
+  box-shadow: none;
+}
+
+.profit-audit-page .button-primary,
+.profit-audit-tool-page .button-primary {
+  background: #4b3d31;
+  border-color: #4b3d31;
+  color: #fffaf3;
+}
+
+.profit-audit-page .button-secondary,
+.profit-audit-page .button-ghost,
+.profit-audit-tool-page .button-secondary,
+.profit-audit-tool-page .button-ghost {
+  border-color: rgba(91, 72, 48, 0.11);
+  background: rgba(255, 253, 249, 0.86);
+  color: #3d332a;
+}
+
+.profit-audit-page .button:hover,
+.profit-audit-tool-page .button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.profit-audit-kpis,
+.profit-audit-tool-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profit-audit-tool-kpis {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.profit-audit-kpi,
+.profit-audit-tool-kpis .stat-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 100px;
+  padding: 18px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-tool-kpis .stat-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: center;
+  gap: 4px;
+}
+
+.profit-audit-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 50%;
+  background: #f3ebe2;
+  color: #5b4a3d;
+  font-size: 15px;
+  font-weight: 780;
+}
+
+.profit-audit-kpi span:not(.profit-audit-icon),
+.profit-audit-tool-kpis .stat-label {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-kpi strong,
+.profit-audit-tool-kpis .stat-value {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.profit-audit-kpi p {
+  margin: 5px 0 0;
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.profit-audit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-main,
+.profit-audit-side {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.profit-audit-panel,
+.profit-audit-tool-page .panel,
+.profit-audit-tool-page .sub-panel,
+.profit-audit-tool-page .repeat-card,
+.profit-audit-tool-page .photo-evidence-panel,
+.profit-audit-tool-page .audit-control-card,
+.profit-audit-tool-page .audit-score-card,
+.profit-audit-tool-page .audit-chip {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-panel-header,
+.profit-audit-tool-page .panel-header {
+  align-items: center;
+  padding: 18px 18px 8px;
+  border: 0;
+}
+
+.profit-audit-panel-header h3,
+.profit-audit-tool-page .panel-header h3,
+.profit-audit-tool-page .sub-panel h4,
+.profit-audit-tool-page .sub-panel-header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.profit-audit-panel .panel-body,
+.profit-audit-tool-page .panel-body {
+  padding: 18px;
+}
+
+.profit-audit-record-list {
+  display: grid;
+  gap: 10px;
+}
+
+.profit-audit-record-card,
+.profit-audit-side-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.profit-audit-record-card:hover,
+.profit-audit-side-row:hover {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  transform: none;
+}
+
+.profit-audit-page .hub-row-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.profit-audit-page .hub-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.profit-audit-page .hub-row-meta {
+  align-items: center;
+  color: #74695f;
+  font-size: 12px;
+}
+
+.profit-audit-page .hub-empty {
+  min-height: 148px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 22px 18px;
+  border: 1px dashed rgba(91, 72, 48, 0.13);
+  border-radius: 10px;
+  background: rgba(255, 250, 243, 0.52);
+  color: #756a60;
+  text-align: center;
+}
+
+.profit-audit-tool-page .share-link-panel {
+  margin-top: 0;
+}
+
+.profit-audit-section-shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.profit-audit-section-nav {
+  position: sticky;
+  top: calc(var(--nav-offset, 0px) + 12px);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 250, 243, 0.72);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.profit-audit-tool-page .audit-section-rail-head {
+  display: grid;
+  gap: 4px;
+  padding: 0 2px 4px;
+}
+
+.profit-audit-tool-page .audit-section-rail-head strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.profit-audit-tool-page .audit-section-rail-head span {
+  color: #74695f;
+  font-size: 11px;
+}
+
+.profit-audit-tool-page .audit-section-rail-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.profit-audit-section-pill {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid rgba(91, 72, 48, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 253, 249, 0.68);
+  color: #4b4037;
+  font-size: 12px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.profit-audit-section-pill:hover,
+.profit-audit-section-pill:focus-visible {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  transform: none;
+}
+
+.profit-audit-section-pill.is-complete {
+  background: rgba(236, 246, 239, 0.78);
+  color: #3e6948;
+}
+
+.profit-audit-section-body {
+  min-width: 0;
+}
+
+.profit-audit-section-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding: 0 0 13px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.profit-audit-section-toolbar h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 780;
+}
+
+.profit-audit-section-toolbar p {
+  margin: 4px 0 0;
+  color: #766d64;
+  font-size: 11.5px;
+}
+
+.profit-audit-form-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  background: rgba(255, 253, 249, 0.72) !important;
+}
+
+.profit-audit-tool-page .sub-panel-header,
+.profit-audit-tool-page .repeat-header,
+.profit-audit-tool-page .photo-evidence-top,
+.profit-audit-tool-page .audit-control-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.profit-audit-tool-page .form-grid {
+  gap: 12px;
+}
+
+.profit-audit-tool-page .field {
+  gap: 5px;
+}
+
+.profit-audit-tool-page .field > span,
+.profit-audit-tool-page .audit-score-card > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.profit-audit-tool-page .input {
+  min-height: 40px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.88);
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.profit-audit-tool-page textarea.input,
+.profit-audit-tool-page .textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.profit-audit-tool-page .input:focus {
+  border-color: rgba(155, 106, 50, 0.34);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(155, 106, 50, 0.12);
+  outline: none;
+}
+
+.profit-audit-tool-page .audit-chip-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profit-audit-tool-page .audit-chip {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+}
+
+.profit-audit-tool-page .audit-chip strong,
+.profit-audit-tool-page .repeat-card strong,
+.profit-audit-tool-page .audit-control-card strong {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 780;
+}
+
+.profit-audit-tool-page .audit-chip span,
+.profit-audit-tool-page .muted-copy,
+.profit-audit-tool-page .photo-evidence-top p {
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.profit-audit-tool-page .audit-score-grid,
+.profit-audit-tool-page .audit-control-grid,
+.profit-audit-tool-page .photo-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profit-audit-tool-page .audit-score-card,
+.profit-audit-tool-page .audit-control-card,
+.profit-audit-tool-page .repeat-card,
+.profit-audit-tool-page .photo-evidence-card {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+}
+
+.profit-audit-tool-page .photo-evidence-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 250, 243, 0.52);
+}
+
+.profit-audit-tool-page .photo-evidence-frame {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f7f2ec;
+}
+
+.profit-audit-tool-page .photo-evidence-frame img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.profit-audit-tool-page .status-pill,
+.profit-audit-tool-page .soft-pill,
+.profit-audit-page .soft-pill {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 760;
+  box-shadow: none;
+}
+
+.profit-audit-tool-page .page-floating-controls {
+  gap: 8px;
+}
+
+.profit-audit-tool-page .control-dock-button {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.profit-audit-tool-page .control-dock-button:hover {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.profit-audit-tool-page.visit-mode .profit-audit-tool-header {
+  padding: 18px 20px;
+}
+
+.profit-audit-tool-page.visit-mode .profit-audit-tool-kpis,
+.profit-audit-tool-page.visit-mode .profit-audit-report-panel {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .profit-audit-grid,
+  .profit-audit-section-shell,
+  .profit-audit-hero,
+  .profit-audit-tool-header {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-audit-hero-actions,
+  .profit-audit-tool-actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .profit-audit-kpis,
+  .profit-audit-tool-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profit-audit-section-nav {
+    position: static;
+  }
+
+  .profit-audit-tool-page .audit-section-rail-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .profit-audit-hero,
+  .profit-audit-tool-header {
+    padding: 20px 16px;
+  }
+
+  .profit-audit-hero-action-grid,
+  .profit-audit-tool-actions,
+  .profit-audit-kpis,
+  .profit-audit-tool-kpis,
+  .profit-audit-record-card,
+  .profit-audit-side-row,
+  .profit-audit-tool-page .audit-chip-row,
+  .profit-audit-tool-page .audit-score-grid,
+  .profit-audit-tool-page .audit-control-grid,
+  .profit-audit-tool-page .photo-evidence-grid,
+  .profit-audit-tool-page .audit-section-rail-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-audit-hero-action-grid,
+  .profit-audit-tool-actions,
+  .profit-audit-tool-page .sub-panel-header,
+  .profit-audit-tool-page .repeat-header,
+  .profit-audit-tool-page .photo-evidence-top,
+  .profit-audit-tool-page .audit-control-top,
+  .profit-audit-section-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profit-audit-page .button,
+  .profit-audit-tool-page .button,
+  .profit-audit-tool-page .share-link-row .button {
+    width: 100%;
+  }
+}
+
 /* CLIENT PROFILE - Command Centre and Clients CRM sibling override */
 .client-record-page {
   padding-top: 6px;
