@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
-import { PageContainer, PageHeader } from '../../components/layout';
+import { PageContainer } from '../../components/layout';
 import { StatCard } from '../../components/ui/StatCard';
 import { useVisitMode } from '../../lib/useVisitMode';
 import { PhotoEvidenceField } from '../../components/common/PhotoEvidenceField';
@@ -812,32 +812,43 @@ export function FoodSafetyAuditPage() {
   }
 
   return (
-    <PageContainer size="wide" className={visitMode ? 'visit-mode' : ''}>
+    <PageContainer size="wide" className={`food-safety-tool-page ${visitMode ? 'visit-mode' : ''}`}>
       <div className="page-stack">
-        <PageHeader
-          eyebrow="Audit tool"
-          title="Food Safety Audit"
-          description="Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report."
-          actions={
-            <>
-              <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
-                {visitMode ? 'Exit visit mode' : 'Visit mode'}
-              </button>
-              <button className="button button-secondary" onClick={newAudit}>
-                New audit
-              </button>
-              <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
-                {isSaving ? 'Saving...' : 'Save audit'}
-              </button>
-              <button className="button button-secondary" onClick={handleExportPrint}>
-                Export PDF
-              </button>
-              <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
-                {isSharing ? 'Creating link...' : 'Create share link'}
-              </button>
-            </>
-          }
-        />
+        <section className="food-safety-tool-header">
+          <div className="food-safety-tool-header-copy">
+            <span className="food-safety-kicker">Food Safety</span>
+            <h1>{form.siteName || 'Food Safety Audit'}</h1>
+            <p>
+              Run a practical site food safety review with check registers, temperature evidence, immediate actions, and a printable follow-up report.
+            </p>
+            <div className="food-safety-chip-row">
+              <span>{calc.riskLabel}</span>
+              <span>{calc.completion}% compliance</span>
+              <span>{message}</span>
+            </div>
+          </div>
+
+          <div className="food-safety-tool-actions">
+            <Link className="button button-secondary" to="/food-safety-hub">
+              Back to audits
+            </Link>
+            <button className={`button ${visitMode ? 'button-primary' : 'button-secondary'}`} onClick={toggleVisitMode}>
+              {visitMode ? 'Exit visit mode' : 'Visit mode'}
+            </button>
+            <button className="button button-secondary" onClick={newAudit}>
+              New audit
+            </button>
+            <button className="button button-primary" disabled={isSaving} onClick={handleSave}>
+              {isSaving ? 'Saving...' : 'Save audit'}
+            </button>
+            <button className="button button-secondary" onClick={handleExportPrint}>
+              Export PDF
+            </button>
+            <button className="button button-secondary" disabled={isSharing} onClick={handleShareReport}>
+              {isSharing ? 'Creating link...' : 'Create share link'}
+            </button>
+          </div>
+        </section>
       {visitMode ? (
         <section className="panel visit-mode-toolbar">
           <div className="panel-body visit-mode-toolbar-body">
@@ -864,7 +875,7 @@ export function FoodSafetyAuditPage() {
         </section>
       ) : null}
 
-      <section className="panel share-link-panel">
+      <section className="panel share-link-panel food-safety-report-panel">
         <div className="panel-body stack gap-12">
           <div className="record-header-message">
             <span className="soft-pill">{message}</span>
@@ -895,16 +906,31 @@ export function FoodSafetyAuditPage() {
         </div>
       </section>
 
-      <section className="stats-grid compact">
+      <section className="stats-grid compact food-safety-tool-kpis">
         <StatCard label="Pass" value={String(calc.passCount)} hint="Checks marked as compliant" />
         <StatCard label="Watch" value={String(calc.watchCount)} hint="Needs monitoring or follow-up" />
         <StatCard label="Fail" value={String(calc.failCount)} hint="Immediate action needed" />
+        <StatCard label="Compliance" value={`${calc.completion}%`} hint={calc.riskLabel} />
       </section>
 
-      <section>
-        <div>
-          <article className="panel" id="food-safety-site">
-            <div className="panel-header">
+      <section className="food-safety-workspace">
+        <aside className="food-safety-section-nav" aria-label="Food safety sections">
+          <div className="food-safety-section-nav-head">
+            <strong>Audit sections</strong>
+            <span>{foodSafetyVisitSections.length} sections</span>
+          </div>
+          <nav>
+            {foodSafetyVisitSections.map((section) => (
+              <a className="food-safety-section-pill" href={section.href} key={section.href}>
+                {section.label}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="food-safety-workspace-main">
+          <article className="panel food-safety-form-card" id="food-safety-site">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Site details</h3>
                 <p className="muted-copy">Capture the core context before reviewing food safety controls.</p>
@@ -1007,8 +1033,8 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel" id="food-safety-checks">
-            <div className="panel-header">
+          <article className="panel food-safety-form-card" id="food-safety-checks">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Control checks</h3>
                 <p className="muted-copy">Mark each key control as pass, watch, fail, or not applicable.</p>
@@ -1045,8 +1071,8 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel" id="food-safety-temperature">
-            <div className="panel-header">
+          <article className="panel food-safety-form-card" id="food-safety-temperature">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Temperature log</h3>
                 <p className="muted-copy">Record every key fridge, freezer, delivery, cooking, cooling, and hot-hold reading during the visit.</p>
@@ -1099,8 +1125,8 @@ export function FoodSafetyAuditPage() {
             </div>
           </article>
 
-          <article className="panel" id="food-safety-summary">
-            <div className="panel-header">
+          <article className="panel food-safety-form-card" id="food-safety-summary">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Summary and actions</h3>
                 <p className="muted-copy">Capture what is working, what is unsafe, and what must happen next.</p>
@@ -1126,8 +1152,8 @@ export function FoodSafetyAuditPage() {
                 </label>
               </div>
 
-              <div className="panel">
-                <div className="panel-header">
+              <div className="panel food-safety-nested-panel">
+                <div className="panel-header food-safety-panel-header">
                   <div>
                     <h3>Area summaries and action plans</h3>
                     <p className="muted-copy">Add focused area-by-area summaries and next steps for the kitchen team.</p>
@@ -1280,7 +1306,7 @@ export function FoodSafetyAuditPage() {
 
         <div className="page-floating-controls">
           <button className="button button-primary control-dock-button" onClick={() => setControlModalOpen(true)}>
-            📊 Audit Controls
+            Audit Controls
           </button>
         </div>
 

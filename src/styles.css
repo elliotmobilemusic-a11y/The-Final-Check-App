@@ -3378,6 +3378,583 @@ input[type="radio"]:checked {
   }
 }
 
+/* FOOD SAFETY - final Command Centre sibling override */
+.food-safety-page,
+.food-safety-tool-page {
+  gap: 18px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.food-safety-hero,
+.food-safety-tool-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px 28px;
+  padding: 24px 28px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 14px;
+  background: rgba(255, 250, 243, 0.74);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.05);
+}
+
+.food-safety-hero-copy,
+.food-safety-tool-header-copy {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.food-safety-kicker {
+  color: #766657;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.food-safety-hero h1,
+.food-safety-tool-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(1.75rem, 2.1vw, 2.35rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+.food-safety-hero p,
+.food-safety-tool-header p {
+  max-width: 720px;
+  margin: 0;
+  color: #74695f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.food-safety-chip-row,
+.food-safety-hero-action-grid,
+.food-safety-tool-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.food-safety-tool-actions {
+  justify-content: flex-end;
+}
+
+.food-safety-chip-row span {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: #4b4037;
+  font-size: 10.5px;
+  font-weight: 720;
+  line-height: 1;
+}
+
+.food-safety-hero-actions {
+  display: grid;
+  gap: 10px;
+  min-width: min(380px, 100%);
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 253, 249, 0.78);
+}
+
+.food-safety-hero-actions > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.food-safety-page .button,
+.food-safety-tool-page .button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 720;
+  box-shadow: none;
+}
+
+.food-safety-page .button-primary,
+.food-safety-tool-page .button-primary {
+  background: #4b3d31;
+  border-color: #4b3d31;
+  color: #fffaf3;
+}
+
+.food-safety-page .button-secondary,
+.food-safety-page .button-ghost,
+.food-safety-tool-page .button-secondary,
+.food-safety-tool-page .button-ghost {
+  border-color: rgba(91, 72, 48, 0.11);
+  background: rgba(255, 253, 249, 0.86);
+  color: #3d332a;
+}
+
+.food-safety-page .button:hover,
+.food-safety-tool-page .button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.food-safety-kpis,
+.food-safety-tool-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.food-safety-kpi,
+.food-safety-tool-kpis .stat-card {
+  min-height: 100px;
+  padding: 18px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.food-safety-kpi {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.food-safety-tool-kpis .stat-card {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+
+.food-safety-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 50%;
+  background: #f3ebe2;
+  color: #5b4a3d;
+  font-size: 15px;
+  font-weight: 780;
+}
+
+.food-safety-kpi span:not(.food-safety-icon),
+.food-safety-tool-kpis .stat-label {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.food-safety-kpi strong,
+.food-safety-tool-kpis .stat-value {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: clamp(1.45rem, 1.8vw, 2rem);
+  font-weight: 820;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.food-safety-kpi p {
+  margin: 5px 0 0;
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.food-safety-grid,
+.food-safety-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.food-safety-workspace {
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+}
+
+.food-safety-main,
+.food-safety-side,
+.food-safety-workspace-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.food-safety-panel,
+.food-safety-tool-page .panel,
+.food-safety-tool-page .food-safety-form-card,
+.food-safety-tool-page .repeat-card,
+.food-safety-tool-page .photo-evidence-panel,
+.food-safety-tool-page .tool-check-row,
+.food-safety-tool-page .tool-temp-row {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.food-safety-panel-header,
+.food-safety-tool-page .panel-header {
+  align-items: center;
+  padding: 18px 18px 8px;
+  border: 0;
+}
+
+.food-safety-panel-header h3,
+.food-safety-tool-page .panel-header h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.food-safety-panel .panel-body,
+.food-safety-tool-page .panel-body {
+  padding: 18px;
+}
+
+.food-safety-record-list,
+.food-safety-page .hub-row-list {
+  display: grid;
+  gap: 10px;
+}
+
+.food-safety-record-card,
+.food-safety-side-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+.food-safety-record-card:hover,
+.food-safety-side-row:hover {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  transform: none;
+}
+
+.food-safety-page .hub-row-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.food-safety-page .hub-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.food-safety-page .hub-row-meta {
+  align-items: center;
+  color: #74695f;
+  font-size: 12px;
+}
+
+.food-safety-page .hub-empty {
+  min-height: 148px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 22px 18px;
+  border: 1px dashed rgba(91, 72, 48, 0.13);
+  border-radius: 10px;
+  background: rgba(255, 250, 243, 0.52);
+  color: #756a60;
+  text-align: center;
+}
+
+.food-safety-section-nav {
+  position: sticky;
+  top: calc(var(--nav-offset, 0px) + 12px);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 250, 243, 0.72);
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.04);
+}
+
+.food-safety-section-nav-head {
+  display: grid;
+  gap: 4px;
+  padding: 0 2px 4px;
+}
+
+.food-safety-section-nav-head strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.food-safety-section-nav-head span {
+  color: #74695f;
+  font-size: 11px;
+}
+
+.food-safety-section-nav nav {
+  display: grid;
+  gap: 7px;
+}
+
+.food-safety-section-pill {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid rgba(91, 72, 48, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 253, 249, 0.68);
+  color: #4b4037;
+  font-size: 12px;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.food-safety-section-pill:hover,
+.food-safety-section-pill:focus-visible {
+  border-color: rgba(91, 72, 48, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  transform: none;
+}
+
+.food-safety-form-card {
+  display: grid;
+  gap: 14px;
+  background: rgba(255, 253, 249, 0.72) !important;
+}
+
+.food-safety-tool-page .form-grid {
+  gap: 12px;
+}
+
+.food-safety-tool-page .field {
+  gap: 5px;
+}
+
+.food-safety-tool-page .field > span {
+  color: #74695f;
+  font-size: 8.5px;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.food-safety-tool-page .input {
+  min-height: 40px;
+  border: 1px solid rgba(91, 72, 48, 0.11);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.88);
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.food-safety-tool-page textarea.input,
+.food-safety-tool-page .textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.food-safety-tool-page .input:focus {
+  border-color: rgba(155, 106, 50, 0.34);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(155, 106, 50, 0.12);
+  outline: none;
+}
+
+.food-safety-tool-page .tool-check-row,
+.food-safety-tool-page .tool-temp-row,
+.food-safety-tool-page .repeat-card {
+  padding: 14px;
+  background: rgba(255, 253, 249, 0.74);
+}
+
+.food-safety-tool-page .tool-check-row,
+.food-safety-tool-page .tool-check-controls,
+.food-safety-tool-page .tool-temp-row {
+  gap: 10px;
+}
+
+.food-safety-tool-page .tool-check-copy strong,
+.food-safety-tool-page .repeat-card strong {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 780;
+}
+
+.food-safety-tool-page .tool-check-copy span,
+.food-safety-tool-page .muted-copy,
+.food-safety-tool-page .photo-evidence-top p {
+  color: #776d64;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.food-safety-tool-page .photo-evidence-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 250, 243, 0.52);
+}
+
+.food-safety-tool-page .photo-evidence-top,
+.food-safety-tool-page .repeat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.08);
+}
+
+.food-safety-tool-page .photo-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.food-safety-tool-page .photo-evidence-card {
+  padding: 14px;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.74);
+}
+
+.food-safety-tool-page .photo-evidence-frame {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f7f2ec;
+}
+
+.food-safety-tool-page .photo-evidence-frame img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.food-safety-tool-page .status-pill,
+.food-safety-tool-page .soft-pill,
+.food-safety-page .soft-pill {
+  border: 1px solid rgba(91, 72, 48, 0.10);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 760;
+  box-shadow: none;
+}
+
+.food-safety-tool-page .control-dock-button {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.food-safety-tool-page .control-dock-button:hover {
+  transform: none;
+  box-shadow: 0 1px 2px rgba(44, 34, 24, 0.08);
+}
+
+.food-safety-tool-page.visit-mode .food-safety-tool-kpis,
+.food-safety-tool-page.visit-mode .food-safety-report-panel {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .food-safety-grid,
+  .food-safety-workspace,
+  .food-safety-hero,
+  .food-safety-tool-header {
+    grid-template-columns: 1fr;
+  }
+
+  .food-safety-hero-actions,
+  .food-safety-tool-actions {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .food-safety-kpis,
+  .food-safety-tool-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .food-safety-section-nav {
+    position: static;
+  }
+
+  .food-safety-section-nav nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .food-safety-hero,
+  .food-safety-tool-header {
+    padding: 20px 16px;
+  }
+
+  .food-safety-kpis,
+  .food-safety-tool-kpis,
+  .food-safety-record-card,
+  .food-safety-side-row,
+  .food-safety-section-nav nav,
+  .food-safety-tool-page .tool-check-controls,
+  .food-safety-tool-page .tool-temp-row,
+  .food-safety-tool-page .photo-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .food-safety-hero-action-grid,
+  .food-safety-tool-actions,
+  .food-safety-tool-page .photo-evidence-top,
+  .food-safety-tool-page .repeat-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .food-safety-page .button,
+  .food-safety-tool-page .button,
+  .food-safety-tool-page .share-link-row .button {
+    width: 100%;
+  }
+}
+
 /* PROFIT AUDIT - final Command Centre sibling override */
 .profit-audit-page .profit-audit-grid {
   display: grid;
@@ -20973,5 +21550,43 @@ textarea:focus-visible {
 
   .clients-account-card {
     padding: 14px;
+  }
+}
+/* FOOD SAFETY - true final cascade guard */
+.food-safety-page .food-safety-grid,
+.food-safety-tool-page .food-safety-workspace {
+  display: grid;
+}
+
+.food-safety-page .food-safety-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.65fr);
+}
+
+.food-safety-tool-page .food-safety-workspace {
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+}
+
+.food-safety-tool-page .food-safety-tool-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1180px) {
+  .food-safety-page .food-safety-grid,
+  .food-safety-tool-page .food-safety-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .food-safety-tool-page .food-safety-tool-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .food-safety-page .food-safety-grid,
+  .food-safety-tool-page .food-safety-workspace,
+  .food-safety-tool-page .food-safety-tool-kpis {
+    grid-template-columns: 1fr;
   }
 }

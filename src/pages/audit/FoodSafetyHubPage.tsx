@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PageIntro } from '../../components/layout/PageIntro';
 import { listClients } from '../../services/clients';
 import { readDraft } from '../../services/draftStore';
 import { listFoodSafetyAudits } from '../../services/foodSafetyAudits';
@@ -17,6 +16,14 @@ function fmtDate(iso?: string | null) {
     month: 'short',
     year: 'numeric'
   });
+}
+
+function scoreFoodSafetyAudit(state: FoodSafetyAuditState) {
+  const activeChecks = (state.checks ?? []).filter((item) => item.status !== 'N/A');
+  const passCount = activeChecks.filter((item) => item.status === 'Pass').length;
+  const failCount = activeChecks.filter((item) => item.status === 'Fail').length;
+  const score = activeChecks.length > 0 ? Math.round((passCount / activeChecks.length) * 100) : 0;
+  return { failCount, score };
 }
 
 export function FoodSafetyHubPage() {
@@ -49,17 +56,33 @@ export function FoodSafetyHubPage() {
 
   const latestAudit = audits[0] ?? null;
   const pendingSubmissions = submissions.filter((s) => s.status !== 'used').slice(0, 4);
+  const sitesReviewed = new Set(audits.map((audit) => audit.client_site_id || audit.site_name || audit.id)).size;
+  const averageScore = audits.length
+    ? Math.round(audits.reduce((total, audit) => total + scoreFoodSafetyAudit(audit.data).score, 0) / audits.length)
+    : 0;
 
   return (
-    <div className="page-stack">
-      <PageIntro
-        eyebrow="Food Safety"
-        title="Food Safety Audit"
-        description="Run site compliance checks, temperature logging, control reviews, and immediate action follow-up."
-        actions={
-          <div className="hub-intro-actions">
+    <div className="page-stack food-safety-page">
+      <section className="food-safety-hero">
+        <div className="food-safety-hero-copy">
+          <span className="food-safety-kicker">Food Safety</span>
+          <h1>Food Safety Audit</h1>
+          <p>
+            Review hygiene standards, compliance controls, evidence, corrective actions, and site readiness.
+          </p>
+          <div className="food-safety-chip-row" aria-label="Food safety status">
+            <span>{hasDraft ? '1 draft' : 'No drafts'}</span>
+            <span>{audits.length} completed audits</span>
+            <span>{audits.length} reports ready</span>
+            <span>{sitesReviewed} sites reviewed</span>
+          </div>
+        </div>
+
+        <div className="food-safety-hero-actions">
+          <span>Compliance actions</span>
+          <div className="food-safety-hero-action-grid">
             <Link className="button button-primary" to="/food-safety?new=1">
-              New audit
+              New food safety audit
             </Link>
             {hasDraft && (
               <Link className="button button-secondary" to="/food-safety">
@@ -72,14 +95,49 @@ export function FoodSafetyHubPage() {
               </Link>
             )}
           </div>
-        }
-      />
+        </div>
+      </section>
 
-      <div className="hub-layout">
+      <section className="food-safety-kpis" aria-label="Food safety performance">
+        <article className="food-safety-kpi">
+          <span className="food-safety-icon" aria-hidden="true">D</span>
+          <div>
+            <span>Active drafts</span>
+            <strong>{hasDraft ? '1' : '0'}</strong>
+            <p>{hasDraft ? 'Local draft ready to resume' : 'No local draft in progress'}</p>
+          </div>
+        </article>
+        <article className="food-safety-kpi">
+          <span className="food-safety-icon" aria-hidden="true">R</span>
+          <div>
+            <span>Completed reports</span>
+            <strong>{audits.length}</strong>
+            <p>{loading ? 'Checking saved audits' : 'Saved audit records'}</p>
+          </div>
+        </article>
+        <article className="food-safety-kpi">
+          <span className="food-safety-icon" aria-hidden="true">S</span>
+          <div>
+            <span>Sites reviewed</span>
+            <strong>{sitesReviewed}</strong>
+            <p>{clients.length} clients available</p>
+          </div>
+        </article>
+        <article className="food-safety-kpi">
+          <span className="food-safety-icon" aria-hidden="true">%</span>
+          <div>
+            <span>Average compliance</span>
+            <strong>{averageScore}%</strong>
+            <p>{audits.length ? 'Average pass rate' : 'No scored audits yet'}</p>
+          </div>
+        </article>
+      </section>
+
+      <div className="hub-layout food-safety-grid">
         {/* ─── Main: recent audits ───────────────────────────── */}
-        <div className="hub-main-zone">
-          <section className="panel">
-            <div className="panel-header">
+        <div className="hub-main-zone food-safety-main">
+          <section className="panel food-safety-panel">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Recent audits</h3>
                 <p className="muted-copy">
@@ -104,12 +162,12 @@ export function FoodSafetyHubPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="hub-row-list">
+                <div className="hub-row-list food-safety-record-list">
                   {audits.slice(0, 12).map((audit) => (
                     <Link
                       key={audit.id}
                       to={`/food-safety?load=${audit.id}`}
-                      className="hub-row"
+                      className="hub-row food-safety-record-card"
                     >
                       <div className="hub-row-main">
                         <strong className="hub-row-title">
@@ -120,8 +178,11 @@ export function FoodSafetyHubPage() {
                             {clientMap.get(audit.client_id)}
                           </span>
                         ) : null}
+                        <span className="soft-pill">Report ready</span>
                       </div>
                       <div className="hub-row-meta">
+                        <span>{scoreFoodSafetyAudit(audit.data).score}%</span>
+                        <span>{scoreFoodSafetyAudit(audit.data).failCount} fail</span>
                         <span className="hub-row-date">
                           {fmtDate(audit.review_date ?? audit.updated_at ?? audit.created_at)}
                         </span>
@@ -136,10 +197,10 @@ export function FoodSafetyHubPage() {
         </div>
 
         {/* ─── Side: draft + clients + questionnaires ────────── */}
-        <div className="hub-side-zone">
+        <div className="hub-side-zone food-safety-side">
           {hasDraft && (
-            <section className="panel hub-draft-panel">
-              <div className="panel-header">
+            <section className="panel hub-draft-panel food-safety-panel">
+              <div className="panel-header food-safety-panel-header">
                 <div>
                   <h3>Unsaved draft</h3>
                   <p className="muted-copy">Continue where you left off.</p>
@@ -162,8 +223,8 @@ export function FoodSafetyHubPage() {
             </section>
           )}
 
-          <section className="panel">
-            <div className="panel-header">
+          <section className="panel food-safety-panel">
+            <div className="panel-header food-safety-panel-header">
               <div>
                 <h3>Start for a client</h3>
                 <p className="muted-copy">Open a new audit with a client pre-linked.</p>
@@ -186,7 +247,7 @@ export function FoodSafetyHubPage() {
                       <Link
                         key={client.id}
                         to={`/food-safety?client=${client.id}&new=1`}
-                        className="hub-row hub-row--compact"
+                        className="hub-row hub-row--compact food-safety-side-row"
                       >
                         <span className="hub-row-title">{client.company_name}</span>
                         <span className="hub-row-arrow" aria-hidden="true">→</span>
@@ -204,8 +265,8 @@ export function FoodSafetyHubPage() {
           </section>
 
           {!loading && (
-            <section className="panel">
-              <div className="panel-header">
+            <section className="panel food-safety-panel">
+              <div className="panel-header food-safety-panel-header">
                 <div>
                   <h3>Pre-visit questionnaires</h3>
                   <p className="muted-copy">Recent Food Safety submissions ready to use.</p>
