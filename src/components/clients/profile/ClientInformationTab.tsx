@@ -64,8 +64,8 @@ export function ClientInformationTab({
   );
 
   return (
-    <div className="client-tab-layout">
-      <SectionCard>
+    <div className="client-tab-layout client-record-tab-layout client-record-information-tab">
+      <SectionCard className="client-record-section client-record-business-section">
         <SectionHeader
           title="Business overview"
           description="The master record for who this client is, how they operate, and how billing is set up."
@@ -248,7 +248,7 @@ export function ClientInformationTab({
         </details>
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-contacts-section">
         <SectionHeader
           title="Contacts"
           description="The people Jason needs to reach quickly: primary, finance, operations, then everyone else."
@@ -260,7 +260,7 @@ export function ClientInformationTab({
         />
 
         <div className="client-relationship-grid">
-          <article className="client-info-block">
+          <article className="client-info-block client-record-contact-card">
             <h3>Primary contact</h3>
             {primaryContact ? (
               <div className="client-form-grid">
@@ -302,7 +302,7 @@ export function ClientInformationTab({
             )}
           </article>
 
-          <article className="client-info-block">
+          <article className="client-info-block client-record-contact-card">
             <h3>Finance contact</h3>
             {financeContacts.length === 0 ? (
               <div className="dashboard-empty">No finance contact assigned.</div>
@@ -318,7 +318,7 @@ export function ClientInformationTab({
             )}
           </article>
 
-          <article className="client-info-block">
+          <article className="client-info-block client-record-contact-card">
             <h3>Operations contact</h3>
             {operationsContacts.length === 0 ? (
               <div className="dashboard-empty">No operations contact assigned.</div>
@@ -337,7 +337,7 @@ export function ClientInformationTab({
 
         <div className="stack gap-12">
           {additionalContacts.map((contact) => (
-            <div className="client-inline-record" key={contact.id}>
+            <div className="client-inline-record client-record-contact-card" key={contact.id}>
               <div className="client-form-grid">
                 <FieldGroup label="Name">
                   <input
@@ -404,7 +404,7 @@ export function ClientInformationTab({
         </div>
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-sites-section">
         <SectionHeader
           title="Sites / locations"
           description="Sites stay together here so the work tab can stay focused on delivery and value."
@@ -415,9 +415,9 @@ export function ClientInformationTab({
           ) : null}
         />
 
-        <div className="stack gap-12">
+        <div className="stack gap-12 client-record-site-list">
           {client.data.sites.map((site) => (
-            <article className="client-inline-record" id={`site-${site.id}`} key={site.id}>
+            <article className="client-inline-record client-record-site-card" id={`site-${site.id}`} key={site.id}>
               <div className="client-inline-record-top">
                 <div>
                   <strong>{site.name || 'Unnamed site'}</strong>
@@ -496,7 +496,7 @@ export function ClientInformationTab({
         </div>
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-notes-section">
         <SectionHeader
           title="Background / account notes"
           description="Operational context, pain points, history, and internal relationship notes in one place."

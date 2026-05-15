@@ -103,9 +103,9 @@ export function ClientPortalTab({
   ];
 
   return (
-    <div className="client-tab-layout">
+    <div className="client-tab-layout client-record-tab-layout client-record-portal-tab">
       {/* Portal status */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-portal-section">
         <SectionHeader
           title="Client portal"
           description="Release controls, portal copy, and the exact items the client can see."
@@ -180,7 +180,7 @@ export function ClientPortalTab({
       </SectionCard>
 
       {/* Portal copy */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-portal-copy-section">
         <SectionHeader
           title="Portal copy"
           description="Keep the client-facing message controlled from one place."
@@ -214,7 +214,7 @@ export function ClientPortalTab({
       </SectionCard>
 
       {/* Visibility controls */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-visibility-section">
         <SectionHeader
           title="Visibility controls"
           description="Choose which categories are visible before you publish the next portal update."
@@ -249,12 +249,13 @@ export function ClientPortalTab({
       </SectionCard>
 
       {/* Shared items */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-shared-items-section">
         <SectionHeader
           title="Shared items"
           description="Per-item control for the resources that can appear in the client portal."
         />
         <DataTable
+          className="client-record-table"
           columns={sharedItemColumns}
           data={sharedItems}
           keyExtractor={(item) => item.id}

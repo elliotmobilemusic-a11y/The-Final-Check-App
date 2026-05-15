@@ -17,7 +17,7 @@ export function ClientProfileTabNav({
   ];
 
   return (
-    <nav className="client-profile-tab-nav" aria-label="Client profile sections">
+    <nav className="client-profile-tab-nav client-record-tabs" aria-label="Client profile sections">
       {tabs.map((tab) => (
         <NavLink
           key={tab.id}

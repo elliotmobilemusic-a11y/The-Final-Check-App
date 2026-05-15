@@ -368,11 +368,11 @@ export function ClientPricingTab({
   ];
 
   return (
-    <div className="client-tab-layout client-pricing-layout">
+    <div className="client-tab-layout client-pricing-layout client-record-tab-layout client-record-pricing-tab">
 
       {/* Commercial summary — only shown when there is data */}
       {(quotes.length > 0 || invoices.length > 0) && (
-        <SectionCard padding="compact">
+        <SectionCard padding="compact" className="client-record-section client-record-pricing-summary">
           <div className="stats-grid">
             <StatCard
               label="Active quotes"
@@ -405,7 +405,7 @@ export function ClientPricingTab({
       )}
 
       {/* Saved quotes */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-quotes-section">
         <SectionHeader
           title="Saved quotes"
           description="All quotes for this client. Convert to an invoice when a quote is accepted."
@@ -426,6 +426,7 @@ export function ClientPricingTab({
           }
         />
         <DataTable
+          className="client-record-table"
           columns={quoteColumns}
           data={quotes}
           keyExtractor={(q) => q.quoteId}
@@ -439,7 +440,7 @@ export function ClientPricingTab({
       </SectionCard>
 
       {/* Invoices */}
-      <SectionCard>
+      <SectionCard className="client-record-section client-record-invoices-section">
         <SectionHeader
           title="Invoices"
           description="Drafts, sent invoices, outstanding balances, and payment records."
@@ -456,6 +457,7 @@ export function ClientPricingTab({
           }
         />
         <DataTable
+          className="client-record-table"
           columns={invoiceColumns}
           data={invoices}
           keyExtractor={(inv) => inv.id}
@@ -470,7 +472,7 @@ export function ClientPricingTab({
 
       {/* Invoice editor */}
       {selectedInvoice ? (
-        <SectionCard>
+        <SectionCard className="client-record-section client-record-invoice-editor-section">
           <SectionHeader
             title="Invoice editor"
             description="Use the page save action to keep edits to the selected invoice."

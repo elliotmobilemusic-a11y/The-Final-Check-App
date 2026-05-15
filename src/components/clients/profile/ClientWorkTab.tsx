@@ -88,8 +88,8 @@ export function ClientWorkTab({
   );
 
   return (
-    <div className="client-tab-layout">
-      <SectionCard>
+    <div className="client-tab-layout client-record-tab-layout client-record-work-tab">
+      <SectionCard className="client-record-section client-record-work-section">
         <SectionHeader
           title="Work & services"
           description="One delivery view for active audits, compliance, mystery shops, menu projects, dish specs, recipe costings, and service jobs."
@@ -100,7 +100,7 @@ export function ClientWorkTab({
           }
         />
 
-        <ActionRow align="start" gap="default">
+        <ActionRow align="start" gap="default" className="client-record-actions-row">
           <Link className="button button-secondary" to={`/audit`}>
             New operational audit
           </Link>
@@ -129,6 +129,7 @@ export function ClientWorkTab({
         </div>
 
         <DataTable<ClientWorkItem>
+          className="client-record-table"
           columns={[
             {
               key: 'itemType',

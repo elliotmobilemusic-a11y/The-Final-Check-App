@@ -1614,8 +1614,8 @@ export function ClientProfilePage() {
   }
 
   return (
-    <PageContainer size="wide">
-      <main className="client-profile-page-simplified">
+    <PageContainer size="wide" className="client-record-page">
+      <main className="client-profile-page-simplified client-record-page-shell">
         <div className="client-profile-shell">
           <ClientProfileHeader
             companyName={activeForm.companyName}
@@ -1639,6 +1639,7 @@ export function ClientProfilePage() {
 
           <ClientProfileTabNav clientId={clientId} activeTab={activeTab} />
 
+        <div className="client-record-tab-content">
         {activeTab === 'information' ? (
           <ClientInformationTab
             client={activeForm}
@@ -1750,6 +1751,7 @@ export function ClientProfilePage() {
             onExportQuotePdf={exportQuotePdf}
           />
         ) : null}
+        </div>
         </div>
       </main>
 

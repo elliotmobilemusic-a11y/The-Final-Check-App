@@ -45,9 +45,9 @@ export function ClientProfileHeader({
   onOpenPortal
 }: ClientProfileHeaderProps) {
   return (
-    <header className="client-profile-header">
-      <div className="client-profile-header-content">
-        <div className="client-profile-header-identity">
+    <header className="client-profile-header client-record-header">
+      <div className="client-profile-header-content client-record-header-content">
+        <div className="client-profile-header-identity client-record-identity">
           <div className="client-profile-avatar" aria-hidden="true">
             {(companyName || 'C').charAt(0).toUpperCase()}
           </div>
@@ -62,7 +62,7 @@ export function ClientProfileHeader({
 
             <p className="client-contact-name">{contactName}</p>
 
-            <div className="client-profile-meta-row">
+            <div className="client-profile-meta-row client-record-meta">
               <span className="client-meta-item">{industry}</span>
               <span className="client-meta-item">{siteCount} sites</span>
               <span className="client-meta-item">Next review: {lastReviewDate}</span>
@@ -71,7 +71,7 @@ export function ClientProfileHeader({
           </div>
         </div>
 
-        <div className="client-profile-actions">
+        <div className="client-profile-actions client-record-actions">
           <div className="client-action-bar">
             {editing ? (
               <>
