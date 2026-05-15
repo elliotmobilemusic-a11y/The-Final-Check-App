@@ -1075,15 +1075,15 @@ export function ClientProfilePage() {
       ...foodSafetyAudits.map((a) => ({
         id: `fs-${a.id}`,
         type: 'Food Safety',
-        title: a.title || a.site_name || 'Food Safety',
-        date: a.updated_at ?? a.created_at ?? '',
+        title: a.title || a.siteName || 'Food Safety',
+        date: a.updatedAt ?? a.createdAt ?? '',
         to: `/food-safety?load=${a.id}`
       })),
       ...mysteryShopAudits.map((a) => ({
         id: `ms-${a.id}`,
         type: 'Mystery Shop',
-        title: a.title || a.site_name || 'Mystery Shop',
-        date: a.updated_at ?? a.created_at ?? '',
+        title: a.title || a.siteName || 'Mystery Shop',
+        date: a.updatedAt ?? a.createdAt ?? '',
         to: `/mystery-shop?load=${a.id}`
       })),
       ...menus.map((m) => ({
