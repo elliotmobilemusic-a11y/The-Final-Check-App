@@ -292,7 +292,8 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       'unspecified category',
       'evidence photo',
       'owner tbc',
-      'not assigned'
+      'not assigned',
+      'all of the above'
     ];
     return (
       !blocked.includes(lower) &&
@@ -611,23 +612,47 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
   const typedPriorityOnly = typedPriorityActions.filter(
     (item) => !structuredActionTitles.has(normalizeProseText(item).toLowerCase())
   );
-  const priorityActionsListHtml = topNamedActions.length
-    ? `<ul class="kitchen-audit-priority-actions-list">${topNamedActions
-        .map(
-          (item) => {
-            const meta = [
-              hasMeaningfulText(item.priority) ? cleanCopy(item.priority) : '',
-              hasMeaningfulText(item.owner) ? `Owner: ${cleanCopy(item.owner)}` : '',
-              hasMeaningfulText(item.impact) ? `Impact: ${cleanCopy(item.impact)}` : ''
-            ].filter(Boolean);
-            return `
-              <li>
-                <strong>${cleanCopy(item.title)}</strong>
-                ${meta.length ? `<span class="kitchen-audit-priority-meta">${meta.map((part) => `<span>${part}</span>`).join('')}</span>` : ''}
-              </li>`;
-          }
-        )
-        .join('')}</ul>`
+  const hasActionOwnerTiming = topNamedActions.some((item) => hasMeaningfulText(item.owner) || hasMeaningfulText(item.dueDate));
+  const hasActionImpact = topNamedActions.some((item) => hasMeaningfulText(item.impact));
+  const finalActionColumns = [
+    { key: 'priority', label: 'Priority', width: hasActionOwnerTiming || hasActionImpact ? '14%' : '18%' },
+    { key: 'action', label: 'Action', width: hasActionOwnerTiming || hasActionImpact ? '38%' : '82%' },
+    hasActionOwnerTiming
+      ? { key: 'ownerTiming', label: 'Owner / timing', width: hasActionImpact ? '24%' : '48%' }
+      : null,
+    hasActionImpact
+      ? { key: 'impact', label: 'Expected impact', width: hasActionOwnerTiming ? '24%' : '48%' }
+      : null
+  ].filter((column): column is { key: string; label: string; width: string } => Boolean(column));
+
+  const priorityActionsTableHtml = topNamedActions.length
+    ? `
+        <table class="report-table report-table-tight kitchen-audit-final-actions-table">
+          <colgroup>
+            ${finalActionColumns.map((column) => `<col style="width: ${column.width}" />`).join('')}
+          </colgroup>
+          <thead>
+            <tr>${finalActionColumns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+            ${topNamedActions
+              .map((item) => {
+                const ownerTiming = [
+                  hasMeaningfulText(item.owner) ? `Owner: ${cleanCopy(item.owner)}` : '',
+                  hasMeaningfulText(item.dueDate) ? `Due: ${cleanCopy(item.dueDate)}` : ''
+                ].filter(Boolean).join('<br />');
+                const values: Record<string, string> = {
+                  priority: hasMeaningfulText(item.priority) ? cleanCopy(item.priority) : '',
+                  action: cleanCopy(item.title),
+                  ownerTiming,
+                  impact: hasMeaningfulText(item.impact) ? cleanCopy(item.impact) : ''
+                };
+                return `<tr>${finalActionColumns.map((column) => `<td>${values[column.key] ?? ''}</td>`).join('')}</tr>`;
+              })
+              .join('')}
+          </tbody>
+        </table>
+      `
     : '';
 
   const typedPriorityHtml = renderList(typedPriorityOnly);
@@ -669,14 +694,15 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
       : null
   ].filter((item): item is { label: string; value: string; primary?: boolean } => Boolean(item));
 
+  const clientName = normalizeTitleLabel(safe(state.businessName) || 'Client Site');
+  const coverSummary = `Kitchen Profit Audit report for ${clientName}, focused on profit recovery, kitchen controls, labour efficiency, purchasing, waste, and menu performance.`;
+
   const coverHtml = buildReportCoverHtml({
     reportType: 'Kitchen Profit Audit Consultancy Report',
-    clientName: normalizeTitleLabel(safe(state.businessName) || 'Client Site'),
+    clientName,
     preparedDate: safe(state.visitDate) || new Date().toISOString().split('T')[0],
     consultant: safe(state.consultantName) || 'The Final Check',
-    summary: hasMeaningfulText(execProse)
-      ? safe(execProse)
-      : 'A focused consultancy review of margin performance, operating controls, and practical profit recovery.',
+    summary: coverSummary,
     metrics: coverMetrics,
     details: [
       { label: 'Site', value: safe(state.businessName) },
@@ -693,32 +719,11 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     [
       pageTwoMetrics
         ? renderSection(
-            'Commercial snapshot',
+            'Key commercial metrics',
             `<div class="report-metric-grid report-metric-grid-4">${pageTwoMetrics}</div>`,
             'Weekly sales, food cost, labour, and gross profit markers captured during the visit.'
           )
-        : '',
-      renderSection(
-        'Key issues',
-        renderList(hasNarrativeSignal ? narrative.keyIssues : []),
-        'The most material issues currently suppressing margin, control, or operating consistency.'
-      )
-    ]
-      .filter(Boolean)
-      .join('')
-  );
-
-  const priorityActionsChapter = renderChapter(
-    'What to do first',
-    'Priority Actions',
-    'Quick wins and the highest-impact corrective actions to stabilise margin and control.',
-    [
-      renderSection('Immediate focus', quickWinsHtml, 'Fast operational corrections that can usually be put in place immediately.'),
-      renderSection(
-        'Action plan',
-        [priorityActionsListHtml, typedPriorityHtml].filter(Boolean).join(''),
-        'Recorded priority actions, with ownership and impact shown only where they have been captured.'
-      )
+        : ''
     ]
       .filter(Boolean)
       .join('')
@@ -780,35 +785,57 @@ export function buildKitchenAuditReportHtml(state: AuditFormState) {
     controlsChapterBody
   );
 
-  const findingsChapter = renderChapter(
-    'Findings and narrative',
-    'Operational Findings',
-    'Detailed findings across waste, portion control, ordering, layout, and other operational observations.',
+  const keyIssuesBody = [
+    renderList(hasNarrativeSignal ? narrative.keyIssues : []),
     findingsChapterBody
+  ]
+    .filter(Boolean)
+    .join('');
+
+  const findingsChapter = renderChapter(
+    'Findings',
+    'Key Issues / Findings',
+    'The practical issues currently suppressing margin, control, or operating consistency.',
+    keyIssuesBody
+  );
+
+  const finalActionPlanBody = [
+    renderSection(
+      'Immediate focus',
+      quickWinsHtml,
+      'Fast operational corrections that can usually be put in place immediately.'
+    ),
+    renderSection(
+      'Priority checklist',
+      [priorityActionsTableHtml, typedPriorityHtml].filter(Boolean).join(''),
+      'Recorded priority actions, with ownership, timing, and impact shown only where they have been captured.'
+    )
+  ]
+    .filter(Boolean)
+    .join('');
+
+  const finalActionPlanChapter = renderChapter(
+    'Final checklist',
+    'Final Action Plan',
+    'The final practical checklist for management follow-up after reading the report.',
+    finalActionPlanBody
   );
 
   const primaryReading = [
     executiveLeadSection,
     commercialChapter,
-    priorityActionsChapter,
-    nextStepsChapter,
+    findingsChapter,
     evidenceChapter,
-    findingsChapter
+    controlsChapter,
+    nextStepsChapter,
+    finalActionPlanChapter
   ]
     .filter(Boolean)
     .join('');
 
-  const appendix = [controlsChapter].filter(Boolean).join('');
-
   const inner = [
     coverHtml,
-    `<div class="kitchen-audit-primary-reading">${primaryReading}</div>`,
-    appendix
-      ? `<aside class="kitchen-audit-appendix" aria-label="Supporting detail">
-          <div class="kitchen-audit-appendix-banner">Supporting detail · full register and evidence</div>
-          ${appendix}
-        </aside>`
-      : ''
+    `<div class="kitchen-audit-primary-reading">${primaryReading}</div>`
   ]
     .filter(Boolean)
     .join('');
