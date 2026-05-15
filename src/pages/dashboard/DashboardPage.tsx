@@ -592,42 +592,6 @@ export function DashboardPage() {
 
           <div className="command-centre-main">
 
-            {/* Recent Work — only rendered when data exists */}
-            {recentWork.length > 0 && (
-              <div className="panel command-centre-panel">
-                <div className="panel-header">
-                  <div className="cc-panel-header-inner">
-                    <div className="cc-panel-icon-wrap" aria-hidden="true">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3>Recent Work</h3>
-                      <p>Last updated audits and projects</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="panel-body">
-                  <div className="activity-list">
-                    {recentWork.map((item) => (
-                      <div key={item.id} className="activity-item">
-                        <div className="activity-item-copy">
-                          <strong>{item.title}</strong>
-                          <span className="activity-item-label">{item.type}</span>
-                        </div>
-                        <div className="cc-rw-meta">
-                          <span className="cc-rw-date">{fmtShortDate(item.date)}</span>
-                          <Link className="cc-rw-open" to={item.to}>Open →</Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Workstream Tasks */}
             <div className="panel command-centre-panel dashboard-task-panel">
               <div className="panel-header">
@@ -728,6 +692,53 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
+
+            {/* Recent Work — only rendered when data exists */}
+            {recentWork.length > 0 && (
+              <div className="panel command-centre-panel cc-recent-work-panel">
+                <div className="panel-header">
+                  <div className="cc-panel-header-inner">
+                    <div className="cc-panel-icon-wrap" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3>Recent Work</h3>
+                      <p>Last updated audits and projects</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="panel-body">
+                  <div className="activity-list">
+                    {recentWork.slice(0, 4).map((item) => (
+                      <div key={item.id} className="activity-item">
+                        <div className="activity-item-copy">
+                          <strong>{item.title}</strong>
+                          <span className="activity-item-label">{item.type}</span>
+                        </div>
+                        <div className="cc-rw-meta">
+                          <span className="cc-rw-date">{fmtShortDate(item.date)}</span>
+                          <Link
+                            className="cc-rw-open"
+                            to={item.to}
+                            aria-label={`Open ${item.title}`}
+                          >
+                            Open →
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {recentWork.length > 4 && (
+                    <Link className="cc-view-all-link" to="/clients">
+                      View all work →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
 
