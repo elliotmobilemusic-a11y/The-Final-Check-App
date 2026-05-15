@@ -1,11 +1,22 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createEmptyClientData } from '../../features/clients/clientData';
+import { listAudits } from '../../services/audits';
 import { createClientIntakeShare } from '../../services/clientIntakeShares';
 import { deleteClient, listClients } from '../../services/clients';
+import { listFoodSafetyAudits } from '../../services/foodSafetyAudits';
 import type { ClientRecord } from '../../types';
 
 type SortMode = 'attention' | 'updated' | 'review' | 'value' | 'company';
+
+type RecentWorkRow = {
+  id: string;
+  type: string;
+  title: string;
+  clientId?: string;
+  date: string;
+  to: string;
+};
 
 function getTimestamp(value?: string | null) {
   if (!value) return 0;
@@ -37,6 +48,11 @@ function formatReviewLabel(value?: string | null) {
   if (remainingDays < 0) return `${Math.abs(remainingDays)} day${Math.abs(remainingDays) === 1 ? '' : 's'} overdue`;
   if (remainingDays === 0) return 'Review due today';
   return `Review in ${remainingDays} day${remainingDays === 1 ? '' : 's'}`;
+}
+
+function fmtShortDate(iso?: string | null) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 function statusTone(status?: string | null) {
@@ -77,6 +93,7 @@ function buildClientSignals(client: ClientRecord) {
 
 export function ClientsPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
+  const [loadingClients, setLoadingClients] = useState(true);
   const [message, setMessage] = useState('Client list ready.');
   const [intakeUrl, setIntakeUrl] = useState('');
   const [search, setSearch] = useState('');
@@ -85,9 +102,39 @@ export function ClientsPage() {
   const [sortMode, setSortMode] = useState<SortMode>('attention');
   const [clientPendingDelete, setClientPendingDelete] = useState<ClientRecord | null>(null);
   const [isDeletingClient, setIsDeletingClient] = useState(false);
+  const [recentWorkRows, setRecentWorkRows] = useState<RecentWorkRow[]>([]);
 
   useEffect(() => {
     void refreshClients();
+  }, []);
+
+  useEffect(() => {
+    Promise.allSettled([listAudits(), listFoodSafetyAudits()])
+      .then(([auditResult, fsResult]) => {
+        const items: RecentWorkRow[] = [
+          ...(auditResult.status === 'fulfilled' ? auditResult.value.map((a) => ({
+            id: `audit-${a.id}`,
+            type: 'Kitchen Audit',
+            title: a.title || a.site_name || 'Kitchen Audit',
+            clientId: a.client_id ?? undefined,
+            date: a.updated_at ?? a.created_at ?? '',
+            to: `/audit?load=${a.id}`
+          })) : []),
+          ...(fsResult.status === 'fulfilled' ? fsResult.value.map((a) => ({
+            id: `fs-${a.id}`,
+            type: 'Food Safety',
+            title: a.title || a.site_name || 'Food Safety Audit',
+            clientId: a.client_id ?? undefined,
+            date: a.updated_at ?? a.created_at ?? '',
+            to: `/food-safety?load=${a.id}`
+          })) : [])
+        ]
+          .filter((item) => !!item.date)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 4);
+        setRecentWorkRows(items);
+      })
+      .catch(() => {});
   }, []);
 
   async function refreshClients() {
@@ -96,6 +143,8 @@ export function ClientsPage() {
       setClients(rows);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not load clients.');
+    } finally {
+      setLoadingClients(false);
     }
   }
 
@@ -138,6 +187,24 @@ export function ClientsPage() {
       );
     }
   }
+
+  function clearFilters() {
+    setSearch('');
+    setStatusFilter('All');
+  }
+
+  const clientMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of clients) map.set(c.id, c.company_name);
+    return map;
+  }, [clients]);
+
+  const recentWork = useMemo(() => {
+    return recentWorkRows.map((item) => ({
+      ...item,
+      clientName: item.clientId ? (clientMap.get(item.clientId) ?? undefined) : undefined
+    }));
+  }, [recentWorkRows, clientMap]);
 
   const visibleClients = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
@@ -220,6 +287,39 @@ export function ClientsPage() {
     };
   }, [visibleClients]);
 
+  const nextClientAction = useMemo(() => {
+    const overdue = clients.find((c) => {
+      const d = daysUntil(c.next_review_date);
+      return d !== null && d < 0;
+    });
+    if (overdue) return { client: overdue, reason: 'Review overdue' };
+
+    const dueSoon = clients.find((c) => {
+      const d = daysUntil(c.next_review_date);
+      return d !== null && d >= 0 && d <= 14;
+    });
+    if (dueSoon) return { client: dueSoon, reason: 'Review due soon' };
+
+    const latest = clients.find((c) => (c.status ?? 'Active').toLowerCase() === 'active');
+    if (latest) return { client: latest, reason: 'Latest active account' };
+
+    return null;
+  }, [clients]);
+
+  const reviewsDueSoonCount = useMemo(() => {
+    return clients.filter((c) => {
+      const d = daysUntil(c.next_review_date);
+      return d !== null && d >= 0 && d <= 14;
+    }).length;
+  }, [clients]);
+
+  const latestUpdatedClient = useMemo(() => {
+    return [...clients].sort(
+      (a, b) => getTimestamp(b.updated_at ?? b.created_at) - getTimestamp(a.updated_at ?? a.created_at)
+    )[0] ?? null;
+  }, [clients]);
+
+  const hasActiveFilters = search.trim() !== '' || statusFilter !== 'All';
   const latestVisibleClient = visibleClients[0] ?? null;
 
   return (
@@ -305,7 +405,7 @@ export function ClientsPage() {
                 </div>
                 <div>
                   <h2>Client List</h2>
-                  <p>All visible accounts</p>
+                  <p>{loadingClients ? 'Loading accounts…' : `${clients.length} account${clients.length === 1 ? '' : 's'} in workspace`}</p>
                 </div>
               </div>
               <span className="status-pill">{visibleClients.length}</span>
@@ -316,7 +416,7 @@ export function ClientsPage() {
                 <span className="clients-filter-label">Search</span>
                 <input
                   className="input"
-                  placeholder="Company, contact, email, location, or tag"
+                  placeholder="Company, contact, email, location, or tag…"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
@@ -352,9 +452,42 @@ export function ClientsPage() {
               </label>
             </div>
 
-            {visibleClients.length === 0 ? (
+            {hasActiveFilters && (
+              <div className="clients-filter-clear-row">
+                <span className="clients-result-count">
+                  {visibleClients.length} of {clients.length} {clients.length === 1 ? 'client' : 'clients'}
+                </span>
+                <button
+                  className="button button-small button-ghost clients-filter-clear"
+                  onClick={clearFilters}
+                  type="button"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+
+            {!loadingClients && clients.length === 0 ? (
+              <div className="clients-empty-premium">
+                <div className="clients-empty-premium-icon" aria-hidden="true">
+                  <svg fill="none" height="22" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="22"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <strong>No clients yet</strong>
+                <span>Create your first client profile to start managing your account book.</span>
+                <div className="clients-empty-premium-actions">
+                  <Link className="button button-primary" to="/clients/new">New client</Link>
+                  <button className="button button-secondary" onClick={handleCreateIntakeLink} type="button">
+                    Enquiry link
+                  </button>
+                </div>
+              </div>
+            ) : visibleClients.length === 0 ? (
               <div className="clients-empty-state">
-                No clients match the current search or filter settings.
+                {hasActiveFilters ? (
+                  <>No clients match these filters. </>
+                ) : (
+                  <>No clients found. </>
+                )}
               </div>
             ) : (
               <div className="clients-account-list">
@@ -410,6 +543,9 @@ export function ClientsPage() {
                           <Link className="button button-small button-primary" to={`/clients/${client.id}`}>
                             Open profile
                           </Link>
+                          <Link className="button button-small button-secondary" to={`/audit?client=${client.id}&new=1`}>
+                            Start audit
+                          </Link>
                           <button
                             className="button button-small button-ghost danger-text"
                             onClick={() => setClientPendingDelete(client)}
@@ -428,6 +564,48 @@ export function ClientsPage() {
         </main>
 
         <aside className="clients-side">
+          {/* Next Client Action spotlight */}
+          {clients.length > 0 && (
+            <div className="clients-panel clients-spotlight-panel">
+              <div className="clients-panel-header">
+                <div className="clients-panel-heading">
+                  <div className="clients-panel-icon clients-panel-icon-amber">
+                    <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div>
+                    <h2>Next Client Action</h2>
+                    <p>Suggested client to open now</p>
+                  </div>
+                </div>
+              </div>
+              {nextClientAction ? (
+                <div className="clients-spotlight-body">
+                  <div className="clients-spotlight-identity">
+                    <div className="clients-row-avatar">
+                      {(nextClientAction.client.company_name || 'C').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="clients-spotlight-names">
+                      <strong>{nextClientAction.client.company_name}</strong>
+                      <span>{nextClientAction.reason}</span>
+                    </div>
+                  </div>
+                  <div className="clients-spotlight-actions">
+                    <Link className="button button-primary" to={`/clients/${nextClientAction.client.id}`}>
+                      Open profile
+                    </Link>
+                    <Link className="button button-secondary" to={`/audit?client=${nextClientAction.client.id}&new=1`}>
+                      Start audit
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="clients-spotlight-empty">
+                  <span>No immediate client action needed.</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="clients-panel clients-side-action-card">
             <div className="clients-panel-header">
               <div className="clients-panel-heading">
@@ -515,8 +693,55 @@ export function ClientsPage() {
                 <span>Monthly value</span>
                 <strong>£{summary.totalMonthlyValue.toLocaleString('en-GB')}</strong>
               </div>
+              {reviewsDueSoonCount > 0 && (
+                <div className="clients-health-row">
+                  <span>Reviews due soon</span>
+                  <strong>{reviewsDueSoonCount}</strong>
+                </div>
+              )}
+              {latestUpdatedClient && (
+                <div className="clients-health-row clients-health-row-latest">
+                  <span>Latest account</span>
+                  <span className="clients-health-latest-name">{latestUpdatedClient.company_name}</span>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Recent Client Work */}
+          {recentWork.length > 0 && (
+            <div className="clients-panel clients-recent-work-panel">
+              <div className="clients-panel-header">
+                <div className="clients-panel-heading">
+                  <div className="clients-panel-icon">
+                    <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div>
+                    <h2>Recent Client Work</h2>
+                    <p>Latest audits linked to accounts</p>
+                  </div>
+                </div>
+              </div>
+              <div className="clients-recent-work-list">
+                {recentWork.map((item) => (
+                  <div key={item.id} className="clients-recent-work-row">
+                    <div className="clients-recent-work-copy">
+                      <span className="clients-recent-work-title">{item.title}</span>
+                      <span className="clients-recent-work-type">
+                        {item.type}{item.clientName ? ` · ${item.clientName}` : ''}
+                      </span>
+                    </div>
+                    <div className="clients-recent-work-meta">
+                      <span className="clients-recent-work-date">{fmtShortDate(item.date)}</span>
+                      <Link className="cc-rw-open" to={item.to} aria-label={`Open ${item.title}`}>
+                        Open →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 

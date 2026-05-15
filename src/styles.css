@@ -3378,6 +3378,208 @@ input[type="radio"]:checked {
   }
 }
 
+/* Clients: spotlight panel */
+.clients-panel-icon-amber {
+  background: rgba(251, 241, 231, 0.9);
+  color: #7a5226;
+}
+
+.clients-spotlight-body {
+  display: grid;
+  gap: 14px;
+  padding: 12px 18px 18px;
+}
+
+.clients-spotlight-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.clients-spotlight-names {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.clients-spotlight-names strong {
+  font-size: 13.5px;
+  font-weight: 780;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clients-spotlight-names span {
+  font-size: 11px;
+  color: #6e5e50;
+}
+
+.clients-spotlight-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.clients-spotlight-actions .button {
+  justify-content: center;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 720;
+  box-shadow: none;
+}
+
+.clients-spotlight-actions .button-primary {
+  background: #4b3d31;
+  border-color: #4b3d31;
+  color: #fffaf3;
+}
+
+.clients-spotlight-empty {
+  padding: 14px 18px 18px;
+  color: #7a7067;
+  font-size: 12px;
+}
+
+/* Clients: filter meta row */
+.clients-filter-clear-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 18px 10px;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.07);
+}
+
+.clients-result-count {
+  font-size: 11px;
+  color: #7a7067;
+}
+
+.clients-filter-clear {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a5226;
+  padding: 3px 8px;
+  min-height: auto;
+  border-radius: 6px;
+}
+
+/* Clients: premium empty state */
+.clients-empty-premium {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 32px 20px;
+  margin: 16px 18px 18px;
+  border: 1px dashed rgba(91, 72, 48, 0.13);
+  border-radius: 12px;
+  background: rgba(255, 250, 243, 0.52);
+  text-align: center;
+}
+
+.clients-empty-premium-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f0ebe4;
+  color: #5d4a3c;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(91, 72, 48, 0.10);
+}
+
+.clients-empty-premium strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.2;
+}
+
+.clients-empty-premium > span {
+  color: #7a7067;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 340px;
+}
+
+.clients-empty-premium-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* Clients: recent work panel */
+.clients-recent-work-list {
+  display: grid;
+  padding: 8px 18px 16px;
+}
+
+.clients-recent-work-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(91, 72, 48, 0.07);
+}
+
+.clients-recent-work-row:last-child {
+  border-bottom: none;
+}
+
+.clients-recent-work-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.clients-recent-work-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clients-recent-work-type {
+  font-size: 10px;
+  font-weight: 800;
+  color: #806144;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.clients-recent-work-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.clients-recent-work-date {
+  font-size: 11px;
+  color: #74695f;
+  white-space: nowrap;
+}
+
+/* Clients: account health latest row */
+.clients-health-latest-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
 /* FOOD SAFETY - final Command Centre sibling override */
 .food-safety-page,
 .food-safety-tool-page {
