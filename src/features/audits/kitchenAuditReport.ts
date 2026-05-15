@@ -24,55 +24,83 @@ const KITCHEN_AUDIT_DELIVERABLE_STYLES = `
     color: inherit;
   }
   .kitchen-audit-deliverable .pdf-cover-page {
-    min-height: 270mm;
-    justify-content: space-between;
+    min-height: 0;
+    justify-content: flex-start;
   }
   .kitchen-audit-deliverable .pdf-cover-top-bar {
-    padding-bottom: 7px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(127,82,33,0.22);
+    margin-bottom: 10mm;
   }
   .kitchen-audit-deliverable .pdf-cover-hero {
-    flex: 1;
+    flex: 0 0 auto;
     min-height: 0;
-    justify-content: center;
-    gap: 10px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 6px;
     margin-top: 0;
-    padding: 10mm 0 4mm;
+    padding: 0 0 8mm;
   }
   .kitchen-audit-deliverable .pdf-cover-hero-main {
-    gap: 10px;
-    max-width: 142mm;
-    padding: 14mm 18mm 15mm;
-    border-radius: 18px;
+    gap: 8px;
+    max-width: 148mm;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    justify-items: start;
+    text-align: left;
+  }
+  .kitchen-audit-deliverable .pdf-cover-hero-rule {
+    display: none;
+  }
+  .kitchen-audit-deliverable .pdf-cover-report-type {
+    font-size: 9pt;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: rgba(127,82,33,0.75);
+    margin-bottom: 4px;
   }
   .kitchen-audit-deliverable .pdf-cover-client-title {
-    margin: 8px 0 4px;
-    font-size: 32pt;
-    line-height: 1.04;
+    margin: 2px 0 4px;
+    font-size: 28pt;
+    line-height: 1.06;
+    text-align: left;
   }
   .kitchen-audit-deliverable .pdf-cover-summary {
-    margin: 4px 0 0;
-    max-width: 122mm;
+    margin: 2px 0 0;
+    max-width: 130mm;
     font-size: 10pt;
     line-height: 1.55;
+    text-align: left;
   }
   .kitchen-audit-deliverable .pdf-cover-metrics {
+    flex: 0 0 auto;
     gap: 10px;
-    margin: 0 auto 8mm;
+    margin: 0 0 6mm;
+    max-width: 100%;
+    width: 100%;
+    border-top: 1px solid rgba(127,82,33,0.18);
+    padding-top: 6mm;
   }
   .kitchen-audit-deliverable .pdf-cover-metric {
-    min-height: 19mm;
-    padding: 7px 9px 8px;
+    min-height: 17mm;
+    padding: 6px 10px 8px;
     border-radius: 10px;
   }
   .kitchen-audit-deliverable .pdf-cover-metric-value {
-    font-size: 18pt;
+    font-size: 17pt;
   }
   .kitchen-audit-deliverable .pdf-cover-details-band {
+    flex: 0 0 auto;
     margin-top: 0;
-    padding: 12px 0 0;
+    padding: 5mm 0 0;
+    border-top: 1px solid rgba(127,82,33,0.14);
   }
   .kitchen-audit-deliverable .pdf-cover-detail {
-    padding: 8px 10px 9px;
+    padding: 7px 10px 8px;
     border-radius: 8px;
   }
   .kitchen-audit-deliverable .report-chapter {
