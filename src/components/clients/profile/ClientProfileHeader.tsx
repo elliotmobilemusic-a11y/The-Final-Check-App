@@ -115,14 +115,14 @@ export function ClientProfileHeader({
                   New quote
                 </button>
                 <button
-                  className="button"
+                  className="button button-secondary"
                   onClick={onNewInvoice}
                   type="button"
                 >
                   New invoice
                 </button>
                 <button
-                  className="button"
+                  className="button button-primary"
                   onClick={onOpenPortal}
                   type="button"
                 >
