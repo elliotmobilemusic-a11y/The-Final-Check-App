@@ -220,10 +220,7 @@ export function ClientsPage() {
     };
   }, [visibleClients]);
 
-  const featuredAttention = useMemo(
-    () => visibleClients.filter((client) => buildClientSignals(client).needsAttention).slice(0, 3),
-    [visibleClients]
-  );
+  const latestVisibleClient = visibleClients[0] ?? null;
 
   return (
     <div className="page-stack clients-page">
@@ -233,20 +230,20 @@ export function ClientsPage() {
           <span className="clients-header-eyebrow">Clients</span>
           <h1 className="clients-header-title">Client CRM</h1>
           <p className="clients-header-desc">
-            Your operating view of the whole account book — what needs attention, what is active, and where to go next.
+            Manage accounts, spot risk early, and move quickly into the next client action.
           </p>
           <div className="clients-header-chips">
-            <span className="clients-status-chip">{summary.activeCount} active accounts</span>
+            <span className="clients-status-chip">{summary.activeCount} active account{summary.activeCount === 1 ? '' : 's'}</span>
             {message && <span className="clients-status-chip clients-status-chip-message">{message}</span>}
           </div>
         </div>
         <div className="clients-header-actions">
-          <button className="button button-ghost" onClick={handleCreateIntakeLink} type="button">
-            Enquiry link
-          </button>
-          <Link className="button button-secondary" to="/clients/new">
+          <Link className="button button-primary" to="/clients/new">
             New client
           </Link>
+          <button className="button button-secondary" onClick={handleCreateIntakeLink} type="button">
+            Enquiry link
+          </button>
         </div>
       </div>
 
@@ -297,201 +294,230 @@ export function ClientsPage() {
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="clients-filter-bar">
-        <label className="clients-filter-field">
-          <span className="clients-filter-label">Search</span>
-          <input
-            className="input"
-            placeholder="Company, contact, email, location, or tag"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-        <label className="clients-filter-field clients-filter-field-sm">
-          <span className="clients-filter-label">Status</span>
-          <select
-            className="input"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option>All</option>
-            <option>Active</option>
-            <option>Prospect</option>
-            <option>Onboarding</option>
-            <option>Paused</option>
-            <option>Completed</option>
-          </select>
-        </label>
-        <label className="clients-filter-field clients-filter-field-sm">
-          <span className="clients-filter-label">Sort</span>
-          <select
-            className="input"
-            value={sortMode}
-            onChange={(event) => setSortMode(event.target.value as SortMode)}
-          >
-            <option value="attention">Attention first</option>
-            <option value="updated">Last updated</option>
-            <option value="review">Next review</option>
-            <option value="value">Monthly value</option>
-            <option value="company">Company A–Z</option>
-          </select>
-        </label>
-      </div>
-
-      {/* Intake URL */}
-      {intakeUrl ? (
-        <div className="share-link-row">
-          <input
-            className="input"
-            readOnly
-            value={intakeUrl}
-            onFocus={(event) => event.currentTarget.select()}
-          />
-          <button
-            className="button button-secondary"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(intakeUrl);
-                setMessage('Client enquiry link copied.');
-              } catch (error) {
-                setMessage(
-                  error instanceof Error ? error.message : 'Could not copy the enquiry link.'
-                );
-              }
-            }}
-            type="button"
-          >
-            Copy link
-          </button>
-          <a className="button button-ghost" href={intakeUrl} rel="noreferrer" target="_blank">
-            Open
-          </a>
-        </div>
-      ) : null}
-
-      {/* Attention strip */}
-      {featuredAttention.length > 0 ? (
-        <div className="clients-attention-strip">
-          <div className="clients-section-header">
-            <div className="clients-section-header-inner">
-              <div className="clients-section-icon">
-                <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+      <div className="clients-grid">
+        <main className="clients-main">
+          {/* Client list */}
+          <div className="clients-panel clients-list-section">
+            <div className="clients-panel-header">
+              <div className="clients-panel-heading">
+                <div className="clients-panel-icon">
+                  <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                </div>
+                <div>
+                  <h2>Client List</h2>
+                  <p>All visible accounts</p>
+                </div>
               </div>
-              <div>
-                <span className="clients-section-eyebrow">Priority accounts</span>
-                <span className="clients-section-title">Needs attention first</span>
-              </div>
+              <span className="status-pill">{visibleClients.length}</span>
             </div>
-            <span className="status-pill status-danger">{featuredAttention.length}</span>
-          </div>
-          <div className="clients-attention-grid">
-            {featuredAttention.map((client) => {
-              const signals = buildClientSignals(client);
-              return (
-                <article className="crm-attention-card" key={client.id}>
-                  <div className="crm-attention-card-top">
-                    <strong>{client.company_name}</strong>
-                    <span className="status-pill status-danger">{signals.attentionLabel}</span>
-                  </div>
-                  <p>
-                    {client.location || 'Location not set'}
-                    {client.contact_name ? ` • ${client.contact_name}` : ''}
-                  </p>
-                  <div className="crm-attention-card-actions">
-                    <Link className="button button-primary" to={`/clients/${client.id}`}>
-                      Open account
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
 
-      {/* Client list */}
-      <div className="clients-list-section">
-        <div className="clients-section-header">
-          <div className="clients-section-header-inner">
-            <div className="clients-section-icon">
-              <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-            </div>
-            <div>
-              <span className="clients-section-eyebrow">Client list</span>
-              <span className="clients-section-title">All visible accounts</span>
-            </div>
-          </div>
-          <span className="status-pill">{visibleClients.length}</span>
-        </div>
-
-        {visibleClients.length === 0 ? (
-          <div className="clients-empty-state">
-            No clients match the current search or filter settings.
-          </div>
-        ) : (
-          <div className="clients-account-list">
-            {visibleClients.map((client) => {
-              const signals = buildClientSignals(client);
-              return (
-                <article
-                  className={`clients-account-row${signals.needsAttention ? ' is-attention' : ''}`}
-                  key={client.id}
+            <div className="clients-filter-row">
+              <label className="clients-filter-field">
+                <span className="clients-filter-label">Search</span>
+                <input
+                  className="input"
+                  placeholder="Company, contact, email, location, or tag"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </label>
+              <label className="clients-filter-field clients-filter-field-sm">
+                <span className="clients-filter-label">Status</span>
+                <select
+                  className="input"
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
                 >
-                  <div className="clients-row-identity">
-                    <div className="clients-row-avatar">
-                      {(client.company_name || 'C').charAt(0).toUpperCase()}
-                    </div>
-                    <div className="clients-row-names">
-                      <span className="clients-row-company">{client.company_name}</span>
-                      <span className="clients-row-contact">{client.contact_name || 'No contact set'}</span>
-                    </div>
-                  </div>
+                  <option>All</option>
+                  <option>Active</option>
+                  <option>Prospect</option>
+                  <option>Onboarding</option>
+                  <option>Paused</option>
+                  <option>Completed</option>
+                </select>
+              </label>
+              <label className="clients-filter-field clients-filter-field-sm">
+                <span className="clients-filter-label">Sort</span>
+                <select
+                  className="input"
+                  value={sortMode}
+                  onChange={(event) => setSortMode(event.target.value as SortMode)}
+                >
+                  <option value="attention">Attention first</option>
+                  <option value="updated">Last updated</option>
+                  <option value="review">Next review</option>
+                  <option value="value">Monthly value</option>
+                  <option value="company">Company A-Z</option>
+                </select>
+              </label>
+            </div>
 
-                  <div className="clients-row-metrics">
-                    <div className="clients-row-metric">
-                      <small>Next review</small>
-                      <span>{formatReviewLabel(client.next_review_date)}</span>
-                    </div>
-                    <div className="clients-row-metric">
-                      <small>Monthly value</small>
-                      <span>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</span>
-                    </div>
-                    <div className="clients-row-metric">
-                      <small>Open tasks</small>
-                      <span className={signals.openTasks > 0 ? 'text-danger' : ''}>{signals.openTasks}</span>
-                    </div>
-                    <div className="clients-row-metric">
-                      <small>Overdue invoices</small>
-                      <span className={signals.overdueInvoices > 0 ? 'text-danger' : ''}>{signals.overdueInvoices}</span>
-                    </div>
-                  </div>
+            {visibleClients.length === 0 ? (
+              <div className="clients-empty-state">
+                No clients match the current search or filter settings.
+              </div>
+            ) : (
+              <div className="clients-account-list">
+                {visibleClients.map((client) => {
+                  const signals = buildClientSignals(client);
+                  return (
+                    <article
+                      className={`clients-account-card${signals.needsAttention ? ' is-attention' : ''}`}
+                      key={client.id}
+                    >
+                      <div className="clients-account-identity">
+                        <div className="clients-row-avatar">
+                          {(client.company_name || 'C').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="clients-row-names">
+                          <span className="clients-row-company">{client.company_name}</span>
+                          <span className="clients-row-contact">{client.contact_name || 'No contact set'}</span>
+                          {(client.location || client.industry) && (
+                            <span className="clients-row-location">
+                              {[client.location, client.industry].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="clients-row-right">
-                    <div className="clients-row-badges">
-                      <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
-                      {signals.needsAttention && (
-                        <span className="status-pill status-danger">{signals.attentionLabel}</span>
-                      )}
-                    </div>
-                    <div className="clients-row-actions">
-                      <Link className="button button-small button-primary" to={`/clients/${client.id}`}>
-                        Open
-                      </Link>
-                      <button
-                        className="button button-small button-ghost danger-text"
-                        onClick={() => setClientPendingDelete(client)}
-                        type="button"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                      <div className="clients-account-metrics">
+                        <div className="clients-row-metric">
+                          <small>Next review</small>
+                          <span>{formatReviewLabel(client.next_review_date)}</span>
+                        </div>
+                        <div className="clients-row-metric">
+                          <small>Monthly value</small>
+                          <span>£{signals.data.estimatedMonthlyValue.toLocaleString('en-GB')}</span>
+                        </div>
+                        <div className="clients-row-metric">
+                          <small>Open tasks</small>
+                          <span className={signals.openTasks > 0 ? 'text-danger' : ''}>{signals.openTasks}</span>
+                        </div>
+                        <div className="clients-row-metric">
+                          <small>Overdue invoices</small>
+                          <span className={signals.overdueInvoices > 0 ? 'text-danger' : ''}>{signals.overdueInvoices}</span>
+                        </div>
+                      </div>
+
+                      <div className="clients-account-actions">
+                        <div className="clients-row-badges">
+                          <span className={statusTone(client.status)}>{client.status || 'Active'}</span>
+                          {signals.needsAttention && (
+                            <span className="status-pill status-danger">{signals.attentionLabel}</span>
+                          )}
+                        </div>
+                        <div className="clients-row-actions">
+                          <Link className="button button-small button-primary" to={`/clients/${client.id}`}>
+                            Open profile
+                          </Link>
+                          <button
+                            className="button button-small button-ghost danger-text"
+                            onClick={() => setClientPendingDelete(client)}
+                            type="button"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        </main>
+
+        <aside className="clients-side">
+          <div className="clients-panel clients-side-action-card">
+            <div className="clients-panel-header">
+              <div className="clients-panel-heading">
+                <div className="clients-panel-icon">
+                  <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                </div>
+                <div>
+                  <h2>Client Actions</h2>
+                  <p>Move straight into the next account step</p>
+                </div>
+              </div>
+            </div>
+            <div className="clients-side-actions">
+              <Link className="button button-primary" to="/clients/new">New client</Link>
+              <button className="button button-secondary" onClick={handleCreateIntakeLink} type="button">
+                Enquiry link
+              </button>
+              {latestVisibleClient ? (
+                <Link className="button button-secondary" to={`/clients/${latestVisibleClient.id}`}>
+                  Open latest client
+                </Link>
+              ) : null}
+            </div>
+
+            {intakeUrl ? (
+              <div className="clients-intake-card">
+                <span>Enquiry link ready</span>
+                <input
+                  className="input"
+                  readOnly
+                  value={intakeUrl}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+                <div className="clients-intake-actions">
+                  <button
+                    className="button button-small button-secondary"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(intakeUrl);
+                        setMessage('Client enquiry link copied.');
+                      } catch (error) {
+                        setMessage(
+                          error instanceof Error ? error.message : 'Could not copy the enquiry link.'
+                        );
+                      }
+                    }}
+                    type="button"
+                  >
+                    Copy link
+                  </button>
+                  <a className="button button-small button-ghost" href={intakeUrl} rel="noreferrer" target="_blank">
+                    Open
+                  </a>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="clients-panel clients-health-panel">
+            <div className="clients-panel-header">
+              <div className="clients-panel-heading">
+                <div className="clients-panel-icon">
+                  <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-7"/></svg>
+                </div>
+                <div>
+                  <h2>Account Health</h2>
+                  <p>Portfolio summary for visible accounts</p>
+                </div>
+              </div>
+            </div>
+            <div className="clients-health-list">
+              <div className="clients-health-row">
+                <span>Active accounts</span>
+                <strong>{summary.activeCount}</strong>
+              </div>
+              <div className="clients-health-row is-warning">
+                <span>Needs attention</span>
+                <strong>{summary.attentionCount}</strong>
+              </div>
+              <div className="clients-health-row">
+                <span>Open actions</span>
+                <strong>{summary.openTasks}</strong>
+              </div>
+              <div className="clients-health-row">
+                <span>Monthly value</span>
+                <strong>£{summary.totalMonthlyValue.toLocaleString('en-GB')}</strong>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
 
       {clientPendingDelete ? (
