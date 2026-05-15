@@ -16,172 +16,476 @@ import { calculateAudit } from './kitchenAuditHelpers';
 
 const KITCHEN_AUDIT_DELIVERABLE_STYLES = `
 <style>
-  /* Scoped to Kitchen Profit deliverable HTML only (shared + standalone export). */
+  /* =================================================================
+     KITCHEN PROFIT AUDIT — PREMIUM REPORT STYLES
+     Scoped to .kitchen-audit-deliverable
+     ================================================================= */
+
   .kitchen-audit-deliverable {
     --profit-gap-xs: 6px;
     --profit-gap-sm: 10px;
     --profit-gap-md: 14px;
     color: inherit;
   }
+
+  /* ================================================================
+     COVER PAGE
+     Layout: brand bar → hero (flex:1, content centred) → metrics → details
+     ================================================================ */
+
+  /* Keep full A4 height; flow from top (no space-between gaps) */
   .kitchen-audit-deliverable .pdf-cover-page {
-    min-height: 0;
+    min-height: 270mm;
     justify-content: flex-start;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
   .kitchen-audit-deliverable .pdf-cover-top-bar {
     padding-bottom: 10px;
-    border-bottom: 2px solid rgba(127,82,33,0.22);
-    margin-bottom: 10mm;
+    border-bottom: 1px solid rgba(127, 82, 33, 0.22);
   }
+
+  /* Hero: takes all remaining space, content vertically centred */
   .kitchen-audit-deliverable .pdf-cover-hero {
-    flex: 0 0 auto;
-    min-height: 0;
-    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: flex-start;
-    gap: 6px;
+    flex: 1;
+    min-height: 0;
+    gap: 0;
     margin-top: 0;
-    padding: 0 0 8mm;
-  }
-  .kitchen-audit-deliverable .pdf-cover-hero-main {
-    gap: 8px;
-    max-width: 148mm;
     padding: 0;
-    border-radius: 0;
+  }
+
+  /* Flat editorial block — no card treatment */
+  .kitchen-audit-deliverable .pdf-cover-hero-main {
+    display: grid;
+    gap: 10px;
+    max-width: 142mm;
+    padding: 0;
     border: none;
+    border-radius: 0;
     background: none;
     box-shadow: none;
     justify-items: start;
     text-align: left;
+    margin: 0;
   }
+
+  /* Vertical rule: hidden in this layout */
   .kitchen-audit-deliverable .pdf-cover-hero-rule {
     display: none;
   }
-  .kitchen-audit-deliverable .pdf-cover-report-type {
-    font-size: 9pt;
-    letter-spacing: 0.12em;
+
+  /* Aside: "Prepared for operational leadership / Confidential" — shown
+     below summary with a thin warm separator */
+  .kitchen-audit-deliverable .pdf-cover-hero-aside {
+    display: grid;
+    gap: 3px;
+    max-width: 142mm;
+    margin-top: 8mm;
+    padding-top: 6mm;
+    border-top: 1px solid rgba(127, 82, 33, 0.14);
+  }
+
+  .kitchen-audit-deliverable .pdf-cover-hero-aside span {
+    font-size: 6.8pt;
+    font-weight: 800;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
-    font-weight: 700;
-    color: rgba(127,82,33,0.75);
-    margin-bottom: 4px;
+    color: rgba(127, 82, 33, 0.6);
   }
+
+  .kitchen-audit-deliverable .pdf-cover-hero-aside strong {
+    font-size: 9pt;
+    font-weight: 500;
+    color: var(--pdf-muted-strong);
+  }
+
+  /* Report type kicker: flat underline, no pill */
+  .kitchen-audit-deliverable .pdf-cover-report-type {
+    padding: 0 0 7px;
+    border: none;
+    border-bottom: 1px solid rgba(127, 82, 33, 0.28);
+    border-radius: 0;
+    background: none;
+    color: var(--pdf-accent-strong);
+    font-size: 7.5pt;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  /* Large serif client name */
   .kitchen-audit-deliverable .pdf-cover-client-title {
-    margin: 2px 0 4px;
-    font-size: 28pt;
-    line-height: 1.06;
+    max-width: 14ch;
+    margin: 6px 0 0;
+    font-size: 46pt;
+    line-height: 0.95;
+    letter-spacing: -0.045em;
     text-align: left;
+    font-weight: 600;
   }
+
+  /* One-sentence summary */
   .kitchen-audit-deliverable .pdf-cover-summary {
+    max-width: 122mm;
     margin: 2px 0 0;
-    max-width: 130mm;
-    font-size: 10pt;
-    line-height: 1.55;
     text-align: left;
+    font-size: 10.5pt;
+    line-height: 1.65;
+    color: var(--pdf-ink-soft);
   }
+
+  /* Metrics band: sits flush below hero with warm separator */
   .kitchen-audit-deliverable .pdf-cover-metrics {
     flex: 0 0 auto;
-    gap: 10px;
-    margin: 0 0 6mm;
-    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1.35fr repeat(2, minmax(0, 1fr));
+    max-width: none;
     width: 100%;
-    border-top: 1px solid rgba(127,82,33,0.18);
-    padding-top: 6mm;
+    gap: 10px;
+    margin: 0;
+    padding-top: 5mm;
+    border-top: 1px solid rgba(127, 82, 33, 0.18);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
   .kitchen-audit-deliverable .pdf-cover-metric {
-    min-height: 17mm;
-    padding: 6px 10px 8px;
-    border-radius: 10px;
+    min-height: 18mm;
+    padding: 8px 11px 10px;
+    border-radius: 8px;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
+  .kitchen-audit-deliverable .pdf-cover-metric.primary {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .kitchen-audit-deliverable .pdf-cover-metric-value {
-    font-size: 17pt;
+    font-size: 18pt;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
   }
+
+  /* Engagement details: compact grid at bottom */
   .kitchen-audit-deliverable .pdf-cover-details-band {
     flex: 0 0 auto;
-    margin-top: 0;
-    padding: 5mm 0 0;
-    border-top: 1px solid rgba(127,82,33,0.14);
+    margin-top: 5mm;
+    padding: 4mm 0 0;
+    border-top: 1px solid rgba(127, 82, 33, 0.13);
   }
+
   .kitchen-audit-deliverable .pdf-cover-detail {
     padding: 7px 10px 8px;
-    border-radius: 8px;
+    border-radius: 6px;
+    box-shadow: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
+
+  /* ================================================================
+     BODY CHAPTERS
+     ================================================================ */
+
   .kitchen-audit-deliverable .report-chapter {
-    gap: 14px;
+    gap: 16px;
     padding: 14mm 15mm 16mm;
     min-height: auto;
   }
+
   .kitchen-audit-deliverable .report-chapter-break {
     break-before: page;
     page-break-before: always;
   }
+
   .kitchen-audit-primary-reading .report-chapter:first-child {
     break-before: page;
     page-break-before: always;
   }
+
   .kitchen-audit-deliverable .report-chapter-header {
-    gap: 4px;
-    padding-bottom: 9px;
+    gap: 5px;
+    padding-bottom: 10px;
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
   .kitchen-audit-primary-reading .report-chapter-header h2 {
-    font-size: 22px;
+    font-size: 24px;
+    letter-spacing: -0.04em;
   }
+
   .kitchen-audit-deliverable .report-chapter-header p,
   .kitchen-audit-deliverable .report-section-header p {
     font-size: 10.5px;
-    line-height: 1.55;
+    line-height: 1.6;
+    color: var(--pdf-muted-strong);
   }
-  .kitchen-audit-deliverable .report-section-block {
-    gap: 8px;
-  }
-  .kitchen-audit-deliverable .report-section-block + .report-section-block {
-    margin-top: 10px;
-  }
-  .kitchen-audit-deliverable .report-section-header h3 {
-    font-size: 14px;
-  }
-  .kitchen-audit-deliverable .report-metric-grid {
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .kitchen-audit-deliverable .report-metric-card,
-  .kitchen-audit-deliverable .report-story-card {
-    padding: 9px 10px 10px;
-    border-radius: 8px;
-    box-shadow: none;
-  }
-  .kitchen-audit-deliverable .report-metric-card strong {
-    font-size: 14px;
-  }
-  .kitchen-audit-deliverable .report-table {
-    margin-top: 6px;
-    border-radius: 8px;
-    font-size: 8.8pt;
-  }
-  .kitchen-audit-deliverable .report-table th,
-  .kitchen-audit-deliverable .report-table td {
-    padding: 7px 8px;
-  }
+
+  /* ================================================================
+     EXECUTIVE SUMMARY
+     ================================================================ */
+
   .kitchen-audit-exec-lead {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
   .kitchen-audit-exec-body {
-    font-size: 10.5pt;
-    line-height: 1.58;
-    color: #3a383d;
-    max-width: 52rem;
+    font-size: 11pt;
+    line-height: 1.72;
+    color: var(--pdf-ink-soft);
+    max-width: 90ch;
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
   .kitchen-audit-exec-body p {
     margin: 0;
   }
+
+  /* ================================================================
+     SECTION BLOCKS
+     ================================================================ */
+
+  .kitchen-audit-deliverable .report-section-block {
+    gap: 10px;
+  }
+
+  .kitchen-audit-deliverable .report-section-block + .report-section-block {
+    margin-top: 12px;
+  }
+
+  .kitchen-audit-deliverable .report-section-header h3 {
+    font-size: 14px;
+    letter-spacing: -0.015em;
+  }
+
+  /* ================================================================
+     COMMERCIAL SNAPSHOT — METRIC GRID
+     These classes are kitchen-audit-only; full base styles are defined here.
+     ================================================================ */
+
+  .kitchen-audit-deliverable .report-metric-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .kitchen-audit-deliverable .report-metric-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kitchen-audit-deliverable .report-metric-card {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px 11px;
+    border: 1px solid rgba(127, 82, 33, 0.13);
+    border-radius: 8px;
+    background: #fdf9f5;
+    box-shadow: none;
+    page-break-inside: avoid;
+    break-inside: avoid-page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Label below value */
+  .kitchen-audit-deliverable .report-metric-card span {
+    display: block;
+    order: 2;
+    margin-top: 3px;
+    color: var(--pdf-muted);
+    font-size: 6.8pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.28;
+  }
+
+  /* Value above label */
+  .kitchen-audit-deliverable .report-metric-card strong {
+    display: block;
+    order: 1;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--pdf-ink);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  /* Primary emphasis card — weekly / annual opportunity */
+  .kitchen-audit-deliverable .report-metric-card-primary {
+    background: linear-gradient(180deg, #fff9ef 0%, #f7eddf 100%);
+    border-color: rgba(127, 82, 33, 0.28);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .kitchen-audit-deliverable .report-metric-card-primary strong {
+    font-size: 17px;
+    color: var(--pdf-accent-strong);
+  }
+
+  /* ================================================================
+     STORY CARDS (findings / observations)
+     ================================================================ */
+
+  .kitchen-audit-deliverable .report-story-card {
+    padding: 11px 12px 12px;
+    border: 1px solid rgba(127, 82, 33, 0.12);
+    border-radius: 8px;
+    background: #fdfbf7;
+    box-shadow: none;
+    page-break-inside: avoid;
+    break-inside: avoid-page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .kitchen-audit-deliverable .report-story-card h3 {
+    font-size: 12.5px;
+    margin-bottom: 6px;
+  }
+
+  .kitchen-audit-deliverable .muted-copy,
+  .kitchen-audit-deliverable .report-story-card p,
+  .kitchen-audit-deliverable .report-story-card li {
+    font-size: 9.4pt;
+    line-height: 1.52;
+  }
+
+  /* ================================================================
+     TABLES
+     ================================================================ */
+
+  .kitchen-audit-deliverable .report-table {
+    margin-top: 6px;
+    border-radius: 6px;
+    font-size: 8.8pt;
+    box-shadow: none;
+  }
+
+  .kitchen-audit-deliverable .report-table th,
+  .kitchen-audit-deliverable .report-table td {
+    padding: 7px 9px;
+  }
+
+  .kitchen-audit-deliverable .report-table th {
+    font-size: 7pt;
+    letter-spacing: 0.1em;
+  }
+
+  /* Priority column in action plan: slightly bolder */
+  .kitchen-audit-final-actions-table td:first-child {
+    font-weight: 600;
+    font-size: 8.2pt;
+  }
+
+  /* ================================================================
+     PRIORITY ACTIONS LIST
+     ================================================================ */
+
+  .kitchen-audit-priority-actions-list {
+    display: grid;
+    gap: 7px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .kitchen-audit-priority-actions-list li {
+    padding: 9px 12px 10px;
+    border: 1px solid rgba(115, 95, 64, 0.15);
+    border-radius: 7px;
+    background: #fdfaf6;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .kitchen-audit-priority-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--pdf-muted);
+    margin-top: 3px;
+  }
+
+  .kitchen-audit-priority-meta span + span::before {
+    content: "·";
+    margin-right: 6px;
+    opacity: 0.6;
+  }
+
+  /* ================================================================
+     PHOTO EVIDENCE
+     ================================================================ */
+
+  .kitchen-audit-evidence-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  .kitchen-audit-food-offer {
+    display: grid;
+    gap: 8px;
+  }
+
+  .kitchen-audit-deliverable .report-photo-section {
+    gap: 7px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .kitchen-audit-deliverable .report-photo-grid {
+    gap: 8px;
+  }
+
+  .kitchen-audit-deliverable .report-photo-card {
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  .kitchen-audit-deliverable .report-photo-card img {
+    height: 38mm;
+  }
+
+  .kitchen-audit-deliverable .report-photo-grid-featured .report-photo-card:first-child img {
+    height: 48mm;
+  }
+
+  .kitchen-audit-deliverable .report-photo-card figcaption {
+    padding: 7px 8px 8px;
+  }
+
+  .kitchen-audit-deliverable .report-photo-card figcaption strong {
+    font-size: 10px;
+  }
+
+  .kitchen-audit-deliverable .report-photo-card figcaption span {
+    font-size: 9px;
+  }
+
+  /* ================================================================
+     APPENDIX / CONTROLS REGISTER
+     ================================================================ */
+
   .kitchen-audit-appendix {
     margin-top: 0;
     padding: 0;
     border-top: 2px solid rgba(115, 95, 64, 0.22);
     background: #fff;
   }
+
   .kitchen-audit-appendix-banner {
     font-size: 0.72rem;
     letter-spacing: 0.14em;
@@ -190,101 +494,58 @@ const KITCHEN_AUDIT_DELIVERABLE_STYLES = `
     font-weight: 700;
     margin: 14mm 15mm -7mm;
   }
+
   .kitchen-audit-appendix .report-chapter-header h2 {
     font-size: 1.28rem;
     color: #5a554d;
   }
+
   .kitchen-audit-appendix .report-chapter-header p {
     color: #6c655c;
   }
+
   .kitchen-audit-appendix .report-section-header h3 {
     font-size: 1.02rem;
     color: #5c5752;
   }
+
   .kitchen-audit-appendix .report-table {
     font-size: 0.88rem;
   }
+
   .kitchen-audit-appendix .report-story-card h3 {
     font-size: 1rem;
   }
-  .kitchen-audit-priority-actions-list {
-    display: grid;
-    gap: 8px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .kitchen-audit-priority-actions-list li {
-    padding: 9px 10px 10px;
-    border: 1px solid rgba(115, 95, 64, 0.16);
-    border-radius: 8px;
-    background: #fffdfa;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-  .kitchen-audit-priority-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 0.82rem;
-    color: #6c655c;
-    margin-top: 0.2rem;
-  }
-  .kitchen-audit-priority-meta span + span::before {
-    content: "·";
-    margin-right: 6px;
-    color: rgba(108, 101, 92, 0.75);
-  }
-  .kitchen-audit-evidence-grid {
-    display: grid;
-    gap: 10px;
-  }
-  .kitchen-audit-food-offer {
-    display: grid;
-    gap: 8px;
-  }
-  .kitchen-audit-deliverable .report-photo-section {
-    gap: 7px;
-    padding-top: 0;
-    border-top: 0;
-  }
-  .kitchen-audit-deliverable .report-photo-grid {
-    gap: 8px;
-  }
-  .kitchen-audit-deliverable .report-photo-card {
-    border-radius: 8px;
-    box-shadow: none;
-  }
-  .kitchen-audit-deliverable .report-photo-card img {
-    height: 38mm;
-  }
-  .kitchen-audit-deliverable .report-photo-grid-featured .report-photo-card:first-child img {
-    height: 48mm;
-  }
-  .kitchen-audit-deliverable .report-photo-card figcaption {
-    padding: 7px 8px 8px;
-  }
-  .kitchen-audit-deliverable .report-photo-card figcaption strong {
-    font-size: 10px;
-  }
-  .kitchen-audit-deliverable .report-photo-card figcaption span {
-    font-size: 9px;
-  }
-  .kitchen-audit-deliverable .muted-copy,
-  .kitchen-audit-deliverable .report-story-card p,
-  .kitchen-audit-deliverable .report-story-card li {
-    font-size: 9.4pt;
-    line-height: 1.5;
-  }
+
+  /* ================================================================
+     PRINT
+     ================================================================ */
+
   @media print {
+    .kitchen-audit-deliverable .pdf-cover-page {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
     .kitchen-audit-appendix {
       background: #faf8f4 !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+
     .kitchen-audit-deliverable .kitchen-audit-appendix {
       break-before: page;
       page-break-before: always;
+    }
+
+    .kitchen-audit-deliverable .report-metric-card,
+    .kitchen-audit-deliverable .report-metric-card-primary,
+    .kitchen-audit-deliverable .report-story-card,
+    .kitchen-audit-deliverable .pdf-cover-metric,
+    .kitchen-audit-deliverable .pdf-cover-detail,
+    .kitchen-audit-priority-actions-list li {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
   }
 </style>`;
